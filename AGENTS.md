@@ -17,7 +17,7 @@ Codex: read its "For Codex" section at the start of every task.
 | What is done and the queue, in order | `docs/PROGRESS.md` |
 | Claude and Codex: who builds what, the hand-over, the fallback, the reviews' score | `docs/claude-and-codex.md` |
 | Security: what is protected, and the rules every builder and reviewer keeps | `SECURITY.md` |
-| How builder sessions and lanes are run (for the orchestrator) | `docs/orchestrating.md` |
+| How builder sessions and lanes are run (for the orchestrator: sessions, the cache, hand-overs, lanes) | `docs/orchestrating.md` |
 | Running and checking it: switches, PR pictures, every tool | `docs/developing.md` |
 | The design, one file per topic | `docs/design/` (index: `DESIGN.md`) |
 | Materials the queue points to: the open entries' specs word for word (`queue-specs.md`), the teaching prototypes and judges, the woodpecker acts draft, the Sniper screenshot | `docs/handoff/` |
@@ -37,46 +37,93 @@ Codex: read its "For Codex" section at the start of every task.
 4. Check weekly usage with `scripts/usage.sh`, and again after every commit (see "Usage"). If it says "unknown", this
    session cannot see usage: say so in the first line of each PR you open, and carry on; Haakon then watches usage
    himself and pauses the work at about 90%.
-5. Read "Standing instructions" at the end of this file.
+5. Before opening the task's PR, read its entry and the "For Haakon" table in `docs/PROGRESS.md` on `develop` again,
+   since Haakon's answers can change it while you work: build what changed, or, if that is large, say so in the PR and
+   add it as its own entry right after the task.
 
 ## How to work
 
-Haakon's rules, word for word (21 October 2026):
+Every rule here says what it is for. The aim behind them all: as much finished work of full quality as the week's
+usage allows, at the lowest cost now and later.
 
-- A question is a question. Answer it; don't act on it unless I say so.
-- Match effort to the task. Docs, READMEs, small fixes and config: one pass, no subagents.
-- Don't use more than 2 agents unless I ask for it. Never stop to ask about this:
-  pick the cheaper way, and say in the PR what you chose.
-- Usage is limited. Prefer the cheapest approach that does the job well.
-- Read only the parts of large files the task needs (search, then read sections).
-- Long simulations: run them in the background and wait for the completion notice.
-  Don't poll, and don't keep agents alive just to wait for a run.
-- At each milestone, open a PR I can play, say in it what to try, and carry on with
-  the next item without waiting for me to review or merge.
-
-How to keep to them:
-
-- **Read little.** Some game files are large (`engine.js` and `ai.js` are over 100 KB): never read one whole. Find what you
-  need with `scripts/codemap.sh <file>` (its functions with line numbers; pipe it through grep) or grep, then read that
-  line range. Don't re-read what you just edited.
+- **A question is a question.** Answer it; act on it only when Haakon says so.
+- **Match effort to the task,** and take the cheapest approach that does the job well, since usage is limited. Docs,
+  READMEs, small fixes and config: one pass, no helpers.
+- **Read little.** Some game files are large (`engine.js` and `ai.js` are over 100 KB): never read one whole. Find what
+  you need with `scripts/codemap.sh <file>` (its functions with line numbers; pipe it through grep) or grep, then read
+  that line range. Don't re-read what you just edited.
 - **Print little.** Run the suites with `scripts/test.sh` and simulations with `scripts/sim.sh`: both print a summary
   and the failures and keep the full log in a file. Run long ones in the background (the Bash tool's background mode)
-  and wait for the completion notice. Never paste a full log into the conversation.
-- **Helpers, effort and escalation:** Claude's are in `CLAUDE.md` ("Models, effort and helpers"). Codex uses no
-  helpers; its escalation and its part in the work are in `docs/claude-and-codex.md`.
+  and wait for the completion notice: never poll, and keep no agent alive just to wait. Never paste a full log into the
+  conversation.
+- **Helpers, effort and escalation:** Claude's are in `CLAUDE.md` ("Models, effort and helpers", with when a helper
+  pays). Codex uses no helpers; its escalation and its part in the work are in `docs/claude-and-codex.md`.
 - **Edit in place,** and **don't loop:** if the same approach fails twice, stop, write down what you tried, and change
   course, hand it to the escalation helper, or mark the item blocked in `docs/PROGRESS.md` and go on to the next.
 - **One fact, one place.** Link instead of copying. A design call goes into its topic file in `docs/design/`.
-- **Haakon's words are kept.** Quote a new instruction word for word in the PR. If it is a standing one, also add it,
-  dated, to "Standing instructions" below, with the quote in `docs/archive/instructions.md`.
+- **Keep it lean.** Every change removes what it replaces, in the same PR: no commented-out code, no "old" copies,
+  nothing it made unused (code, files, settings, assets, test helpers). Look for an existing helper before writing one.
+  A leftover is a finding in every review.
+- **Split by meaning,** so a reader loads only what it needs. Split along the lines people look things up by (a rival,
+  a voice, a system, a screen), never by size alone: about 50 KB is the signal to look for such a split, not the place
+  to cut. Where a family of things differs only in part (rivals, voices, moves), write the shared part once and each
+  difference as an override. Before a split, say in the PR what it saves later; a split that saves nothing is not made.
+  Each split goes in its own PR, with behaviour proven unchanged (fingerprints and suites).
+- **Principles over rules.** Where a rule's letter would defeat what it is for, follow its purpose, say so in the PR
+  under "Readings taken", and flag the rule to be fixed. Never for the safety rules: `SECURITY.md`, `main`, keys and
+  secrets, and the storage keys.
+- **The smallest setup that tests the rule,** so checks stay fast as the game grows. Every test sets up a scripted
+  board with only the snakes and food it needs, for a few ticks, rather than full rounds. Full rounds only in the few
+  tests that guard the whole (the simulation's fingerprint and `--check`, the online round trip), and long measurements
+  (`tools/abtest.js`, censuses) in `scripts/sim.sh`, never in CI. When the game grows, the tests' default does not.
+- **A change a player sees updates the README,** in the same PR, as it does the lesson and the Field guide row.
+- **Haakon's words are kept, in the archive.** Quote each instruction he gives word for word in the PR and in
+  `docs/archive/instructions.md`, dated. A standing rule goes into the section of this file where it applies (or
+  `CLAUDE.md`, if only Claude uses it), said as briefly as it can be, with what it is for: never as a dated entry or a
+  quote here, since every session pays to read this file.
 - **Each game's files stay in its own repository.** Never write this project's notes, logs or files into another
   project's repository or folders, such as Amarna Letters'.
 - **Sessions.** When sessions are started for you task by task (a Claude Code Project does this), stop when your task
   is merged and say what is next; otherwise carry on with the next task in the same session.
-- **Keep it lean** (Haakon, 1 November 2026; the words are in `docs/archive/instructions.md`). Every change removes what it replaces, in the same PR: no
-  commented-out code, no "old" copies, nothing it made unused (code, files, settings, assets, test helpers). Look for an
-  existing helper before writing one. Split code by responsibility and keep each file under about 50 KB; split a file
-  that grows past that in its own PR, with behaviour proven unchanged. A leftover is a finding in every review.
+
+## Questions and readings
+
+Haakon should never have to hunt for a question, nor answer one the rules already settle.
+
+- **Every reading is noted.** Each reading a task takes, where its entry or the design left something open, goes into
+  its PR under "Readings taken", with the rule it rests on ("Rules that stand", or the design section). Most questions
+  are answered that way; only what no rule settles, or a matter of taste, goes to Haakon. The design session checks
+  the readings at each milestone.
+- **Every question reaches him three ways:** the session's last message opens with "Questions for Haakon", each
+  numbered and answerable from a phone, with the reading taken or suggested ("Questions for Haakon: none" if there are
+  none); the milestone PR's description opens with the same list; and the "For Haakon" table in `docs/PROGRESS.md`
+  keeps it until he answers. A session that starts builder sessions passes each list on word for word.
+
+## How work flows
+
+Waiting is lost time and, past an hour, a lost cache. The orchestrator's part, and the full text: `docs/orchestrating.md`.
+
+1. **Review in the background.** Open the PR, start its reviews (Codex's, and on engine-rules and AI entries Claude's
+   design check, at the same time), and go on with what comes next. Fix what the reviews find in one round, then merge
+   at a 10. The last message says what merged and what is next.
+2. **The next entry from `develop`,** never stacked on an open PR's branch. An AI entry waits for the last AI change to
+   merge, so each head-to-head compares against a settled AI.
+3. **Lanes beside it.** Independent work runs in parallel: different files from every open lane, no shared
+   measurement, no waiting on another's result. Changes to the AI or the engine's rules run one at a time, and so do
+   changes to the online messages; art, chatter lines, interface and layout fixes, docs and splits run beside them.
+   Claim a lane first with a draft PR from a fresh branch off `develop`, after checking the open PRs; merge `develop`
+   into it before review; change the progress file only when it merges.
+4. **The brake.** From about 85% of the weekly usage no new side lane opens; from about 90%, only small things in the
+   main lane ("Usage").
+
+## The workshop check
+
+At every milestone, say in one line of the milestone PR what slows the work down as the game grows, and fix what
+passes its mark: (1) how long the checks take for a docs-only and a code PR, finding out why if either grew by more
+than a fifth since the last check; (2) the files every session reads, this one, `CLAUDE.md` and `docs/PROGRESS.md`,
+each kept under about 20 KB, with done entries and answered questions moved to `docs/archive/` and a line pointing to
+them; (3) files that should be split by meaning (above), each in a PR of its own with behaviour proven unchanged; (4)
+merged branches, deleted from GitHub; (5) leftovers nobody uses, archived or removed; (6) the README current.
 
 ## Rules that stand
 
@@ -89,6 +136,11 @@ How to keep to them:
 - **Clever rivals, human reactions.** Haakon: "They shouldn't have super human reaction speed, but they should be very
   clever" (11 October). They get better through planning ahead, "not by increasing reaction time, or making them all
   samey in strategy, nor decreasing performance below good gameplay levels" (14 October).
+- **Every new move is tested both ways.** For every move or rule a snake can choose to use, run `tools/abtest.js` on
+  fresh seeds: rivals that use it against a copy where it is taken from the play of some rivals only (the others keep
+  it, so the rule itself is unchanged). Its users should come out ahead in wins or survival. If they don't, the PR
+  says why: the move doesn't matter (a design finding for Haakon) or the rivals play it badly, which is fixed before it
+  merges. The PR shows the table, with how often each rival used the move and how often it worked.
 - **Every new rule needs a visible cue and a lesson** (a one-time lesson and a Field guide row). Haakon called this
   "very important".
 - **Every rival keeps its trademark,** measured before and after a change: Mason's straight runs, Ouroboros's coiling,
@@ -111,20 +163,18 @@ How to keep to them:
 
 ## Usage
 
-Haakon (26 October 2026): "I want these 2 continually working until they reach about 90% usage, at that point I don't
-want them taking on any bigger task, as I want the bulk of that remaining usage for myself." So work continuously,
-task after task, and check weekly usage after every commit. From about 90% of the weekly limit, take on no bigger
-task: finish the one at hand if it is nearly done, or bring it to a clean commit and open a draft PR saying how to test
-it and what is left; then only small things (a fix, a doc), and note where you stopped in `docs/PROGRESS.md`. Two
-building sessions share the limit: this game's and Amarna Letters'. Only the measured share counts: the app's weekly usage warning is not the brake (Haakon, 29 October 2026: "They
-weren't supposed to stop before 90%. We're still at only 76%").
+Work continuously, task after task, and check weekly usage after every commit. From about 90% of the weekly limit, take
+on no bigger task, so the rest of the week stays Haakon's: finish the one at hand if it is nearly done, or bring it to a
+clean commit and open a draft PR saying how to test it and what is left; then only small things (a fix, a doc), and
+note where you stopped in `docs/PROGRESS.md`. Two building sessions share the limit: this game's and Amarna Letters'.
+Only the measured share counts, never the app's warning, and a session that cannot read it carries on.
 
 ## Git and GitHub
 
 `main` is Haakon's and is what the live site plays: never push to it, never force-push. Work on a branch from `develop`,
 one per task, with a PR into `develop`; merge it yourself when the suites pass (and, for a task that changes the game,
 one reviewer has found nothing blocking). At each milestone make sure a PR from `develop` to `main` carries the new
-work, saying what to try, with its line of what is new at the top of `version.js`'s news, and merge it yourself once its CI is green (see "Standing instructions"). Before pushing to a branch whose PR you opened earlier, check whether that
+work, saying what to try, with its line of what is new at the top of `version.js`'s news, and merge it yourself once its CI is green; then carry on with the next task without waiting for Haakon. Push the task's branch after every commit, even before its PR opens (a draft PR if it is not ready), so nothing is lost if a session dies or its machine is reclaimed. Before pushing to a branch whose PR you opened earlier, check whether that
 PR was merged; if it was, start a new branch and PR. Don't stack PRs on each other's branches.
 
 Cloud sessions can't use GitHub's GraphQL API, so `gh pr create` and `gh pr view` fail. Use the REST API:
@@ -166,81 +216,4 @@ review what changed since; raise something new about unchanged code only as P0 o
 design check on the big items, and Claude's reviewer whenever Codex is unavailable) gives a score from 1 to 10 and
 everything that keeps the work from 10, and only a 10, a list with nothing open, passes. The whole method, with its
 guards against endless rounds and a slipping bar: "Codex reviews" and "Reviews" in `docs/claude-and-codex.md`.
-
-## Standing instructions
-
-Haakon's standing instructions given since this file was last revised, dated, newest last.
-
-- **27 October 2026:** "You merge it. Always." Merge the milestone PR from `develop` into `main` yourself, once its CI
-  is green, instead of leaving it for Haakon. Still never push to `main` directly or force-push: it changes by that
-  merge only.
-- **27 October 2026: push as you go; 31 October 2026: after every commit.** "Yes to all, expertly!", then "YES!" (the
-  words are in `docs/archive/instructions.md`). Push the task's branch after every commit, even before its PR opens (a
-  draft PR if it is not ready), so nothing is lost if a session dies, runs out of usage or its machine is reclaimed.
-- **27 October 2026: every new move is tested both ways.** (the words are in `docs/archive/instructions.md`). For every new move
-  or rule a snake can choose to use, run `tools/abtest.js` on fresh seeds: rivals that use it, against a copy where it
-  is taken from the play of some rivals only (the others keep it, so the rule itself is unchanged). Its users should come
-  out ahead in wins or survival. If they don't, the PR says why: either the move doesn't matter (a design finding for
-  Haakon) or the rivals play it badly, which is fixed before it merges. The PR shows the table, with how often each rival
-  used the move and how often it worked. Today's rules still stand: "No ability only people use", "No refuges" and every
-  trademark kept.
-- **27 October 2026: questions come back to Haakon directly.** (the words are in `docs/archive/instructions.md`). Every question, choice or "left unsolved" point Haakon should answer reaches him three
-  ways:
-  1. **The session's last message,** which the session that started it reads and relays, opens with "Questions for
-     Haakon". It lists each one, numbered, as a question he can answer from his phone, with the reading taken or
-     suggested. If there are none, it says "Questions for Haakon: none".
-  2. **The milestone PR's description** opens with the same list.
-  3. **The "For Haakon" table** in `docs/PROGRESS.md` keeps it until he answers.
-
-  A session that starts builder sessions passes each list on to Haakon word for word in its next update.
-- **28 October 2026: every assumption is noted.** (the words are in `docs/archive/instructions.md`). Every
-  reading a task takes, where its entry or the design left something open, goes into its PR under "Readings taken",
-  each with the rule it rests on ("Rules that stand" above, or the design section). Most questions are answered that
-  way first, by reasoning from the rules; only what no rule settles, or a matter of taste, goes to Haakon. The design
-  session checks the readings at each milestone.
-- **28 October 2026: the workshop check.** "Yes please, sound good! Do it expertly for both!" (to Claude's proposal;
-  the words are in `docs/archive/instructions.md`). At every milestone, say in one line of the milestone PR what slows
-  the work down as the game grows, and fix what passes its mark: (1) how long the checks take for a docs-only and a
-  code PR, finding out why if either grew by more than a fifth since the last check; (2) the files every session reads,
-  this one and `docs/PROGRESS.md`, each kept under about 20 KB, with done entries and answered questions moved to
-  `docs/archive/` and a line pointing to them; (3) files over about 50 KB, split in a PR of their own with behaviour
-  proven unchanged (fingerprints and suites), the tests included; (4) merged branches, deleted from GitHub (their history
-  stays in `develop`); (5) leftovers nobody uses, archived or removed.
-- **27 October 2026: re-read the task before the PR.** "Yes, why not? If you don't object." (to Claude's proposal; the
-  words are in `docs/archive/instructions.md`). Before opening the task's PR, read its entry in `docs/PROGRESS.md` on
-  `develop` again, with the "For Haakon" table, since Haakon's answers can change it while you work. Build what changed,
-  or, if that is large, say so in the PR and add it as its own entry right after the task.
-- **28 October 2026: pipeline, don't wait** (full text, with the orchestrator's part, in `docs/orchestrating.md`).
-  Open the PR, start its reviewers in the background (Codex's review and the design check together), and go on with what comes next; fix what the review finds when it
-  returns, then merge. Take the next entry from `develop`, never stacked on an open PR's branch; an AI entry waits for
-  the last AI change to merge, so each head-to-head compares against a settled AI. Long runs and checks go in the
-  background, and no turn sits idle. The last message says what merged and what is next.
-- **28 October 2026: as many lanes as can run in parallel** (full text in `docs/orchestrating.md`; for builders it
-  replaces the limit of two agents in "How to work", each builder keeping its own limit of helpers). A lane is
-  independent work: different files from every other open lane, no shared measurement, no waiting on another's result.
-  Changes to the AI or the engine's rules run one at a time, and so do changes to the online messages; art, chatter
-  lines, interface and layout fixes, docs and test-file splits run beside them. Claim a lane first with a draft PR from
-  a fresh branch off `develop`, after checking the open PRs; change the progress file only when the work merges; merge
-  `develop` into the branch before review. From about 85% of the weekly usage no new side lane opens; from about 90%,
-  only small things in the main lane.
-- **29 October 2026: the smallest setup that tests the rule.** "Yes, make it expertly so!" (to Claude's proposal, for
-  this game and Amarna Letters alike; the words are in `docs/archive/instructions.md`). Every test sets up the smallest
-  scene that still tests its rule: a scripted board with only the snakes and food it needs, for a few ticks, rather
-  than full rounds. Full rounds and many-round runs only in the few tests that guard the whole (the simulation's
-  fingerprint and `--check`, the online round trip), and long measurements (`tools/abtest.js`, censuses) in
-  `scripts/sim.sh`, never in CI. When the game grows (rivals, moves, board sizes), the tests' default does not grow
-  with it; the workshop check's check times are the measure.
-- **31 October 2026: a change a player sees updates the README.** "Yes, expertly to both!" (the words are in
-  `docs/archive/instructions.md`). Any entry or PR that changes what a player sees or does updates `README.md` in the
-  same PR, as it does the lesson and the Field guide row; the workshop check gains a sixth point: (6) the README is
-  current, said in one line of each milestone PR and fixed if not.
-- **1 November 2026: Claude and Codex build together.** (the words are in `docs/archive/instructions.md`). Codex
-  builds beside Claude, on its own subscription, to spread the weekly usage, and the two review each other's work.
-  Claude orchestrates and keeps the decisions; Codex takes what tests can prove. The routing, the hand-over by the
-  `codex` label and Haakon's poller, the fallback when Codex is out of usage and the reviews' score: `docs/claude-and-codex.md`.
-- **1 November 2026: only a 10 passes** (the words are in `docs/archive/instructions.md`). Every review passes the work only at a 10, which for Codex
-  means no finding open, with guards against endless rounds and a slipping bar. The score follows from the list, and
-  later rounds judge the changes. After three rounds the escalation helper takes one look, and what is still open
-  leaves the PR blocked, never merged below 10. A blind re-review of a merged 10 every week and canaries now and then
-  are logged and reported. On the big tasks, Codex's review and Claude's design check start at the same time. The
-  method: `docs/claude-and-codex.md`, "Reviews".
+On engine-rules and AI entries, Codex's review and Claude's design check start at the same time.
