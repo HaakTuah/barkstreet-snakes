@@ -237,6 +237,10 @@ method, with its guards against endless rounds and a slipping bar, is "Codex rev
 guide row, the visible cue, and online play in step each come with it; one missing is a P1 (the rules in "Rules that
 stand" and "How to work").
 
+**Text a player reads,** for every reviewer of a change that adds or rewrites it: report as a finding any line that
+reads machine-made (one shape filled in again and again, filler, clichés, two voices alike); the slop audit in
+`docs/PROGRESS.md` sets the bar.
+
 **One idea, for every reviewer** of a change to the game (not docs, design copies or Dependabot's updates): end the
 review with one thing outside this change that would make the game better, or "none", the usual answer when nothing is
 worth the owner's time. It never blocks (a P3 at most). The builder searches the open ideas first: a new one is filed as
