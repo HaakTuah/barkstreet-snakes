@@ -43,7 +43,7 @@ and the owner's notes of 2 November, among them).
 ## The workshop lane (splits by meaning, leftovers, the file-by-file review)
 
 - **The file-by-file review** (the owner, 2 November 2026; part 1, the docs every session reads, done in PR #334;
-  part 2, `docs/design/`, draft PR #335; then the code): its spec is in
+  part 2, `docs/design/`, PR #335; part 3, the code, draft PR #337): its spec is in
   `docs/handoff/queue-specs.md` under the same title.
 - *Done:* `audio.js` and `chatter/zh.js` split (PRs #225, #226), the chatter split by meaning (PR #318), the workshop
   check's point (2) (this file 10 KB, `AGENTS.md` 20 KB, 2 November) and point (5), the unused-code check (PR #331):
