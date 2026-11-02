@@ -38,7 +38,7 @@ Two half-rings round your head show both rests, the jump's on the left in sky bl
 - golden leaves give golden dashes (up to 3): three cells in one tick, cutting through a body up to two thick and putting out every fire (into the edge or a hole, you blow up);
 - golden mushrooms make the edges wrap (12 seconds each, up to 20).
 
-Golden ones go before the plain ones and leave their rests alone. Anyone holding one wears a gold outline, with sky-blue round pips behind the head for golden jumps and ember diamonds for golden dashes. The rivals jump, dash, cut and wrap too, golden ones included, by the same rules, when it pays them and each in its own style: Sniper cuts off its target, Mute seals its boxes, Gobbler races for food, Vulture dashes to beads, Ghost keeps a dash ready to escape, Mason lays its walls two thick so one dash can't cut them, and Star, the power addict, uses every one it gets.
+Golden ones go before the plain ones and leave their rests alone. Anyone holding one wears a gold outline, with sky-blue round pips behind the head for golden jumps and ember diamonds for golden dashes. The rivals jump, dash, cut and wrap too, golden ones included, by the same rules, when it pays them and each in its own style: Sniper cuts off its target, Mute seals its boxes, Gobbler races for food, Vulture dashes to beads, Ghost keeps a dash ready to escape, Mason lays its walls two thick so one dash can't cut them, the aggressive come down from a golden flight across a rival's way to shut it in, every rival keeps a golden dash for a trap or a cut that puts someone out, and Star, the power addict, uses every one it gets.
 
 ### Food
 
