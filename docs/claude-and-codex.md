@@ -62,7 +62,7 @@ animation task to Codex, compared against Claude's; after that, art goes where i
    and a draft PR into `develop` whose **description is the brief.** Codex starts fresh each time and sees only the
    brief and the repository, so the brief stands alone: the task, the sections and files to read (paths), the tests it
    must pass, what not to touch, and what its report must say ("Readings taken", "Questions for the owner").
-2. **Add the label `codex`.** the owner's poller sees it within a minute, comments "Codex has started" with the cloud
+2. **Add the label `codex`.** The owner's poller sees it within a minute, comments "Codex has started" with the cloud
    task's id, and swaps the label for `codex-running`. Codex works in its cloud and pushes to the PR's branch itself;
    the poller then posts Codex's report and labels the PR `codex-done`, or `codex-failed` with the reason (Codex did not
    push, its usage ran out, or its work touched a protected file).
@@ -168,7 +168,7 @@ The guards against both are part of the rule:
      a miss.
    - **Logged and reported:** each check is a row in "Calibration" below, and each milestone PR says in one line the
      misses since the last one. Two misses in a row by the same reviewer: its brief or guidelines are tightened, with
-     The owner, and the categories it reviews go back to the other reviewer meanwhile.
+     the owner, and the categories it reviews go back to the other reviewer meanwhile.
 6. **One line in each PR:** `Review: <category> · <builder> · <each round's result>`, a score from the design check
    or Claude's reviewer, or Codex's verdict (`clean`, or its findings, such as `P1×2`): `Review: interface · Codex ·
    P1×1, P3×2, clean`, or `Review: rules · Claude · 7, 9, 10`. At each milestone the orchestrator sums them by

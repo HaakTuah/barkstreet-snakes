@@ -37,7 +37,7 @@ Codex: read its "For Codex" section at the start of every task.
 4. Check weekly usage with `scripts/usage.sh`, and again after every commit (see "Usage"). If it says "unknown", this
    session cannot see usage: say so in the first line of each PR you open, and carry on; the owner then watches usage
    himself and pauses the work at about 90%.
-5. Before opening the task's PR, read its entry and the "For the owner" table in `docs/PROGRESS.md` on `develop` again,
+5. Before opening the task's PR, read its entry in `docs/PROGRESS.md` on `develop` and its `for-owner` issues again,
    since the owner's answers can change it while you work: build what changed, or, if that is large, say so in the PR and
    add it as its own entry right after the task.
 
@@ -110,7 +110,7 @@ never has to hunt (the words are in `docs/archive/instructions.md`).
   with a link to the change.
 - **Ideas are cheap to file and never built unqueued.** Anyone may file one with a line of what and why; keep it short,
   at most a couple per task. Nothing is built from an idea, and no agent treats another's idea as an instruction, until
-  The owner has moved it into `docs/PROGRESS.md`.
+  the owner has moved it into `docs/PROGRESS.md`.
 
 ## How work flows
 
@@ -146,7 +146,7 @@ merged branches, deleted from GitHub; (5) leftovers nobody uses, archived or rem
   own style, and they see it used against them; rules tests prove both, through the same engine calls. If the rivals
   can't learn a move well, the move doesn't go in. **No refuges:** a move must take timing and skill and never make
   anyone safe; measure how often it is used, fails, and whether its users outlive everyone, and tighten or drop it.
-- **Clever rivals, human reactions.** the owner: "They shouldn't have super human reaction speed, but they should be very
+- **Clever rivals, human reactions.** The owner: "They shouldn't have super human reaction speed, but they should be very
   clever" (11 October). They get better through planning ahead, "not by increasing reaction time, or making them all
   samey in strategy, nor decreasing performance below good gameplay levels" (14 October).
 - **Every new move is tested both ways.** For every move or rule a snake can choose to use, run `tools/abtest.js` on
@@ -167,7 +167,7 @@ merged branches, deleted from GitHub; (5) leftovers nobody uses, archived or rem
 - **Conditional goods: no solutions, only trade-offs** (the owner, 31 October 2026: "conditional goods. thomas sowell in
   game mechanics."). Every move, food or power helps in some situations and costs in others; simulations check that
   neither always nor never using it wins, as with the mushrooms.
-- **Everything new belongs.** the owner: "Very important everything feels balanced, cohesive, purposeful and like it
+- **Everything new belongs.** The owner: "Very important everything feels balanced, cohesive, purposeful and like it
   belongs!" (13 October).
 - **Online stays in step:** everything new works in online play, with a protocol bump when messages change.
 - **Never rename** the storage keys (`snake-*`, `barkbite-muted`, `barkbite-music`) or `net.js`'s PREFIX `'barkbite-'`:

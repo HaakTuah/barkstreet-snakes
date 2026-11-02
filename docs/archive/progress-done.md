@@ -751,9 +751,28 @@ Word for word from "The polish lane" in `docs/PROGRESS.md`.
 - The room card on a phone (PR #256): its seats as names in a row, as the start card's, each rival's "unless a friend joins" left to the card's own words; it fits a 320 px phone upright (it ran 117 px under its buttons), and on a 568x320 one sideways it scrolls 84 px, not 234.
 - The friends card's Join on a small phone on its side (PR #272): at 568x320 it ran 15 px off the card's edge; its row is a little tighter there.
 
+Moved from "The polish lane" in `docs/PROGRESS.md` (2 November 2026, the file-by-file review), word for word; the
+owner's three notes of 2 November merged as PRs #322 (the remains), #320 (the flags) and #321 (the spit's tell):
+
+- **First, the housekeeping:** done (PR #222, and the design session's move of the open entries' specs to
+  `docs/handoff/queue-specs.md`, 31 October 2026); merged branches now go by GitHub's "Automatically delete head
+  branches", and the older ones went by the "Delete merged branches" button in Actions (31 October 2026). Then archive leftovers nobody uses.
+- **Next, from the owner's notes of 2 November** (his words: `docs/archive/instructions.md`), one PR each: **every
+  snake's remains match the body they came from** ("Remains" in `docs/design/04-food-and-the-world.md`): The owner saw it
+  on Star, but `beadOf` in `render/food.js` has three faults. A dead snake's beads take their pattern by bead count, not
+  by the segment they came from, so every patterned rival's comes out squeezed (Wildcard, Joker, Sniper, Vulture,
+  Desperado, Mason, Colonist); Star's and Copycat's beads go round six fixed hues from red, while their bodies show a
+  running, fading rainbow; and crash drops and cut tails carry only the base colour. Each bead takes the fill and mark
+  its segment had at that moment; **flags fall with the log** when a gap opens under them, as the piece does,
+  instead of jumping (food's own fall is entry 6's A/B); and **the spit's tell**: the cheek's bulge counts down to the
+  spit, so a player sees when it comes (where it flies is 3b+'s dotted line).
+
 ## The split lane, done (moved 31 October 2026)
 
 - `audio.js` became `audio/` (PR #225): `cues.js` and `sound.js`, sound proven unchanged by `docs/archive/studies/same-sound.js`.
   `chatter/zh.js` became `zh.js` and `zh-more.js` (PR #226), checked by `docs/archive/studies/same-zh.js`.
 - Chatter split by meaning (the owner, 2 November 2026; PR #318): a file per rival in `chatter/voices/` over a shared
   core, with the impressions and the talk on their own, listed in `chatter/voices.js`.
+- The workshop check's point (2), 2 November 2026: `docs/PROGRESS.md` back under 20 KB (10 KB, item 6's spec moved to `docs/handoff/queue-specs.md`) and `AGENTS.md` at 20 KB.
+- The unused-code check, the workshop check's point (5) (PR #331): unused code removed and done study tools moved
+  from `tools/dev/` to `docs/archive/` (`docs/archive/README.md` lists them).
