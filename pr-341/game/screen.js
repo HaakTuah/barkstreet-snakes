@@ -276,6 +276,33 @@ const applyMotion = () => Render.setReducedMotion(reducedMQ.matches);
 reducedMQ.addEventListener?.('change', applyMotion);
 applyMotion();
 
+// The screen stays on while you play, through the countdown, and while
+// you watch a round (a screen wake lock); a nap, a card or the Hall of
+// Fame lets it go. A hidden tab loses it (the browser lets it go), so
+// coming back asks again, if it's still wanted then (alone you'll be
+// napping: waking asks). Where there's no wake lock, nothing changes; a
+// refusal (a battery saver, say) isn't asked again until the next time
+// it's wanted.
+const awake = { lock: null, asking: false, refused: false };
+function keepAwake() {
+  if (!navigator.wakeLock) return;
+  const want = !document.hidden && recordsEl.hidden && pickerEl.hidden && (state === 'countdown' || (state === 'running' && overlay.classList.contains('hidden')));
+  if (!want) {
+    awake.refused = false;
+    if (awake.lock) { const lock = awake.lock; awake.lock = null; lock.release().catch(() => {}); }
+    return;
+  }
+  if (awake.lock || awake.asking || awake.refused) return;
+  awake.asking = true;
+  navigator.wakeLock.request('screen').then(lock => {
+    awake.asking = false;
+    awake.lock = lock;
+    lock.addEventListener('release', () => { if (awake.lock === lock) awake.lock = null; }); // (the browser's doing: a hidden tab)
+    keepAwake(); // (let go at once if it's no longer wanted)
+  }, () => { awake.asking = false; awake.refused = true; });
+}
+document.addEventListener('visibilitychange', keepAwake); // (after the nap's, in input.js)
+
 // ------------------------------------------- dev: frame-time overlay
 
 // Behind ?perf or ?debug, toggled with the ` key: average and worst frame

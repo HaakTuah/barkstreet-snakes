@@ -347,6 +347,14 @@ function sendLobby() {
   if (!lobbyPlayers.hidden) renderPlayers();
 }
 
+// Hosting: where everyone goes next, for friends' screens, once a tick when
+// the rivals have thought, and again when a person's press changes it.
+let planSent = false;
+function sendPlan() {
+  planSent = true;
+  online.room.broadcast(Online.plan(theGame));
+}
+
 function fromFriend(id, msg) {
   if (!hosting()) return;
   if (msg.t === 'hello') {
@@ -569,6 +577,25 @@ function guestRound(msg) {
   updateControls();
   showCard({ title: '…', text: theGame.rivalsLine, opponents: true, quiet: true, beat: true });
   markYou(playerAlive());
+}
+
+// A tick from the host, on a friend's screen.
+function hostTick(msg) {
+  if (!theGame || (state !== 'running' && state !== 'countdown')) return;
+  if (state === 'countdown') go();
+  const wasAlive = playerAlive();
+  for (const s of theGame.snakes) rememberPrev(s);
+  const wasPiloted = !!player()?.autopilot;
+  const dying = Online.apply(theGame, msg, DIRS);
+  // If the host had an AI steer for you for a while (your connection
+  // hiccupped), say so once you're back.
+  const piloted = !!player()?.autopilot;
+  if (piloted && !wasPiloted) online.pilotedAt = performance.now();
+  if (wasPiloted && !piloted && player() && performance.now() - online.pilotedAt > 2000 && !online.toldAway) toast(FLAVOR.youAway, 2200);
+  if (!piloted) online.toldAway = false;
+  tickLen = msg.len || Engine.tickMs(theGame);
+  online.lastTickAt = performance.now();
+  afterTick(dying, wasAlive);
 }
 
 function hostLost(reason) {
