@@ -1,6 +1,6 @@
 {
-  "version": 20,
-  "fingerprint": "8a81f3eb63734379",
+  "version": 21,
+  "fingerprint": "513e22581602a05b",
   "kinds": {
     "away": "{1} t: string",
     "back": "{1} t: string",
@@ -33,7 +33,7 @@
     "tick e baked": "[4] string number number number",
     "tick e burrow": "[4] string number number number",
     "tick e charge": "[3] string number number",
-    "tick e crash": "[9] string number number number string string null number number",
+    "tick e crash": "[10] string number number number string string number number number number",
     "tick e cut": "[6] string number number number number number",
     "tick e dash": "[6] string number number number number number",
     "tick e death": "[7] string number string string null number string",
@@ -49,7 +49,7 @@
     "tick e heal": "[3] string number number",
     "tick e knock": "[8] string number number number number number number string",
     "tick e lastApples": "[3] string number number",
-    "tick e leap": "[6] string number number number number number",
+    "tick e leap": "[7] string number number number number number number",
     "tick e peck": "[6] string number number array<number> array<number> array<>",
     "tick e rainbow": "[3] string number number",
     "tick e rot": "[5] string number number number string",
