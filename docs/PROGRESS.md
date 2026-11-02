@@ -71,8 +71,8 @@ and the owner's notes of 2 November, among them).
 - **The design by topic, not by round** (#336; the owner, 2 November 2026): each topic's current rule moves from the
   round files into its topic file in `docs/design/`, superseded versions and measurements to `docs/archive/`. A slow
   side lane, one topic per docs-only PR, taken when a lane is free; code comments citing a section are checked.
-- **Waiting for the main lane** (PR #198 and its parked #202 have them open): `ai.js` (139 KB), `engine.js` (128 KB) and
-  `render/world.js` (51 KB). Split each in a PR of its own once the main lane merges, proven by fingerprints and suites.
+- **Waiting for the main lane:** `ai.js` and `engine.js` are now the main lane's own step, 2y+; `render/world.js` (50 KB)
+  still waits for a gap. Split each in a PR of its own once the main lane merges, proven by fingerprints and suites.
 
 ## The queue, in order
 
@@ -97,6 +97,13 @@ contested one; (2) the rivals take landings when it pays, each in its style (Sni
 hardly ever), planned from the visible ring, never by reaction ("Clever rivals, human reactions"); (3) the flight and
 leap now measured both ways again, and per use, leap now included ("Every new move is tested both ways"). If they pay,
 done; if still flat, the PR says so as a design finding.
+
+### 2y+. Split `ai.js` and `engine.js` by meaning (the owner, 2 November 2026; the main lane, right after 2y, before part 5)
+
+Both have grown past the mark (148 KB and 136 KB) and every main-lane entry touches them, so the gap "between AI
+entries" never came. Each is split by meaning in a PR of its own (the rivals' shared template, each rival's override,
+planning, and so on for `ai.js`; the rules by system for `engine.js`), proven unchanged by the fingerprints and the
+suites, so it goes quickly and needs no head-to-head. Part 5's branch (#202) then merges the split in once.
 
 ### 5 (part 5). Gold portals, unparked (the owner, 2 November 2026; an engine-rules entry, right after 2y)
 
