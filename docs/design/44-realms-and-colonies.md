@@ -60,3 +60,25 @@ were and the rivals know nothing more than before.
   Ensign with the Southern Cross (the second, fourth, …) or a Red Ensign with the colony's badge, here the log's own oak
   on a white roundel (the third, fifth, …). The first colony keeps the Union Flag. Each colony remembers its number
   (`n`), so its flag never changes.
+
+### A pecked flag is a lost colony
+
+The owner: "territory stays behind when the woodpecker takes out the flag. Probably shouldn't do that." So land never
+outlives its flag:
+- **Colonist:** a colony whose flag cell becomes a hole is lost. Colonist forgets it, its land shrinks into the pit
+  ring by ring, and Colonist sets off at once to plant another (swapping a pecked site it was heading for).
+- **Sovereign:** a pecked capital moves the realm at once, banner and all, to the nearest centre that isn't a pit (the
+  most land among those as near); its slow drift never moves onto one.
+- **The fall:** the flag tips over and drops into the pit, shrinking and fading (760 ms, `FALL_MS` in
+  `render/flags.js`; with reduced motion it fades in place). A pecked capital's banner falls into the pit the same way,
+  and a new one pops up at the new capital (the owner, 2 November 2026: flags fall, they don't jump); a banner only
+  glides, 240 ms, when the realm drifts a cell. A flag or banner on a piece the strike cuts loose rides that piece down,
+  upright, shrinking and fading with it (750 ms), as its food does.
+- **The lines,** even just after another line (the peck itself goes without its usual one): Colonist, "The flag's gone
+  down the hole! Abandon colony!"; Sovereign, "The capital has fallen. Into a hole."
+- **The lesson,** the first time each happens in a round, for everyone, players and watchers, chatter on or off: "The
+  woodpecker took a flag: that colony's lost." or "The woodpecker took a capital: its realm moves." It's seen as the
+  chatter sees it, a tick after the strike (a colony gone from its snake's memory with a hole where its flag stood, or a
+  realm moved off a centre that's now a hole), so a colony Colonist simply lets go says nothing; it waits behind a
+  lesson holding the banner.
+- **The Field guide** has a row for it (Lost flags) and a picture.
