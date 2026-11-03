@@ -112,7 +112,7 @@ growth still to come doesn't, so a friend's screen, which isn't sent it, draws t
   from the top left like everything else; splinters over the rim and sawdust round it; at the board's edge, a notch
   bitten out of the log. They lie on the static layer under the snakes, so a body bridging a hole is drawn across it,
   and a strike paints again only the box round its new holes. (A body over a pit: "A body over a pit, smooth" in
-  `32-the-owners-playtest.md`.)
+  `03-the-snake-as-a-character.md`.)
 - **The mark** is traced with the same outline, its rim the pit's torn lip to come (the same wobble, corners rounder: 11
   units against the pits' 7), and glows red. It covers the crumbs and pieces it will take. Its cracks run along the
   grain under the snakes, and as the strike nears the pecks bite nicks in from outside the rim, each its own size and

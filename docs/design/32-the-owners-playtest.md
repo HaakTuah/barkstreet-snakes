@@ -68,15 +68,8 @@ measured, in `docs/archive/design-food.md`.
 
 ### A body over a pit, smooth
 
-**The finding** (the playtest of 20 October, queue item 3; the owner: "The part of you that is over the hole gets a really odd outline"): over a pit, the body's round segments bulged above its line and its cream rim seemed to go.
-
-**The cause:** over a pit a span is drawn slimmer (round six A: it sags, see "Bridges and jumps you can see" in `27-round-six-a-fairness-and-fixes.md`), but its segments stay a cell apart, so they parted: round beads above a thin band between them, the outline scalloped round each bead, and the shade underneath drawn as a crescent on every bead and a narrower strip on each band. Measured, the top of your body varied 0.09 cells along a span (0.05 on the bark).
-
-**The call** (27 October 2026):
-- **The bands fill out** (`bandR` in `render/lead.js`): over a pit, a band's half-width eases from `PINCH` of its segment's radius to the narrower of its two segments' radii, by how far over the pit they are. Never past either: a head over the pit (it doesn't sag) or a gulp stays round, its band no square shoulder. What's up in the air keeps its pinch. Every shape a body is drawn with follows it: the body, its outlines and rim, the gold line, its shadows and the land's colour round a rival. So the span is still slimmer by the same sag, but its line and rim are as smooth as on the bark (the top edge now varies 0.00 cells). Its sheen dots stay, one a segment, so you can still count them.
-- **Shaded as one body** (`shadeUnder`, `shadeBands` in `render/bodies.js`): a straight run over the pit is shaded by a strip along its lower side (its right one going down), drawn after the segments so it runs on through them, each half of a band in the darker step of the segment it's nearer. A round segment (`roundAt`: an end, a turn, or one more than a unit wider than its bands, like a head or a gulp) keeps its crescent, and the strips by it and round a turn go down before the segments, which cover their ends.
-
-**Tested:** `tools/render-test.js`: you across a hollow three cells wide, its top edge level along the middle of it and the cream rim as thick as on the bark; then your head over it and your neck on the bark, no band wider than either of its segments. The bridge check's band sample moved to the wider band's lower edge, and its sag is measured on the whole body, shaded part included (32 pixels across before and after, against 36 on the bark).
+Its rules are in `03-the-snake-as-a-character.md` under the same name, and its text as it was, with the finding, its cause
+and how it was tested, in `docs/archive/design-looks.md`.
 
 ### Rainbows upright
 
@@ -90,28 +83,8 @@ measured, in `docs/archive/design-food.md`.
 
 ### Hunger on the body
 
-**The finding** (the playtest of 20 October): on a wide desktop the hunger bar on your tag is far from your snake, out of sight, and the owner starved without seeing it come.
-
-**The call** (27 October 2026): every snake shows its hunger on its body, read from the clock its tag reads (`hungerLook` in `render/looks.js`), so you see it where your eyes already are, on yourself and on every rival:
-- **It slims** as its last meal runs out: its body (not its head) up to 22% thinner, by the share of the meal gone to the power 1.5, so a snake just fed looks as it always did, a hungry one is plainly thinner, and the change creeps in rather than jumps.
-- **It growls** in the warning's seconds (the toast's, `Engine.hungerWarning`: 6 s before it starts shrinking, or 9 before it would starve if that's sooner, in real time, snow or not; until #327 it read the hunger clock, so a snake of 4 in snow was warned only 4.5 s before the end): two short arcs either side of its head, cream under ink so they read on the bark and on any body, swelling out and fading on each rumble (520 ms, a beat the "Your tummy is rumbling" toast and the rumble sound go with), and its head shakes a little, both stronger toward the end. With reduced motion the arcs hold still and the head doesn't shake.
-- **It pales** while starving (shrinking a segment every 1.5 s): a parchment wash over its whole shape, full within the first segment lost. On the palest bodies (Mason's marble, Ghost) it barely shows; the slimness and the growl carry it there.
-- The Field guide's Hunger row says it: "A hungry snake grows thin, then growls; one gone pale is shrinking. At 3 it starves. Your bar is under your name."
-
-The rivals are shown nothing new (their own clock was always in `aiView()`, as a person sees their bar); online, the tag already carries `lastAte` and `mealMs` (protocol 8), so a guest sees the same. **Tested:** `tools/render-test.js`, Sniper just fed, with 2 s left and starving: slimmer in its own colour, growl lines beside its head, and starving paler.
-
-**A new player's starving rate** (`tools/dev/hunger-seen/measure.js`): there is no model of a person, so a stand-in. AI rounds with the game's own rules, seat 0 standing in for a new player (a rival plays it), with its view of its own hunger hidden until it would notice it, then a second late: never (the owner on a wide desktop), at the warning toast (before this change), once its body is visibly thinner (5%, at 37% of its meal gone: after), or always (a rival, or someone watching the bar). 
-
-*Measured*, 300 rounds a seed on fresh seeds 61 / 73:
-
-| Seat 0 notices its hunger | Rounds it starved in | Its deaths by starving | Snake-time in the warning (starving) | Wins |
-| --- | --- | --- | --- | --- |
-| never (the bar unseen) | 6.7 / 9.3% | 9.0 / 12.3% | 14.7 / 16.1% (5.0 / 5.7) | 25.7 / 24.0% |
-| at the toast (before) | 1.3 / 1.3% | 1.9 / 1.8% | 13.6 / 13.4% (3.7 / 3.5) | 29.0 / 24.7% |
-| from its body (after) | 0.3 / 2.3% | 0.4 / 3.1% | 12.4 / 14.0% (3.0 / 4.4) | 24.3 / 24.7% |
-| always | 1.3 / 1.3% | 1.8 / 1.8% | 12.2 / 12.6% (3.4 / 3.5) | 24.3 / 26.0% |
-
-So what starves a new player is not seeing hunger at all: unseen, 8.0% of rounds end in starving (48 of 600); seen in any of the three ways, 1.3% (8 of 600 each). Seeing it earlier on the body adds nothing over a toast acted on at once, by this measure; the stand-in reads 6 s as plenty, as the rivals do. The change is where it shows: the toast is easy to miss, as the owner did on a wide desktop, and your body is where you are looking. A person's real rate needs a person: the owner's next desktop rounds will say.
+Its rules are in `03-the-snake-as-a-character.md` under the same name, and its text as it was, with how a new player's
+starving rate was measured, in `docs/archive/design-looks.md`.
 
 ### The phone gap
 
@@ -158,46 +131,13 @@ perched under the board, flying and drumming on it.
 
 ### Wildcard's hair
 
-The owner: "Not a comb-over: his real swoop, a big fluffy golden-blond pompadour swept back, then forward and to one side.
-It must read at phone size."
-
-- *Before:* a flat golden patch combed across the back of the head to a small curl over one eye, the same size as the
-  head; at phone size it read as a yellow cap.
-- *Then* (PR #74, `pompadour()`): the roll swooped forward along one side to a flick past that eye. The owner (28
-  October): "It flips to the front side, you know like a blond emo/goth haircut"; heading up, it read like a turban.
-- *Then* (PR #107, `render/faces.js`, `hairBack()` and `hairRoll()`), seen from above with the head pointing +x and -y the
-  far side: two shapes, each with a dark amber outline so they read at phone size. Nothing is in front of the brow: a
-  lighter raised roll runs along the hairline just behind the eyes (its front edge at x = 0.12 of a cell, no further),
-  with a shine along its crest, fuller at the far end. Behind it, the fluffy golden mass puffs out past the head, most
-  at the back and the far side; its strands run straight back over the crown and turn to the far side at their ends, so
-  the comb reads up, back and round. The eyes, pout and squint are as they were.
-- *Then* PR #110's lacquered mop, PR #144's version F and PR #156's F at 85%. The owner (30 October): "trump looks like
-  David Lynch now. I actually think the very first or second hairstyle trump had in the game is better", and picked the
-  first, "but have the swirl point upwards instead of downwards".
-- *Now* (2n, `render/faces.js`, `hairBack()`, `pompadour()`, `wildHair()`): PR #74's pompadour exactly as it was
-  (shape, size, strands, colours and outline), with one change: its lick, the curl at the near end of the roll that came
-  forward over the brow to a flick past the eye, is turned round, curling up and back over the hair behind it, its two
-  combed strands following it. Two tries that reworked more were turned down; the owner (31 October): "it looks horrible.
-  I want the original hair, but I want the lick reversed. That's all. Keep it that simple."
-- Drawn in the head's own frame, so it is the same at every heading, and still: nothing in it moves, with reduced motion
-  or without. Capricious's Wildcard mood wears it too. Drawing only.
+Its rules are in `03-the-snake-as-a-character.md` under the same name, and its text as it was, with each hair before
+it, in `docs/archive/design-looks.md`.
 
 ### Copycat's face
 
-While copying, its head mixes the copied colour about half and half with its red; a thin red rim and the yellow star
-pin keep it Copycat. Uncopied, it stays full flag red.
-
-- *Before* (since "Copycat in the flag's red"): its head kept the flag's red whoever it copied, so only its pale body
-  told you it was copying, and whom.
-- *Now* (`render/looks.js`, `fillsOf()`; the rim in `render/bodies.js`): copying, its head (and its cat ears, with the
-  deeper red inside) is its model's own colour, full rather than the body's pale copy, mixed half and half with
-  `#de2910` (`COPY_HEAD`, 0.5, in plain RGB). Copying Star it takes the rainbow's hue at Star's head, flowing in step;
-  copying Mute, its colour of the moment (Capricious keeps its own pink in every mood, since 3b). A 1.5-unit rim of the flag's red runs round the head inside
-  its edge, and the yellow pin is as it was. Copying no one (or its model out), the head is all red and has no rim.
-- A colour opposite red mixes to a neutral: Metagamer's cyan gives a grey head, Sovereign's blue a plum one, Vulture's
-  black a dark red. The rim and pin keep these Copycat; it's the honest half and half.
-- Drawn from what both screens know (its model, synced online as `memory.modelId`, and the model's colour), so host and
-  guest show the same head. Drawing only.
+Its rules are in `03-the-snake-as-a-character.md` under the same name, and its text as it was in
+`docs/archive/design-looks.md`.
 
 ### The rival line-up
 
