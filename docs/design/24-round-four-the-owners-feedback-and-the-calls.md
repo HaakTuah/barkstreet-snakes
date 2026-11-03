@@ -4,36 +4,17 @@ After the third pass the owner played and sent a list: the controls feel delayed
 
 ### Two powers, two presses
 
-The one power press (pressing the way you're going) is split in two. A press that did "whatever power you happen to hold" blew snakes up: holding a golden dash, pressing forward to hop a hole dashed into it instead.
-
-- **Jump:** Space (and since round six A, a click on the board), or a tap on a phone. It hops one cell (a body, a hole or fire) as before, waiting up to `LEAP_WINDOW` ticks for something to hop; golden jumps go first and are free.
-- **Flash:** E (by where it sits, like WASD), or either Shift (the sprint key in most PC games, and the right Shift sits beside the arrows), and since round six A a right-click on the board; or on a phone a swipe the way you're already going. Golden flashes go first.
-- **Pressed together**, the jump goes first if it can (something right in front to hop, somewhere to land), because no flash gets past that; the flash goes once you're down. A flash pressed in the air goes once you're down too. (Round four's critique: the flash used to win even when it couldn't go, so mashing both crashed you, or with golden flashes held blew you up in a hole; and a flash pressed in the air was dropped.)
-- **Steering keys only steer.** Pressing the way you're already going does nothing now. It was the old power press, and held keys and auto-repeat fired it by accident; the 120 ms double-tap guard goes with it. The other one (`POWER_AFTER_TURN_MS`) stays, for swipes only: a fresh swipe the way the last swipe turned you, while that one's still down or within 300 ms of its lift, is the turn swiped twice, not a flash, so a quick double flick to make sure can't fire a golden flash into an edge. (It was 180 ms from the turn's registering; a double flick puts its second touch down 150–280 ms after the first lifts. Only a swipe that turned counts, so golden flashes swiped back to back still go.) Keys need no guard.
-- **Nap moves to P and Esc** (and the ⏸ button). Space can't both nap and jump, and jumping is what Space is for in a game. Enter, R or an arrow starts and starts over, as before; P and Esc no longer start a round from the start or round-over card.
-- **Space, E and Shift never start, wake or dismiss anything.** They're the keys you mash in a fight, and mashing jump just after you die mustn't start a new round. A button you Tabbed to still takes Space, as buttons do. (That's tracked from the Tab key itself: a card's button the game focused after a keypress also looks keyboard-focused to the browser, and mashed Space would start a round.) Since 31 October 2026 waking a nap is the one exception: any key that plays wakes it, Space included, and the waking press never fires a power (the Pause row of `docs/design/09-voice-and-copy.md`).
-- **On a phone, a tap jumps** once it's clearly a tap. It jumps on the lift: within 6 px of where it touched (`TAP_STILL_PX`), or a quick touch, under 250 ms (`TAP_QUICK_MS`), that never went as far as a swipe (a finger rolls 7–11 px as it lifts in a hurry). Held still for `TAP_JUMP_MS` (80 ms), it jumps before the lift, but only with something to hop within reach on the way it's going: a thumb resting on the glass, ready to steer, isn't a jump. A jump a hold asked for that hasn't gone yet is taken back if the touch turns out to be a swipe, and a thumb resting while the other swipes isn't tapping. Going on touch-down would fire a jump on every dodge, because a swipe takes 15–50 ms to tell apart from a tap and a dodge always has something in front to hop. *As built*, 80 ms rather than 60: the slowest swipe measured (0.15 px/ms) is seen moving by about 57 ms, since touch moves arrive once a frame, so 60 left a 3 ms margin and 80 leaves about 23. (Round four's critique made the hold need something to hop, and the drifting quick tap a jump: a thumb resting 90–200 ms before it swiped left a jump armed, and a quick tap that drifted 7–11 px was dropped.) A touch on a button or a name tag (yours too) never jumps.
-- **A card that comes up by itself** (your death's, the round's end) takes no tap on its buttons that began before it came up or within `CARD_TAP_MS` (500 ms) of it, nor one in a run of touches, each within `CARD_MASH_MS` (350 ms) of the last, that began then. Mashing jump never plays again. Keys are unchanged (Space presses only a button you Tabbed to). (Since round six A, mouse presses go by the same rule.)
-- **Teaching it.** The flash's key is taught once a round, from 6 s in, until you've flashed. A short phone (where the help under the board is off the screen) teaches both on the first Go, as a lesson in one line: "Tap jumps. Swipe ahead flashes." (It was Go!'s big banner, three lines on a 320 px phone and faded under the heads for most of its life; see "Speech bubbles" for where banners go now.) Steering is taught beside YOU (see "What was promised and missing").
-
-This changes the third pass's feel-target promise ("Space and Enter always mean nap and start over"). It now reads: P and Esc nap, Enter starts over, Space jumps.
+Its rules are in `40-powers-and-moves.md` under the same name, and its text as it was, with what was measured, in
+`docs/archive/design-powers.md`.
 
 ### A flash for everyone
 
-Everyone can flash: **two cells in one tick, along the ground, free, then a 6 s rest** (`FLASH_LENGTH`, `FLASH_COST`, `FLASH_COOLDOWN_MS`). It eats what it passes. It cuts nothing and puts nothing out: whatever is in the way, it gets that far and runs into, as a crawl would.
-
-**Why free:** *measured*, a flash that cost a tail segment made rounds 6 s longer and pushed starving from 16% to 26% of deaths. A free one at 6 s kept rounds as they were, and the investigators' AI used it about 4 times a minute, to its advantage. As built, rivals flash about twice a minute (2.1): a flash must look two apples better than crawling, or one to win a race for food. At one apple they flashed 3 times a minute and did no better than never flashing (see Rivals).
-
-Golden leaves now give **golden flashes** (the rules and the AI still call them dashes, as they call golden jumps leaps): three cells, cutting a snake one cell thick, putting fire out, and blowing up at the edge or a hole. They go before the plain flash and leave its rest alone.
+Its rules are in `40-powers-and-moves.md` under the same name, and its text as it was, with what was measured, in
+`docs/archive/design-powers.md`.
 
 ### Holding more than one
 
-Golden powers add up:
-- Each golden beetle gives 2 golden jumps, up to 3 held.
-- Each golden leaf gives 2 golden flashes, up to 3 held.
-- Each golden mushroom adds 12 s of wrap, up to 20 s.
-
-You can hold golden jumps and golden flashes at once, since they're different presses. Before this, a beetle wiped your golden flashes, a leaf your golden jumps, and a second mushroom only reset the clock.
+Its rules are in `40-powers-and-moves.md` under the same name, and its text as it was in `docs/archive/design-powers.md`.
 
 ### Telling powers apart
 

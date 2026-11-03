@@ -8,7 +8,7 @@ plays. Elsewhere: the interface's eight colours (`02-art-direction-storybook-bar
 ("Remains" in `04-food-and-the-world.md`); the YOU marker at the start ("YOU" in `16-the-first-seconds.md`) and friends'
 arrows and the crash's bang (`19-looks-and-lines.md`); people's seat colours and markings (`22-play-with-friends-online.md`);
 Ouroboros (`17-ouroboros-and-the-golden-beetles-leap.md`); a costume change ("A costume change" in
-`35-capricious-copycat-and-wildcard.md`); each move's own cue (its section in `29-round-six-b-the-new-moves.md`); the
+`35-capricious-copycat-and-wildcard.md`); each move's own cue (its section in `40-powers-and-moves.md`); the
 woodpecker (`38-the-woodpecker.md`); the rivals' play (`39-the-rivals.md`).
 
 ### Your snake
