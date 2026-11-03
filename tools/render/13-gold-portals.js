@@ -23,3 +23,16 @@ const through = await follow([[1, 11], [0, 11], [23, 11], [22, 11], [21, 11], [2
 check(!through.row.some(orange), 'a follower’s body through a gold portal is drawn on each side, never across the log between', JSON.stringify(through.row));
 const into = await follow([[23, 11], [22, 11], [21, 11], [20, 11]], 0.9);
 check(into.guess.x === 0 && into.guess.y === 11 && into.guess.moves === 1, '...and one about to go through is drawn going on into it, out at the exit', JSON.stringify(into.guess));
+// A flash asked for at the edge, through an open portal: drawn going on through it, the way the game takes it.
+const flashed = await ev(`(() => {
+  seeds(260);
+  const g = stage(['gobbler', 'mason', 'ghost']), [you, gob] = g.snakes;
+  setBody(gob, [[22, 11], [21, 11], [20, 11], [19, 11]], 'right');
+  gob.prev = gob.body.map(c => ({ x: c.x - 1, y: c.y }));
+  gob.dashes = 1; gob.flashArmed = g.tick;
+  g.portals = [{ x: TUNING.GRID - 1, y: 11, dx: 1, dy: 0, tx: 0, ty: 11, owner: you.id, shutAt: g.time + 1500 }];
+  show(g); drawN(2, 0.5);
+  const a = anim.get(gob);
+  return { x: a.mx, y: a.my, flash: a.mf };
+})()`);
+check(flashed.x === 1 && flashed.y === 11 && flashed.flash === 2, '...and a dash at the edge is drawn going on through the portal, out past its exit', JSON.stringify(flashed));
