@@ -105,8 +105,7 @@ and the owner's notes of 2 November, among them).
   `43-the-start-card-and-records.md` (PR #436). Teaching followed, in `30-teaching-by-showing.md` (PR #437). The food
   and world's leftovers followed (PR #440). The rivals' leftovers followed (PR #444). The small leftovers followed
   (PR #446). Performance followed, in `45-performance.md` (PR #PRNUM). Next: the new topics (chatter and lines, the
-  round's arc, balance targets), then the
-  history, as listed in `docs/handoff/design-by-topic-left.md`.
+  round's arc, balance targets), then the history, as listed in `docs/handoff/design-by-topic-left.md`.
 - **Waiting for a gap:** `render/world.js` (50 KB), the last big file now that `ai/` and `engine/` are split (2y+). Split
   in a PR of its own when no open lane touches it, proven by fingerprints and suites.
 
