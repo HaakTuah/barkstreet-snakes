@@ -2,7 +2,8 @@
 // Checks the chatter's lines: every line in English has its Chinese (Copycat
 // repeats what it hears, in Chinese), every {who} line names someone the
 // same way in both, no voice has an empty list, no Chinese is left over from
-// a line that's gone, and every punchline is a line someone says.
+// a line that's gone, every punchline is a line someone says, and no voice
+// has more than four lines of one shape (a template filled in again and again).
 // Then it plays the chatter itself (chatter/ with the game's own engine, on
 // a stand-in page) through staged moments: every voice speaks up when it's
 // pecked under, put out by the rain, sees food burn or rot, starves, is cut
