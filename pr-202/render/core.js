@@ -49,7 +49,8 @@
 //   faces.js      eyes, lids, mouths, hats and beaks, and every look's face
 //   land.js       Sovereign's realm and Colonist's colonies: land on a map
 //   flags.js      land made ahead of a strike, its dashes, banners, flags, ripples and hues
-//   food.js       the food and its pictures, a mushroom's spit rings and cheeks, the beetles' burrows and bore
+//   food.js       the food and its pictures, a mushroom's spit rings and cheeks
+//   burrows.js    the beetles' burrows, their cracks, growing shut and healing, and the bore
 //   weather.js    fire and scorch, a snake on fire, the sky, rain, lightning, rainbows
 //   bird-perch.js the woodpecker's size and growth, its perch, its aim and its layer
 //   bird.js       the woodpecker's plan, its poses, its head and eye

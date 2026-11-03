@@ -106,6 +106,15 @@ function fillRoom(headP, t, cap, need, eager, foodRange, mute, bodyMark, stampF,
         if (eager) { const i = unframed[q], v = foodValue[i]; if (v > 0) anyFood = Math.max(anyFood, v * (foodFrom[i] > by ? latePull(foodRange, t, by, foodFrom[i], mute) : pull)); }
       }
     }
+    // (A gold portal, open as I'd step through it from its entry: its exit
+    // is a move on from there, as near as any neighbour.)
+    for (let n = 0; n < portalIn.length; n++) {
+      const e = portalIn[n], q = portalEx[n];
+      if (S[e] !== stampF || (e === headP ? 0 : D[e]) !== d - 1 || portalLeft[n] < by || S[q] === stampF || !(B[q] <= by || (BU[q] > by && inBody[q] !== bodyMark))) continue;
+      S[q] = stampF; D[q] = d; Q[write++] = q;
+      if (B[q] <= by) { space++; if (d < trail && inBody[q] === bodyMark) trail = d; }
+      if (eager) { const i = unframed[q], v = foodValue[i]; if (v > 0) anyFood = Math.max(anyFood, v * (foodFrom[i] > by ? latePull(foodRange, t, by, foodFrom[i], mute) : pull)); }
+    }
     const width = write - levelEnd;
     if (width && width <= 2 && levelEnd - 1 < need) {
       necks[neckCount++] = Q[levelEnd];
@@ -161,6 +170,15 @@ function spreadTerritory(ns, t, age, bits, tags, stop, coughMax, beadCount) {
         q = p + 1; s = B[q]; o = s & tags;
         if (s <= T1) { B[q] = claim; theirs++; Q[write++] = q; } else if (s >= next && o && o !== tag) { if (o === 1) mine--; else theirs--; B[q] = next; }
       }
+    }
+    // (A gold portal open at T + 1: whoever has its entry at T has its exit
+    // at T + 1, as a neighbour, the same way.)
+    for (let n = 0; n < portalIn.length; n++) {
+      const e = portalIn[n], se = B[e], tag = se & tags;
+      if (se < CLAIMED || !tag || portalLeft[n] < T1 || ((se - CLAIMED) >> bits) !== T + age) continue;
+      const q = portalEx[n], s = B[q], o = s & tags;
+      if (tag === 1) { if (s <= T1) { if (ML[q] <= T1) { B[q] = mineNext; mine++; Q[write++] = q; } } else if (s >= next && o > 1) { theirs--; B[q] = next; } }
+      else if (s <= T1) { B[q] = next + tag; theirs++; Q[write++] = q; } else if (s >= next && o && o !== tag) { if (o === 1) mine--; else theirs--; B[q] = next; }
     }
     if (mine === mineBefore && T >= t && stop && T1 + 1 > coughMax) {
       let open = false; // (a rival's own bead nobody's claimed yet)
