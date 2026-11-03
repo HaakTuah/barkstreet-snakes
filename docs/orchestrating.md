@@ -26,7 +26,7 @@ night, and every PR merged since then on the security gate's fallback, or withou
 reviews", point 6, in `docs/claude-and-codex.md`), so a gap shows too.
 
 - **Pipeline, don't wait** (archive, 28 October 2026): organise the work so the token cache is used to the full and
-  no time is lost, with every other cost weighed too. Waiting is lost time and, past an hour, a lost cache. The builder's part (review in
+  no time is lost, with every other cost weighed too. The builder's part (review in
   the background, the next entry from `develop`) is "How work flows" in `AGENTS.md`, points 1 and 2; the
   orchestrator's:
   1. **Bigger review fixes in a session of their own.** If a review asks for more than about an hour's work, the

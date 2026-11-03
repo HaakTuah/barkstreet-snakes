@@ -24,8 +24,7 @@ fills each today. The models and effort Claude Code gives each of its roles: `CL
   in time, as before Codex came. It holds the picture of the finished game and sends the work back until it meets it.
 - **The security reviewer:** Codex's automatic security review; its fallback, the fallback reviewer ("Codex reviews",
   point 6).
-- **The design checker** (today: Claude): the design check with a score on the engine-rules and AI entries ("Codex
-  reviews", point 5).
+- **The design checker** (today: Claude): the design check with a score ("Codex reviews", point 5).
 - **Planning design** (today: Claude): the rivals' planning, asked directly when an entry needs a new or better plan, at
   most once per entry, with a self-contained brief (the problem, the measurements, the files and lines). It returns a
   design, which the builder builds and measures.
@@ -66,8 +65,8 @@ sources), Claude does.
 Whole with Claude, since there the code is the hard part and a brief cannot hold the decisions: the AI's search, online
 sync, and the orchestrator's own work (briefs, routing, readings, reviews' verdicts, merges).
 
-Changes to the AI or the engine's rules still run one at a time, and so do changes to the online messages ("as many
-lanes as can run in parallel" in `docs/orchestrating.md`): Codex lanes are side lanes beside them. **Trial:** in the first week Codex can build, one art or
+The lanes that run one at a time ("How work flows", point 3, in `AGENTS.md`) stay so: Codex lanes are side lanes beside
+them. **Trial:** in the first week Codex can build, one art or
 animation task to Codex, compared against Claude's; after that, art goes where it scored better.
 
 ## Handing work to Codex

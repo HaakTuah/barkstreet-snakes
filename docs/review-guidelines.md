@@ -24,7 +24,10 @@ November 2026).
 description and the sections it names; a broken rule of `AGENTS.md` (above all the rules that stand) or of
 `SECURITY.md`; a test weakened or skipped, or changed beyond what the task forces (a forced change shows in the PR that
 every check is kept and none loosened); and a protected file (`SECURITY.md`, rule 3) changed by a Codex lane. Report
-anything the change leaves behind (code, files or settings it made unused, commented-out code) as a finding.
+anything the change leaves behind (code, files or settings it made unused, commented-out code) as a finding. The pillars
+of "How to work" in `AGENTS.md` block too: a fact, rule or piece of logic written a second time instead of pointed to (a
+copy, or a selection of another file's lines), and an entry added to the copies check's baseline. Content put where its
+readers must read past it, such as a file holding what its readers do not need, is a finding.
 
 **What the rivals know,** for every reviewer: report as P1 any AI logic that reads the game other than through
 `aiView()`, or anything in `aiView()` a snake on the log could not see or know (a person's input before it lands).
