@@ -8,10 +8,6 @@ at a time, as before; delete a line here when its block moves, and this file whe
 
 **New topics (a file each, when taken):**
 
-**History, to the archive:** 23 3–12 (the architecture now is in `docs/developing.md`), 24 73–79 and 91 (the audit's
-remaining items, docs that contradicted the game), and 34 (skipped or adapted guidelines,
-or it stays as a record).
-
 **Stays:** 02, 05 (spells, lightning, winter, and "Cost.", the weather's own cost note, pointed to from 45), 09, 35 and 36 (topic files); 28's tools; the censuses and records in 10, 11 32–43, 14
 15, 18 9, 25, 26 38–68, 27 3–11 and 54–192, 29 3, 32 3–6, and 24 3; 37 (a queued spec, into 40 once built).
 

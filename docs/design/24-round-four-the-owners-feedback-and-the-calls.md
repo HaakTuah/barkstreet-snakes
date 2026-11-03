@@ -61,25 +61,12 @@ its text as it was, with what was measured, in `docs/archive/design-page.md`.
 
 ### What was promised and missing
 
-The completeness audit went through every request across three sessions. About 100 items were done. These were promised and not built, and are built now:
-- rivals planning with their powers;
-- the board-split fix;
-- the trappers' thicker walls;
-- lines for being put out by rain, for ash and for rot, and Sovereign and Colonist complaining when rot ruins their land (see "Lines and announcements");
-- a steering hint beside the YOU arrow: its rule is in `30-teaching-by-showing.md` under "The first seconds", and
-  this item as it was in `docs/archive/design-teaching.md`.
-
-Things an expert would expect, added:
-- a **Field guide** beside Hall of Fame and Your story: its rules are in `30-teaching-by-showing.md` under "The Field
-  guide", and this item as it was in `docs/archive/design-teaching.md`;
-- powers you can tell apart (above);
-- beads that rot (above);
-- a stop to eating back your own crash;
-- new lessons: each lesson as it is now is in its topic file (the woodpecker's in `38-the-woodpecker.md`, the
-  dash's key in `40-powers-and-moves.md`, the last apples' news in `04-food-and-the-world.md`; your own tail is
-  squashed, not eaten, since round six B: `41-crashes.md`), and this item as it was in `docs/archive/design-teaching.md`.
-
-Docs that contradicted the game are corrected: the holes were said to be trenches, the power marks were described from before the third pass, the "rare" golden apple came 5 times a round, and Joker's mushroom habit was missing. The critique found that the older sections still described the game before round four (force fields, Space naps, pressing ahead to leap, a woodpecker that cuts); they're brought up to it now, each older call kept and marked as superseded.
+The completeness audit's list, and the docs it corrected, as it was are in `docs/archive/design-arc-and-history.md`.
+Each item built is in its topic file: the rivals planning with their powers, the board split and the trappers' thicker
+walls in `39-the-rivals.md`; the lines in `13-lines-and-announcements.md`; the steering hint, the Field guide and the
+lessons in `30-teaching-by-showing.md` (their text as it was in `docs/archive/design-teaching.md`); powers told apart in
+`03-the-snake-as-a-character.md`; beads that rot in `04-food-and-the-world.md`; your own crash squashed, not eaten, in
+`41-crashes.md`.
 
 ### Online
 
