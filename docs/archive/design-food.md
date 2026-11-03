@@ -4,6 +4,10 @@ The food topic's sections as the round files and the owner's playtest had them, 
 versions and measurements.
 The current rules are in `docs/design/04-food-and-the-world.md`, under the same names.
 
+## From the round's arc (`12-the-rounds-arc.md`)
+
+**Starving is decided after eating.** A snake whose head reaches food on the tick it would starve eats instead.
+
 ## From round four (`24-round-four-the-owners-feedback-and-the-calls.md`)
 
 ### Food

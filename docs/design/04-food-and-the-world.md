@@ -26,6 +26,9 @@ was tried and measured, is in `docs/archive/design-food.md`).
   how long its last meal keeps it (`mealMs`, carried online), and its tag's bar is measured against that, so it's full
   after any meal. Under `HUNGER_WARN_MS` (6 s) left, the tag shows it's starving: the bar in Berry, a ring pulsing round
   the tag, and "starving" for a screen reader.
+- **Starving is decided after eating:** a snake whose head reaches food on the tick it would starve eats instead
+  (`ateTick`, in `engine/food.js` and `engine/step.js`). A mushroom doesn't save it, nor does its own bead, which it
+  squashes.
 - **Your own beads aren't a meal:** you squash them (see "Choking on your own tail" in `41-crashes.md`). Beads carry
   their owner, so it's the same rule for everyone, rivals included. Poison would punish picking your tail back up after
   a crash, and seat colours can look alike.
