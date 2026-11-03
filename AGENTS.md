@@ -77,7 +77,8 @@ usage allows, at the lowest cost now and later.
 - **The owner's words are kept, in the archive.** Quote each instruction he gives word for word, dated, in the PR and
   in `docs/archive/instructions.md`, leaving out personal details as `SECURITY.md`, point 11, says. A standing rule
   goes, as briefly as it can be said and with what it is for, into the section of this file where it applies (or
-  `CLAUDE.md`, if only Claude uses it), never as a dated entry or a quote, since every session pays to read this file.
+  `CLAUDE.md`, if only Claude uses it). Rule files state rules, never quotes or dates, with at most a pointer to the
+  archive, "(archive, D Month YYYY)": every session pays to read them, and the archive keeps his words.
 - **Each game's files stay in its own repository.** Never write this project's notes, logs or files into another
   project's repository or folders, such as Amarna Letters'.
 - **Sessions.** When sessions are started for you task by task, stop when your task is merged and say what is next;
@@ -144,7 +145,8 @@ The owner's words behind them are in `docs/archive/instructions.md`.
   can't learn a move well, the move doesn't go in. **No refuges:** a move must take timing and skill and never make
   anyone safe; measure how often it is used, fails, and whether its users outlive everyone, and tighten or drop it.
 - **Clever rivals, human reactions.** No superhuman reaction speed, but very clever: they get better through planning
-  ahead, never through faster reactions, more samey strategies, or play below good gameplay levels.
+  ahead, never through faster reactions, more samey strategies, or play below good gameplay levels (archive,
+  11 and 14 October 2026).
 - **Every new move is tested both ways:** for every move or rule a snake can choose to use, `tools/abtest.js` on fresh
   seeds pits rivals that use it against a copy where only some rivals lose it (the rule itself unchanged). Its users
   should come out ahead in wins or survival; if not, the PR says why: the move doesn't matter (a design finding for the
@@ -152,7 +154,8 @@ The owner's words behind them are in `docs/archive/instructions.md`.
   and how often it worked. A move too rare to move whole rounds is judged per use, each use forked and played on with
   and without it; and a move is measured against rivals who play its counter (a dodge is worth only what the threat it
   dodges is worth).
-- **Every new rule needs a visible cue and a lesson** (a one-time lesson and a Field guide row): very important.
+- **Every new rule needs a visible cue and a lesson** (a one-time lesson and a Field guide row): a rule without both
+  is not done (archive, 20 October 2026).
 - **Every rival keeps its trademark,** measured before and after a change: Mason's straight runs, Ouroboros's coiling,
   Creeper's tail-riding, Ghost's distance, Gobbler's food share, Vulture's beads, Sovereign's time home, Mute's boxing,
   Joker's lures, Desperado's skims, Star's flash rate.
@@ -160,9 +163,10 @@ The owner's words behind them are in `docs/archive/instructions.md`.
   rates, and old against new AI coming out even), character (every trademark) or feel (round length, deaths by cause,
   starving and crashes survived). Visuals too: a look-alike is fine if nobody would see a difference. Fingerprint-identical changes are the fast lane; the rest go through
   `tools/abtest.js` on fresh seeds.
-- **Conditional goods: no solutions, only trade-offs.** Every move, food or power helps in some situations and costs in others; simulations check that
+- **Conditional goods: no solutions, only trade-offs** (archive, 31 October 2026). Every move, food or power helps in some situations and costs in others; simulations check that
   neither always nor never using it wins, as with the mushrooms.
-- **Everything new belongs:** very important, everything feels balanced, cohesive, purposeful and like it belongs.
+- **Everything new belongs:** it must feel balanced, cohesive and purposeful, and fit with the rest of the game
+  (archive, 13 October 2026).
 - **Online stays in step:** everything new works in online play, with a protocol bump when messages change.
 - **Never rename** the storage keys (`snake-*`, `barkbite-muted`, `barkbite-music`) or `net.js`'s PREFIX `'barkbite-'`:
   that would wipe players' records or split online play. Never create a repository named `snake-game`: old links
