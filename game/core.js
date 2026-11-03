@@ -113,19 +113,19 @@ const FLAVOR = {
   woodpeckerWatch: ['The woodpecker is here. Everyone, keep clear of its mark.', 'Rat-a-tat. The woodpecker is at work on the log.'],
   // The new rules, as they first happen to you in a round: one idea each, short.
   // (A no-break space keeps "At 3" together: split, it reads as two statements.)
-  youCrash: ['Crashes cost tail. At\u00a03, or boxed in, a crash ends you.', 'That crash cost tail. At\u00a03, or boxed in, you’re out.'],
+  youCrash: ['Crashes cost tail. At length\u00a03, or boxed in, one ends you.', 'That crash cost tail. At length\u00a03, or boxed in, you’re out.'],
   youCrashToThree: 'Crashes cost tail. You’re at\u00a03: the next one ends you.',
   youAtThree: ['Down to\u00a03. One more crash and you’re out.', 'At\u00a03 now. The next crash is the last.'],
   youAlight: ['On fire: 3 bites of tail, and at\u00a03 it ends you. Rain helps.', 'Burning, and losing bits of you. At\u00a03 it ends you.'],
   youPeckedUnder: 'Pecking under you! Only your head can fall in.', // (a body over a fresh hole bridges it)
-  cutLoose: 'Cut loose, it falls! Get off the shaded piece.', // (2s: the first mark that cuts a piece loose, or its strike)
+  cutLoose: 'The shaded piece is cut loose and will fall. Get off it!', // (2s: the first mark that cuts a piece loose, or its strike)
   youSquash: 'Your own beads feed nobody.', // (round six B: your first own bead squashed)
   youWoodpecker: 'Food in the woodpecker’s mark flies to its ring.', // (once a round, as it comes, once its own banner has had its time: the one idea you can act on, in one line on a phone; that it won't shut you in if it can help it is the Field guide's)
-  birdBeetle: 'The woodpecker eats beetles too!', // (round six B, 2m: the first beetle you see the bird eat, one that didn't get off its mark in time)
+  birdBeetle: 'The woodpecker eats beetles too.', // (round six B, 2m: the first beetle you see the bird eat, one that didn't get off its mark in time)
   youDig: 'A cornered beetle digs in. Grab it before it’s gone!', // (the first one near enough your head to catch: see DIG_NEAR)
   digBurrow: 'A beetle that digs in leaves a burrow behind.', // (the first burrow a dig leaves in a round, anywhere on the log, once the dig's own lesson is told)
   digAndBurrow: 'A cornered beetle digs in, leaving a burrow.', // (the same, when the dig's lesson hasn't been told yet: most digs are far from you, so this one teaches both, the dig first)
-  burrowTaken: 'A beetle that digs in by a burrow takes its place.', // (the first burrow in a round that a dig near it starts growing shut, once the burrow's lesson is told: burrows keep BURROW_SPACING apart)
+  burrowTaken: 'A new burrow by an old one: the old one grows shut.', // (the first burrow in a round that a dig near it starts growing shut, once the burrow's lesson is told: burrows keep BURROW_SPACING apart)
   burrowHeal: 'Old burrows grow shut: beetles go in, none come out.', // (the stalest: the one unused longest, as the Field guide has it. The first one starting to grow shut in a round, once the burrow's lesson is told)
   lostColony: 'The woodpecker took a flag: that colony’s lost.', // (a flag it pecks out, the first in a round; for watchers too)
   lostCapital: 'The woodpecker took a capital: its realm moves.',
@@ -134,8 +134,8 @@ const FLAVOR = {
   flashKey: touchFirst ? 'Your dash is ready: swipe the way you’re going.' : 'Your dash is ready: E, Shift or right-click.', // (what it does is the Field guide's: a lesson is 60 characters at most)
   // Beside the YOU arrow, as a round starts (until you steer).
   steerHint: touchFirst ? 'Swipe to steer' : 'Arrow keys to steer (or WASD)',
-  leapNothing: 'Jumps hop over a snake, a hole or fire.',
-  leapEarly: `A bit early: a jump waits ${TUNE.LEAP_WINDOW} moves, then lapses.`,
+  leapNothing: 'Nothing to jump. Jumps clear a snake, a hole or fire.',
+  leapEarly: `Too early: a jump waits ${TUNE.LEAP_WINDOW} moves, then gives up.`,
   islandHop: touchFirst ? 'Tap to hop up to three cells. Hop the gap!' : 'Space hops up to three cells. Hop the gap!', // (the first time you're boxed in with a jumpable gap: round six B's island hop)
   powersFirst: 'Tap jumps. Swipe ahead dashes.', // (a short phone's first Go: steering is beside YOU. One line on a 320 px phone, so it fits between the heads)
   bothOut: ['Nobody slithered away from that one.', 'A draw, of sorts.', 'Both of you. At once.'],
@@ -146,11 +146,11 @@ const FLAVOR = {
   goldBeetle: ['A golden beetle! Catch it for golden jumps.', 'A golden beetle: catch it, and jump far for free.'],
   goldBeetleWatch: ['A golden beetle! Whoever catches it jumps far.', 'A golden beetle is scuttling about.'],
   youGoldBeetle: n => `Golden: ${n} long jump${n === 1 ? '' : 's'}, free. ${touchFirst ? 'Tap' : 'Space or a click'} to jump.`,
-  bridgeFirst: 'A snake across a pit is a bridge, until its tail passes!', // (the first time a snake lies across a pit near you: round six B's bridges)
+  bridgeFirst: 'A snake across a pit is a bridge, until its tail passes.', // (the first time a snake lies across a pit near you: round six B's bridges)
   youLeapFirst: 'Hup! A jump costs your tail tip, then a short rest.',
-  youDashFirst: 'Golden dashes cut through two thick, and put out fire.',
+  youDashFirst: 'Golden dashes cut bodies two thick and put out fire.',
   youCutFirst: 'A dash cuts through a thin body.', // (round six B: your first cut)
-  youFlashFailed: 'Too thick! A failed dash costs five.', // (your first failed flash)
+  youFlashFailed: 'Too thick! A failed dash costs 5 off your tail.', // (your first failed flash)
   neckCut: 'Snip! Too short to go on.', // (the first neck cut you see: a cut that left a snake fewer than 3 in front)
   dropTail: 'Dash through your own tail to drop it.', // (the first time you're in a pocket smaller than you, your dash ready and your own body one thick in front)
   youDropTail: 'Tail dropped: lighter, and out of the pocket.', // (your first own cut)
@@ -164,8 +164,8 @@ const FLAVOR = {
   youSnip: name => `Snip! You cut ${name} in two.`,
   youSnipped: name => `Snip. ${name} dashed right through you.`,
   youBumped: 'Bumped in mid-air! Down you go.', // (round six B: your first bump in the air)
-  youGoldFly: 'Hold to fly 5. Steer to land!', // (your first golden jump)
-  ringRace: 'Lie on its ring before it lands, and it’s out!', // (2y: the first time a flier's ring is in your reach before it comes down)
+  youGoldFly: touchFirst ? 'Hold your finger down to fly 5 cells. Steer to land!' : 'Hold the jump to fly 5 cells. Steer to land!', // (your first golden jump)
+  ringRace: 'A flier lands on its ring. Get there first and it’s out!', // (2y: the first time a flier's ring is in your reach before it comes down)
   youRingRaced: 'A rival could get to your ring first. Steer away!', // (2y: the first time a rival could reach your ring before you're down)
   leapNow: 'Press twice to leap now, anywhere!', // (the first time a flier comes down just ahead of you: you could have cut it off)
   youMushroomSpit: 'Bleh! Steer to aim it: it lands three ahead.', // (round six B: your first mushroom, which comes back up)
