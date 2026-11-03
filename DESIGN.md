@@ -8,12 +8,12 @@ the file of its topic; a new round or topic gets its own file and a line here.
 | File | Covers |
 | --- | --- |
 | [`docs/design/01-the-vision-in-one-paragraph.md`](docs/design/01-the-vision-in-one-paragraph.md) | The vision in one paragraph |
-| [`docs/design/02-art-direction-storybook-bark-on-a-mossy-log.md`](docs/design/02-art-direction-storybook-bark-on-a-mossy-log.md) | Art direction: "storybook bark", on a mossy log (its cast palette is now in 03) |
+| [`docs/design/02-art-direction-storybook-bark-on-a-mossy-log.md`](docs/design/02-art-direction-storybook-bark-on-a-mossy-log.md) | Art direction: "storybook bark", on a mossy log, with borders and frames (its cast palette is now in 03) |
 | [`docs/design/03-the-snake-as-a-character.md`](docs/design/03-the-snake-as-a-character.md) | The snake as a character: how the snakes look, your snake and how you're told apart, the cast palette, faces, what each looks at, the tongue gags, each rival's look (Ouroboros, Mute's mood ring, Wildcard's hair, Copycat's red and face, a costume change, Star with its tell, mustache and rainbow), gold and the power marks, jumps and bodies over a pit, and hunger on the body |
 | [`docs/design/04-food-and-the-world.md`](docs/design/04-food-and-the-world.md) | Food and the world: food and its looks (mushrooms that look poisonous), apples that rot and food that cooks, how much there is and hunger, the rivals and food, beetles and their dig, burrows and their growing shut, beetles and the woodpecker, holes, remains, and what food and beetles send online (the realms and colonies: 44) |
 | [`docs/design/05-weather.md`](docs/design/05-weather.md) | Weather |
 | [`docs/design/06-keeping-it-smooth.md`](docs/design/06-keeping-it-smooth.md) | Keeping it smooth |
-| [`docs/design/07-borders-and-frames.md`](docs/design/07-borders-and-frames.md) | Borders and frames |
+| [`docs/design/07-borders-and-frames.md`](docs/design/07-borders-and-frames.md) | Borders and frames (now in 02) |
 | [`docs/design/08-grabbing-attention.md`](docs/design/08-grabbing-attention.md) | Grabbing attention (its banners' motion and dress are now in 30) |
 | [`docs/design/09-voice-and-copy.md`](docs/design/09-voice-and-copy.md) | Voice and copy |
 | [`docs/design/10-feel-targets-checked-in-phase-7.md`](docs/design/10-feel-targets-checked-in-phase-7.md) | Feel targets (checked in Phase 7) (its touch precision is now in 42) |

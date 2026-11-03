@@ -36,6 +36,23 @@ There are also two functional tints that aren't separate colors. **Parchment-2**
 - **A living wood:** the shadows of leaves overhead sway gently over the log (one small soft layer, drawn stretched over the board each frame), and now and then an autumn leaf drifts down onto it, turning as it goes, under the food and the snakes so it never hides anything that matters. With reduced motion, the shadows hold still and no leaves fall.
 - **Depth:** buttons have a 3 px "lip" and press down 2 px. Cards float on a soft 0 10 30 shadow. Snakes cast a small offset shadow on the bark. There's no blur anywhere on the canvas.
 
+### Borders and frames
+
+One treatment, used everywhere:
+- **Board:** a carved Heartwood frame with leaves resting on its corners. The leaves sway, each from its stalk on its
+  own beat; now and then a band of light runs along the wood; and **the frame lights up round its edge for the big
+  moments**, in the moment's colour: green for Go!, gold for a golden apple or any golden pickup, emerald for a beetle,
+  red for a knockout (strongest for yours) or catching fire, orange for the woodpecker, honey for a win or a new best,
+  and each kind of weather in its own as it comes ("Spells of weather" in `05-weather.md`). Only its opacity moves
+  (`flashFrame()` in `game/toasts.js`); with reduced motion it doesn't light.
+- **Panels:** parchment with an inset Parchment-2 ring. This covers the cards, the dialog, the name tags, banners and
+  bubbles.
+- **Buttons:** pills with a lip.
+  - Primary: Leaf with cream text.
+  - Secondary: transparent with an Ink ring.
+  - Small: Heartwood with cream text.
+- **Focus:** a Honey ring on dark backgrounds and an Ink ring on parchment, always visible with `:focus-visible`.
+
 ### Typography
 
 One family: **Fredoka** (rounded), at weights 400–700, with a system rounded/sans fallback. It loads non-blocking, so the game is playable instantly and offline with the fallback font.
