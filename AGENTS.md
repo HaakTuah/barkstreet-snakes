@@ -214,28 +214,6 @@ change that should keep behaviour must keep the fingerprints.
 
 ## Review guidelines
 
-For the code review (today Codex's), which reports findings by priority: report as **P1** (blocking) a departure from the design or
-from the PR's description and the sections it names; a broken rule of this file (above all the rules that stand) or of
-`SECURITY.md`; a test weakened or skipped, or changed beyond what the task forces (a forced change shows in the PR that every check is kept and none loosened); and a protected file changed by a Codex lane. Report anything the
-change leaves behind (code, files or settings it made unused, commented-out code) as a finding. Every finding counts:
-the PR passes only with none open. In a later round of the same PR, check that the earlier findings were fixed and
-review what changed since; raise something new about unchanged code only as P0 or P1. Every other reviewer scores
-from 1 to 10, and only a 10, a list with nothing open, passes ("Codex reviews" and "Reviews" in
-`docs/claude-and-codex.md`).
-
-**What the rivals know,** for every reviewer: report as P1 any AI logic that reads the game other than through
-`aiView()`, or anything in `aiView()` a snake on the log could not see or know (a person's input before it lands).
-
-**What a player sees, for every reviewer** of a change a player can see: the README, the one-time lesson and its Field
-guide row, the visible cue, and online play in step each come with it; one missing is a P1 (the rules in "Rules that
-stand" and "How to work").
-
-**Text a player reads,** for every reviewer of a change that adds or rewrites it: report as a finding any line that
-reads machine-made (one shape filled in again and again, filler, clichés, two voices alike); the slop audit in
-`docs/PROGRESS.md` sets the bar.
-
-**One idea, for every reviewer** of a change to the game (not docs, design copies or Dependabot's updates): end the
-review with one thing outside this change that would make the game better, or "none", the usual answer when nothing is
-worth the owner's time. It never blocks (a P3 at most). The builder searches the open ideas first: a new one is filed as
-an `enhancement` issue and linked in the PR, a repeat becomes a comment on the existing issue, so the ones that keep
-coming up show. Nothing is built from it until the owner queues it.
+Every reviewer, Codex's code review included, reads `docs/review-guidelines.md` whole and judges the change by it, with
+`SECURITY.md`. The guidelines have a file of their own so a reviewer reads only what it needs, and a builder session
+does not carry them (archive, 3 November 2026).
