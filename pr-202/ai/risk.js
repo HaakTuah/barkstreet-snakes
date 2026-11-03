@@ -33,14 +33,22 @@ function readRisk() {
     // But a plain flash costs its rest, so a snake spends one racing for
     // food straight ahead of it, not to cross a cell it can't crawl to:
     // its flash I fear only with food on that line within its reach.)
-    const fx = at(heads[k].x + o.dir.x), fy = at(heads[k].y + o.dir.y);
+    // (Straight on, cell by cell, as the engine goes: over the edge where
+    // they wrap for it, or through a gold portal open that way.)
+    const line = [];
+    for (let n = 1, x = heads[k].x, y = heads[k].y; n <= TUNE.DASH_LENGTH + TUNE.LEAP_REACH + 2; n++) {
+      let nx = at(x + o.dir.x), ny = at(y + o.dir.y);
+      if (!inGrid(nx, ny) && portalOut(x, y, o.dir, 1)) { nx = (nx + N) % N; ny = (ny + N) % N; }
+      line[n] = { x: nx, y: ny }; x = nx; y = ny;
+    }
+    const fx = line[1].x, fy = line[1].y;
     const gold = o.dashes > 0 || o.leaps > 0, hop = inGrid(fx, fy) && otherFree[fy * N + fx] > 1;
     const far = Math.max(gold ? TUNE.DASH_LENGTH : TUNE.FLASH_LENGTH, gold || hop ? TUNE.LEAP_REACH + 1 : 1);
     if (o.air - age >= 1 && o.land >= 0) rings.push(o.air - age, o.land, strike);
     else if (o.air > 0 && o.land >= 0) strikes[o.land] += strike; // (down on its ring since I saw it: its head is there now)
-    const on = f => { for (let n = 1; n <= far + 1; n++) if (at(heads[k].x + o.dir.x * n) === f.x && at(heads[k].y + o.dir.y * n) === f.y) return true; return false; };
+    const on = f => { for (let n = 1; n <= far + 1; n++) if (line[n].x === f.x && line[n].y === f.y) return true; return false; };
     if (gold || hop || food.some(f => f.kind !== 'mushroom' && on(f))) for (let i = 2; i <= far; i++) {
-      const nx = at(heads[k].x + o.dir.x * i), ny = at(heads[k].y + o.dir.y * i);
+      const { x: nx, y: ny } = line[i];
       if (inGrid(nx, ny)) strikes[ny * N + nx] += strike * 0.5;
     }
     const stampZ = ++markStamp;
