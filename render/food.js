@@ -305,6 +305,17 @@ function drawMushroomAt(f, x, y, t, pop) {
       ctx.stroke();
     }
   }
+  // Freshly spat (2x): wet, a green slick under it and a glint on the cap, drying
+  // as the moves its spitter slides over it run out.
+  const wet = f.slideUntil != null ? (f.slideUntil - game.tick) / T.OWN_SPIT_TICKS : 0;
+  if (wet > 0 && pop >= 1) {
+    ctx.globalAlpha = Math.min(1, wet) * (1 - 0.4 * wilt);
+    ctx.fillStyle = 'rgba(132,204,22,0.6)';
+    ctx.beginPath(); ctx.ellipse(x, y + CELL * 0.34, CELL * 0.4, CELL * 0.13, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#f7fee7';
+    ctx.beginPath(); ctx.arc(x - CELL * 0.13, y - CELL * 0.12, CELL * 0.055, 0, TAU); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + CELL * 0.08, y - CELL * 0.03, CELL * 0.032, 0, TAU); ctx.fill();
+  }
   ctx.globalAlpha = 1;
 }
 

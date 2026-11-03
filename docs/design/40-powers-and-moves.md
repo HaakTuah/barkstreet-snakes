@@ -360,7 +360,8 @@ A mushroom is a weapon you aim:
 - **You slide over your own.** For `OWN_SPIT_TICKS` (6) moves after the spit, the spitter's head goes over the mushroom
   it spat, as a full mouth goes over food, and it stays; anyone else who comes over it swallows it as ever. (2x, the
   owner's playtest: before, a snake that kept going swallowed it again three moves later, shrank, and spat it again, a
-  loop.) The rivals know it as you do (`ai/food.js`: their own fresh spit can't be eaten till then).
+  loop.) *The cue:* it lies wet, a green slick under it and a glint on its cap, drying as the moves run out. The rivals
+  know it as you do (`ai/food.js`: their own fresh spit can't be eaten till then).
 - **Stronger each time.** A mushroom takes `SHRINK` (3) segments the first time, and one more each time it comes back
   up, to `SHRINK_MAX` (5); it darkens a shade each time. It never kills by itself: it shrinks you no further than
   `MIN_LENGTH`. A spat mushroom wilts in half the time it had left, but lies at least `SPIT_WILT_MIN` (20) ticks.
@@ -369,10 +370,11 @@ A mushroom is a weapon you aim:
 - **Eating one on purpose** is a real choice: a few segments for a shot at a rival, best when you're long and they're
   close.
 - *The cue:* the green bulge, the ring, the arc and a "ptoo"; a hit is a green puff on the target's head.
-- *The lessons:* your first, "Bleh! Steer to aim it: it lands three ahead."; the first time one hits you, "Ptoo! Name
+- *The lessons:* your first, "Bleh! Steer to aim it: it lands three ahead."; your first spit that lies, "Still wet: you
+  slide over your own."; the first time one hits you, "Ptoo! Name
   got you. Steer to spit it back."
 - *The Field guide's Mushroom row:* "Poison: 3 off your tail (never below 3). A second later it comes back up, three
-  ahead of you: steer to aim it at a head. Each time it comes back up it takes one more, up to 5, a shade darker. Keep
+  ahead of you: steer to aim it at a head; you slide over it while it's wet. Each time it comes back up it takes one more, up to 5, a shade darker. Keep
   out of a green ring."
 - *The rivals* (`ai/spit.js`): everyone aims one in the cheek (the last moves before the spit), closes in on where it
   could hit a head before that, and keeps its head out of any ring due within its search;
