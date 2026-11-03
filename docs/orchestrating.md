@@ -15,8 +15,9 @@ to tell it. The same wake reads `docs/PROGRESS.md`'s diff since it last looked: 
 added or moved, an answer of the owner's, a lane opened or a bug put first), opening a lane where one is due, and skips
 the done-marks its own builders made (archive, 2 November 2026). **Its report on every wake counts the lanes:** the
 lanes open, and every independent entry it is not running, each with its reason ("waits on 2y's files" is one, none
-given is not), so a stall shows in one line, and the Codex security reviews asked since the last wake, each with its PR
-and why it qualified, so overuse shows the same night.
+given is not), so a stall shows in one line, the Codex security reviews asked since the last wake, each with its PR and why it qualified, so overuse shows the same
+night, and every PR merged since then whose review summary lacks its completed "🔒 Security Review" row ("Codex
+reviews"), so a gap shows too.
 
 - **28 October 2026: pipeline, don't wait.** "Yes, please, organize it expertly so we maximize token caching, time spent, and all other concerns." (to Claude's proposal; the words are in
   `docs/archive/instructions.md`). Waiting is lost time and, past an hour, a lost cache, so:
