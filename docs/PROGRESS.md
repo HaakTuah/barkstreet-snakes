@@ -104,7 +104,7 @@ and the owner's notes of 2 November, among them).
   PR #421).
 - **The design by topic, not by round** (#336): *Done:* the round files are pointers and records; topics made or widened:
   `02`–`05`, `09`, `12` (the round's arc), `13`, `21`, `22`, `30`, `31`, `33` and `38`–`45`, their history in
-  `docs/archive/design-*.md` (PR #425 to PR #PRNUM).
+  `docs/archive/design-*.md` (PR #425 to PR #451).
 - **Waiting for a gap:** `render/world.js` (50 KB), the last big file now that `ai/` and `engine/` are split (2y+). Split
   in a PR of its own when no open lane touches it, proven by fingerprints and suites.
 
