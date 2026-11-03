@@ -17,7 +17,7 @@ the file of its topic; a new round or topic gets its own file and a line here.
 | [`docs/design/08-grabbing-attention.md`](docs/design/08-grabbing-attention.md) | Grabbing attention |
 | [`docs/design/09-voice-and-copy.md`](docs/design/09-voice-and-copy.md) | Voice and copy |
 | [`docs/design/10-feel-targets-checked-in-phase-7.md`](docs/design/10-feel-targets-checked-in-phase-7.md) | Feel targets (checked in Phase 7) |
-| [`docs/design/11-the-third-pass-what-it-settles.md`](docs/design/11-the-third-pass-what-it-settles.md) | The third pass: what it settles (its gold, power token and height are now in 03) |
+| [`docs/design/11-the-third-pass-what-it-settles.md`](docs/design/11-the-third-pass-what-it-settles.md) | The third pass: what it settles (its gold, power token and height are now in 03, its phone speakers in 21) |
 | [`docs/design/12-the-rounds-arc.md`](docs/design/12-the-rounds-arc.md) | The round's arc: its timeline, starving and the Hall of Fame's ranking (its woodpecker is now in 38, its cornered rivals in 39) |
 | [`docs/design/13-lines-and-announcements.md`](docs/design/13-lines-and-announcements.md) | Lines and announcements |
 | [`docs/design/14-crashes-not-deaths-the-rules-reworked.md`](docs/design/14-crashes-not-deaths-the-rules-reworked.md) | Crashes, not deaths (the rules, reworked): food that cooks, apples that rot, and what it did (its crashes, head-ons and fire on snakes are now in 41, its woodpecker in 38) |
@@ -27,7 +27,7 @@ the file of its topic; a new round or topic gets its own file and a line here.
 | [`docs/design/18-powers-everyone-leaps-and-golden-things-do-more.md`](docs/design/18-powers-everyone-leaps-and-golden-things-do-more.md) | Powers: everyone leaps, and golden things do more: sudden death closing in, and 600 rounds measured (its powers are now in 40) |
 | [`docs/design/19-looks-and-lines.md`](docs/design/19-looks-and-lines.md) | Looks and lines (its Mute's mood ring and the power's gold line are now in 03) |
 | [`docs/design/20-the-fourth-performance-pass-the-pages-own-work.md`](docs/design/20-the-fourth-performance-pass-the-pages-own-work.md) | The fourth performance pass: the page's own work |
-| [`docs/design/21-sound.md`](docs/design/21-sound.md) | Sound |
+| [`docs/design/21-sound.md`](docs/design/21-sound.md) | Sound: how it's made, the cues and what each means, round six A's rules for world cues, the woodpecker's drum as its blows, yours against a rival's and the world's (panning, dulling, priority, gaps, the mix and ducking), rivals' chomps and babble, the music and its stages, the weather's beds, phone speakers, the switches, how a cue is measured, and online |
 | [`docs/design/22-play-with-friends-online.md`](docs/design/22-play-with-friends-online.md) | Play with friends (online) |
 | [`docs/design/23-architecture-change-and-why.md`](docs/design/23-architecture-change-and-why.md) | Architecture change (and why) |
 | [`docs/design/24-round-four-the-owners-feedback-and-the-calls.md`](docs/design/24-round-four-the-owners-feedback-and-the-calls.md) | Round four: the owner's feedback, and the calls: Two powers, two presses (now in 40); A flash for everyone (now in 40); Holding more than one (now in 40); Telling powers apart (now in 03); The woodpecker: holes under you, and holes that look like holes (now in 38); Food; Rivals (now in 39); Borders, not force fields; Events and timings; Controls that keep up; What was promised and missing; Online |
