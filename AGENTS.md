@@ -18,7 +18,7 @@ it directly. Codex: read the "For Codex" section of `docs/claude-and-codex.md` a
 | Security: the rules every builder and reviewer keeps; what is protected and who might attack (the threat model) | `SECURITY.md`, `docs/threat-model.md` |
 | How builder sessions and lanes are run (for the orchestrator), and the workshop check's marks | `docs/orchestrating.md` |
 | Running and checking it, every tool, PR pictures, GitHub's REST calls, Dependabot and CodeQL; each file of the game and its tools, and where each folder lists its parts ("How it's put together") | `docs/developing.md` |
-| The design, one file per topic | `docs/design/` (index: `DESIGN.md`) |
+| The design, one file per topic | `docs/design/` (index: `DESIGN.md` at the root) |
 | Materials the queue points to, with the open entries' specs word for word (`queue-specs.md`) | `docs/handoff/` |
 | Study and measuring tools from earlier rounds (censuses, audits, PR pictures) | `tools/dev/` (done ones: `docs/archive/`) |
 | History: the old polish audit, the plan as it grew, the owner's instructions word for word | `docs/archive/` |
@@ -118,9 +118,12 @@ never has to hunt.
 
 Waiting is lost time and, past an hour, a lost cache. The orchestrator's part, and the full text: `docs/orchestrating.md`.
 
-1. **Review in the background:** open the PR, start its reviews (on engine-rules and AI entries, Codex's and the design
-   check at the same time) and go on with what comes next; fix what they find in one round, merge at a 10, and say in
-   the last message what merged and what is next.
+1. **Review in the background:** when the work is done, mark its draft PR ready (the REST call in `docs/developing.md`),
+   which starts Codex's one automatic security review; then ask for Codex's code review (on engine-rules and AI entries,
+   with the design check at the same time) and go on with what comes next; fix what they find in one round, and say in
+   the last message what merged and what is next. Merge only at a 10, once Codex's review summary shows the completed
+   "🔒 Security Review" row on a commit at or after the last change to the risky part (with no risky part, on any
+   commit of the PR; "Codex reviews", point 6, in `docs/claude-and-codex.md`).
 2. **The next entry from `develop`,** never stacked on an open PR's branch. An AI entry waits for the last AI change to
    merge, so each head-to-head compares against a settled AI.
 3. **Lanes beside it** for independent work: different files from every open lane, no shared measurement, no waiting on
@@ -181,15 +184,16 @@ game's and Amarna Letters' building sessions share the limit; only the measured 
 ## Git and GitHub
 
 `main` is the owner's and is what the live site plays: never push to it, never force-push. Work on a branch from
-`develop`, one per task, with a PR into `develop`; merge it yourself when the suites pass (and, for a task that changes
-the game, one reviewer has found nothing blocking). Push after every commit, even before the PR opens (a draft PR if it
+`develop`, one per task, with a PR into `develop`; merge it yourself when the suites pass and its reviews pass
+("Reviews" in `docs/claude-and-codex.md`; "How work flows", point 1). Push after every commit, even before the PR opens (a draft PR if it
 is not ready), so nothing is lost if a session dies. Before pushing to a branch whose PR you opened earlier, check
 whether that PR was merged; if it was, start a new branch and PR. Don't stack PRs on each other's branches.
 
 **Milestones,** so the live game never lags: one is due whenever a change a player would notice has merged into
 `develop`, and at least once a day while work merges. Make sure a PR from `develop` to `main` carries the new work,
 saying what to try, with its line of what is new at the top of `version.js`'s news; merge it yourself once its CI is
-green, and carry on without waiting for the owner.
+green, and carry on without waiting for the owner. **Before pushing `develop`,** check the last `develop` -> `main` PR
+(the call in `docs/developing.md`): if it has merged, merge `main` back into `develop` first and open a new milestone PR.
 
 **Dependabot, CodeQL, PR pictures and the REST calls** (cloud sessions can't use GitHub's GraphQL API, so `gh pr
 create` and `gh pr view` fail): `docs/developing.md`. Dependabot's security PRs are the one other way into `main`, only
