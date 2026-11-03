@@ -1,9 +1,13 @@
 // ---------------------------------------------------------------- jump and flash together
+// (A stamina that never runs out, for the checks of the order presses go in, not what they cost: since 2u a plain jump
+// and a plain flash take more than a full bar together. What they cost is checked below, "One stamina".)
+const endless = s => Object.defineProperty(s, 'restedAt', { get: () => 0, set() {} });
 { // A jump and a flash pressed together with something right in front: it hops it (no flash gets past that, and none blows up in a hole), then flashes once it's down.
   for (const [what, gold] of [['a body', false], ['a hole, holding golden flashes', true]]) {
     const g = board([[line(5, 10, 6), 'right'], gold ? [line(5, 20, 3), 'right'] : wall(6)]);
     const me = g.snakes[0];
     if (gold) { g.holes.add(K(6, 10)); me.dashes = 1; }
+    endless(me);
     E.leap(g, me); E.flash(g, me);
     quiet(g);
     check(`a jump and a flash pressed together at ${what}: it hops`, me.alive && !!me.flight && g.events.some(e => e.type === 'leap' && e.snake === me) && !g.events.some(e => e.snake === me && (e.type === 'dash' || e.type === 'crash')), JSON.stringify(g.events.map(e => e.type)));
@@ -27,7 +31,7 @@
     const g = board([[line(5, 10, 6), 'right'], hole ? [line(5, 20, 3), 'right'] : wall(5 + dist)]);
     const me = g.snakes[0];
     if (hole) g.holes.add(K(5 + dist, 10)); else g.snakes[1].stunUntil = 1e9;
-    me.dashes = gold ? 1 : 0;
+    me.dashes = gold ? 1 : 0; endless(me);
     E.leap(g, me); E.flash(g, me);
     const seen = [];
     for (let t = 0; t < dist + 3 && me.alive; t++) { feed(g); quiet(g); for (const e of g.events) if (e.snake === me && ['leap', 'dash', 'crash', 'fizzle'].includes(e.type)) seen.push(`${e.type}@${g.tick - 1}`); }
@@ -36,14 +40,26 @@
   }
 }
 
+{ // One stamina (2u): a plain jump and a plain flash pressed together at a body, from a full bar: it hops, and the flash
+  // has to wait for its share to come back, since the two take more than a full bar.
+  const g = board([[line(5, 10, 6), 'right'], wall(6)]);
+  const me = g.snakes[0];
+  E.leap(g, me); E.flash(g, me);
+  const seen = [];
+  for (let t = 0; t < 3 && me.alive; t++) { feed(g); quiet(g); for (const e of g.events) if (e.snake === me && ['leap', 'dash', 'fizzle'].includes(e.type)) seen.push(e.type + (e.why ? ':' + e.why : '')); }
+  const both = T.JUMP_STAMINA_MS + T.DASH_STAMINA_MS <= T.STAMINA_MS;
+  check(`a plain jump and a plain flash pressed together from a full bar: it hops, then ${both ? 'flashes' : 'the flash waits for its stamina'}`, me.alive && seen[0] === 'leap' && (both ? seen.includes('dash') : !seen.includes('dash') && E.flashIn(g, me) > 0), seen.join());
+}
+
 { // A flash pressed in the air isn't lost: it goes once the snake's down.
   const g = board([[line(5, 10, 6), 'right'], wall(6)]);
   const me = g.snakes[0];
+  endless(me);
   E.leap(g, me); quiet(g); // (up)
   E.flash(g, me); feed(g); quiet(g); // (pressed in the air; down on the far side)
   const early = g.events.some(e => e.type === 'dash');
   feed(g); quiet(g);
-  check('a flash pressed in the air goes once it\'s down', !early && g.events.some(e => e.type === 'dash' && e.snake === me && e.plain) && me.body[0].x === 7 + T.FLASH_LENGTH && E.flashIn(g, me) > 0, JSON.stringify(me.body[0]));
+  check('a flash pressed in the air goes once it\'s down', !early && g.events.some(e => e.type === 'dash' && e.snake === me && e.plain) && me.body[0].x === 7 + T.FLASH_LENGTH, JSON.stringify(me.body[0])); // (what it then costs: "One stamina", above)
 }
 
 { // A flash waiting on a jump isn't lost when the jump doesn't land cleanly: it goes when the snake moves again, as one pressed in a stun does.
@@ -52,6 +68,7 @@
   const g = board([[line(5, 10, 8), 'right'], [[[7, 12], [7, 13], [7, 14], [7, 15]], 'up']]);
   const [me, r] = g.snakes;
   g.fires.set(K(6, 10), { from: 0, until: 999, group: 1, strike: false }); g.fireGroups.set(1, 1); // (r comes up column 7 into the landing, (7,10), as me comes down)
+  endless(me);
   E.leap(g, me);
   const seen = [];
   for (let t = 0; t < 3 + T.STUN_TICKS && me.alive; t++) {

@@ -176,14 +176,15 @@ const fly = (g, n) => { const at = []; for (let i = 0; i < n; i++) { quiet(g); a
 { // ...and leaps now when it is trapped. Heading right down a corridor of pits two cells long, a pit across its end:
   // every crawl crashes within its search, and nothing is right in front to hop yet. Ghost and Desperado, whose
   // style makes a leap now cheap, press twice, through the same engine call as a person's, and come down past the pit
-  // (Drab, at four times the price, crawls on and hops a wall of the corridor once it's beside it: as good a way out).
+  // (with walls a hop could clear, Drab, at four times the price, crawls on and hops one once it's beside it: as good a
+  // way out; so the walls here are too wide to hop).
   for (const key of ['ghost', 'desperado']) {
     const g = E.createGame({ withPlayer: false, personas: [key, 'drab'] });
     g.snakes = g.snakes.slice(0, 2);
     const [a, b] = g.snakes;
     a.body = Array.from({ length: 7 }, (_, i) => ({ x: 6 - i, y: 10 })); a.dir = D.right; a.leaps = 0; a.restedAt = 0; // (a full bar: as before, the jump and the flash both ready)
     b.body = Array.from({ length: 5 }, (_, i) => ({ x: 20, y: 20 + i })); b.dir = D.up; b.restedAt = 1e9;
-    for (let x = 5; x <= 8; x++) { g.holes.add(K(x, 9)); g.holes.add(K(x, 11)); }
+    for (let x = 5; x <= 8; x++) for (let k = 1; k <= T.LEAP_REACH + 1; k++) { g.holes.add(K(x, 10 - k)); g.holes.add(K(x, 10 + k)); } // (walls too wide to hop: since 2u a hop off to the side costs no tail, so with walls one thick it was as good a way out)
     g.holes.add(K(9, 10));
     g.food = []; g.time = 30000;
     let now = null;

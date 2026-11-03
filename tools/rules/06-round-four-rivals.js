@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------- round four: the rivals
 // A view built by hand (what an AI sees), and what it picks over many tries.
 const cellsOf = a => a.map(([x, y]) => ({ x, y }));
-const aiMe = (body, dir, more = {}) => ({ id: 0, body: cellsOf(body), dir: D[dir], grow: 0, hungerLeft: 99999, starveIn: 99999, leaps: 0, dashes: 0, wrap: 0, leapIn: 9999, flashIn: 9999, ...more });
+const aiMe = (body, dir, more = {}) => ({ id: 0, body: cellsOf(body), dir: D[dir], grow: 0, hungerLeft: 99999, starveIn: 99999, leaps: 0, dashes: 0, wrap: 0, leapIn: 9999, flashIn: 9999, stamina: T.STAMINA_MS, ...more }); // (the stamina full: a power on, leapIn or flashIn 0, goes from a full bar)
 const aiRival = (id, body, dir) => ({ id, body: cellsOf(body), dir: D[dir], stun: 0, leaps: 0, dashes: 0, wrap: 0 });
 const aiView = more => ({ grid: T.GRID, food: [], holes: new Set(), fire: new Set(), age: 2, tick: 10, timeMs: 30000, ...more });
 const picks = (view, persona = 'drab', n = 50) => {
