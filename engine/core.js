@@ -21,6 +21,7 @@
 //   pits.js        bridges over holes, and falling in
 //   woodpecker.js  the woodpecker's peck: choosing and shaping its patch, how deep it digs
 //   landings.js    where snakes in a patch land: rooms, knock-aside and the promised landings
+//   portals.js     the gold portals a wrapping snake opens going off an edge, which anyone may follow through
 //   view.js        what a snake sees (snapshot, aiView) and what it thinks ahead
 //   powers.js      leaps and dashes: their paths, plans, cuts and mid-tick moves
 //   crashes.js     what a crash does: recoil, stuns, the room left, bumps in the air
@@ -47,11 +48,13 @@ let stamp = 0;
 const key = (x, y) => y * GRID + x;
 const inside = (x, y) => x >= 0 && y >= 0 && x < GRID && y < GRID;
 // One cell on from (x, y) in direction d: off the board, unless the edges
-// wrap round for this snake (a golden mushroom).
+// wrap round for this snake (a golden mushroom), or a gold portal is open
+// there that way (round six B, part 5: anyone may follow; see portals.js).
 const wraps = (game, s) => s.wrapUntil > game.time;
+const portalAt = (game, x, y, d) => game.portals.some(p => p.x === x && p.y === y && p.dx === d.x && p.dy === d.y);
 function ahead(game, s, x, y, d) {
   let nx = x + d.x, ny = y + d.y;
-  if (wraps(game, s)) { nx = (nx + GRID) % GRID; ny = (ny + GRID) % GRID; }
+  if (wraps(game, s) || (!inside(nx, ny) && portalAt(game, x, y, d))) { nx = (nx + GRID) % GRID; ny = (ny + GRID) % GRID; }
   return { x: nx, y: ny };
 }
 const between = (a, b) => a + Math.random() * (b - a);
@@ -124,7 +127,8 @@ function createGame({ humans = null, withPlayer = true, personas = null } = {}) 
     // many it has caught over its life. weatherBag: the spells still to come
     // before any kind repeats (see spell). sdApples: apples fallen since the
     // woodpecker came; sdAppleAt: the tick the next falls.
-    burrows: [], unders: [], fires: new Map(), fireGroups: new Map(), fireTotals: new Map(), fireGroup: 0,
+    // portals: the gold portals open now (see portals.js).
+    portals: [], burrows: [], unders: [], fires: new Map(), fireGroups: new Map(), fireTotals: new Map(), fireGroup: 0,
     weather: { kind: 'clear', since: 0, until: T.WEATHER_FIRST_MS, nextGust: 0, nextStrike: 0 }, weatherBag: [],
     sdApples: 0, sdAppleAt: null,
   };

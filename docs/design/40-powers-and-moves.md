@@ -313,11 +313,11 @@ ends (`WRAP_WARN_MS`), you're warned ("The edges are back in 2 seconds.").
 
 ### Gold portals for the wrap
 
-To build (part 5 of round six B, in `docs/PROGRESS.md`):
+Built in part 5 of round six B (PR #202):
 - Going off an edge while wrapping opens a pair of gold portals, one on each side, trimmed in your colour. The entry
   swirls in and the exit spills out. The frame is gilded while you wrap. Gold, not blue and orange: on this board sky
   blue means jump and ember means flash.
-- Others may follow you through while your body passes and for a while after (`PORTAL_MS`, 1 s to start). Coming out
+- Others may follow you through while your body passes and for a while after (`PORTAL_MS`, 2 s). Coming out
   onto your body is a crash.
 - *Open long enough to matter:* the time a portal stays open after your tail is lengthened, step by step, until
   following through makes a difference from time to time (rivals follow in a fair share of rounds, a first guess at
@@ -326,6 +326,20 @@ To build (part 5 of round six B, in `docs/PROGRESS.md`):
   first. A portal never makes anyone safe, and how often its owner is caught or escapes through it is measured with
   each step.
 - *The lesson:* the first time someone follows, "Anyone can follow you through a portal, for a moment."
+- *The rivals* see a portal as a way through from afar, not only a cell they can step into: their room fill, territory
+  split and power paths link an entry to its exit for as long as it stays open (`ai/portals.js`), and they keep their
+  heads off an exit a rival could come out of. No persona weights of its own: each follows when its own plan pays.
+- **The chosen numbers** (PR #202): `PORTAL_MS` 2000. At 1 s, with the rivals blind past their 3-move search, someone
+  followed in 8% of rounds; seeing the way through raised that to 13 and 16% (seeds 3 and 11); at 1.5 s 17 and 19%,
+  at 2 s 21 and 21% (0.29 and 0.34 follows a round), at 3 s 24 and 28%. Rounds, deaths by cause, and owners and
+  followers out within 3 s (0 to 1%) unchanged: no refuge either way. Head to head (seeds 811/813, 1,200 paired
+  rounds, against rivals who never follow but see portals used against them): 25.2% against 24.7% (interval −1.5 to
+  +2.5), place and time alive the same: too rare to move whole rounds, so it is judged per use (below). A competing
+  approach (the rivals planning for portals in their goals and hunts) needed 5 s for the same share, and came out even
+  too.
+  Per use (`tools/dev/fork-moves.js --move portal --rest`, seeds 902–904, 232 follows): a follower is 3.1 ± 0.8 cells
+  longer 10 s later, but places no better (−0.10 ± 0.10 a follow). The move doesn't matter to places, which is a design
+  finding for the owner (#447); it is kept as built until he answers. Every trademark is within noise.
 
 ### Mushrooms come back up
 

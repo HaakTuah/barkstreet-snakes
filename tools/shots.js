@@ -124,6 +124,15 @@ fs.mkdirSync(out, { recursive: true });
         setBody(ma, Array.from({ length: 8 }, (_, i) => [20, 4 + i]), 'up');
         show(g); drawN(12, 0.5);
       })()`,
+      portal: `(() => {
+        const g = stage(['gobbler', 'mason', 'ghost']), [you, gob, ma, gh] = g.snakes;
+        setBody(you, [[2, 11], [1, 11], [0, 11], [23, 11], [22, 11], [21, 11], [20, 11], [19, 11]], 'right'); you.wrapUntil = g.time + 9000;
+        setBody(gob, Array.from({ length: 7 }, (_, i) => [17 - i, 11]), 'right');
+        setBody(ma, Array.from({ length: 6 }, (_, i) => [8, 4 + i]), 'up');
+        setBody(gh, Array.from({ length: 6 }, (_, i) => [14 - i, 19]), 'right');
+        g.portals = [{ x: 23, y: 11, dx: 1, dy: 0, tx: 0, ty: 11, owner: you.id, shutAt: 0 }];
+        show(g); drawN(12, 0.5, 40);
+      })()`,
       'star-gag': `(() => {
         const g = stage(['star', 'copycat', 'mason']), [you, st, cc, ma] = g.snakes;
         setBody(st, Array.from({ length: 9 }, (_, i) => [9, 11 - i]), 'down'); st.flashReadyAt = g.time + 3000;

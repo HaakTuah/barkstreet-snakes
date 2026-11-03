@@ -36,6 +36,15 @@ const burningAt = (x, y) => { const f = game.fires.get(y * GRID + x); return !!f
 const offBoard = (x, y) => x < 0 || y < 0 || x >= GRID || y >= GRID;
 const hurdleAt = (x, y) => !offBoard(x, y) && (stays[y * GRID + x] === 1 || game.holes.has(y * GRID + x) || burningAt(x, y)); // (what a leap hops)
 const wrapX = (s, v) => s.wrapUntil > game.time ? (v + GRID) % GRID : v;
+// One cell on from (x, y) heading d, as the game goes: over the edge where
+// it wraps for s, or through a gold portal open that way (into stepX, stepY).
+let stepX = 0, stepY = 0;
+function stepOn(s, x, y, d) {
+  stepX = wrapX(s, x + d.x); stepY = wrapX(s, y + d.y);
+  if (offBoard(stepX, stepY) && portalWay(x, y, d)) { stepX = (stepX + GRID) % GRID; stepY = (stepY + GRID) % GRID; }
+}
+// ...and n cells on (from cell to cell, so a portal on the way counts).
+function stepsOn(s, x, y, d, n) { for (let i = 0; i < n; i++) { stepOn(s, x, y, d); x = stepX; y = stepY; } stepX = x; stepY = y; }
 // Would a turn take it back into its own neck (the game never takes one)?
 function intoNeck(s, d) {
   const n = s.body[1];
@@ -76,14 +85,16 @@ function predict(s, a) {
   const h = s.body[0];
   a.mx = h.x; a.my = h.y; a.mv = 0; a.mg = 0; a.ml = 0; a.mf = 0; a.lr = 0;
   if (!s.alive || s.stunUntil > game.tick) return;
-  const d = s.flight ? s.flight.dir : wayOf(s), x = wrapX(s, h.x + d.x), y = wrapX(s, h.y + d.y);
+  const d = s.flight ? s.flight.dir : wayOf(s);
+  stepOn(s, h.x, h.y, d);
+  const x = stepX, y = stepY; // (over a wrapped edge, or through a gold portal open that way)
   a.mx = x; a.my = y; a.mv = 1; a.mg = s.grow > 0 ? 1 : 0; a.mdx = d.x; a.mdy = d.y;
   if (s.flight?.over.length) return; // (in the air: on over what it hops, a cell a tick, then down where it's going)
   if (!s.flight && asksJump(s) && ringAhead(s, h, d)) { a.lr = 1; a.lx = landX; a.ly = landY; } // (where it'll come down, while the press waits: see drawLandings)
   if (!s.flight && asksJump(s) && hops(s, h, d, game.time)) { a.ml = 1; return; }
   if (!s.flight && asksFlash(s)) {
     const go = flashReach(s, d, x, y);
-    if (go > 1) { a.mf = go - 1; a.mx = wrapX(s, h.x + d.x * go); a.my = wrapX(s, h.y + d.y * go); return; }
+    if (go > 1) { a.mf = go - 1; stepsOn(s, h.x, h.y, d, go); a.mx = stepX; a.my = stepY; return; }
   }
   if (offBoard(x, y) || ((game.holes.has(y * GRID + x) || stays[y * GRID + x]) && !bridgeFor(s, x, y))) { a.mv = 0; a.mg = 0; }
   if (game.holes.has(h.y * GRID + h.x) && cover[h.y * GRID + h.x] >= 2) a.rideUntil = game.tick + s.body.length + 1; // (on another's back, over a pit: drawn over it till its tail's off)
@@ -114,7 +125,8 @@ function ringAhead(s, h, d) {
   if (!(s.leaps > 0) && (s.body.length <= T.MIN_LENGTH || s.leapReadyAt > game.time + (s.leapArmed - game.tick) * (timeAt - timeFrom || T.START_TICK))) return false;
   let x = h.x, y = h.y;
   for (let i = 0; i < Math.max(1, s.leapArmed - game.tick + 1) && i < T.LEAP_WINDOW; i++) {
-    const nx = wrapX(s, x + d.x), ny = wrapX(s, y + d.y);
+    stepOn(s, x, y, d);
+    const nx = stepX, ny = stepY;
     if (offBoard(nx, ny)) return false;
     if (hurdleAt(nx, ny)) return hopsTo(s, { x, y }, d);
     x = nx; y = ny;
@@ -122,17 +134,18 @@ function ringAhead(s, h, d) {
   return false;
 }
 function hopsTo(s, h, d) {
-  let x = wrapX(s, h.x + d.x), y = wrapX(s, h.y + d.y);
+  stepOn(s, h.x, h.y, d);
+  let x = stepX, y = stepY;
   if (offBoard(x, y) || !hurdleAt(x, y)) return false;
   for (let i = 0; i < T.LEAP_REACH; i++) {
-    x = wrapX(s, x + d.x); y = wrapX(s, y + d.y);
+    stepOn(s, x, y, d); x = stepX; y = stepY;
     if (offBoard(x, y)) break;
     if (!hurdleAt(x, y)) { landX = x; landY = y; return true; }
   }
   // (Nowhere free within reach: a bridge that'll still be there when it comes down, as the game's leapPath has it.)
   x = h.x; y = h.y;
   for (let i = 1; i <= T.LEAP_REACH; i++) {
-    x = wrapX(s, x + d.x); y = wrapX(s, y + d.y);
+    stepOn(s, x, y, d); x = stepX; y = stepY;
     if (offBoard(x, y)) return false;
     if (i > 1 && bridgeFor(s, x, y) && lastsFor(s, x, y, i + 1)) { landX = x; landY = y; return true; }
   }
@@ -161,7 +174,7 @@ function flashReach(s, d, x, y) {
     } else if (offBoard(x, y) || game.holes.has(k) || stays[k]) return i - 1;
     else if (burningAt(x, y)) return i;
     if (i === len) return i;
-    x = wrapX(s, x + d.x); y = wrapX(s, y + d.y);
+    stepOn(s, x, y, d); x = stepX; y = stepY;
   }
 }
 // Would a dash heading d cut the body at (x, y)? Another snake's, behind
@@ -169,7 +182,8 @@ function flashReach(s, d, x, y) {
 function cutsAt(s, x, y, d) {
   const o = snakeAt(x, y), j = o ? o.body.findIndex(c => c.x === x && c.y === y) : -1;
   if (!o || o === s || j <= 0) return false;
-  const px = wrapX(s, x + d.x), py = wrapX(s, y + d.y);
+  stepOn(s, x, y, d);
+  const px = stepX, py = stepY;
   return offBoard(px, py) || !stays[py * GRID + px] || snakeAt(px, py) !== o;
 }
 const snakeAt = (x, y) => game.snakes.find(o => o.alive && o.body.some(c => c.x === x && c.y === y)) || null; // (whose body is on (x, y))
@@ -180,7 +194,7 @@ const snakeAt = (x, y) => game.snakes.find(o => o.alive && o.body.some(c => c.x 
 let chX = 0, chY = 0;
 function along(s, a, j, last, body = last ? s.prev : s.body) {
   const go = (last ? a.pmf : a.mf) + 1;
-  if (j < go) { const h = body[0]; chX = wrapX(s, h.x + (last ? a.pmdx : a.mdx) * (go - j)); chY = wrapX(s, h.y + (last ? a.pmdy : a.mdy) * (go - j)); }
+  if (j < go) { const h = body[0]; stepsOn(s, h.x, h.y, { x: last ? a.pmdx : a.mdx, y: last ? a.pmdy : a.mdy }, go - j); chX = stepX; chY = stepY; }
   else { const c = body[Math.min(j - go, body.length - 1)]; chX = c.x; chY = c.y; }
 }
 // Two heads going into the same cell meet head-on: both hold (heads in the air never meet).

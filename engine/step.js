@@ -377,9 +377,11 @@ function step(game) {
 
   fillFood(game);
   weather(game);
+  const moved = game.time; // (the time this tick's moves were made at: who the edges wrapped for then)
   game.time += tickLength(game);
   game.tick++;
   promiseLandings(game);
+  portals(game, moved);
   snapshot(game);
   return dying;
 }

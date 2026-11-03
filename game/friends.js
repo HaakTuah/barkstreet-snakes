@@ -89,7 +89,7 @@ const GUIDE_ROWS = [
   ['Golden things', [
     ['goldbeetle', 'Golden beetle', `${TUNE.LEAP_CHARGES} golden jumps: free, no rest. Tap for the plain hop; hold the jump and you fly ${TUNE.GOLD_FLY} cells, always, steering in the air to land where it's safe. Hold up to ${TUNE.LEAP_MAX}.`],
     ['leaf', 'Golden leaf', `${TUNE.DASH_CHARGES} golden dashes: three cells at once, cutting through a body up to ${TUNE.DASH_THICK} thick and putting out every fire. Never at an edge or a hole: you blow up.`],
-    ['goldcap', 'Golden mushroom', `Up in the rain. The edges wrap round for you, ${secs(TUNE.WRAP_MS)} s a mushroom (up to ${secs(TUNE.WRAP_MAX_MS)}).`],
+    ['goldcap', 'Golden mushroom', `Up in the rain. The edges wrap round for you, ${secs(TUNE.WRAP_MS)} s a mushroom (up to ${secs(TUNE.WRAP_MAX_MS)}). Going off one opens gold portals: anyone may follow you through, for a moment.`],
   ]],
   ['Your powers', [
     ['jump', 'Jump', `${touchFirst ? 'A tap' : 'Space or a click on the log'}: hop snakes, holes or fire, up to ${TUNE.LEAP_REACH} cells, to the first free cell: across a gap too. ${touchFirst ? 'Tap twice' : 'Press twice'} to leap now, open ground too. A ring shows where you’ll land. It costs your tail’s tip, then rests ${secs(TUNE.LEAP_COOLDOWN_MS)} s. Bump into a flier in the air and you drop: onto a body or into a hole, you’re out. Lie on a flier’s ring before it lands and it’s out: rivals will try it on you.`],

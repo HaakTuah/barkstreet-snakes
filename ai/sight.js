@@ -18,6 +18,7 @@ function seeBoard() {
 
   inGrid = (x, y) => x >= 0 && y >= 0 && x < N && y < N;
   myHead = me.body[0];
+  readPortals(); // (the gold portals open now: a rival may have gone through one since I saw it)
 
   // Woodpecker holes never close: treat them like walls.
   for (const i of holes) otherFree[i] = HOLE;
@@ -51,7 +52,7 @@ function seeBoard() {
     let hx = o.body[0].x, hy = o.body[0].y;
     for (let s = Math.min(age, o.stun || 0) + 1; s <= age; s++) { // (stunned, it didn't move)
       let nx = hx + o.dir.x, ny = hy + o.dir.y;
-      if (o.wrap > 0) { nx = (nx + N) % N; ny = (ny + N) % N; } // (the edges wrap for it a while)
+      if (o.wrap > 0 || (!inGrid(nx, ny) && portalOut(hx, hy, o.dir, 1))) { nx = (nx + N) % N; ny = (ny + N) % N; } // (the edges wrap for it a while, or a gold portal is open that way)
       if (!inGrid(nx, ny) || otherFree[ny * N + nx] > s) break;
       hx = nx; hy = ny;
       mineFree[hy * N + hx] = Math.max(mineFree[hy * N + hx], L);

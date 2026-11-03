@@ -39,6 +39,7 @@
 //   room.js        the flood fills: a rival's reach, my room and its necks, the territory split
 //   sight.js       the board as I see it: bodies, bridges, where heads are now, each snake's room
 //   risk.js        where a rival could strike, how soon it could be anywhere, a flier's ring
+//   portals.js     the gold portals: how long each stays open, a step through one, a rival coming out of one
 //   spit.js        mushrooms: the shots I could take, and the ones I'd dodge
 //   food.js        desperation, appetite, and what each thing on the board is worth to me
 //   beetles.js     where beetles go, and catching them

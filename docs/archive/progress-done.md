@@ -33,6 +33,14 @@ it under the workshop check's 20 KB. New ones are added here as they are done or
 
 ## The queue, done
 
+### 5 (part 5). Gold portals, unparked (the owner, 2 November 2026; an engine-rules entry, right after 2y)
+
+The golden mushroom's wrap has no cost while the edges open for its holder alone, a small refuge from the edge; part 5's
+gold portals are its counterweight (anyone may follow through for about a second), so #202 comes off the shelf right
+after 2y (the owner: "Yes, expertly to all 3!"). Its spec and A/B are as entry 5 says.
+
+*Done* (PR #202): portals open 2 s after the body passes (`PORTAL_MS` 2000). The rivals see the way through from afar (their room fill, territory split and power paths). Someone follows in 21% of rounds. Per use, a follower ends up longer but places no better, a design finding for the owner (#447). Every trademark is kept. The rule and its numbers are in `docs/design/40-powers-and-moves.md`, "Gold portals for the wrap".
+
 ### 1. Cheaper development and playable previews: one PR, no subagents
 
 The owner's words are in `docs/handoff/next-tasks-verbatim.md`, with their two additions and one correction:

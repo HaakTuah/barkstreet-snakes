@@ -68,6 +68,7 @@ function frame(alpha, now) {
   drawSpitRings(now); // (and where a mushroom in a cheek comes down)
   drawSnakes(alpha, now); // (and the fields' light round any rival in them, under its body)
   drawCheeks(alpha, now); // (a mushroom in a cheek: puffed green, counting down to the spit)
+  drawPortals(now); // (over the snakes: a body goes into one, and comes out of the other)
   if (flagsLater.length) drawBentFlags(now); // (the flags, over the snakes, but not over what stands in front of them)
   if (flagBends.size) forgetBends(now);
   drawTossed(now); // (a bead spat over a head)

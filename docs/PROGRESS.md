@@ -8,7 +8,7 @@ when it is merged into `develop`; add the owner's new tasks where he places them
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
 **2 November 2026, a fresh week:** the main lane is part 4 (#198, merged as it stands so the owner can play it), then
-2y (done, PR #373; the flight’s question is #399), then 2y+ (done: `ai/` and `engine/`, PRs #406, #408, #407), then part 5 (#202, unparked: the wrap's trade-off), then 2x, then 2z, then 2u; the polish
+2y (done, PR #373; the flight’s question is #399), then 2y+ (done: `ai/` and `engine/`, PRs #406, #408, #407), then part 5 (done, PR #202; its finding is #447), then 2x, then 2z, then 2u; the polish
 lane and the workshop lane run beside it, each claimed by a draft PR.
 
 ## For the owner
@@ -131,12 +131,6 @@ landing is almost never contestable. The flight stays as built for now, and no r
 3. **Measured again after 2u and part 7,** whose stamina and pricing change what a flight costs. Only if it is still
    even then does a bigger change go to the owner as a question: a longer flight, or the ring shown before take-off.
 
-### 5 (part 5). Gold portals, unparked (the owner, 2 November 2026; an engine-rules entry, right after 2y)
-
-The golden mushroom's wrap has no cost while the edges open for its holder alone, a small refuge from the edge; part 5's
-gold portals are its counterweight (anyone may follow through for about a second), so #202 comes off the shelf right
-after 2y (the owner: "Yes, expertly to all 3!"). Its spec and A/B are as entry 5 says.
-
 ### 2z. The golden apple's worth (the owner, 2 November 2026; a measurement, then an engine-rules entry if needed)
 
 The only golden food without a power: +3, a race to it before it fades. A census on fresh seeds: how often it is
@@ -154,7 +148,7 @@ Taken out of 3b+ and moved to the front, since it still bites (the owner: "Still
 
 ### 5. Round six B: the new moves (DESIGN "Round six B")
 
-The golden jump that flies, leap now, gold portals, dropped charges, the spit along the line and one pricing model for every power, each its own playable PR that the rivals use well. *Done:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195). **Next, in order:** part 4 (draft PR #198, 2r folded in; the owner answered on 1 November 2026 that the moves stay as designed and the rivals are improved until their users come out ahead: the row is in `docs/archive/progress-done.md`, "For the owner, answered"), then 2x (above), then 2q (2s done, PR #289; part 4's both-ways test runs again on its log when part 4 goes on), part 3b+ (the spit flies along the line), part 5 (#202, gold portals), part 6 (built on `round6b/dropped-charges`) and part 7 (parked on `round6b/pricing`; it also fixes the trademark measures and lifts Joker into the band, see the spec); then the teaching system (item 4). Spec: `docs/handoff/queue-specs.md`, "5. Round six B: the new moves". **When part 4 merges:** run the census on seeds 3 and 11 again (`scripts/sim.sh 200 --seed 3 --census --check`): chased beetles must still get away a third to 45% of the time (2w measured it before the flight was in; `--check` fails a census outside that band).
+The golden jump that flies, leap now, gold portals, dropped charges, the spit along the line and one pricing model for every power, each its own playable PR that the rivals use well. *Done:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195). **Next, in order:** part 4 (draft PR #198, 2r folded in; the owner answered on 1 November 2026 that the moves stay as designed and the rivals are improved until their users come out ahead: the row is in `docs/archive/progress-done.md`, "For the owner, answered"), then 2x (above), then 2q (2s done, PR #289; part 4's both-ways test runs again on its log when part 4 goes on), part 3b+ (the spit flies along the line), part 5 (done, PR #202: gold portals; its finding, that following feeds but wins no places, is #447), part 6 (built on `round6b/dropped-charges`) and part 7 (parked on `round6b/pricing`; it also fixes the trademark measures and lifts Joker into the band, see the spec); then the teaching system (item 4). Spec: `docs/handoff/queue-specs.md`, "5. Round six B: the new moves". **When part 4 merges:** run the census on seeds 3 and 11 again (`scripts/sim.sh 200 --seed 3 --census --check`): chased beetles must still get away a third to 45% of the time (2w measured it before the flight was in; `--check` fails a census outside that band).
 
 ### 2r. No hop onto a doomed island (30 October 2026; part of item 5's part 4)
 
