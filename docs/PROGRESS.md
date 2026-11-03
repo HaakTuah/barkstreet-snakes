@@ -8,7 +8,7 @@ when it is merged into `develop`; add the owner's new tasks where he places them
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
 **2 November 2026, a fresh week:** the main lane is part 4 (#198, merged as it stands so the owner can play it), then
-2y (done, PR #373; the flight’s question is #399), then 2y+ (done: `ai/` and `engine/`, PRs #406, #408, #407), then part 5 (done, PR #202; its finding is #447), then 2x (done, PR #456), then 2z, then 2u; the polish
+2y (done, PR #373; the flight’s question is #399), then 2y+ (done: `ai/` and `engine/`, PRs #406, #408, #407), then part 5 (done, PR #202; its finding is #447), then 2x (done, PR #456), then 2z (done, PR #459: no rule changed; its question is #460), then 2u; the polish
 lane and the workshop lane run beside it, each claimed by a draft PR.
 
 ## For the owner
@@ -137,16 +137,12 @@ landing is almost never contestable. The flight stays as built for now, and no r
 4. **Measured again after 2u and part 7,** whose stamina and pricing change what a flight costs. Only if it is still
    even then does a bigger change go to the owner as a question: a longer flight, or the ring shown before take-off.
 
-### 2z. The golden apple's worth (the owner, 2 November 2026; a measurement, then an engine-rules entry if needed)
-
-The only golden food without a power: +3, a race to it before it fades. A census on fresh seeds: how often it is
-contested, and whether a snake that eats one places or wins better than one that does not. If it pays, it stays as it
-is. If it does not: +3 and both rests refilled ("the apple of vigour"), measured both ways like any rule.
-
 ### 2u. One stamina for jump and dash (the owner, 2 November 2026; an engine-rules entry, after 2z and before part 7)
 
 One bar for both plain powers, no tail cost, each power a third to two thirds of plain power uses and neither better in
-aggregate, the pace kept: `docs/design/37-one-stamina.md`. Part 7's pricing then prices the one stamina.
+aggregate, the pace kept: `docs/design/37-one-stamina.md`. Part 7's pricing then prices the one stamina. Once it
+merges, the golden apple is measured again with the stamina refilled in place of the two rests (2z, #460): "The golden
+apple's worth" in `docs/design/04-food-and-the-world.md`.
 
 ### 2u+. The golden apple's worth, against one stamina (the owner, 3 November 2026; #460; a measurement right after 2u, then an engine-rules entry if it pays)
 

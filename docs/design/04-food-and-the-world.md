@@ -216,3 +216,12 @@ their little island"; burrows ran out as the woodpecker pecked them; and beetles
   `E.beakGap`). So a beetle bound down a burrow beyond the mark isn't chased, and one running off it toward a rival is.
   One gap, not worth its code: the AI's copy lets a fleeing beetle cross a body lying on the mark (the mark's cells
   read as holes there), where the engine stops it.
+
+## The golden apple's worth (2z, measured 3 November 2026)
+
+The golden apple (+3) doesn't pay. The rivals eat every one, 19 ticks after it comes up, and only 12–15% are contested
+(another head within 5 cells). Played on from each eat with and without it (`tools/dev/fork-moves.js --move golden`; 903
+eats on seeds 101 to 104), eating one gains −0.01 ± 0.05 places and costs 2.9 ± 1.2 s alive: the length outweighs the
+meal. "The apple of vigour" (both rests refilled as well) adds +0.01 ± 0.02 places, since the rests are mostly ready when
+it's eaten (0.36 of 2 still resting). So the apple stays as it is for now, and is measured again with the one stamina
+refilled once 2u merges. The owner's question is #460.
