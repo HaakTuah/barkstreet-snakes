@@ -912,3 +912,11 @@ have one zh and zh-more, how does an agent/session which to look in? Won't it ju
 `voices.js` is 49 KB. Re-split along what people look up, a voice (a file per voice, or per voice and language), with
 the lines every voice shares written once; weigh the page's extra script tags and `sw.js` entries against what a
 session saves, and say both in the PR. Behaviour proven unchanged (the chatter suite, fingerprints on seeds 3 and 11).
+
+### 2z. The golden apple's worth (the owner, 2 November 2026; a measurement, then an engine-rules entry if needed)
+
+The only golden food without a power: +3, a race to it before it fades. A census on fresh seeds: how often it is
+contested, and whether a snake that eats one places or wins better than one that does not. If it pays, it stays as it
+is. If it does not: +3 and both rests refilled ("the apple of vigour"), measured both ways like any rule.
+
+Done (PR #459): measured, and no rule changed. The question is #460.
