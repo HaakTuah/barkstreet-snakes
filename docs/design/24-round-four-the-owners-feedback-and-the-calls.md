@@ -39,26 +39,17 @@ measurements, in `docs/archive/design-rivals.md`.
 
 ### Borders, not force fields
 
-Sovereign's realm and Colonist's colonies are drawn as **borders on a map**, like a grand strategy game, not as domes:
-- the land, cell-exact, under a light wash in the owner's colour;
-- a band and a riband of colour along the inside of a true ink line (`#1c1209`), its corners rounded, with a parchment keyline just inside the ink (no line along the board's edge or round a hole). The keyline came with the critique: without it, Colonist's rose went grey-khaki to colour-blind eyes, its ink no darker than the bark's grain;
-- where two claims meet, a line dashed in both colours over true ink, and hatching on land both claim;
-- land that grows a ring of cells at a time as a realm widens, and shrinks back into its capital when its owner dies;
-- a border that flares as it changes and when lightning strikes, breathes while a rival's head is on it, and lights up from where a head crosses in;
-- a rival on the land wearing the land's colour round its pieces on the land's own cells (where two claim it, the later realm's colour), with a parchment keyline outside it, so it shows round a red body too (an ink ring outside that as well took a third fill pass, and put the land over its budget);
-- Sovereign's capital marked with a swallow-tailed banner in parchment and ink, its crown inked, trimmed in the realm's colour (a blue banner vanished into the blue wash), and Colonist's flags on inked poles with parchment knobs. No gold: gold means power.
-
-*As built*, the contested dashes stand still. Marching, their many short pieces cost about as much as all the rest of the land together, so they're cached in one small layer. The optional light sweep across the land was left out.
-
-The land rule becomes one rule everywhere (the AI, the chatter, the HUD and the borders): a cell is land if its centre is within radius + `LAND_REACH` (0.5) of a field's centre. That removes the one-cell nubs the old radius + 1 left at the four tips. Snow lies on land like anywhere else, tinted by it. The domes' weather effects go, except a flare when lightning strikes. Crossing a border sounds like a muffled drum knock with a fife note, not an electric hum.
-
-*Why:* the domes cost about 3.3 ms a frame in a real round (2.6 times the same board without them). *Measured* as built, the staged scene with both owners' land costs 1.28–1.40 times the same board without it (the domes 2.26–2.62), and their canvases hold 5.2 MB instead of 23.9. They read better at phone size.
+Its rules are in `44-realms-and-colonies.md` under the same name, and its text as it was, with its measurements, in
+`docs/archive/design-realms.md`.
 
 ### Events and timings
 
-- **Weather comes from a shuffled bag:** every kind before any repeats. *Measured*, 42% of rounds saw no storm, and half saw three kinds or fewer. `WEATHER_ODDS` now counts how many of each kind go in the bag: one each, since two of a kind could repeat before the others came. A storm drawn before 0:30, or snow before 0:45, waits in the bag.
-- **A lightning fire has a budget:** at most 12 cells over its life (`FIRE_TOTAL`), besides 6 at once. Fires kept themselves going until rain came, some for over a minute.
-- **More golden power food.** Golden things are worth more now that they stack and the rivals use them: leaves 0.07 → 0.25 a gust, golden mushrooms 0.12 → 0.55 a rain spell (at 0.4 the wrap still missed most rounds), golden beetles 0.3 → 0.4 (0.16 since round six A, with beetles out more often).
+- **Weather comes from a shuffled bag:** its rule is in `05-weather.md` ("Spells of weather"), and its text as it was,
+  with its measurements, in `docs/archive/design-food.md`.
+- **A lightning fire has a budget:** its rule is in `05-weather.md` ("Lightning and fire, fairly"), and its text as it
+  was in `docs/archive/design-food.md`.
+- **More golden power food.** Its rule is in `04-food-and-the-world.md` (in "Food on the log"), and its text as it was
+  in `docs/archive/design-food.md`.
 - **Unchanged, because measured right:** the woodpecker at 2:00, and the 120 → 90 ms speed ramp.
 - **Changed once the rest was built:** the woodpecker's patches; their sizes now are in `38-the-woodpecker.md` ("How it picks a
   patch"), and this call as it was, with its measurements, in `docs/archive/design-woodpecker.md`.

@@ -3,6 +3,18 @@
 The food topic's sections as the round files and the owner's playtest had them, word for word, with their superseded
 versions and measurements.
 The current rules are in `docs/design/04-food-and-the-world.md`, under the same names.
+Round four's weather bullets sit with its golden food under "Events and timings"; their current rules are in
+`docs/design/05-weather.md`.
+
+## From the round's arc (`12-the-rounds-arc.md`)
+
+**Starving is decided after eating.** A snake whose head reaches food on the tick it would starve eats instead.
+
+## From crashes, not deaths (`14-crashes-not-deaths-the-rules-reworked.md`)
+
+**Food in the fire cooks.** Fire can now spread onto food: an apple or a bead that's been in a burning cell for `COOK_TICKS` (18) is baked (worth `COOKED_GROWTH`, 2; an apple stops rotting for a while), steaming, glazed and split; left in for `ASH_TICKS` (45) it goes to ash in a grey puff. Getting at it means waiting for the fire to die down, or taking the heat.
+
+**Apples rot.** Each apple lasts about `APPLE_TICKS` (110, ±25%: about 10 to 16 s early in a round, 8 to 12 s once it's at full speed; it was 160, and apples still mostly got eaten before they went): it bruises (brown spots), then rots (brown, wrinkled, its leaf dead, a fly circling), shrivels and goes with a brown puff, and a fresh one drops from the tree above somewhere else (every new apple mid-round drops in from above, like a windfall). It keeps snakes from camping an apple. At first apples lasted 40 s and hardly any rotted (0.1 a round: they were eaten first), so they were shortened: about 1.2 rotted a round at 160 ticks, and about 7 do now (600 seeded rounds; the rounds are longer too).
 
 ## From round four (`24-round-four-the-owners-feedback-and-the-calls.md`)
 
@@ -31,6 +43,12 @@ The calls:
 - **No winter before 45 s.** Snow in the first half-minute starved 5-long snakes in about 1 round in 5. *Measured*, 55% of early starving happened in snow, which is 8% of that time.
 - **Mushrooms never sprout within 2 cells of a head.** Nobody can see one appear in front of them in time.
 - **Golden apples, leaves and mushrooms land somewhere quiet** (the farthest of 8 tries from every head). They become a race you can see, instead of gone in 1.5 s.
+
+### Events and timings (its weather and golden food bullets)
+
+- **Weather comes from a shuffled bag:** every kind before any repeats. *Measured*, 42% of rounds saw no storm, and half saw three kinds or fewer. `WEATHER_ODDS` now counts how many of each kind go in the bag: one each, since two of a kind could repeat before the others came. A storm drawn before 0:30, or snow before 0:45, waits in the bag.
+- **A lightning fire has a budget:** at most 12 cells over its life (`FIRE_TOTAL`), besides 6 at once. Fires kept themselves going until rain came, some for over a minute.
+- **More golden power food.** Golden things are worth more now that they stack and the rivals use them: leaves 0.07 → 0.25 a gust, golden mushrooms 0.12 → 0.55 a rain spell (at 0.4 the wrap still missed most rounds), golden beetles 0.3 → 0.4 (0.16 since round six A, with beetles out more often).
 
 ## From round six A (`27-round-six-a-fairness-and-fixes.md`)
 
@@ -137,3 +155,24 @@ Escapes from a chase went from about half (51%) to 43% with live food alone, and
 | Deaths by cause | as they were, within a point or three | |
 
 Escapes stay inside the 20–35%. The simulation's check passed on both seeds.
+
+#### Beetles and the woodpecker
+
+The owner (29 October 2026; entry 2m): beetles should "quickly try to escape down their burrow when woodpecker targets
+their little island"; burrows ran out as the woodpecker pecked them; and beetles under a strike teleported. The rules
+(`crawl`, `beakDepth`, `beakGap` and `knocks` in `engine/`):
+- **Burrows keep up.** A beetle due up from underground with no free burrow cracks a new one open where it's quiet,
+  by `beetleOut`'s rule (`BURROW_SPACING` apart, at most `BURROW_MAX` open). None comes up under the beak: `freeBurrow`
+  and `placer` leave the mark out.
+- **The mark is danger, as a head is.** While the woodpecker aims, a beetle within `BEETLE_FEAR` of its mark scurries
+  away from it and for a burrow in reach, and dives in. On the mark, it plans against the strike: a burrow in reach it
+  can get to in time (pulled there straight, twice as hard as a head-scared run), else off the mark by the shortest
+  way, else it digs in if the dig is done before the strike. A dig there leaves no burrow, and it comes up elsewhere. A
+  dig already under way that won't be done in time is dropped, and it runs.
+- **No teleporting.** A beetle still on the mark at the strike is the bird's: a `knock` with no landing, a puff and a
+  soft crunch, no ring through the aim. Its lesson, the first time: "The woodpecker eats beetles too!". The Field
+  guide's Beetles and Woodpecker rows say so.
+- **The rivals** move each beetle in their search by the same rule (`bugCrawl` in `ai/beetles.js`, with `E.beakDepth` and
+  `E.beakGap`). So a beetle bound down a burrow beyond the mark isn't chased, and one running off it toward a rival is.
+  One gap, not worth its code: the AI's copy lets a fleeing beetle cross a body lying on the mark (the mark's cells
+  read as holes there), where the engine stops it.
