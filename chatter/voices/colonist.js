@@ -14,7 +14,7 @@ addVoice('colonist', {
   rainbow: ['A rainbow! Plant a flag at the end of it!'],
   bonk: ['I say! Steady on!', 'Blast!', 'A minor diplomatic incident.'],
   burning: ['I appear to be on fire. How awkward.'],
-  doused: ['Rained off. Like every cricket match.'],
+  doused: ['Called off. Like every cricket match.'],
   under: ['Mind the gap!'],
   cut: ['Dash it, my tail!'],
   choke: ['Good heavens, that’s my own tail!', 'Ahem! Not cricket, eating oneself.'],
@@ -73,7 +73,7 @@ addVoice('colonist', {
   "Do mind the paintwork, {who}.": "请当心油漆，{who}。",
   "Bother the colonies. I need lunch!": "殖民地先不管了。我要吃午饭！",
   "The last apples? Ration them, chaps.": "最后的苹果？伙计们，实行配给。",
-  "Rained off. Like every cricket match.": "被雨浇灭了。就像每场板球赛。",
+  "Called off. Like every cricket match.": "被叫停了。就像每场板球赛。",
   "Mind the gap!": "小心空隙！",
   "Burnt to a cinder. Like Sunday lunch.": "烧成灰了。就像周日午餐。",
   "Gone off. Frightfully wasteful.": "坏掉了。实在太浪费了。",
@@ -95,5 +95,5 @@ addVoice('colonist', {
   "A tad… overdone…": "有点……烤过头了……",
   "Annexed myself. Awkward.": "把自己吞并了。尴尬。"
 }, [
-  'Mine now. Terribly sorry.', 'I claim this for the Crown. Which crown? Mine.', 'Do you have a flag, {who}? No flag, no colony.', 'Papers, {who}? No? Off you pop.', 'A minor diplomatic incident.', 'There’s a queue, {who}. Back of it.', 'I appear to be on fire. How awkward.', 'Rain? Just like home.', 'Rained off. Like every cricket match.', 'Burnt to a cinder. Like Sunday lunch.', 'Mind the gap!', 'The last apples? Ration them, chaps.', 'Ahem! Not cricket, eating oneself.', 'Digging in? Frightfully bad form.',
+  'Mine now. Terribly sorry.', 'I claim this for the Crown. Which crown? Mine.', 'Do you have a flag, {who}? No flag, no colony.', 'Papers, {who}? No? Off you pop.', 'A minor diplomatic incident.', 'There’s a queue, {who}. Back of it.', 'I appear to be on fire. How awkward.', 'Rain? Just like home.', 'Called off. Like every cricket match.', 'Burnt to a cinder. Like Sunday lunch.', 'Mind the gap!', 'The last apples? Ration them, chaps.', 'Ahem! Not cricket, eating oneself.', 'Digging in? Frightfully bad form.',
 ]);
