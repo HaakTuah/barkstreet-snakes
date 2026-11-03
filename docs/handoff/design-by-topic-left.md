@@ -2,12 +2,11 @@
 
 For "The design by topic, not by round" (#336; `docs/PROGRESS.md`, the workshop lane). After food, the woodpecker, the
 rivals, the looks, the powers and moves, the crashes, sound, the page, online, the start card and records,
-teaching, the small leftovers (art, weather, words, the round's arc and the chosen numbers) and performance, these blocks in `docs/design/` are still not pointers. Each line: the file and its lines (as of PR #437),
+teaching, the small leftovers (art, weather, words, the round's arc and the chosen numbers), performance and the chatter, these blocks in `docs/design/` are still not pointers. Each line: the file and its lines (as of PR #437),
 the block's first words, and where it belongs. A census, round record or a topic file's own text stays. Take a topic
 at a time, as before; delete a line here when its block moves, and this file when none is left.
 
 **New topics (a file each, when taken):**
-- Chatter and lines: 13 3 and 5, 19 10 "Land lines", 26 24–32 Star's voice.
 - The round's arc: 12 3–13 (the timeline; 12 can become it).
 - Balance targets: 29 30 (or it stays as round six B's record).
 
@@ -19,5 +18,4 @@ or it stays as a record).
 15, 18 9, 25, 26 38–68, 27 3–11 and 54–192, 29 3, 32 3–6, and 24 3; 37 (a queued spec, into 40 once built).
 
 **Noticed:** 30's plan still names the choke and cough (gone since round six B) and keeps combos in "With PR C" (entry
-6's outline replaces them); its step 2 (the bird) looks done. Mason's gold vein sits against "gold means power" (03),
-and Star's start-card line says "jumps and dashes" where 26 says "flashes".
+6's outline replaces them); its step 2 (the bird) looks done. Mason's gold vein sits against "gold means power" (03).

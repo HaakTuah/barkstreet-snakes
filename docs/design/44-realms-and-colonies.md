@@ -3,7 +3,7 @@
 Sovereign's realm and Colonist's colonies: the land each claims on the log, drawn as borders on a map, and the flags
 that mark it. The rules as food and the world, looks and lines, round four, round six A and the owner's playtest
 settled them (their text, with what was tried and measured, is in `docs/archive/design-realms.md`). Elsewhere: how the
-two play their land (`39-the-rivals.md`), their land lines ("Land lines" in `19-looks-and-lines.md`), the drum and fife
+two play their land (`39-the-rivals.md`), their land lines ("Land lines" in `13-lines-and-announcements.md`), the drum and fife
 when you cross in ("Borders sound like borders" in `21-sound.md`), snow on the land ("Winter" in `05-weather.md`), and
 the land a strike leaves, drawn ahead during the aim (`38-the-woodpecker.md`).
 
