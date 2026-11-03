@@ -334,6 +334,9 @@ Built in part 5 of round six B (PR #202):
   +2.5), place and time alive the same: too rare to move whole rounds, so it is judged per use (below). A competing
   approach (the rivals planning for portals in their goals and hunts) needed 5 s for the same share, and came out even
   too.
+  Per use (`tools/dev/fork-moves.js --move portal --rest`, seeds 902–904, 232 follows): a follower is 3.1 ± 0.8 cells
+  longer 10 s later, but places no better (−0.10 ± 0.10 a follow). The move doesn't matter to places, which is a design
+  finding for the owner (#447); it is kept as built until he answers. Every trademark is within noise.
 
 ### Mushrooms come back up
 
