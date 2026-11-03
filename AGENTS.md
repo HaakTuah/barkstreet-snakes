@@ -97,7 +97,8 @@ never has to hunt.
   Feature request (`enhancement`); a bug the task at hand will not fix is a Bug report (`bug`). File an idea or a
   bug with its template's headings and label (`.github/ISSUE_TEMPLATE/`), copied into the body: the API applies none.
   Search the open issues first and add to one rather than file it twice. Each issue holds the whole of it, answerable
-  from a phone.
+  from a phone, and says in plain words what each thing is and why it matters, by the game's own names, never only by a
+  title a builder made up; so does each line that points to one (archive, 3 November 2026).
 - **Everywhere else, only a pointer.** A PR, a report and a session's last message never repeat an issue: under
   "Questions for the owner" they list the issues they opened or touched, one line and a link each ("none" if none). An
   orchestrator passes every new link on to him.
