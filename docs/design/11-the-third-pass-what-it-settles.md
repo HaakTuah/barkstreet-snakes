@@ -25,16 +25,9 @@ Lessons are one idea and 60 characters or fewer (since round six A's critique, i
 
 The rival's quip stays as flavour. A death that ends the round says it on the round-over card too.
 
-**Small mercies at the keys.** A slip shouldn't cost a round, and a press should never be lost without a word:
-- *R* and *Enter* sit next to the steering keys, so mid-round they ask "Start over?" first, naming the key you pressed. The same key again confirms; P, Escape or an arrow keeps going at once (an arrow steers too; Space did too, until it became the jump in round four). In the countdown, *R* is Go, like Enter (never online, where everyone starts together).
-- The nap keys always nap: P and Escape (and Space, until round four made it the jump), in a round or in its countdown (the phone rang). Go is the Go! button, Enter, R or an arrow. On your own death card they keep watching instead (napping would hide why you died), and on the Napping card Enter asks "Start over?" as R does. A button you Tabbed to keeps its own keys (Enter on 2× sets the speed); a new round lets go of it.
-- The press that starts or wakes a round is a steer, never a power (you always start facing right: pressing right to go isn't asking to leap). A turn pressed twice within 120 ms is always the turn; up to 180 ms it's a leap you meant only once the turn has happened, and never with dashes, which go at once. (Superseded by round four: steering keys only steer, and the guard, `POWER_AFTER_TURN_MS`, is kept for swipes only: since the critique, 300 ms from the lift of the swipe that turned you.)
-- Waking from a nap goes through one quiet countdown beat (no YOU, no riser; the round's music carries on), so your hand is back on the keys before the board moves. An arrow skips the beat, and steers. A round napped before its Go gets its real Go on waking. Watching, waking is at once.
-- A nap never covers a death that's about to be told: the card comes up as it would.
-- Stunned, the latest press wins (you get more than one guess while the stars go round, and a small inked chevron by your head shows which way you pressed, or (since round four) the jump's hop or the flash's double chevron, in its accent (sky or ember; Honey when golden), for a power asked for, until the moment you move, online too), checked against your neck, not the way you were facing when you crashed. Reversing a queued turn that hasn't happened yet changes your mind instead of being ignored, and a U-turn's two keys rolled together count even when the second lands a hair early.
-- On a phone every finger is its own swipe: a thumb resting on the glass doesn't block the other, and can still steer once the other lifts. During a round a swipe may start on a button (the Go! in the middle of the board); a short tap is still a tap.
-- A first round's score is a best only by default: no fanfare until there's a best to beat. Carving your name is offered once a round, not on both cards, and never pressed on you: on a keyboard the card keeps the focus (R and Enter mean what they always mean; Space, since round four, starts nothing) and Tab reaches the field. It stays while you type, even if the round ends under it; named already, the card says "as the owner"; carving says "Carved".
-- Where four tags in a row would cut the rivals' names (a near-square window), they sit in two rows of two, as on a phone.
+**Small mercies at the keys**: its rules are in `42-controls.md` under the same name (and the tags in two rows of
+two in "What gives on the smallest screens" in `33-one-screen.md`), and its text as it was in
+`docs/archive/design-page.md`.
 
 **Every sound survives a phone speaker**: its rules are in `21-sound.md` under the same name (and the gaps that keep
 yours apart from a rival's under "Yours, a rival's and the world's"), and its text as it was in

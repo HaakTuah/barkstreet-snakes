@@ -113,7 +113,7 @@ believe" there.
 - *It plays with the controls.* Under the board it clings to a button's rim where one is near (2.5 of its units, about
   34 px on a 390 px phone): its toes on the side of a speed button or a switch, facing the button and its spot, as it
   clings to the log; resting there, every 3 to 7 s it pecks at the button, two quick taps (render/bird-perch.js
-  `perchFor`, render/bird-draw.js `headAndEye`). Going from one spot to the next it hops from rim to rim. With reduced
+  `perchFor`, render/bird.js `headAndEye`). Going from one spot to the next it hops from rim to rim. With reduced
   motion it clings but doesn't peck.
 - *On its side,* it perches beside the board: in the margin where there is one, else in the 24 px gap between the
   column and the board.
