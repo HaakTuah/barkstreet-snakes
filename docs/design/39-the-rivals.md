@@ -5,8 +5,7 @@ its own weights and, for some, a driver that runs once a decision. The rules as 
 round six B and the owner's playtest settled them (their text, with what was tried and measured, is in
 `docs/archive/design-rivals.md`). Elsewhere: what they do with food and beetles (`04-food-and-the-world.md`, from
 "Rivals see food as it is"), with the woodpecker ("The rivals tell a mark from a hole" in `38-the-woodpecker.md`),
-with fire and head-ons (`14-crashes-not-deaths-the-rules-reworked.md`), with their own beads ("Choking on your own tail"
-in `27-round-six-a-fairness-and-fixes.md`), with each of round six B's moves, and the power styles still to build ("Every
+with fire, head-ons, their own beads and each move (`40-powers-and-moves.md`), and the power styles still to build ("Every
 rival has a power style", "Balance targets" and "Gobbler's endgame" in `29-round-six-b-the-new-moves.md`); their looks
 (`03-the-snake-as-a-character.md`); their lines
 (`09-voice-and-copy.md`, `13-lines-and-announcements.md`, `19-looks-and-lines.md`); Capricious, Copycat and Wildcard
@@ -127,7 +126,7 @@ It's the same rule for every snake (`readDesperation` in `ai/food.js`).
 A mushroom costs a rival as many apples as the segments it takes (`SHRINK`, 3, the first time), fed or hungry; Gobbler,
 which hates them, counts it twice (`mushroom` −6). With a shot in reach, a rival weighs eating one on purpose against
 the shot, by its taste for it (`spit`: Drab 0.05, Ghost 0.2, Sniper 2.5, Joker 4): "Mushrooms come back up" and "The
-spit flies along the line" in `29-round-six-b-the-new-moves.md`. Desperate, it takes no shots.
+spit flies along the line" in `40-powers-and-moves.md`. Desperate, it takes no shots.
 
 ### Rivals use their powers, when it pays
 
@@ -149,14 +148,14 @@ pressed only when it beats crawling (`powerPick` in `ai/powers.js`):
   Ghost 0.8, Desperado 0.6), and putting a flier out by lying on its ring (`landing`, 0.6 by default: Drab 0.15,
   Desperado 1.2, Sniper 1.5).
 
-How each move is used and seen used against them is in its own section in `29-round-six-b-the-new-moves.md`; the power
+How each move is used and seen used against them is in its own section in `40-powers-and-moves.md`; the power
 styles and one pricing model for every power are still to build (part 7 of round six B, in `docs/PROGRESS.md`).
 
 ### A cornered AI makes the sensible last move
 
 When every move looks fatal, a wall, a hole or its own body is certain death, but a rival's cell may already be free (it
 sees rivals as they were a moment ago), so it bets on the cell that frees up soonest (`maybeFree` in `ai/search.js`).
-Through fire rather than a crash: "Fire on snakes" in `14-crashes-not-deaths-the-rules-reworked.md`.
+Through fire rather than a crash: "Fire on snakes" in `40-powers-and-moves.md`.
 
 ### The board split
 
