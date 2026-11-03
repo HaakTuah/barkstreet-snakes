@@ -386,8 +386,8 @@ function onFrame(now) {
 // Keep it playable everywhere: if this device keeps dropping frames during
 // a round (over 12% of frames late, two windows of about three seconds in a
 // row), the board draws less, for good: first no canopy shadows and a lower
-// resolution, then the lowest. (Late means half again the shortest frame
-// seen in the window, so 60, 120 and 144 Hz screens are judged alike.)
+// resolution, then the lowest. (Late means over 1.6 times the shortest frame
+// seen in the window, and over 12 ms, so 60, 120 and 144 Hz screens are judged alike.)
 const governor = { frames: 0, late: 0, best: Infinity, dts: [], strikes: 0, pinned: false };
 function govern(dt) {
   if (governor.pinned || state !== 'running' || document.hidden || Render.quality === 0 || !theGame || theGame.time < 1500 || dt <= 0) return;
