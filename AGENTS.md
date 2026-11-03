@@ -15,7 +15,7 @@ it directly. Codex: read the "For Codex" section of `docs/claude-and-codex.md` a
 | --- | --- |
 | What is done and the queue, in order | `docs/PROGRESS.md` |
 | Claude and Codex: who builds what, the hand-over, the fallback, the reviews' score | `docs/claude-and-codex.md` |
-| Security: what is protected, and the rules every builder and reviewer keeps | `SECURITY.md` |
+| Security: the rules every builder and reviewer keeps; what is protected and who might attack (the threat model) | `SECURITY.md`, `docs/threat-model.md` |
 | How builder sessions and lanes are run (for the orchestrator), and the workshop check's marks | `docs/orchestrating.md` |
 | Running and checking it, every tool, PR pictures, GitHub's REST calls, Dependabot and CodeQL; each file of the game and its tools, and where each folder lists its parts ("How it's put together") | `docs/developing.md` |
 | The design, one file per topic | `docs/design/` (index: `DESIGN.md`) |
