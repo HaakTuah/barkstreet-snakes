@@ -73,8 +73,8 @@ and the owner's notes of 2 November, among them).
 
 ## The workshop lane (splits by meaning, leftovers, the file-by-file review)
 
-- **After part 5 merges:** remove `coughs` from `ai/` (nobody coughs: `ai/evaluate.js`, `ai/room.js`, `ai/buffers.js`),
-  fingerprint-identical. It waits for part 5 (#202), which may change those files.
+- *Done:* `coughs` removed from `ai/` (nobody coughs: `ai/evaluate.js`, `ai/room.js`, `ai/buffers.js`, `ai/food.js`),
+  fingerprint-identical (the workshop/remove-coughs PR).
 - *Done:* the woodpecker's two unplayed cues removed (`audio/cues.js`, `audio/sound.js`; PR #434).
 - *Done:* the workshop check's point (2): `AGENTS.md` from 21.5 to 20.0 KB, every rule kept; the workshop check's marks
   moved to `docs/orchestrating.md`, the file table's detail to `docs/developing.md` (PR #420).
