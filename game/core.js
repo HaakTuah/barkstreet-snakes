@@ -164,7 +164,7 @@ const FLAVOR = {
   youSnip: name => `Snip! You cut ${name} in two.`,
   youSnipped: name => `Snip. ${name} dashed right through you.`,
   youBumped: 'Bumped in mid-air! Down you go.', // (round six B: your first bump in the air)
-  youGoldFly: 'Hold the jump to fly 5 cells. Steer to land!', // (your first golden jump)
+  youGoldFly: touchFirst ? 'Hold your finger down to fly 5 cells. Steer to land!' : 'Hold the jump to fly 5 cells. Steer to land!', // (your first golden jump)
   ringRace: 'A flier lands on its ring. Get there first and it’s out!', // (2y: the first time a flier's ring is in your reach before it comes down)
   youRingRaced: 'A rival could get to your ring first. Steer away!', // (2y: the first time a rival could reach your ring before you're down)
   leapNow: 'Press twice to leap now, anywhere!', // (the first time a flier comes down just ahead of you: you could have cut it off)
