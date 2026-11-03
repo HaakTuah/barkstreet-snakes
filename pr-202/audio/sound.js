@@ -33,7 +33,7 @@ window.SnakeAudio = (() => {
   // (weather, the woodpecker, beetles): each gives way sooner than the one before.
   const MAX_VOICES = { you: 7, rival: 6, world: 5 };
   const PRIORITY = { death: true, best: true, win: true, winBest: true, ko: true, stinger: true }; // these always play
-  const WORLD = { beetle: 1, crackle: 1, thunder: 1, gust: 1, burrow: 1, heal: 1, scrabble: 1, dig: 1, knock: 1, rainbow: 1, rain: 1, snow: 1, ember: 1, woodpecker: 1, call: 1, aim: 1, drum: 1, crash: 1, peck: 1, bake: 1, ash: 1, douse: 1, lastApples: 1 };
+  const WORLD = { beetle: 1, crackle: 1, thunder: 1, gust: 1, burrow: 1, heal: 1, scrabble: 1, dig: 1, knock: 1, rainbow: 1, rain: 1, snow: 1, ember: 1, call: 1, aim: 1, drum: 1, crash: 1, bake: 1, ash: 1, douse: 1, lastApples: 1 };
   const RIVALS = { rivalDeath: 1, bonked: 1 };
   const RIVAL_VOLUME = 0.5;    // a rival's leap or dash, next to yours...
   const RIVAL_LOWPASS = 2600;  // ...and a little duller, as if further off
@@ -63,7 +63,7 @@ window.SnakeAudio = (() => {
   const MIN_INTERVAL = {
     eat: 40, golden: 60, meat: 60, mushroom: 80, crunch: 80, beetle: 3000, leaf: 60,
     rivalDeath: 120, death: 250, best: 400, win: 600, winBest: 600,
-    beat: 80, go: 80, woodpecker: 400, peck: 340, hungry: 1200, hungerWarn: 1500, ui: 30, // peck: never more than 3 in any second
+    beat: 80, go: 80, hungry: 1200, hungerWarn: 1500, ui: 30,
     crackle: 300, thunder: 900, gust: 1500, burrow: 1000, scrabble: 250, rainbow: 1500, rain: 1500,
     ko: 200, close: 1400, field: 800, bonk: 150, bigBonk: 300, bonked: 300, leap: 120, thunk: 250, dash: 50, douse: 300, wrap: 1500, boom: 300, ready: 600, alight: 400, singe: 200, bake: 400, ash: 400, snip: 300, drum: 300, crash: 300, aim: 400, call: 2000, snow: 1500, ember: 250, riser: 1500, stinger: 1500,
     flash: 150, flashReady: 600, lastApples: 4000,
