@@ -34,7 +34,7 @@ where a clearly better home exists, or a pointer where no reader needs it.
 reads machine-made (one shape filled in again and again, filler, clichés, two voices alike); the slop audit in
 `docs/PROGRESS.md` sets the bar.
 
-**A rule file changed** (`SECURITY.md`, rule 3), for every reviewer: report as P1 a rule that departs from the
+**A protected file changed** (`SECURITY.md`, rule 3), for every reviewer: report as P1 a rule that departs from the
 owner's archived words it cites (`docs/archive/instructions.md`), so a rule never drifts from what he said.
 
 **One idea, for every reviewer** of a change to the game (not docs, design copies or Dependabot's updates): end the
