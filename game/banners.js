@@ -126,7 +126,7 @@ function news(dying) {
     if (e.type === 'cut' && e.by === me.id && once('youCutFirst')) return toast(FLAVOR.youCutFirst, 2400, 'gold', 'lesson');
     if (e.type === 'cut' && e.by === me.id) return toast(FLAVOR.youSnip(who(e.snake, true)), 1800, 'gold');
     if (e.type === 'crash' && e.air && isMe(e.snake) && once('youBumped')) return toast(FLAVOR.youBumped, 2400, 'warn', 'lesson');
-    if (e.type === 'leap' && e.gold && isMe(e.snake) && once('youGoldFly')) return toast(touchFirst ? FLAVOR.youGoldFly.replace('Hold', 'Hold your finger down') : FLAVOR.youGoldFly, 2800, 'gold', 'lesson');
+    if (e.type === 'leap' && e.gold && isMe(e.snake) && once('youGoldFly')) return toast(FLAVOR.youGoldFly, 2800, 'gold', 'lesson');
     if (e.type === 'crash' && e.failed && once('youFlashFailed')) return toast(FLAVOR.youFlashFailed, 2600, 'warn', 'lesson');
     if (e.type === 'cut' && e.by != null) return toast(FLAVOR.youSnipped(theGame.snakes[e.by]?.name || 'Someone'), 2200, 'warn', 'lesson');
     if (e.type === 'alight') { flashFrame('kill'); if (once('alight')) return toast(pick(FLAVOR.youAlight), 2600, 'fire', 'lesson'); } // (later burns: the flames and the -1s say it)

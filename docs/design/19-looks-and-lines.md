@@ -1,10 +1,14 @@
 ## Looks and lines
 
-- **Friends get their own arrow.** Online, the bouncing arrow that says YOU over your head at the start also points out each friend, a touch smaller, with the name they picked in their colour, so you know at a glance who's who (each screen shows its own YOU).
-- **A crash you don't survive goes off with a bang.** A comic starburst (flat, inked, a cached sprite) and a thick shockwave ring in the snake's colour with an ink edge at its head, a spray of pieces from the head and along the body, and a little smoke; your kill shakes the board a touch. (Before, a snake just burst into its beads, which read the same as a crash you survive.) With reduced motion it's a still starburst and ring, fading.
+- **Friends get their own arrow**: its rule is in `22-play-with-friends-online.md` ("On a friend's screen"), and its
+  text as it was in `docs/archive/design-online.md`.
+- **A crash you don't survive goes off with a bang**: its rule is in `41-crashes.md` under the same name, and its text
+  as it was in `docs/archive/design-powers.md`.
 - **Mute is a mood ring, not a rainbow** and **Holding a power shows**: their rules are in
   `03-the-snake-as-a-character.md` under "Mute is a mood ring, not a rainbow" and "A power is one token, not a
   ring", and their text as it was in `docs/archive/design-looks.md`.
-- **Fields that overlap.** A snake's own fields that overlap (Colonist's colonies) are drawn as one merged field with one rim round the lot, not rings crossing rings. Where two snakes' fields meet (a colony planted in Sovereign's realm, say), the border between them crackles: a jagged, flickering seam of pale light, throwing the odd spark, outlining the contested ground. Colonist may plant in anyone's land; the field is a look, and the rules don't change. (Round four's borders keep the merging: one line round a snake's own land, and where two owners' land meets, a line dashed in both colours, standing still, with the land both claim hatched; the seam and its sparks went with the domes.)
-- **Land lines.** Sovereign and Colonist mind their land: fire in it ("Our realm is ablaze! Fetch the royal bucket!", "I say, the colony's on fire!", at most every 12 s), the woodpecker pecking it ("That bird is pecking holes in OUR land!"), food rotting on it (round four: "Something is rotten in our realm.", "I say, something's gone off in the colony.", at most every 30 s), and, for Sovereign, a colony planted in its realm ("A colony? On OUR land, Colonist?!"). All with their Chinese for Copycat. Land is one rule everywhere since round four (the AI, the chatter, the HUD and the borders): a cell whose centre is within the field's radius plus `LAND_REACH` (0.5) of its centre.
+- **Fields that overlap**: its rules are in `44-realms-and-colonies.md` under the same name, and its text as it was
+  in `docs/archive/design-realms.md`.
+- **Land lines**: its rules are in `13-lines-and-announcements.md` under the same name, and its text as it was in
+  `docs/archive/design-chatter.md`.
 

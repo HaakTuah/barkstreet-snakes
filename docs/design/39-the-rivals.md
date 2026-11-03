@@ -2,18 +2,17 @@
 
 Three rivals play every round with you (four when you watch), dealt from a cast of eighteen. Each is the same AI with
 its own weights and, for some, a driver that runs once a decision. The rules as the rivals' look ahead, round four,
-round six B and the owner's playtest settled them (their text, with what was tried and measured, is in
-`docs/archive/design-rivals.md`). Elsewhere: what they do with food and beetles (`04-food-and-the-world.md`, from
+round five, round six A and B and the owner's playtest settled them (their text, with what was tried and measured, is
+in `docs/archive/design-rivals.md`). Elsewhere: what they do with food and beetles (`04-food-and-the-world.md`, from
 "Rivals see food as it is"), with the woodpecker ("The rivals tell a mark from a hole" in `38-the-woodpecker.md`),
-with fire, head-ons and their own beads (`41-crashes.md`), with each move (`40-powers-and-moves.md`), and the power styles still to build ("Every
-rival has a power style", "Balance targets" and "Gobbler's endgame" in `29-round-six-b-the-new-moves.md`); their looks
-(`03-the-snake-as-a-character.md`); their lines
-(`09-voice-and-copy.md`, `13-lines-and-announcements.md`, `19-looks-and-lines.md`); Capricious, Copycat and Wildcard
-(`35-capricious-copycat-and-wildcard.md`); Ouroboros (`17-ouroboros-and-the-golden-beetles-leap.md`); Star
-(`26-round-five-star.md`); Sovereign's realm and Colonist's flags (`04-food-and-the-world.md`, and "A pecked flag is a
-lost colony" in `27-round-six-a-fairness-and-fixes.md`); how they think quickly, and its tools
-(`28-the-rivals-think-faster-round-six-as-optimization.md`); and how each round measured them ("Round four, measured" in
-`25-round-four-measured.md`, "Round six A, measured" in `27-round-six-a-fairness-and-fixes.md`).
+with fire, head-ons and their own beads (`41-crashes.md`), with each move (`40-powers-and-moves.md`); the power styles'
+measure ("Balance targets", below); their looks (`03-the-snake-as-a-character.md`); their
+lines (`09-voice-and-copy.md`, and the chatter, with Star's voice, in `13-lines-and-announcements.md`); Capricious,
+Copycat and Wildcard (`35-capricious-copycat-and-wildcard.md`); Sovereign's realm and Colonist's flags, and a pecked
+flag (`44-realms-and-colonies.md`); the tools that time and measure them
+(`28-the-rivals-think-faster-round-six-as-optimization.md`); and how each round measured them ("Round four, measured"
+in `25-round-four-measured.md`, "Round five, measured" in `26-round-five-star.md`, "Round six A, measured" in
+`27-round-six-a-fairness-and-fixes.md`).
 
 ### What a rival sees
 
@@ -141,9 +140,7 @@ pressed only when it beats crawling (`powerPick` in `ai/powers.js`):
 - *Golden jumps:* whenever one pays, at a third of an apple (0.35).
 - *Golden dashes:* 0.6 of an apple, pressed out of a trap or for a cut that puts a rival out.
 - Desperate, every power is half the price.
-- *Star's habit* (`powers`: `price` 0, `risk` 350, `everyWay`, `jumpAny`, `dashSpend`): its powers are free unless one
-  ends where a rival could strike, it weighs the flash every way, jumps any hurdle with somewhere free to land, and
-  spends golden dashes on speed (at the full price).
+- *Star's habit* (`powers`): its powers are free unless one ends where a rival could strike ("Star", below).
 - *A style's own price,* where a persona has one: a leap now out of a trap (`leapNow`, times the jump's price: Drab 4,
   Ghost 0.8, Desperado 0.6), and putting a flier out by lying on its ring (`landing`, 0.6 by default: Drab 0.15,
   Desperado 1.2, Sniper 1.5).
@@ -200,12 +197,87 @@ driver are in `ai/rivals/`, over the shared template in `ai/rivals.js` (`DRAB`, 
 Still to build (part 7 of round six B, in `docs/PROGRESS.md`): measures that catch Mute's boxing, Joker's lures and
 Mason's body beside itself, which show little over the field on a simple measure, and Joker lifted into the band.
 
+### Ouroboros
+
+The snake that eats its own tail, the 17th rival (its look: "The rivals' looks" in `03-the-snake-as-a-character.md`).
+Its `coil` weight (`{ weight: 20, from: 10 }`) rewards keeping its head close behind its own tail once it's 10 or
+longer, so it moves as a ring; food pulls it along, so the ring rolls over food, and anything caught inside is boxed in.
+It's distinct from Mute (who boxes in one chosen victim) and Sovereign (who guards land). The ring is a strong, safe
+shape, so its coil is gentle and its caution and appetite low (`headRisk` 800, `food` 3), to keep it in the band.
+
+### Star
+
+The owner's idea: the rainbow body, dropped before, given to a new rival, a star with a rainbow following it, inspired
+by the stars of the original Paper Mario (its look and tell: "Star" in `03-the-snake-as-a-character.md`; its voice:
+"Star's voice" in `13-lines-and-announcements.md`). *Why it belongs:* every rival prices jumps and flashes the same way, and Star
+is the first whose whole character is the powers, a power addict that jumps and flashes as often as it can, so it
+shows what they can do; a shooting star dragging a rainbow is the most natural home the rainbow has had.
+
+It prices powers far below anyone else, by the same rules and the same engine calls, through two persona weights that
+are off for everyone else, so rounds without Star play exactly as if it didn't exist:
+- **`w.powers`** `{ price: 0, risk: 350, everyWay, jumpAny, dashSpend }`. Its powers are free to it, unless one ends
+  where its risk is over 350 (a rival could strike there: in reach of its powers, or nearer), and there it pays the
+  full price, as anyone would. A power still has to beat crawling by a point.
+  - **Flashes:** whenever it's rested and the flash doesn't run into anything, weighed every way, not just the way it
+    would crawl: about four times as often as anyone else.
+  - **Jumps:** any hurdle with somewhere free to land beyond it that no rival could get to before it's down, not just
+    out of a crash or onto food.
+  - **Golden dashes:** spent on speed too, not only on cuts and golden things, but at anyone's price for one (0.6 of
+    an apple), so only for a real gain, such as beating a rival to an apple.
+- **`w.golden`** `{ power: 6, apple: 1.5, contested: 0.5 }`. It craves golden things above everything, to feed the
+  habit: golden power food (golden beetles, golden leaves and golden mushrooms; a plain beetle is worth to it what
+  it's worth to anyone) is worth six times as much to it, a golden apple one and a half times, and golden power food a
+  rival will reach first still counts half.
+- **`territory` 1.2:** of everything tried, the only change that moved its win rate.
+
+Spending powers on small gains makes a rival weaker, so Star stays a threat in two ways: each power goes by the same
+tests of where it goes as anyone's, and pays the full price where a rival could strike, so it rarely flashes into a
+crash; and its craving keeps it stocked with golden jumps. It's tuned into the same band as everyone; its habitual
+jumps neither help nor hurt measurably, and stay because they're the character.
+
+### Every rival has a power style
+
+Each persona uses jumps and flashes its own way, through the same engine calls as a person. Most of it is still to
+build (part 7 of round six B, with one pricing model for every power, in `docs/PROGRESS.md`); "Balance targets",
+below, is its measure.
+- **Built so far:** Star's habit ("Star"); a style's own price for a leap now and for a flier's ring (`leapNow`,
+  `landing`: "Rivals use their powers, when it pays") and for a mushroom shot (`spit`: "Mushrooms, to a rival");
+  everyone's island hop, and a tail dropped only when trapped ("The plain jump hops islands" and "Dropping your tail"
+  in `40-powers-and-moves.md`).
+- **To build, each its own:** Sniper cuts off its target; Mute seals boxes; Gobbler races for food; Vulture flashes to
+  beads; Ghost keeps a flash ready to escape. Sovereign and Colonist chase intruders off their land; Mason finishes
+  walls; Creeper flashes in behind tails; Desperado for the thrill; Joker springs its lures; Ouroboros jumps its own
+  coils and drops its own tail. Star is the addict; Wildcard is random; Capricious and Copycat borrow; Metagamer reads
+  its rivals; Drab is the baseline.
+- **To build, all of them:** a ready flash is worth keeping (a reserve value); length is worth trading for room when
+  boxed in (jump to an island, or drop the tail); keep a jumpable way out; cross the woodpecker's mark when they'll be
+  out of it before the strike (today they keep out of a mark as out of a hole: "The rivals tell a mark from a hole" in
+  `38-the-woodpecker.md`).
+- *The test case:* the owner's screenshot (Gobbler folded on a strip, an island across a hollow). The rival must find
+  the hop, the flight or the tail drop.
+
+### Gobbler's endgame
+
+To build, with the power styles. Gobbler grows longest, and most of its deaths come late, in pockets too small for it;
+no weight change held it up ("Gobbler, at the floor" under "Round six A, measured" in
+`27-round-six-a-fairness-and-fixes.md`). Its style is the cure, not a number: it hops to the next island for food, and
+drops its tail when a pocket is too small. The aim: Gobbler comfortably inside 15–35%, its food share still the
+field's biggest.
+
 ### The band
 
 Every persona wins 15–35% of the rounds it plays, over several seeds (one persona on one seed is about 130 rounds, ±7
 points of noise; over five seeds about 660, ±3). A persona outside it is retuned, without losing its trademark; one at
 the floor whose retunes don't hold up on fresh seeds keeps its weights ("Gobbler, at the floor" under "Round six A,
 measured"). The latest rates by persona are in "Win rates by personality" there.
+
+### Balance targets
+
+The measure for the moves and the power styles, as round six B set it (simulation, paired seeds): powers on clearly beat
+powers off in the seat-split A/B; every persona in the band (above); rounds about 160–180 s; starving at most 8%;
+failed flashes rare enough to be a risk you take on purpose. The numbers chosen against it are in each move's section
+of `40-powers-and-moves.md`; the text as it was, with the A/B as it stood then, is in
+`docs/archive/design-arc-and-history.md`.
 
 ### How a change to the rivals is measured
 
@@ -217,7 +289,30 @@ measured"). The latest rates by persona are in "Win rates by personality" there.
   move them ("Rules that stand" in `AGENTS.md`). A behaviour the census can't count gets a census of its own in
   `tools/dev/`.
 - **The cost:** a decision's time, from `tools/bench-ai.js`. Every new weight goes in `WEIGHTS` (`ai/rivals.js`), or
-  every search that reads it is slower ("One shape of weights" in `28-the-rivals-think-faster-round-six-as-optimization.md`).
+  every search that reads it is slower ("One shape of weights", below).
+
+### How they think quickly
+
+A rival's thinking (`decide()`, `ai/decide.js`) is most of the time the simulation and CI take, so its searches are
+built for speed, and a change made for speed alone keeps every decision ("How a change to the rivals is measured"; the
+tools in `28-the-rivals-think-faster-round-six-as-optimization.md`).
+- **The framed board.** The territory search, my room's flood fill and each rival's reach run on the grid framed by a
+  border of holes (`frameBoards` in `ai/buffers.js`), so a cell's neighbours are just a row up or down and a cell either
+  side, and no search tests for the edge. On the territory search's board (`terr`, which my room's fill reads too), one
+  Int32 a cell says everything a search asks of it: when the cell frees up for a rival (my body placed on it), or, once
+  the territory search has claimed it, `CLAIMED` plus when, with whose it is in the lowest bits. Each search state
+  starts from a copy of the board (`terrFree`) instead of undoing the last.
+- **Searches compiled once.** The searches over the framed board are functions of their own at the top level
+  (`ai/room.js`), outside `decide`, reading only typed arrays and plain numbers, so V8 compiles them once and they stay
+  compiled. A function that meets something of a new shape (a persona, a kind of food) is compiled all over again, and
+  runs uncompiled meanwhile.
+- **One shape of weights.** The search reads every persona's weights through one shape: a copy of the persona's own
+  over `WEIGHTS` (`ai/rivals.js`), which lists every weight. **A new weight goes in `WEIGHTS`.** One left out still
+  works, but every search that reads it is slower.
+- **The territory search stops early.** Once I claim nothing more, the rest is the rivals sharing out what's left among
+  themselves, which counts only for an aggressive snake; so for anyone else it stops there, unless a rival could still
+  claim food it can't eat (its own bead), which would still be mine to take. (The search still allows for a rival
+  that's coughing, `coughs`, but nobody coughs now.)
 
 ### The rival line-up
 

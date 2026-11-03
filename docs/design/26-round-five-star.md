@@ -1,35 +1,14 @@
 ## Round five: Star
 
-The owner's idea: bring back the rainbow body we dropped and give it to a new rival, **Star**. Star is inspired by the stars of the original Paper Mario, the one with the big mustache, so it looks like a star with a rainbow following it. It's a power addict that jumps and flashes as often as it can. These are the calls, as they were built; where the build changed one, it says so.
-
-**Why it belongs.** Round four made jumping and flashing central, but every rival prices them the same way. Star is the first rival whose whole character is the powers: it shows what they can do. The rainbow also finally gets a home that fits.
-- It was Wildcard's first, then Mute's.
-- Mute became a mood ring, because a mime's colour should be its mood.
-- A shooting star dragging a rainbow is the most natural use the rainbow has had.
+**The owner's idea**, **Why it belongs** and **How it plays**: their rules are in `39-the-rivals.md` under "Star",
+and their text as it was in `docs/archive/design-rivals.md`.
 
 **The look** and **The tell: a countdown on its five points**: their rules are in `03-the-snake-as-a-character.md`
 under "Star" and "The tell: a countdown on its five points", and their text as it was, with why a countdown, in
 `docs/archive/design-looks.md`.
 
-**How it plays.** Star prices powers far below anyone else, by the same rules and the same engine calls. It's two persona weights, both off for everyone else, so rounds without Star play exactly as before (100 rounds drawn without it, seed 3, give the stub's fingerprint, 202796421):
-- **`w.powers`** `{ price: 0, risk: 350, everyWay, jumpAny, dashSpend }`. Its powers are free to it, unless one ends where its risk is over 350 (a rival could strike there: in reach of its powers, or nearer), and there it pays the full price, as anyone would. A power still has to beat crawling by a point. (The brief said a fraction of the price: at 0.05 Star flashed 8.2 times a minute and won no more, 22 / 19%.)
-  - **Flashes:** whenever it's rested and the flash doesn't run into anything, weighed every way, not just the way it would crawl: about four times as often as anyone else.
-  - **Jumps:** any hurdle with somewhere free to land beyond it that no rival could get to before it's down, not just out of a crash or onto food. (A head moving into the landing stops a jump, and it crawled into what it meant to hop: about one avoidable crash every two rounds, until the critique.)
-  - **Golden dashes:** spent on speed too, not only on cuts and golden things, but at anyone's price for one (0.6 of an apple), so only for a real gain, such as beating a rival to an apple. (Free to it, it spent both in the two ticks after a leaf, in a zig-zag that cut nobody: 69% of its dashes, against 18% now.)
-- **`w.golden`** `{ power: 6, apple: 1.5, contested: 0.5 }`. It craves golden things above everything, to feed the habit: golden power food (golden beetles, golden leaves and golden mushrooms; a plain beetle is worth to it what it's worth to anyone) is worth six times as much to it, a golden apple one and a half times, and golden power food a rival will reach first still counts half. (Without `contested` it ate 1.0 golden power food a round, against 0.68 for the rest.)
-- **Territory 1.2**, from the stub's 0.6: of everything tried, the only change that moved its win rate (23% to 26.5%, over 800 rounds with Star in every one).
-
-Round four measured that spending powers on small gains makes a rival weaker. So Star stays a real threat in two ways. Each power goes by the same tests of where it goes as anyone's, and pays the full price where a rival could strike, so it rarely flashes into a crash: 0.5% of its flashes crash that tick, against 1.7% for the rest's, and 1.4% of its plain jumps crash within 0.3 s of taking off. And its craving keeps it stocked with golden jumps. It's tuned by simulation into the same 15–35% band as everyone. Tried and no better (Star in every round, both seeds): more room wanted (`margin` 6); more fear of heads (`headRisk` 900); no habitual jumps (22 / 19%: they neither help nor hurt measurably, and stay because they're the character); the plain jump at a third of its price; `space` 1.4 with `territory` 1.0.
-
-**Its voice.** A jolly old-timer who can't stop showing off, and is never mean: "Whee! Still got it!", "In my day we flashed uphill both ways!" It has a line for every moment anyone has (but the ones that are one voice's own) and four of its own:
-- **Showing off** (`zoom`): any plain flash of its own, not just one that beats someone to food or shoots past a head (those keep their `flash.first` and `flash.past` lines); its jumps too, half the time, and all of them together at most every 10 s. Its golden dashes and golden jumps it always cheers when it can talk. `ready`, its flash back ("Back in business!"), comes only once the flash has been back a second: it flashes the tick its rest ends, so that's rare (about 0.4 a round). As first built, `ready` came a tick before almost every flash and was its commonest line (197 of 928, now 20). The numbers in the next lines are from before the critique: since, a flash is cheered about one time in five (21%, from 11%), and a round repeats fewer of its lines (53 from 79, in 48 rounds). In whole AI rounds (60, Star in every one, the chatter's own chances) that's about one plain flash in ten cheered (139 of 1,401), one plain jump in seven and a show-off every 19 s alive, never two within 10 s; half of them are `ready` lines. At its most addicted (staged: a flash every 6 s and a jump every 4, for three minutes) it shows off 12 times.
-- **Grumbling** (`resting`): while its flash rests, half its small talk ("Rest, rest, rest. I'll rest when I'm old!").
-- **Its stash** (`stash`): a golden beetle it eats ("Golden! Straight in the tank."); a golden leaf gets a golden-flash line as it eats it ("Out of my way, I'm golden!"), since it spends the leaf's flashes there and then. Since the critique, Star's own moments (golden power food, a rainbow, its kill, being cut) are never crowded out by its showing off: it says them every time it can talk (from 39–57% before). A golden mushroom gets its `wrap` lines and a golden apple its `golden` one instead, its own for both; a plain apple it mentions a third as often as anyone (5% of them, against 15%: at 15%, two lines in five were about apples).
-- A rainbow is family ("Family!", "Oh, look at you! You've grown!"): Star speaks first if it's alive and free to talk, and otherwise someone else does, as before. In those rounds it greeted half the rainbows it saw (14 of 28).
-- Now and then (a quarter of its show-offs, at most every 40 s, 1.1 s later) Wildcard brags back ("Fast? I invented fast, Star.") or Mason answers in Latin ("Festina lente, Star!"): about one a round in four.
-- Its kill and win lines ("Make a wish.", "Not bad for an old-timer.") never repeat its chatter. ("Too slow, sonny!" was too close to another game's famous taunt.) Its start-card line: "Jumps and flashes every chance it gets. Catch it when it dims." It joins the gigglers at Mason's *Biggus Dickus* ("Har har! Oh, my mustache!").
-
-All told it says about eight lines a minute alive. Every line has its Chinese for Copycat: 805 lines now (717 before), 776 Chinese, 173 punchlines (142). Also since the critique, for everyone: a golden dash that cuts someone gets the dasher's snip line (a tail off) or its kill line (in two), and its dash line only when those can't be said.
+**Its voice**: its rules are in `13-lines-and-announcements.md` under "Star's voice", and its text as it was, with
+what was measured, in `docs/archive/design-chatter.md`.
 
 **The cast**, **Copycat copying Star**, **Along the way, for everyone** and **Worth a look**: their rules are in
 `03-the-snake-as-a-character.md` (under "Star", "Copycat copying Star" and "Your snake"), and their text as it was
@@ -64,6 +43,6 @@ Per persona, from a scratch census of the same rounds (the same fingerprints), S
 - **Its deaths:** a body 55 / 54%, then itself 19% and holes 12% on seed 3, holes 18% and itself 15% on seed 11. It starves in about 2% of its rounds and never blows itself up.
 - **Its thinking** (`decide()`) costs no more than anyone's (a quiet run of 80 rounds: mean 0.65 ms, p99 3.2, against 0.78 and 3.5 for the rest): it's rarely rested, so it weighs the flash less often.
 - **Its look:** as paths, the star and its mustache cost the GPU about 0.57 ms a frame on the long-snake scene, so they're a sprite (see "Prerender" under Skipped or adapted). Against bf81687, interleaved in one browser (16 rounds, the quickest of 12 batches, 800×800 at 2x): the `long-star` scene (the long-snake scene with Star in Sniper's seat) 1.05 times (rounds 0.85 to 1.19), the `long` scene without Star 0.96 times (0.73 to 1.17), both within noise. `tools/bench.js` times `long-star` beside `long`.
-- **Its voice:** above, under "Its voice" (60 whole rounds on the chatter's own chances, seed 5).
+- **Its voice:** under "Its voice" in `docs/archive/design-chatter.md` (60 whole rounds on the chatter's own chances, seed 5).
 - **Tests:** `tools/rules-test.js` has nine checks of Star's habit (five fail on the stub), `tools/render-test.js` six of its look (five fail on the stub; the sixth, its rainbow holding still with reduced motion, passes on the stub's plain fade anyway), and `tools/chatter-test.js` plays its voice through (297 checks of the chatter and the sound, from 250).
 

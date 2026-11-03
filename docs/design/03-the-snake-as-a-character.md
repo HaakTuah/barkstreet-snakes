@@ -7,8 +7,8 @@ tried and measured, is in `docs/archive/design-looks.md`). All of it is drawing 
 plays. Elsewhere: the interface's eight colours (`02-art-direction-storybook-bark-on-a-mossy-log.md`); beads and remains
 ("Remains" in `04-food-and-the-world.md`); the YOU marker at the start ("YOU" in `16-the-first-seconds.md`) and friends'
 arrows and the crash's bang (`19-looks-and-lines.md`); people's seat colours and markings (`22-play-with-friends-online.md`);
-Ouroboros (`17-ouroboros-and-the-golden-beetles-leap.md`); a costume change ("A costume change" in
-`35-capricious-copycat-and-wildcard.md`); each move's own cue (its section in `40-powers-and-moves.md`); the
+Capricious's and Copycat's play
+(`35-capricious-copycat-and-wildcard.md`); each move's own cue (its section in `40-powers-and-moves.md`); the
 woodpecker (`38-the-woodpecker.md`); the rivals' play (`39-the-rivals.md`).
 
 ### Your snake
@@ -120,16 +120,35 @@ Everything that comes out is drawn with a dark outline or a bright colour so it 
   about to bite) and nose, and a harlequin diamond round each eye, in its hat's purple and orange.
 - **Desperado:** a cowboy hat tipped back, a red bandana on its neck, and woven cream poncho stripes every fourth
   segment (cream, not Honey: gold means a power).
-- **Ouroboros:** a real snake's look ("Ouroboros" in `17-ouroboros-and-the-golden-beetles-leap.md`).
+- **Ouroboros,** the snake that eats its own tail, is the first that looks like a real snake: dark gold (`#b8860b`) with
+  a python's dark diamonds down its back (a pale fleck in each), a wedge-shaped head with a diamond on the crown, amber
+  eyes with black slits, nostrils. When its own tail is right in front of it, it opens wide and bites it: the symbol
+  itself, for a moment. Its remains are gold beads with a dark diamond. One head only: a decoy head would mislead you,
+  where which end is the head decides everything.
 - **Mute** is a mood-ring mime ("Mute is a mood ring, not a rainbow").
 - **Copycat** is in the flag's red ("Copycat in the flag's red" and "Copycat's face"), with dashed rings round its
   segments: a copy of someone.
 - **Capricious** is always pink, so you can always find it whatever mood it's in. **It starts every round undecided**
   (its own pink self, one eye big, one small, a brow cocked) for 3.5 to 5.5 s before its first mood, and dithers like
   that for 1.2 to 2 s between moods. In a mood it wears that rival's face, as a costume over its own pink body; each
-  change of mood is a costume change ("A costume change" in `35-capricious-copycat-and-wildcard.md`), and Copycat's
-  change of model looks the same, in its red.
+  change of mood is a costume change ("A costume change"), and Copycat's change of model looks the same, in its
+  red.
 - **Star** is a sunflower star trailing a rainbow ("Star").
+
+### A costume change (2t)
+
+Capricious is always pink, so it needs no ring round its head to be found while its mood changes: its pink coat does
+that. Instead, one animation shows every change of costume (the owner's call, 30 October 2026; his words in
+`docs/archive/design-rivals.md`).
+- *How* (`costumeChange` and `drawChange` in `render/looks.js`): over `COSTUME_MS` (500 ms), in the face's frame.
+  Capricious taking up a mood, putting one down (undecided again), or changing one for another; Copycat taking on a new
+  model, or losing one. A puff of nine little clouds swells round the head and clears, in Capricious's pink or in
+  Copycat's red. The old costume (its face, and its head's colour, so Copycat's old copied head goes too) pops off,
+  growing and fading, in the first half. The new one pops on from 30% of the way, past full size and back, as food pops
+  in. With reduced motion it is a plain crossfade.
+- *Seen, not played:* each screen draws it from the mood and the model it has, so online play needs nothing new.
+- The name tag's dot in the list beside the board keeps its pink ring (`game/hud.js`): it is not on the board, and in a
+  list of dots it still marks the one that changes.
 
 ### Mute is a mood ring, not a rainbow
 

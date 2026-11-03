@@ -4,8 +4,8 @@ From 2:00 a great spotted woodpecker comes for the log, a patch at a time: it is
 round's arc, round four, round six A and the owner's playtest settled them (their text, with what was tried and measured,
 is in `docs/archive/design-woodpecker.md`). Elsewhere: how beetles flee its mark ("Beetles and the woodpecker" in
 `04-food-and-the-world.md`), the last apples that fall meanwhile ("Food on the log", there), its perch on a phone
-(`31-phones.md`, and "The phone gap" and "The phone's bottom" in `32-the-owners-playtest.md`), the sound's levels
-(`21-sound.md`), and a flag it pecks out ("A pecked flag is a lost colony" in `27-round-six-a-fairness-and-fixes.md`).
+("The woodpecker's perch" in `31-phones.md`), the sound's levels (`21-sound.md`), and a flag it pecks out ("A pecked
+flag is a lost colony" in `44-realms-and-colonies.md`).
 
 ### When it comes
 
@@ -251,9 +251,9 @@ phone's address bar never resizes it.
     woodpecker's mark flies to its ring." (the one idea you can act on, one line on a phone; that it won't shut you in
     if it can help it is the Field guide's);
   - the first time it pecks under you: "Pecking under you! Only your head can fall in.";
-  - the first mark that cuts a piece loose (or as it falls, if the banner was busy): "Cut loose, it falls! Get off the
-    shaded piece.";
-  - the first beetle it eats: "The woodpecker eats beetles too!".
+  - the first mark that cuts a piece loose (or as it falls, if the banner was busy): "The shaded piece is cut loose and will fall.
+    Get off it!";
+  - the first beetle it eats: "The woodpecker eats beetles too.".
 - **Death:** the card's title is **Pecked!** (or "Drilled!") for a head in the patch, "Down the hole!" for one on a
   piece cut loose, and "Flattened!" for a hole you hit (`09-voice-and-copy.md`, "Death titles").
 - **The Field guide's** Woodpecker row (`game/friends.js`, with a picture of an apple flying out of the mark to its
@@ -281,7 +281,7 @@ The sound topic is `21-sound.md` ("Round six A's cues", "The woodpecker's drum i
   bead was never its meal, so then the next nearest head was after it; when you were the one after it, nobody speaks
   for you. Never for a mushroom or what the bird ate; a knocked beetle caught within 4 cells counts.
 - **No rival announces its fair play:** the lesson does (a chatter test keeps it so).
-- Sovereign and Colonist mind their land pecked full of holes (`19-looks-and-lines.md`, "Land lines").
+- Sovereign and Colonist mind their land pecked full of holes (`13-lines-and-announcements.md`, "Land lines").
 
 ### Online
 
