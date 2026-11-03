@@ -36,9 +36,12 @@ fills each today. The models and effort Claude Code gives each of its roles: `CL
 - **Helpers: when they pay** (archive, 2 November 2026), for every builder: Claude's helpers and, once it can build,
   Codex's subagents. A helper starts cold, rereads what it needs and returns only a summary, so it is worth its cost
   only when the work has one of these shapes:
-  - *Parallel and independent:* parts that touch different files and need nothing from each other.
+  - *Parallel and independent:* parts that touch different files and need nothing from each other. Helpers that
+    write run in parallel only when their briefs already fix every choice their parts share (the tests, interfaces,
+    names and formats); otherwise one writer does the work, since each parallel writer makes choices the others never
+    see, and their work clashes (archive, 3 November 2026).
   - *Competing approaches, judged by measurement:* several candidate fixes for one problem, each tried in its own
-        worktree and measured the same way (`tools/abtest.js`, a census, the fingerprints); the best is kept, the rest
+    worktree and measured the same way (`tools/abtest.js`, a census, the fingerprints); the best is kept, the rest
     dropped.
   - *Bulk to brief:* many files read to answer one narrow question; the helper returns file:line and a sentence, so
     the builder's context stays clean.
@@ -46,10 +49,12 @@ fills each today. The models and effort Claude Code gives each of its roles: `CL
 
   It does not pay for small or one-pass work (docs, config, small fixes), for steps that depend on each other, when
   briefing it would cost most of the work, or for waiting on a run. Give each helper the cheapest model that does its
-  part well (Claude's: `CLAUDE.md`; Codex's: "For Codex"), a narrow brief and its own files, and check every result
-  before using it. At most four at a time, reviewers included; each lane's builder keeps its own four. The PR lists the
-  helpers that ran and what each gave, so the rule can be checked against its cost. Never stop to ask about helpers:
-  decide by these shapes.
+  part well (Claude's: `CLAUDE.md`; Codex's: "For Codex") and a brief that stands alone, since it sees nothing else:
+  its goal; what it returns, and in what form (file:line and a sentence, a diff in its own worktree, a measured
+  table); the files it may change and the sources it reads; and where its task ends. A vague brief brings back
+  duplicated work and gaps. Check every result before using it. At most four at a time, reviewers included; each
+  lane's builder keeps its own four. The PR lists the helpers that ran and what each gave, so the rule can be checked
+  against its cost. Never stop to ask about helpers: decide by these shapes.
 - **Escalation:** a problem that has defeated a builder twice goes to a fresh solver with a self-contained brief (the
   problem, what was tried, the files and lines); the builder who was stuck applies and checks the answer. The other
   model comes first once Codex can build (the status above): a problem that has defeated Claude goes to Codex as a
