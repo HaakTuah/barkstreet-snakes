@@ -120,7 +120,7 @@ for (let r = 0; r < ROUNDS; r++) {
     const s0 = g.snakes.find(s => !s.isPlayer && used(g, s));
     if (!s0) continue;
     const id = s0.id, after = snap(g);
-    if (MOVE === 'golden') { golden(before, after, id, g.snakes[id].name); forks++; g = back(after); continue; }
+    if (MOVE === 'golden') { golden(before, after, id, g.snakes[id].name, g.events.some(e => e.type === 'eat' && e.snake === s0 && e.kind !== 'golden' && e.kind !== 'mushroom')); forks++; g = back(after); continue; }
     const A = back(before), B = back(before);
     rngState = before.rng; E.step(A); const afterA = rngState;
     if (process.env.FORK_CHECK && (sig(A) !== sig(back(after)) || afterA !== after.rng)) throw new Error(`round ${r}, tick ${g.tick}: the fork's own play differs from the round's`);
@@ -137,15 +137,15 @@ for (let r = 0; r < ROUNDS; r++) {
 // 2z: one golden apple eaten, played on as it went (A), uneaten (B), as a plain apple (P) and as the apple of vigour (V),
 // all from the same random numbers after the tick. Diffs: what the apple as it is gave (A against B), its +3 over a
 // plain apple's +1 (A against P), and what vigour would add (V against A).
-function golden(before, after, id, persona) {
-  const was = back(before).snakes[id], G = T.GOLDEN_GROWTH;
+function golden(before, after, id, persona, otherMeal) {
+  const was = back(before).snakes[id], now = back(after), G = T.GOLDEN_GROWTH;
   const play = edit => { const x = back(after), s = x.snakes[id]; edit(x, s); rngState = after.rng; return playOut(x).get(id); };
   const A = play(() => {});
-  const B = play((x, s) => { s.grow -= G; s.eaten -= G; for (const k of ['lastAte', 'nextStarve', 'mealMs', 'ateTick']) s[k] = was[k]; });
+  const B = play((x, s) => { s.grow -= G; s.eaten -= G; if (!otherMeal) for (const k of ['lastAte', 'nextStarve', 'mealMs', 'ateTick']) s[k] = was[k]; }); // (another meal the same tick, a flash's on the way, keeps its refill: one meal's is any meal's)
   const P = play((x, s) => { s.grow -= G - 1; s.eaten -= G - 1; });
   const V = play((x, s) => { s.leapReadyAt = Math.min(s.leapReadyAt, x.time); s.flashReadyAt = Math.min(s.flashReadyAt, x.time); });
   const d = (a, b) => ({ place: b.place - a.place, win: (a.place === 1) - (b.place === 1), alive: (a.alive - b.alive) / 1000, out5: (b.alive < 5000) - (a.alive < 5000), len10: a.len10 - b.len10 });
-  diffs.push({ ...d(A, B), plain: d(A, P), vigour: d(V, A), rested: (was.leapReadyAt > back(after).time) + (was.flashReadyAt > back(after).time), persona });
+  diffs.push({ ...d(A, B), plain: d(A, P), vigour: d(V, A), rested: (now.snakes[id].leapReadyAt > now.time) + (now.snakes[id].flashReadyAt > now.time), persona });
 }
 const mean = k => diffs.reduce((t, d) => t + d[k], 0) / Math.max(1, diffs.length);
 const se = k => { const m = mean(k); return Math.sqrt(diffs.reduce((t, d) => t + (d[k] - m) ** 2, 0) / Math.max(1, diffs.length - 1) / Math.max(1, diffs.length)); };
