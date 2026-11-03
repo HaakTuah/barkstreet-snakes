@@ -1,7 +1,8 @@
 # Powers and moves, as they were decided: the round files' text
 
 The powers' and moves' sections as the round files had them, word for word, with their superseded versions and
-measurements. The current rules are in `docs/design/40-powers-and-moves.md`.
+measurements. The current rules are in `docs/design/40-powers-and-moves.md`, and the crash rules (crashes, head-ons, fire on snakes, your own beads) in
+`docs/design/41-crashes.md`.
 
 ## From crashes, not deaths (`14-crashes-not-deaths-the-rules-reworked.md`)
 

@@ -5,7 +5,7 @@ its own weights and, for some, a driver that runs once a decision. The rules as 
 round six B and the owner's playtest settled them (their text, with what was tried and measured, is in
 `docs/archive/design-rivals.md`). Elsewhere: what they do with food and beetles (`04-food-and-the-world.md`, from
 "Rivals see food as it is"), with the woodpecker ("The rivals tell a mark from a hole" in `38-the-woodpecker.md`),
-with fire, head-ons, their own beads and each move (`40-powers-and-moves.md`), and the power styles still to build ("Every
+with fire, head-ons and their own beads (`41-crashes.md`), with each move (`40-powers-and-moves.md`), and the power styles still to build ("Every
 rival has a power style", "Balance targets" and "Gobbler's endgame" in `29-round-six-b-the-new-moves.md`); their looks
 (`03-the-snake-as-a-character.md`); their lines
 (`09-voice-and-copy.md`, `13-lines-and-announcements.md`, `19-looks-and-lines.md`); Capricious, Copycat and Wildcard
@@ -155,7 +155,7 @@ styles and one pricing model for every power are still to build (part 7 of round
 
 When every move looks fatal, a wall, a hole or its own body is certain death, but a rival's cell may already be free (it
 sees rivals as they were a moment ago), so it bets on the cell that frees up soonest (`maybeFree` in `ai/search.js`).
-Through fire rather than a crash: "Fire on snakes" in `40-powers-and-moves.md`.
+Through fire rather than a crash: "Fire on snakes" in `41-crashes.md`.
 
 ### The board split
 

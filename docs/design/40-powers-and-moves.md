@@ -13,8 +13,8 @@ measured, is in `docs/archive/design-powers.md`). Elsewhere: how a held power, a
 `29-round-six-b-the-new-moves.md`); swipes, taps and the mouse (`31-phones.md`, `33-one-screen.md`, "Controls that keep
 up" in `24-round-four-the-owners-feedback-and-the-calls.md` and "Controls anyone can guess" in
 `27-round-six-a-fairness-and-fixes.md`); teaching (`30-teaching-by-showing.md`); Capricious, Copycat and Wildcard
-(`35-capricious-copycat-and-wildcard.md`); sound in general (`21-sound.md`); and one stamina for both plain powers, to
-build (`37-one-stamina.md`).
+(`35-capricious-copycat-and-wildcard.md`); sound in general (`21-sound.md`); one stamina for both plain powers, to
+build (`37-one-stamina.md`); and crashes, head-ons, fire on snakes and your own beads squashed (`41-crashes.md`).
 
 ### The words
 
@@ -204,10 +204,10 @@ a leap now down on it, puts the flier out (it comes down on a body).
 - In the air are each flying head and the part of its body lifted over what it hops. Flying into another snake's air
   is a bump; two flying heads in one cell both bump. Something on the ground passes under a flight, and a flight passes
   over the ground.
-- A bump costs what a crash does (`CRASH_LOSS` and `STUN_TICKS`), and you drop where you are:
+- A bump costs what a crash does (`CRASH_LOSS` and `STUN_TICKS`: "Crashes, not deaths" in `41-crashes.md`), and you drop where you are:
   - over bark, you're stunned there, and the ground's test for being trapped holds as for any crash: if there'll be
     nowhere to turn when the stun's over, you're out;
-  - over fire, you're stunned there and catch alight as if you'd crawled in ("Fire on snakes");
+  - over fire, you're stunned there and catch alight as if you'd crawled in ("Fire on snakes" in `41-crashes.md`);
   - over a hole, you fall in and you're out;
   - onto a body, you're out: you drop straight down, and the snake under you blocks your landing.
 - Coming down on a body at the end of a flight is the same, and puts you out. So a golden flash through a landing cell
@@ -233,7 +233,7 @@ once it's down). *Why free:* a flash that cost a tail segment made rounds longer
 ### The plain flash cuts
 
 - Through a body `FLASH_THICK` (1) cell thick with free log beyond (on the board, no hole, no body), it cuts that body:
-  the part behind the cut falls to beads, food for anyone (its owner squashes them: "Choking on your own tail"). The cut
+  the part behind the cut falls to beads, food for anyone (its owner squashes them: "Choking on your own tail" in `41-crashes.md`). The cut
   is one a snake, where the cells the flash crosses are nearest that snake's head; a layer beyond the flash's last cell
   is only why it can't go on.
 - It puts out the first fire it passes, and goes into a second.
@@ -260,7 +260,7 @@ golden cuts. The death card: "Name’s dash cut you right behind the head".
 
 A flash that runs into what it can't get through (the edge, a hole, a body too thick or with nothing free beyond, a
 head) gets as far as it can and has failed: it costs `FAIL_LOSS` (5) segments and a longer stun, `FAIL_STUN_TICKS` (6),
-not a crash's 3 and 4. Without the risk, everyone would flash all the time and cautious play would lose.
+not a crash's 3 and 4 ("Crashes, not deaths" in `41-crashes.md`). Without the risk, everyone would flash all the time and cautious play would lose.
 - *The cue:* a bigger bonk, with the stars staying longer.
 - *The lesson:* your first failed flash, "Too thick! A failed dash costs five."
 - *The Field guide's Failed dash row:* "Dash into a head, a body too thick, the edge or a hole and it fails: 5 off your
@@ -381,84 +381,6 @@ Where a spat mushroom rolls off what it lands on is a rule, so anyone can predic
 "Free" means on the board, not a hole, not burning, no food, no burrow, and no body still there next tick (a tail end
 moving on is free); it may roll past food or a burrow but not stop there. The wrapped edge is an edge here. Nothing
 else is pushed aside by a head.
-
-### Crashes, not deaths
-
-Snake is one mistake and out, and the longer you are, the more there is to bump into; so a crash costs length rather
-than everything, and length is your armour.
-
-- **A crash** (into the edge, a hole, any body, or another head) bounces your head back: it stays put, you lose
-  `CRASH_LOSS` (3) segments off your tail (never below `MIN_LENGTH`, 3; they break off as beads in your markings, food
-  for anyone but you), and you're stunned for `STUN_TICKS` (4, about half a second): your body stays where it is (so
-  someone can run into it). You can steer meanwhile, and go your way when the stun's over; if you haven't steered and
-  you're still facing what you hit, you turn to the open side with the most room. A head-on bounces both. A crashed
-  snake's tail doesn't move that tick, so a head heading for it crashes too (worked out until nothing changes).
-- **You're out** if you crash at your smallest (3), or if there'll be nowhere to turn **when the stun's over**: every
-  neighbour (the cell you hit included) off the board, a hole, or a body that'll still be there by the tick you move
-  again. Room is judged with the real timings: a cell j from a snake's head is left on that snake's (length − j +
-  growth)th move, and a head may take a cell on the very tick its tail leaves; a stunned snake's moves start when its
-  stun's over. So your own tail breaking off in the crash makes room (and your tail end, leaving as you move), a rival's
-  tail that'll have moved on makes room, a rival that crashed this tick too loses its tail at once, and a snake that's
-  out this tick is all food. A cell another head is arriving in is that head's now, and counts the same way.
-- So a short snake plays the classic game; a long one can take a few knocks, and every bite counts.
-- *The cue:* the head lunges into what it hit and bounces back, chips of bark (or the other snake's colour) fly, a
-  "Bonk!" pops up, and for you a "-3" and a shake; its head wobbles and stars go round it while it's stunned.
-- *The sound:* for you, a hollow wooden bonk with a spring's boing and a twinkle (a failed flash's is bigger); someone
-  else's crash is a dull thud.
-- *The lessons:* your first crash, "Crashes cost tail. At 3, or boxed in, a crash ends you." (or "That crash cost
-  tail. At 3, or boxed in, you’re out."); down to 3, "Crashes cost tail. You’re at 3: the next one ends you." The death
-  card says why a crash was the end (the engine records it): "…at your smallest", "…with nowhere to turn", "…, and it
-  was longer", "…, the same length: both out".
-- *The Field guide's Crashes row:* "An edge, a snake or your own tail costs you tail. At 3, or boxed in, a crash ends
-  you."
-- *The rivals* play by exactly the same rules: they steer clear of crashes, a stunned rival doesn't think until it can
-  move again, and every rival has lines for crashing and losing its tail (some gloat when you bounce off them).
-
-### Head-on, both boxed in
-
-Two snakes that meet head-on, each with nowhere to turn: the longer one bounces (the shorter one's body, turned to
-food, is its room); the same length, both out. How it's worked out: the cell two heads met in is room for one of them
-once every other head that met there is out or has room of its own (that one will turn away); everything is worked out
-until nothing changes, and when nothing does, **the shortest of those still boxed in go out first** and the rest are
-looked at again. So it's the same whether they met in a cell or swapped, whether the shorter is at its smallest or not,
-whether only one of them is boxed in, and when two snakes run into each other's bodies, each boxed in only by the other.
-
-### No more head-butting loops
-
-Only one of two heads that met in an empty cell may go back into it: **the longer one** (the same length, the one that
-came first). The other, coming out of its stun still facing it without having steered, turns away, to the open side
-with the most room, avoiding a cell next to another head if it can. Once the other is out, still stunned or gone, the
-cell is anyone's. The rivals keep twice their usual berth from a snake they just met head-on for about 3 s.
-
-### Fire on snakes
-
-Crawl into a burning cell and you catch alight for `BURN_TICKS` (18, about 2 s; going back in starts it again): every
-`BURN_EVERY` (6) ticks a segment falls off, roasted (a roast bead is worth 2), 3 in all, the same as a crash; at your
-smallest, the flames finish you ("burned up"). Rain or snow puts you out within 6 ticks. At the same price, it's a real
-choice: a crash stops you dead and stuns you; fire lets you keep going.
-- *The cue:* flames run along your back, with embers and smoke; catching, a burst of flame and a whoosh; each piece
-  lost, a hiss and a pop.
-- *The lesson:* "On fire: 3 bites of tail, and at 3 it ends you. Rain helps."
-- *The Field guide's Fire row:* "Lightning lights it. Crawl in and it takes 3 bites of tail; rain puts it out."
-- *The rivals* plan round fire like a wall, but when every other move is a crash or worse, they go through the fire
-  rather than crash; never as a shortcut.
-
-### Choking on your own tail
-
-Your own beads (the tail a crash knocks off, or a cut takes) aren't a meal: your head squashes any bead of your own it
-passes over, at once and for nothing, so it's no meal for you and denied to everyone else. A crash costs its length for
-good, and chasing your own beads to deny them is a choice that costs time and position. Beads carry their owner, so it's
-the same rule for everyone. (A starving snake that squashes a bead on the tick it runs out isn't saved: it ate nothing.)
-The name stays from when your head choked on them; the choke, the cough and the nudge are gone.
-- *The cue:* a soft splat and a flat splat left on the bark in the bead's own colour, a little wider than the bead, with
-  a darker rim, a wet sheen and a few drops, fading over 3 s (with reduced motion it doesn't spread, it just fades); no
-  spray of crumbs, no gulp and no "Splat!" over your head (`drawSplats()` in `render/weather.js`).
-- *The sound:* a soft wet splat, low, with a little squelch after it (softer for a rival's).
-- *The lesson:* the first squash, "Your own beads feed nobody."
-- *The Field guide's Beads row* ends "Your own you squash flat as you pass: food for nobody, so chase them down to keep
-  them from the others."
-- *The rivals:* their own beads are worth nothing to them; squashing to deny is left to people and to the pricing part
-  (part 7).
 
 ### Online
 

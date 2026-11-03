@@ -11,7 +11,7 @@ Three rules from the owner hold for all of them:
 - **Every rival keeps its trademark.** Mason's straight lines (the owner: "Keep watch!"), Ouroboros's coils, Creeper's tail-riding and the rest are measured before and after.
 
 **Choking on your own tail**: its rules as they stand now (your own beads are squashed: the choke, the cough and
-the nudge are gone) are in `40-powers-and-moves.md` under the same name, with the roll rule under "Where it rolls is a rule,
+the nudge are gone) are in `41-crashes.md` under the same name, the roll rule (now the spit's) in `40-powers-and-moves.md` under "Where it rolls is a rule,
 never chance", and its text as it was, with its measurements, in `docs/archive/design-powers.md`.
 
 **A pecked flag is a lost colony** (the owner: "territory stays behind when the woodpecker takes out the flag. Probably shouldn't do that."). Land used to outlive its flag when the woodpecker pecked it out. Now:
