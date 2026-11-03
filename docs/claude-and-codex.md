@@ -140,7 +140,7 @@ goes to building. Its usage can run out like any other, and it may then not say 
    comment** (tested 3 November 2026: `@codex security review` runs one only while Auto security review is on in Codex's
    settings; with it off, the same words run a code review alone). If an ask comes back as a code review alone, the PR
    says so and the next wake reports it to the owner; it is not counted as reviewed. The threat model it reads is
-   `SECURITY.md` ("The threat model"), set in its settings.
+   `docs/threat-model.md`, set in its settings; its review instructions are `SECURITY.md`.
 7. **Checks that run the work, once Codex can build** (the owner, 2 November 2026; the words are in
    `docs/archive/instructions.md`). The native review reads the diff but runs nothing, so it cannot check a claim such
    as "the rivals now dash 40% more". When Codex's environments work ("Setup"), a Codex task in its container also
@@ -213,7 +213,7 @@ The weekly blind re-reviews and the canaries, newest first ("Reviews", point 5).
   wrong, say why in your report and leave that part.
 - Run `scripts/test.sh` before you finish, and `scripts/sim.sh` with the fingerprint for a change that should keep behaviour.
 - Commit and push your work to the PR's branch, never to `main` or `develop`, and open no new pull request. Never
-  change `.github/`, `scripts/cloud-setup.sh`, `.claude/`, `AGENTS.md`, `CLAUDE.md` or `SECURITY.md`, and never put
+  change `.github/`, `scripts/cloud-setup.sh`, `.claude/`, `AGENTS.md`, `CLAUDE.md`, `SECURITY.md` or `docs/threat-model.md`, and never put
   a key or secret anywhere.
 - Your environment's setup script installs what the suites need. If something is missing, say what in your report
   instead of working around it.
@@ -224,7 +224,8 @@ The weekly blind re-reviews and the canaries, newest first ("Reviews", point 5).
 
 - Codex on ChatGPT Pro 100, its GitHub app given HaakTuah's two game repositories. Its own Code Review is set to
   automatic review off.
-- One Codex cloud environment per repository, made in ChatGPT's Codex settings, its setup script
+- A Codex cloud environment made in ChatGPT's Codex settings for Barkstreet Snakes only, none yet for Amarna Letters
+  (tasks by comment fail either way: "Codex reviews", point 5), its setup script
   `bash scripts/cloud-setup.sh` (from `/workspace/<repository>`).
   The agent may reach the internet (the repository is public and the environment holds no secrets); fonts.googleapis.com
   and fonts.gstatic.com matter most: the game's font, which the input and layout suites need to measure text.
@@ -246,7 +247,7 @@ opened, except Dependabot's security PRs under the five conditions in `SECURITY.
 
 **Codex's work never touches what runs with credentials or sets the rules.** A Codex task reads the web, so text
 planted somewhere could try to steer it. Its work may never change `.github/` (the CI workflows),
-`scripts/cloud-setup.sh`, `.claude/`, `AGENTS.md`, `CLAUDE.md` or `SECURITY.md`. Such a PR is labelled
+`scripts/cloud-setup.sh`, `.claude/`, `AGENTS.md`, `CLAUDE.md`, `SECURITY.md` or `docs/threat-model.md`. Such a PR is labelled
 `codex-failed` with the files named, and the orchestrator checks it too before any merge (`gh api
 repos/<repository>/compare/develop...<branch>` lists the files): it is never merged; the owner decides. Lanes that must
 change those files are Claude's. Nothing secret is ever written to a repository.

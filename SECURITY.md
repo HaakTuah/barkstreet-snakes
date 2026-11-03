@@ -15,20 +15,8 @@ vector and security concerns".
 
 ## The threat model
 
-Codex's security review reads this file as its threat model (the path is set in its settings, so it is not made anew
-for every review). The rules below say how each way in is closed; this section says who might come in, and for what.
-
-- **Who:** anyone on the internet. They write issues and comments, open PRs from forks, join an online game with a room
-  code, send a shared record or a link, publish a package or action this repository uses, or plant text on a page a
-  builder or Codex reads.
-- **What they want:** the owner's tokens and accounts, through a workflow, a PR's checks or work handed to Codex
-  (rules 1 to 4); a push to `main` or the site (rules 2 and 3); code run in a player's browser (rules 5 to 7); a
-  player's saved records wiped or forged, or an online game stalled or taken over (rules 5 and 7).
-- **The ways in:** online peers' messages, shared records, URL parameters and room codes (rule 5); the workflows and
-  what triggers them (rule 2); dependencies and actions (rules 2 and 10); outsiders' text reaching an agent (rule 4).
-- **Lower stakes:** a slowdown or crash confined to one player's own tab, from input only that player chose, is Low;
-  the same reached by another player online is not. Cheating against the rivals in a single-player game is not a
-  security matter.
+Who might attack, what they want and where they could get in: `docs/threat-model.md`, which Codex's security
+review reads as its threat model.
 
 ## The rules
 
@@ -44,7 +32,7 @@ for every review). The rules below say how each way in is closed; this section s
      it through `env:` and quote it;
    - only GitHub's own actions (`actions/*`), or another pinned to a full commit SHA.
 3. **The protected files:** only Claude's builders change `.github/`, `scripts/cloud-setup.sh`,
-   `.claude/`, `AGENTS.md`, `CLAUDE.md` and this file, never a Codex lane, and a change to `.github/` or the setup
+   `.claude/`, `AGENTS.md`, `CLAUDE.md`, `docs/threat-model.md` and this file, never a Codex lane, and a change to `.github/` or the setup
    script needs the owner's yes in its PR. One exception, narrow: Dependabot's version updates of actions a workflow
    already uses need no yes when the diff changes nothing but the pinned version (and its comment), CI is green and its
    review is clean; the reviewer checks that the diff is only that. A new workflow, a changed trigger or permission, a
