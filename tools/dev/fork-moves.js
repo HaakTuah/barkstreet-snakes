@@ -31,6 +31,8 @@ function patchAI(text) {
   swap('if (!golden && !trapped && !ringCover.length) return null;', 'if (!golden && (globalThis.__forbid.now.has(me.id) || (!trapped && !ringCover.length && !globalThis.__force.now.has(me.id)))) return null;');
   swap('if (span < 1 || (!golden && !trapped && !coverAt(path[span], span + 1))) return null;', 'if (span < 1 || (!golden && !trapped && !globalThis.__force.now.has(me.id) && !coverAt(path[span], span + 1))) return null;');
   swap('(seenPortals.length && !inGrid(nx, ny) && portalOut(body[0].x', '(seenPortals.length && !inGrid(nx, ny) && !globalThis.__forbid.portal.has(me.id) && portalOut(body[0].x'); // (portal: my own steps through a gold portal, searched or powered)
+  swap('    for (let n = 0; n < portalIn.length; n++) {\n      const e = portalIn[n], q = portalEx[n];', '    for (let n = 0; n < (globalThis.__forbid.portal.has(me.id) ? 0 : portalIn.length); n++) {\n      const e = portalIn[n], q = portalEx[n];'); // (nor plans room through one: the A/B's B side)
+  swap('if (se < CLAIMED || !tag || portalLeft', 'if (se < CLAIMED || (globalThis.__forbid.portal.has(me.id) ? tag <= 1 : !tag) || portalLeft');
   swap('!portalOut(sx, sy, d, 1)) return -1;', '!portalOut(sx, sy, d, 1) || globalThis.__forbid.portal.has(me.id)) return -1;');
   swap('if (me.dashes > 0) { const v', 'if (me.dashes > 0 && !globalThis.__forbid.dash.has(me.id)) { const v');
   // (--forced: the move's price waived, so it's taken wherever it scores above the crawl)

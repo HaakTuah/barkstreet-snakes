@@ -7,7 +7,7 @@
 // tick: a body crossing an edge is a portal's way through. game.portals:
 // [{ x, y, dx, dy (the entry, and the way through it), tx, ty (the exit),
 // owner (whose it is), shutAt (the game time it shuts; 0 while its owner's
-// body is still through it) }]. Events: 'portal' (opened), 'through'
+// body is still through it), followed (the ids of those who followed) }]. Events: 'portal' (opened), 'through'
 // (someone else followed, as it went), 'portalShut'.
 function portals(game) {
   const kept = new Set();
@@ -19,11 +19,11 @@ function portals(game) {
       const dx = a.x === b.x ? 0 : b.x > a.x ? -1 : 1, dy = a.y === b.y ? 0 : b.y > a.y ? -1 : 1;
       let p = game.portals.find(q => q.x === a.x && q.y === a.y && q.dx === dx && q.dy === dy);
       if (!p) {
-        if (!wraps(game, s) || i > 0) continue; // (only one the edges wrap for opens one, as it goes through)
-        p = { x: a.x, y: a.y, dx, dy, tx: b.x, ty: b.y, owner: s.id, shutAt: 0 };
+        if (!wraps(game, s)) continue; // (only one the edges wrap for opens one, as it goes through: its head, or a dash's or a flight's cell beyond it)
+        p = { x: a.x, y: a.y, dx, dy, tx: b.x, ty: b.y, owner: s.id, shutAt: 0, followed: [] };
         game.portals.push(p);
         game.events.push({ type: 'portal', snake: s, x: a.x, y: a.y, tx: b.x, ty: b.y });
-      } else if (i === 0 && p.owner !== s.id && !wraps(game, s)) game.events.push({ type: 'through', snake: s, x: a.x, y: a.y, tx: b.x, ty: b.y, owner: p.owner });
+      } else if (p.owner !== s.id && !wraps(game, s) && !p.followed?.includes(s.id)) { p.followed?.push(s.id); game.events.push({ type: 'through', snake: s, x: a.x, y: a.y, tx: b.x, ty: b.y, owner: p.owner }); } // (once a follower: as its head goes through, or a dash's or a flight's cell)
       if (p.owner === s.id) kept.add(p);
     }
   }

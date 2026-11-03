@@ -62,7 +62,7 @@ declare namespace Engine {
   interface Under { until: number; expires: number; from: number; gold: boolean }
   interface Burrow { x: number; y: number; at: number; used?: number; dug?: number | boolean; shutFrom?: number; shutAt?: number }
   /** A gold portal (round six B, part 5): the entry, the way through it, the exit, whose, and when it shuts (0: its owner's body is still through it). */
-  interface Portal { x: number; y: number; dx: number; dy: number; tx: number; ty: number; owner: number; shutAt: number }
+  interface Portal { x: number; y: number; dx: number; dy: number; tx: number; ty: number; owner: number; shutAt: number; followed?: number[] }
   interface Fire { from: number; until: number; strike: boolean; ember?: boolean; group: number }
   interface Weather { kind: string; since: number; until: number }
   interface Woodpecker {

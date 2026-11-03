@@ -28,6 +28,15 @@ const portalRun = (gap, ticks = 40, stun = 0) => {
   check('a snake the edges wrap for opens a gold portal going off one: entry, the way through, exit', opened && opened.p.x === N21 - 1 && opened.p.y === 10 && opened.p.dx === 1 && opened.p.dy === 0 && opened.p.tx === 0 && opened.p.ty === 10 && opened.p.owner === 0, JSON.stringify(opened));
 }
 
+{ // A dash across the edge while wrapping opens one too (its head lands past the crossing, a cell or two in).
+  const g = board([[line(N21 - 2, 10, 4), 'right']], { time: 30000 });
+  const [a] = g.snakes;
+  a.wrapUntil = g.time + 60000; a.dashes = 1;
+  E.flash(g, a); feed(g); quiet(g);
+  const p = g.portals[0];
+  check('a dash across the edge while wrapping opens a gold portal where it crossed', g.events.some(e => e.type === 'portal') && p && p.x === N21 - 1 && p.dx === 1 && p.tx === 0 && a.body[0].x > 0, JSON.stringify({ head: a.body[0], portals: g.portals }));
+}
+
 { // Following close behind (the body passing, then a moment after): through, out at the exit, nothing crashed.
   const { b, through, seen } = portalRun(3);
   check('another snake following it goes through the portal, out at the exit', b.alive && through && through.snake === 1 && through.owner === 0 && through.tx === 0 && b.body[0].y === 10 && b.body[0].x < 5 && !seen.some(e => e.includes('crash')), JSON.stringify({ head: b.body[0], through, seen }));
