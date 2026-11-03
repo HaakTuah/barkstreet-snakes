@@ -23,6 +23,15 @@ could say. Short enough for the bubble on a phone, and no song lyrics or long qu
 | Screen readers | A card is announced as sentences ("Flattened! You hit the edge at your smallest, 4th place, score 14. You ran out of log. New best: 14!"), never "dot" |
 | Hall of Fame | Empty: "No legends yet. Go make one." and "You haven't played yet. The log is waiting." (after a clear, "A clean slate. The log is waiting.": never "you haven't played" to someone who has). A browser that won't keep anything still has the session's rounds, and says "This browser isn't keeping records, so these last until you close the tab." What got you calls each thing by one name, on its bar and as your nemesis: "Edge & holes" and "the edge & holes", "Woodpecker" and "the woodpecker", "Hunger" and "hunger", "Fire" and "fire", "Yourself" and "yourself" |
 
+**One word for each thing.** On the page the two powers are the *jump* and the *dash*, each with its own press:
+"Space jumps", "E, Shift or right-click dashes", "Tap to jump", "Swipe ahead to dash"; a golden beetle's are *golden
+jumps* and a golden leaf's *golden dashes*. That holds in the key help, the lessons, the Field guide, the banners, the
+chatter (English and Chinese) and the README; it's been the dash since 1 November 2026 (the flash before that), and
+older notes keep the word they were written with. The rules and the code say *leap* and *dash*, and the plain one
+`flash` (some names and the Field guide's picture keys still say flash): "The words" in `40-powers-and-moves.md`. The
+edge of the log is the *edge*, never a wall. *Bonk!* is for a knock you survive; a death gets a word that means out
+("Death titles" above).
+
 **Rules for every string:**
 - One noun for the measure: **Score** (food eaten) and **Best**.
 - Typographer's apostrophes and quotes (’ “ ”) and a real ellipsis (…) everywhere a player can see. The Chinese lines are keyed by the English, so the two change together.

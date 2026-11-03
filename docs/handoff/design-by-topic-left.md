@@ -1,19 +1,10 @@
 # The design by topic: what is left in the round files
 
 For "The design by topic, not by round" (#336; `docs/PROGRESS.md`, the workshop lane). After food, the woodpecker, the
-rivals, the looks, the powers and moves, the crashes, sound, the page, online, the start card and records, and
-teaching, these blocks in `docs/design/` are still not pointers. Each line: the file and its lines (as of PR #437),
+rivals, the looks, the powers and moves, the crashes, sound, the page, online, the start card and records,
+teaching, and the small leftovers (art, weather, words, the round's arc and the chosen numbers), these blocks in `docs/design/` are still not pointers. Each line: the file and its lines (as of PR #437),
 the block's first words, and where it belongs. A census, round record or a topic file's own text stays. Take a topic
 at a time, as before; delete a line here when its block moves, and this file when none is left.
-
-**To move into a topic file:**
-- 07 3–10 "One treatment…": 02 (art direction).
-- 11 13 "One word for each thing": 09. 11 15–22 "Every death says why": 41. 11 7 "Reduced motion removes movement": 02,
-  or a new topic, accessibility.
-- 18 7 "Sudden death closes in": 12 (the round's arc) or 38.
-- 19 5 "A crash you don't survive goes off with a bang": 41.
-- 29 12 and 32–62 "the chosen numbers" (2y, parts 1, 3, 3b, 4): 40, measurements to the archive.
-- 32 43–51 "Rainbows upright": 05 (or 03).
 
 **New topics (a file each, when taken):**
 - Performance: 05 7 "Cost.", 06 3–5, 20 3–12 (measurements to the archive).

@@ -12,6 +12,13 @@ A round has a shape, and the music follows it:
 | Watching | - | Quieter, no percussion |
 | Napping | - | Ducked to about a third |
 
+**Sudden death closes in.** A round ends with the board closing in, not with long snakes waiting to starve: hunger
+bites no harder in sudden death than in the opening (`HUNGER_MS`), but **the woodpecker gets hungrier**: each rest is
+shorter than the one before and each patch a cell bigger, so the log shrinks faster and faster (`PECK_HUNGRIER`,
+`PECK_REST_MIN` and `PECK_CHUNK_MAX`: "When it comes" and "How it picks a patch" in `38-the-woodpecker.md`). Ghost,
+which keeps its distance, eats with a normal appetite up to 18 long so it doesn't starve first in a long endgame
+("Nobody's picky in sudden death" in `39-the-rivals.md`).
+
 **The woodpecker comes at 2:00, not 3:00**, and **The woodpecker, rebuilt: big, telegraphed, in chunks**: its rules as
 they stand now are in `38-the-woodpecker.md`, and their text as it was, with their measurements, in
 `docs/archive/design-woodpecker.md`.

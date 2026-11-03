@@ -87,3 +87,28 @@ The name stays from when your head choked on them; the choke, the cough and the 
   them from the others."
 - *The rivals:* their own beads are worth nothing to them; squashing to deny is left to people and to the pricing part
   (part 7).
+
+### A crash you don't survive goes off with a bang
+
+A snake that goes out bursts at its head: a comic starburst (flat, inked, a cached sprite) and a thick shockwave ring in
+its colour with an ink edge, a spray of pieces from the head and along the body, and a little smoke (`burst()` in
+`render/blasts.js`); a rainbow (Star's, or Copycat's copy of it) goes off in its colours. Your kill shakes the board a
+touch. So it never reads as a crash you survive, which only knocks beads off. With reduced motion it's a still
+starburst and ring, fading.
+
+### Every death says why
+
+The engine records why a snake went out (`fatal`), and the death card's first line says it (`howYouDied` in
+`game/core.js`):
+- a crash with nowhere to turn ("…with nowhere to turn");
+- a crash at your smallest ("…at your smallest");
+- the shorter one in a head-on ("…, and it was longer"; a friend's "they were longer"), or the same length ("…, the
+  same length: both out");
+- pecked ("The woodpecker struck right under your head");
+- burned up ("The flames got you at your smallest");
+- cut in two ("Name’s dash cut you right behind the head");
+- starved ("You ran out of food at your smallest");
+- blown up, or a fall into a hole, in the cause itself ("…dashed into the edge and blew up", "…fell into a woodpecker
+  hole").
+
+The rival's quip stays as flavour. A death that ends the round says it on the round-over card too.

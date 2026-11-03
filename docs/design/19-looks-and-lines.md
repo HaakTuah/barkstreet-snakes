@@ -2,7 +2,8 @@
 
 - **Friends get their own arrow**: its rule is in `22-play-with-friends-online.md` ("On a friend's screen"), and its
   text as it was in `docs/archive/design-online.md`.
-- **A crash you don't survive goes off with a bang.** A comic starburst (flat, inked, a cached sprite) and a thick shockwave ring in the snake's colour with an ink edge at its head, a spray of pieces from the head and along the body, and a little smoke; your kill shakes the board a touch. (Before, a snake just burst into its beads, which read the same as a crash you survive.) With reduced motion it's a still starburst and ring, fading.
+- **A crash you don't survive goes off with a bang**: its rule is in `41-crashes.md` under the same name, and its text
+  as it was in `docs/archive/design-powers.md`.
 - **Mute is a mood ring, not a rainbow** and **Holding a power shows**: their rules are in
   `03-the-snake-as-a-character.md` under "Mute is a mood ring, not a rainbow" and "A power is one token, not a
   ring", and their text as it was in `docs/archive/design-looks.md`.
