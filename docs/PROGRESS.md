@@ -41,6 +41,17 @@ the second account until its usage is spent; on the main account the brake close
   Each kind of text is reviewed as every review is ("Reviews" in `docs/claude-and-codex.md`); here a 10 means
   nothing reads machine-made, every voice is its own and no formula repeats. The owner's read of the ten lines before
   and after is the final word. One PR per voice group or screen, in this lane.
+  *Done so far* (3 November 2026), one line a merge:
+  - Capricious, Metagamer and Star: the "X! I love X!" template, the colon log lines and "in my day" thinned (PR #438).
+  - Sovereign, Colonist and Desperado: "royal X", "I say", "partner" and "Yeehaw" thinned; the two posh voices apart (PR #439).
+  - Ouroboros, Joker and Sniper: "again", knock-knock and "Target X" thinned; Sniper's "whoppertunity" kept (PR #441).
+  - Creeper, Gobbler, Vulture and Mute: light touches where each repeated itself (PR #442).
+  - The banners and cards: the deflating tag ("X. For now.") and the repeated jokes gone (PR #443).
+  - The lessons and the Field guide: terse lessons and subjectless rows read straight, rules unchanged (PR #445).
+  - The guard: the chatter suite fails a voice with more than four lines of one shape (this PR).
+  *Left:* the menus, the news lines and the README's player text; the guide's Burrows, Jump, Cuts and Golden beetle rows
+  and one name for each thing (hole, pit or gap; jump, hop or leap; the rings), once part 5 (#202) merges. Wildcard's
+  and Mason's protected lines stay as they are; the Chinese is rewritten with each changed line.
 - **What belongs:** whatever makes the game feel finished without changing how it plays: things drawn wrong, out of
   place, overlapping, flickering or cut off; the same thing drawn, named or worded differently in two places (a
   rival's colours, a move's name in the lesson and the Field guide); layout at 390 px and desktop, phone held upright and
