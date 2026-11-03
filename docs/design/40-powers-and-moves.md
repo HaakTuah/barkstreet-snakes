@@ -106,8 +106,8 @@ hop rarely reaches the next island across a hollow.
   when you took off. If the landing's been taken meanwhile, you come down on what you hopped: on a hole, in you go; on
   fire, you catch; on a body over a pit, see "A snake across a pit is a bridge"; on a body, see "Bumps in the air".
 - **It waits:** a press waits up to `LEAP_WINDOW` (5) moves for something to hop and somewhere to land within reach,
-  and isn't spent on open ground ("A bit early: a jump waits 5 moves, then lapses."; "Jumps hop over a snake, a hole or
-  fire.").
+  and isn't spent on open ground ("Too early: a jump waits 5 moves, then gives up."; "Nothing to jump. Jumps clear a
+  snake, a hole or fire.").
 - **It costs** the tip of your tail (`LEAP_COST` 1, so it needs more than `MIN_LENGTH`), then rests
   `LEAP_COOLDOWN_MS` (4 s). A leap is a crash you saw coming, traded for one segment instead of three and a stun.
 - *The cue:* the landing cell gets a ring while the jump waits; the flight is the arch, shadow and dust of "Bridges and
@@ -152,7 +152,7 @@ who never double-presses.
   the air").
 - *The cue:* a gold ring marks where you'll land, from the moment you commit, and moves only as you steer. A golden
   leap rises higher than a plain one, with a puff of gold.
-- *The lesson:* on your first golden jump, "Hold to fly 5. Steer to land!"
+- *The lesson:* on your first golden jump, "Hold the jump to fly 5 cells. Steer to land!"
 - *The Field guide's Golden beetle row:* "2 golden jumps: free, no rest. Tap for the plain hop; hold the jump and you
   fly 5 cells, always, steering in the air to land where it's safe. Hold up to 3."
 - *The rivals* plan a flight as they take off, straight or with one turn (left or right, after any number of cells):
@@ -170,8 +170,8 @@ who never double-presses.
 
 A flier's ring is where it will come down, so anyone who gets there first, by crawling, a flash or dash through it, or
 a leap now down on it, puts the flier out (it comes down on a body).
-- *The lesson:* the first time a flier's ring is in your reach before it comes down, "Lie on its ring before it lands,
-  and it’s out!"
+- *The lesson:* the first time a flier's ring is in your reach before it comes down, "A flier lands on its ring. Get
+  there first and it’s out!"
 - *The rivals* go for a ring they can reach in time, planned from the ring as they saw it (a reaction late), never by
   reaction. A flier put out is worth what a neck cut that puts a rival out is (`KILL`, 6 apples, times 0.5 + its
   aggression, its target twice), times its style (`w.landing`: Sniper 1.5, Desperado 1.2, Drab 0.15, the rest 0.6),
@@ -266,7 +266,7 @@ A flash that runs into what it can't get through (the edge, a hole, a body too t
 head) gets as far as it can and has failed: it costs `FAIL_LOSS` (5) segments and a longer stun, `FAIL_STUN_TICKS` (6),
 not a crash's 3 and 4 ("Crashes, not deaths" in `41-crashes.md`). Without the risk, everyone would flash all the time and cautious play would lose.
 - *The cue:* a bigger bonk, with the stars staying longer.
-- *The lesson:* your first failed flash, "Too thick! A failed dash costs five."
+- *The lesson:* your first failed flash, "Too thick! A failed dash costs 5 off your tail."
 - *The Field guide's Failed dash row:* "Dash into a head, a body too thick, the edge or a hole and it fails: 5 off your
   tail and a longer stun."
 
@@ -285,7 +285,7 @@ still crackling on its way isn't put out), and eats food on the way. **The edge,
 far as and runs into, as a failed flash. It goes when you press, before the plain flash, and leaves the plain flash's
 rest alone.
 - *The cue:* gold speed lines with an ember core, and gold and ember flecks.
-- *The lesson:* your first, "Golden dashes cut through two thick, and put out fire."
+- *The lesson:* your first, "Golden dashes cut bodies two thick and put out fire."
 - *The Field guide's Golden leaf row:* "2 golden dashes: three cells at once, cutting through a body up to 2 thick and
   putting out every fire. Never at an edge or a hole: you blow up."
 - *The sound:* a zip, rising fast, and a rush of air; a cut, a snip; blowing up, a boom.
