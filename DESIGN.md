@@ -5,6 +5,13 @@ topics its task needs. The text as it stood before the split is in git history. 
 "Section" name a heading: find it with `grep -rn "## Section" docs/design`. When a design call is made, write it in
 the file of its topic; a new round or topic gets its own file and a line here.
 
+Since "The design by topic, not by round" (#336), the round files keep their headings as pointers, and only the records
+nobody looks up as a rule: the censuses and measurements (10, 11, 14, 15, 18, 24's opening, 25, 26, 27, 29's opening,
+32), 28's tools, and 34's guidelines with their reasons, which 13, 21 and 45 cite; 37 is a queued spec, into 40 once
+built; 02, 05, 09, 35 and 36 are topic files. Noticed and left: 30's plan keeps combos in "With PR C" (entry 6's
+outline wins, as 30 says), its step 2 (the bird) looks done, and Mason's gold vein sits against "gold means power"
+(03), for the owner.
+
 | File | Covers |
 | --- | --- |
 | [`docs/design/01-the-vision-in-one-paragraph.md`](docs/design/01-the-vision-in-one-paragraph.md) | The vision in one paragraph |

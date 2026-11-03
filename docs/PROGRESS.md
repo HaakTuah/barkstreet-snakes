@@ -102,21 +102,9 @@ and the owner's notes of 2 November, among them).
   `docs/archive/progress-done.md`, "The split lane, done". Left: `render/world.js`'s part, which waits with it below.
   `render/food.js` split by meaning: its burrows and the beetle's bore to `render/burrows.js` (66 to 43.5 and 22.6 KB;
   PR #421).
-- **The design by topic, not by round** (#336; the owner, 2 November 2026): each topic's current rule moves from the
-  round files into its topic file in `docs/design/`, superseded versions and measurements to `docs/archive/`. A slow
-  side lane, one topic per docs-only PR, taken when a lane is free; code comments citing a section are checked.
-  Done: food (round four's "Food", round six A's food and beetles into `04-food-and-the-world.md`; PR #425). The
-  playtest's burrows and beetles (32) followed (PR #426). The woodpecker
-  followed, in a file of its own, `38-the-woodpecker.md` (PR #428). The rivals
-  followed, in `39-the-rivals.md` (PR #429). The snakes'
-  looks followed, in `03-the-snake-as-a-character.md` (PR #430). The powers and
-  moves followed, in `40-powers-and-moves.md`, and the crashes in `41-crashes.md` (PR #432). Sound followed, in
-  `21-sound.md` (PR #433). The page followed, in `31-phones.md`, `33-one-screen.md` and `42-controls.md`
-  (PR #435). Online and the start card followed, in `22-play-with-friends-online.md` and a new
-  `43-the-start-card-and-records.md` (PR #436). Teaching followed, in `30-teaching-by-showing.md` (PR #437). The food
-  and world's leftovers followed (PR #440). The rivals' leftovers followed (PR #444). The small leftovers followed
-  (PR #446). Performance followed, in `45-performance.md` (PR #449). The rivals' chatter followed, in
-  `13-lines-and-announcements.md` (PR #450). Next: the new topics (the round's arc, balance targets), then the history, as listed in `docs/handoff/design-by-topic-left.md`.
+- **The design by topic, not by round** (#336): *Done:* the round files are pointers and records; topics made or widened:
+  `02`–`05`, `09`, `12` (the round's arc), `13`, `21`, `22`, `30`, `31`, `33` and `38`–`45`, their history in
+  `docs/archive/design-*.md` (PR #425 to PR #PRNUM).
 - **Waiting for a gap:** `render/world.js` (50 KB), the last big file now that `ai/` and `engine/` are split (2y+). Split
   in a PR of its own when no open lane touches it, proven by fingerprints and suites.
 
