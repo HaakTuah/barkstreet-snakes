@@ -1,16 +1,106 @@
 ## Play with friends (online)
 
-Friends-only rooms, peer to peer, so it stays a static site with nothing to deploy and no accounts.
+Friends-only rooms, peer to peer, so it stays a static site with nothing to deploy and no accounts. This file holds
+online play's general rules (their text as it was, with what was measured, is in `docs/archive/design-online.md`).
+Elsewhere: what each move, rule and thing on the log sends is in its own topic file's "Online" (the powers and moves in
+`40-powers-and-moves.md`, crashes in `41-crashes.md`, the woodpecker in `38-the-woodpecker.md`, beetles and burrows in
+`04-food-and-the-world.md`, the lobby's line-up in "The rival line-up" in `39-the-rivals.md`, sound in `21-sound.md`);
+a room on a newer version in `36-updating.md` ("Online"); the shared Hall of Fame in
+`43-the-start-card-and-records.md`; how a friend's snake is outlined in "Telling you apart" in
+`03-the-snake-as-a-character.md`; and friends drawn ahead from the host's plans in "Controls that keep up" in
+`42-controls.md`.
 
-- **The host's browser runs the game**, exactly the code that runs alone (`engine/`, the AIs, the chatter). Every tick it sends friends a compact picture of the board (about 0.9 KB, so about 8 KB/s per friend); friends send back only their presses: turns, fresh swipes and powers (`{t:'turn'}`, `{t:'swipe'}`, `{t:'pow'}` since round four; a swipe is its own message because only the host knows which way is "ahead" in its queue). Their screens glide between ticks with the same renderer (since round four's critique, drawing everyone ahead from the host's plans: see its Online). `tools/online-test.js` checks that a friend's board matches the host's on every tick, and two real browsers matched on every tick of whole rounds.
-- **Fair, in keeping with the AI rule:** the rivals never know who's a person. Lag would favour the host, who has none. A friend sees each tick half a round trip late, and their turn takes another half to arrive, so the host's own turns wait **a full average round trip** (at most 150 ms), in the order they were pressed.
-- **Never stalls:** a friend's browser says "still here" four times a second. After 0.75 s of silence an AI steers their snake (so a hiccup doesn't drive them into a wall), and any turn they send hands it straight back; a banner appears only if the silence lasts 2 s. **A friend who switches tabs says so at once**, and the AI steers until they turn again (a hidden tab's "still here" slows to once a second, which used to make the AI flicker on and off). The host's own snake gets the same stand-in while the host's tab is hidden. If a friend leaves, the AI finishes their round. If the host leaves, friends get a card saying so; if the connection drops, the card says that instead and offers to rejoin.
-- **Rooms stay healthy:** each person's shared Hall of Fame rows are kept once, replaced when they rejoin and dropped when they leave, so messages stay far under PeerJS's 16 KB limit however often people come and go. Everything from the network is checked and clamped (names, colours, dates, numbers) before it's stored or drawn.
+### Hosting and joining
+
+- **A room** holds up to four people (`MAX_PEOPLE`): the host and three friends; empty seats go to rivals. Its code is
+  five characters with no look-alikes (no 0/O, 1/I/L: `CODE_CHARS` in `online.js`), sent as a link (`?join=`) or, from
+  `file://`, as the code alone. A room is full at four, and a friend on another protocol version is turned away
+  (`{t:'reject', why}`: `'full'` or `'version'`).
+- **Connecting:** PeerJS (from cdnjs with an integrity hash, loaded only when someone opens Play with friends) and its
+  free public broker introduce the browsers; STUN finds a route for most networks. Strict ones need a relay (TURN),
+  which needs a signup, so it's left as a marked spot in `net.js`.
+- **The lobby** shows who's in, in their seat colours, and the rivals who'll take the empty seats (the line-up, its
+  picker and the deck online: "The rival line-up" in `39-the-rivals.md`). Names are made unique (a friend called
+  "Sniper" becomes "Sniper 2" in a round with the rival; two friends of one name, the second gets a 2). A friend who
+  joins during a round watches it and plays from the next.
+- **People get seat colors** (green, lemon, lavender, sky: `HUMAN_COLORS`; the host is green), each with its own
+  marking on the body and in its dot (plain, spots, rings, dots: `MARKS` in `render/bodies.js`; lavender and sky look
+  alike to many colour-blind players), and the same cream outline.
+
+### What crosses the wire
+
+- **The host's browser runs the game**, exactly the code that runs alone (`engine/`, the AIs, the chatter). Every tick
+  it sends friends a compact picture of the board (`{t:'tick'}`: every snake's row, the food, the beetles underground,
+  the holes, the woodpecker, the burrows, the fires, the sky and the tick's events; about 0.9 KB, so about 8 KB/s per
+  friend), and where everyone goes next (`{t:'plan'}`) once its rivals have thought and again when a press changes it.
+  It also sends the room (`lobby`), a new round (`round`, with its first tick), the countdown and Go (`phase`), each
+  line of chatter (`say`), everyone's shared best rounds (`scores`), and that the room closed (`closed`).
+- **Friends send back only their presses:** a key's turn (`{t:'turn'}`, it only steers), a fresh swipe
+  (`{t:'swipe'}`: the host decides whether it's "ahead", against its own queue, which a friend can't see) and a power
+  (`{t:'pow'}`: `'leap'`, `'flash'`, `'unleap'` and `'letgo'`, in `40-powers-and-moves.md`'s "Online"); and, besides,
+  their hello (`hello`: their name, their player id, their best rounds and their version) and whether their page is out
+  of sight (`away`, `back`). `net.js` adds its own: the host's `ping` every second and the friend's `pong`, and the
+  friend's "still here" (`k`).
+- **Fair, in keeping with the AI rule:** the rivals never know who's a person. Lag would favour the host, who has none. A
+  friend sees each tick half a round trip late, and their turn takes another half to arrive, so the host's own turns
+  wait **a full average round trip** (at most 150 ms, `HOST_DELAY_MAX`), in the order they were pressed.
+
+### The protocol's rules
+
+- **Protocol 22** (`VERSION` in `online.js`, whose comment lists every bump). A change to any message's shape bumps it;
+  so does a change in meaning that both sides must play by (a rule, with no message changed). A drawing-only change,
+  drawn by each screen from what it already has, needs none.
+- **Everything from the network is checked and clamped** before it's stored or drawn: names, colours, dates and
+  numbers; a row's kind exists and its cells are on the board. The renderer reads them every frame, so a malformed row
+  could break every frame. `tools/online-test.js` feeds the guest malformed ones.
+- **Rooms stay healthy:** each person's shared Hall of Fame rows are kept once, replaced when they rejoin and dropped
+  when they leave, so messages stay far under PeerJS's 16 KB limit however often people come and go.
+
+### The messages, typed
+
+Types where a mismatched field between two players is hard to find by playing, without a rewrite or a build step.
+`net.js` and `online.js` start with `// @ts-check` and describe every message as JSDoc types: the game's messages in
+`online.js` (`HostMessage`, `GuestMessage`; the positional ones, a tick's rows and events, as unions of tuples narrowed
+on their first element), the ping, pong and keepalive in `net.js`. What they see of the rest of the page (the engine's
+game, snakes, food and events, just the fields `online.js` reads; PeerJS, just what `net.js` calls) is hand-written in
+`types/globals.d.ts`; `engine/` and the rest stay unannotated. CI runs `tsc --noEmit -p jsconfig.json` with TypeScript
+fetched in that step only (`scripts/test.sh types` runs it locally); nothing new is shipped. `tools/online-test.js`
+also sends one of every kind of message through the wire on its own (a tick, plan or round encoded, decoded on a guest
+and encoded again) and requires it back unchanged, and pins the shapes (each message's and each row's fields and their
+types) with `version` in `tools/protocol-shapes.json`: shapes changed with the version not bumped fails, naming the
+kinds; a bumped version needs the pin refreshed (`node tools/online-test.js --pin`); a bump with no shape change (a
+change in meaning) is allowed. Its kinds must match the types, every message the game's code sends (with the fields its
+object literal has) and every event the engine makes, so a new kind can't skip the types.
+
+### On a friend's screen
+
+- **It glides between ticks** with the same renderer, drawing everyone ahead from the host's plans ("Controls that keep
+  up" in `42-controls.md`).
+- **Every screen marks its own snake** with YOU (`16-the-first-seconds.md`). **Friends get their own arrow:** the
+  bouncing arrow that says YOU over your head at the start also points out each friend, a touch smaller, with the name
+  they picked in their colour, so you know at a glance who's who.
+- **A friend's look:** a thinner, plainer outline than yours, and no halo ("Telling you apart" in
+  `03-the-snake-as-a-character.md`); their seat colour and marking above.
+- **Chatter is the host's,** passed on, so everyone sees the same lines; sound is each screen's own, from the events and
+  bubbles it already gets (`21-sound.md`, "Online").
+
+### Away and back
+
+- **Never stalls:** a friend's browser says "still here" four times a second (`KEEPALIVE_MS`). After 0.75 s of silence
+  (`AWAY_MS`) an AI steers their snake (Drab's, so a hiccup doesn't drive them into a wall), and any turn they send, or
+  their messages coming again, hands it straight back; a banner appears only if the silence lasts 2 s
+  (`AWAY_TOAST_MS`).
+- **A friend who switches tabs says so at once** (`away`), and the AI steers until they turn again. The host's own
+  snake gets the same stand-in while the host's tab is hidden.
 - **The host's tab may be hidden:** browsers stop animation frames there, so a tiny worker clock keeps the round going.
-- **What changes online:** no napping, no countdown skipping, no watching speeds; your Hall of Fame and stats keep only your own result; chatter is the host's, passed on, so everyone sees the same lines.
-- **Connecting:** PeerJS (from cdnjs with an integrity hash, loaded only when someone opens Play with friends) and its free public broker introduce the browsers; STUN finds a route for most networks. Strict ones need a relay (TURN), which needs a signup, so it's left as a marked spot in `net.js`.
-- **A shared Hall of Fame** (your idea): on joining, each browser sends its own best rounds (up to 10, never AI rows), and the host passes everyone's on, so friends' rows appear in each other's tables in their seat colors, tagged "friend". Each browser also records every person's result in rounds played together. Every browser has a random player id (the friends you play with see it; a result claiming to be yours is never taken from a friend, so no one can pass for you) and every round an id, so a round is stored once, whoever recorded or shared it first (`tools/records-test.js`). Shared rows are kept once per person and checked like anything else from outside: names, colours, dates and numbers are cleaned, and only a person's own rows are passed on. **Only you**, your best and your stats count only your own rounds. AI results aren't kept for online rounds, or every table would fill with the host's rivals.
-- **People get seat colors** (green, lemon, lavender, sky), each with its own marking on the body and in its dot (plain, spots, rings, dots: lavender and sky look alike to many colour-blind players), and the same cream outline, and names are made unique (a friend called "Sniper" becomes "Sniper 2" in a round with the rival).
+- **Leaving:** if a friend leaves, the AI finishes their round, and their seat opens. If the host leaves, friends get a
+  card saying so; if the connection drops, the card says that instead and offers to rejoin.
 
+### What stays in step
 
-**The messages, typed** (27 October 2026, the owner's call: types where a mismatched field between two players is hard to find by playing, without a rewrite or a build step). `net.js` and `online.js` start with `// @ts-check` and describe every message as JSDoc types: the game's messages in `online.js` (`HostMessage`, `GuestMessage`; the positional ones, a tick's rows and events, as unions of tuples narrowed on their first element), the ping, pong and keepalive in `net.js`. What they see of the rest of the page (the engine's game, snakes, food and events, just the fields `online.js` reads; PeerJS, just what `net.js` calls) is hand-written in `types/globals.d.ts`; `engine/` and the rest stay unannotated. CI runs `tsc --noEmit -p jsconfig.json` with TypeScript fetched in that step only (`scripts/test.sh types` runs it locally); nothing new is shipped. `tools/online-test.js` also sends one of every kind of message through the wire on its own (a tick, plan or round encoded, decoded on a guest and encoded again) and requires it back unchanged, and pins the shapes (each message's and each row's fields and their types) with `version` in `tools/protocol-shapes.json`: shapes changed with the version not bumped fails, naming the kinds; a bumped version needs the pin refreshed (`node tools/online-test.js --pin`); a bump with no shape change (a change in meaning) is allowed. Its kinds must match the types, every message the game's code sends (with the fields its object literal has) and every event the engine makes, so a new kind can't skip the types.
+- **Everything new works online,** with a protocol bump when messages change ("Rules that stand" in `AGENTS.md`). Each
+  move or rule says what it sends in its own topic file (above); this file holds only the general rules.
+- `tools/online-test.js` checks that a friend's board matches the host's on every tick of whole rounds, crossing every
+  kind of event (staging any the rounds bring too few of), and two real browsers matched on every tick of whole rounds.
+- **What changes online:** no napping, no countdown skipping, no watching speeds; your Hall of Fame and stats keep only
+  your own result ("Only you" in `43-the-start-card-and-records.md`).
