@@ -49,8 +49,9 @@ allows, at the lowest cost now and later. Four of them are the pillars that hold
 - **Print little.** `scripts/test.sh` and `scripts/sim.sh` print a summary and the failures and keep the full log in a
   file; never paste a full log into the conversation. Run long ones in the background (`CLAUDE.md` says how, for
   Claude) and wait for the completion notice: never poll, and keep no agent alive just to wait.
-- **Helpers, effort and escalation:** the roles, escalation and the hard work: `docs/claude-and-codex.md`, "Who does
-  what"; each tool's own models, effort and helpers: its own file (Claude Code's: `CLAUDE.md`). Codex uses no helpers.
+- **Helpers, effort and escalation:** the roles, when a helper pays, escalation and the hard work:
+  `docs/claude-and-codex.md`, "Who does what"; each tool's own models and effort: its own file (Claude Code's:
+  `CLAUDE.md`; Codex's: "For Codex" in the same doc).
 - **Edit in place,** and **don't loop:** if the same approach fails twice, stop, write down what you tried, and change
   course, hand it to escalation, or mark the item blocked in the PR and `docs/PROGRESS.md`, with its brief ready for a
   later session (the problem, what was tried, the files and lines), and go on to the next.

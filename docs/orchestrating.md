@@ -47,8 +47,8 @@ reviews", point 6, in `docs/claude-and-codex.md`), so a gap shows too.
 
 - **As many lanes as can run in parallel** (archive, 28 October 2026).
   What a lane is, how it is claimed and how it runs on its own: "How work flows" in `AGENTS.md`, point 3; when an
-  orchestrator runs, it makes the claims. Each lane's builder keeps its own helpers ("Helpers: when they pay" in
-  `CLAUDE.md`).
+    orchestrator runs, it makes the claims. Each lane's builder keeps its own helpers ("Helpers: when they pay" in
+  `docs/claude-and-codex.md`).
   1. **The orchestrator opens a lane for every independent entry it can see,** each a builder session with its own
      brief and check-in, and passes on every lane's "Questions for the owner" word for word.
   2. **The brake closes lanes first** ("How work flows", point 4, and "Usage" in `AGENTS.md`).

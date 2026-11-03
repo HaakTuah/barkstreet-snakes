@@ -359,8 +359,8 @@ state that it does, and does it do it? If something in it doesn't then it needs 
 all." Every file, docs first: what does it say it is for, and does it do that? What doesn't belong moves to where it
 does, or goes; code is checked against "Split by meaning" and "Keep it lean" in `AGENTS.md`. The files every session
 reads first, then `docs/`, then the code, in a few PRs, each with a table of every file it covered and what happened to
-it, behaviour proven unchanged (suites, fingerprints). Helpers by "Helpers: when they pay" in `CLAUDE.md` (a Haiku
-search helper per folder).
+it, behaviour proven unchanged (suites, fingerprints). Helpers by "Helpers: when they pay" in
+`docs/claude-and-codex.md` (a Haiku search helper per folder).
 
 ### The file-by-file review's moves (the workshop lane; found in part 3 of the file-by-file review, PR #337, 2 November 2026)
 
