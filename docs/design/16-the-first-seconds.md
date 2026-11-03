@@ -4,5 +4,7 @@
 `30-teaching-by-showing.md` under "The first seconds", and their text as it was, with the 600 rounds measured, in
 `docs/archive/design-teaching.md`.
 
-**Looks.** Joker's party horn and Mute's inner jaw are in `03-the-snake-as-a-character.md` ("The tongue gags"), and this paragraph as it was in `docs/archive/design-looks.md`. Mushrooms look poisonous, now that length is armour and a mushroom only costs you: a violet haze that breathes, two wavy stink lines rising, and violet spores; eat one and you go queasy green for a moment.
+**Looks.** Joker's party horn and Mute's inner jaw are in `03-the-snake-as-a-character.md` ("The tongue gags"), the
+mushrooms' poisonous look in `04-food-and-the-world.md` ("Mushrooms look poisonous"), and this paragraph as it was in
+`docs/archive/design-looks.md`.
 

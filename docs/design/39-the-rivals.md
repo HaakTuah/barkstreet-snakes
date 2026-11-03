@@ -10,8 +10,8 @@ rival has a power style", "Balance targets" and "Gobbler's endgame" in `29-round
 (`03-the-snake-as-a-character.md`); their lines
 (`09-voice-and-copy.md`, `13-lines-and-announcements.md`, `19-looks-and-lines.md`); Capricious, Copycat and Wildcard
 (`35-capricious-copycat-and-wildcard.md`); Ouroboros (`17-ouroboros-and-the-golden-beetles-leap.md`); Star
-(`26-round-five-star.md`); Sovereign's realm and Colonist's flags (`04-food-and-the-world.md`, and "A pecked flag is a
-lost colony" in `27-round-six-a-fairness-and-fixes.md`); how they think quickly, and its tools
+(`26-round-five-star.md`); Sovereign's realm and Colonist's flags, and a pecked flag
+(`44-realms-and-colonies.md`); how they think quickly, and its tools
 (`28-the-rivals-think-faster-round-six-as-optimization.md`); and how each round measured them ("Round four, measured" in
 `25-round-four-measured.md`, "Round six A, measured" in `27-round-six-a-fairness-and-fixes.md`).
 
