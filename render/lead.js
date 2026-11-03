@@ -76,7 +76,9 @@ function predict(s, a) {
   const h = s.body[0];
   a.mx = h.x; a.my = h.y; a.mv = 0; a.mg = 0; a.ml = 0; a.mf = 0; a.lr = 0;
   if (!s.alive || s.stunUntil > game.tick) return;
-  const d = s.flight ? s.flight.dir : wayOf(s), x = wrapX(s, h.x + d.x), y = wrapX(s, h.y + d.y);
+  const d = s.flight ? s.flight.dir : wayOf(s);
+  let x = wrapX(s, h.x + d.x), y = wrapX(s, h.y + d.y);
+  if (offBoard(x, y) && portalWay(h.x, h.y, d)) { x = (x + GRID) % GRID; y = (y + GRID) % GRID; } // (through a gold portal open that way)
   a.mx = x; a.my = y; a.mv = 1; a.mg = s.grow > 0 ? 1 : 0; a.mdx = d.x; a.mdy = d.y;
   if (s.flight?.over.length) return; // (in the air: on over what it hops, a cell a tick, then down where it's going)
   if (!s.flight && asksJump(s) && ringAhead(s, h, d)) { a.lr = 1; a.lx = landX; a.ly = landY; } // (where it'll come down, while the press waits: see drawLandings)

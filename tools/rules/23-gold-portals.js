@@ -65,6 +65,37 @@ const portalRun = (gap, ticks = 40, stun = 0) => {
   check('a second wrapping snake going through keeps the portal open while its body spans it', open.every(Boolean), JSON.stringify({ open, portals: g.portals, ev: g.events.map(e => e.type) }));
 }
 
+{ // ...and one whose wrap runs out while its body is through it keeps it open the same, and never counts as following.
+  const g = board([[line(N21 - 1, 10, 4), 'right'], [line(4, 3, 4), 'right']], { time: 30000 });
+  const [a] = g.snakes;
+  a.wrapUntil = g.time + 1; // (it crosses on the edges' last moment)
+  g.portals.push({ x: N21 - 1, y: 10, dx: 1, dy: 0, tx: 0, ty: 10, owner: 1, shutAt: g.time + 1, followed: [], wrappers: [] });
+  const open = [];
+  let follows = 0;
+  for (let t = 0; t < 3; t++) { feed(g); quiet(g); open.push(g.portals.length === 1 && !g.portals[0].shutAt); follows += g.events.filter(e => e.type === 'through').length; }
+  check('...and so does one whose wrap runs out while it spans it, never counted a follower', open.every(Boolean) && !follows, JSON.stringify({ open, follows, portals: g.portals }));
+}
+
+{ // A flight that passes over a portal's exit but not through it doesn't keep it open past its time.
+  const g = board([[[[0, 6], [0, 5], [0, 4], [0, 3]], 'down'], [line(10, 20, 4), 'right']], { time: 30000 });
+  const me = g.snakes[0];
+  g.portals.push({ x: N21 - 1, y: 10, dx: 1, dy: 0, tx: 0, ty: 10, owner: 1, shutAt: g.time + 1, followed: [], wrappers: [] });
+  me.leaps = 2;
+  E.leap(g, me); E.leap(g, me); // (held: a golden flight down the left edge, over the exit)
+  quiet(g); quiet(g);
+  check('...but a flight over its exit, not through it, doesn\'t keep it open', me.alive && me.flight && g.portals.length === 0, JSON.stringify({ head: me.body[0], flight: me.flight && { over: me.flight.over, land: me.flight.land }, portals: g.portals }));
+}
+
+{ // A gold portal is a way through for snakes, not for what they spit: a mushroom spat at an open one goes off the
+  // board, as its ring shows (none, there), and doesn't land on the far side.
+  const g = board([[line(N21 - 2, 10, 4), 'right'], [line(10, 20, 4), 'right']], { time: 30000 });
+  g.snakes[0].cheek = { power: T.SHRINK, spitAt: g.tick, left: 120 };
+  g.portals.push({ x: N21 - 1, y: 10, dx: 1, dy: 0, tx: 0, ty: 10, owner: 1, shutAt: g.time + 1500, followed: [], wrappers: [] });
+  feed(g); quiet(g);
+  const e = g.events.find(e => e.type === 'spit');
+  check('a mushroom spat at an open gold portal goes off the board, not through it', e && e.tx >= N21 && !g.food.some(f => f.kind === 'mushroom' && f.y === 10 && f.x < 3), JSON.stringify({ spit: e && [e.tx, e.ty], food: g.food.filter(f => f.kind === 'mushroom') }));
+}
+
 { // Following close behind (the body passing, then a moment after): through, out at the exit, nothing crashed.
   const { b, through, seen } = portalRun(3);
   check('another snake following it goes through the portal, out at the exit', b.alive && through && through.snake === 1 && through.owner === 0 && through.tx === 0 && b.body[0].y === 10 && b.body[0].x < 5 && !seen.some(e => e.includes('crash')), JSON.stringify({ head: b.body[0], through, seen }));
@@ -106,6 +137,16 @@ const portalRun = (gap, ticks = 40, stun = 0) => {
     portals: shutAt === null ? [] : [{ x: N21 - 1, y: 10, dx: 1, dy: 0, tx: 0, ty: 10, owner: 0, shutAt }] });
   const open = picks(view(30000 + 800), 'drab', 20), none = picks(view(null), 'drab', 20);
   check('an AI keeps its head off a portal\'s exit a rival could come out of next (it sees portals used against it)', !open.left && none.left === 20, JSON.stringify({ open, none }));
+}
+
+{ // ...and where a rival's head is now: seen a cell short of an open portal's entry, as stale as anyone's view of the
+  // others (two moves), it may be out at the exit already, a step from the apple just past it. (Its head reckoned on
+  // through the portal, as over an edge that wraps for it.)
+  const view = shutAt => () => aiView({ me: aiMe([[2, 10], [3, 10], [4, 10], [5, 10]], 'left'), others: [aiRival(1, [[N21 - 2, 10], [N21 - 3, 10], [N21 - 4, 10], [N21 - 5, 10]], 'right')], tickMs: 110,
+    food: [{ x: 1, y: 10, kind: 'golden', expires: 999 }, { x: 2, y: 3, kind: 'food', expires: 999 }],
+    portals: shutAt === null ? [] : [{ x: N21 - 1, y: 10, dx: 1, dy: 0, tx: 0, ty: 10, owner: 1, shutAt }] });
+  const open = picks(view(30000 + 800), 'drab', 20), none = picks(view(null), 'drab', 20);
+  check('an AI reckons a rival seen going for an open portal on through it since (where its head may be now)', !open.left && none.left === 20, JSON.stringify({ open, none }));
 }
 
 { // ...and a rival's dash through one: three cells on from its exit, so an AI two cells in keeps out of that line.
