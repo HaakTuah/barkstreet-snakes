@@ -48,7 +48,8 @@ the second account until its usage is spent; on the main account the brake close
   - Creeper, Gobbler, Vulture and Mute: light touches where each repeated itself (PR #442).
   - The banners and cards: the deflating tag ("X. For now.") and the repeated jokes gone (PR #443).
   - The lessons and the Field guide: terse lessons and subjectless rows read straight, rules unchanged (PR #445).
-  - The guard: the chatter suite fails a voice with more than four lines of one shape (this PR).
+  - The guard: the chatter suite fails a voice with more than four lines of one shape (PR #448).
+  *Next on resume:* the menus (the start card, the room card and the nap card's words), then the news lines.
   *Left:* the menus, the news lines and the README's player text; the guide's Burrows, Jump, Cuts and Golden beetle rows
   and one name for each thing (hole, pit or gap; jump, hop or leap; the rings), once part 5 (#202) merges. Wildcard's
   and Mason's protected lines stay as they are; the Chinese is rewritten with each changed line.
