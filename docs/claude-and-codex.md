@@ -118,21 +118,21 @@ goes to building. Its usage can run out like any other, and it may then not say 
    Codex's answer, so neither waits for the other, and the builder answers both lists in one round.
 6. **Docs-only PRs and the milestone PRs get no review,** as before. Codex's automatic review stays off in its settings
    for both repositories, so it reviews only when asked.
-   **One security review a PR, at most** (the owner, 2 November 2026: Codex spent as much of its week on reviews as
-   Claude did on everything, two thirds of it on security reviews run with every round). Codex's security review is
-   set to run only when asked, never with every code review. A builder asks for it once (`@codex security review`), on
-   the round it expects to be the last, and only when the change touches what a security review is for: input from
-   players, models or files, a workflow, the network, saved files or exports, or a dependency newly added or moved up a
-   major version. Every other PR gets the code review alone, Dependabot's minor and patch updates included (CI, the
-   licence gate and GitHub's dependency review check those). Never for a change proven unchanged in what it does (a
-   split by meaning, unused code removed, a rename) nor for docs or the history dossiers: moving the code that writes
-   a save is not changing it. Once means once: a second ask only when a fix after the first changed the risky part
-   again, and the PR names that part. Codex's automatic review is off in its settings, so no code
-   review runs unless a builder asks. **A security review ran only if Codex posts its "🛡️ Codex Security Review"
-   comment** (tested 3 November 2026: `@codex security review` runs one only while Auto security review is on in Codex's
-   settings; with it off, the same words run a code review alone). If an ask comes back as a code review alone, the PR
-   says so and the next wake reports it to the owner; it is not counted as reviewed. The threat model it reads is
-   `docs/threat-model.md`, set in its settings; its review instructions are `SECURITY.md`.
+   **Security reviews: one by itself when a PR is opened, one more only when asked** (the owner, 2 and 3 November
+   2026: Codex spent as much of its week on reviews as Claude did on everything, two thirds of it on security reviews
+   run with every round). Codex's settings run one security review by itself [when: being tested], reporting Medium and above;
+   it reads `docs/threat-model.md` as its threat model and `SECURITY.md` as its instructions. A builder asks for one
+   more (the Codex mention followed by "security review", alone in a comment), which reports Low and above, only when
+   a commit after the opening review changed what a security review is for: input from players, models or files, a
+   workflow, the network, saved files or exports, or a dependency newly added or moved up a major version; and then
+   once, on the round it expects to be the last. Never for a change proven unchanged in what it does (a split by
+   meaning, unused code removed, a rename) nor for docs or the history dossiers: moving the code that writes a save is
+   not changing it. Once means once: another ask only when a fix after the last one changed the risky part again, and
+   the PR names that part. **A security review ran only if Codex posts its "🛡️ Codex Security Review" comment:** an
+   ask that comes back as a code review alone is said in the PR, reported to the owner at the next wake, and not
+   counted as reviewed (tested 3 November 2026: an ask runs a security review only while Codex's "Review" setting for
+   the repository is "Team PRs"; with "Follow personal preferences", or the feature off, it runs a code review alone).
+   Codex's automatic code review is off, so no code review runs unless a builder asks.
 7. **Checks that run the work, once Codex can build** (the owner, 2 November 2026; the words are in
    `docs/archive/instructions.md`). The native review reads the diff but runs nothing, so it cannot check a claim such
    as "the rivals now dash 40% more". When Codex's environments work ("Setup"), a Codex task in its container also
