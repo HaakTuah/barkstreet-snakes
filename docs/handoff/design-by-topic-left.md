@@ -2,7 +2,7 @@
 
 For "The design by topic, not by round" (#336; `docs/PROGRESS.md`, the workshop lane). After food, the woodpecker, the
 rivals, the looks, the powers and moves, the crashes, sound, the page, online, the start card and records, and
-teaching, these blocks in `docs/design/` are still not pointers. Each line: the file and its lines (as of PR #PRNUM),
+teaching, these blocks in `docs/design/` are still not pointers. Each line: the file and its lines (as of PR #437),
 the block's first words, and where it belongs. A census, round record or a topic file's own text stays. Take a topic
 at a time, as before; delete a line here when its block moves, and this file when none is left.
 
