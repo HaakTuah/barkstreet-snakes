@@ -10,8 +10,9 @@
 // move it would have made with the move's price waived)?
 // --rest forbids that rival the move for the rest of the round in the play without it: one tick measures when to use
 // it (the rival still holds it and uses it later), the rest of the round whether having it helps.
-//   node tools/dev/fork-moves.js <root> --move fly|now|dash [--rounds 40] [--seed 1] [--per-round 4] [--forced] [--rest] [--json]
-//     fly: a golden flight held past the plain hop (always GOLD_FLY cells); now: a plain leap now; dash: a golden flash
+//   node tools/dev/fork-moves.js <root> --move fly|now|dash|portal [--rounds 40] [--seed 1] [--per-round 4] [--forced] [--rest] [--json]
+//     fly: a golden flight held past the plain hop (always GOLD_FLY cells); now: a plain leap now; dash: a golden flash;
+//     portal: following someone through a gold portal (no --forced)
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const args = process.argv.slice(2);
@@ -29,6 +30,8 @@ function patchAI(text) {
   swap('  let turn = null;\n  if (golden) {', '  let turn = null;\n  if (golden && !globalThis.__forbid.fly.has(me.id)) {');
   swap('if (!golden && !trapped && !ringCover.length) return null;', 'if (!golden && (globalThis.__forbid.now.has(me.id) || (!trapped && !ringCover.length && !globalThis.__force.now.has(me.id)))) return null;');
   swap('if (span < 1 || (!golden && !trapped && !coverAt(path[span], span + 1))) return null;', 'if (span < 1 || (!golden && !trapped && !globalThis.__force.now.has(me.id) && !coverAt(path[span], span + 1))) return null;');
+  swap('(seenPortals.length && !inGrid(nx, ny) && portalOut(body[0].x', '(seenPortals.length && !inGrid(nx, ny) && !globalThis.__forbid.portal.has(me.id) && portalOut(body[0].x'); // (portal: my own steps through a gold portal, searched or powered)
+  swap('!portalOut(sx, sy, d, 1)) return -1;', '!portalOut(sx, sy, d, 1) || globalThis.__forbid.portal.has(me.id)) return -1;');
   swap('if (me.dashes > 0) { const v', 'if (me.dashes > 0 && !globalThis.__forbid.dash.has(me.id)) { const v');
   // (--forced: the move's price waived, so it's taken wherever it scores above the crawl)
   swap('v += extra - price * cheap * (full ? 1 : habit.price) * U;', 'v += extra - (globalThis.__force.any.has(me.id) && (flash ? globalThis.__force.dash.has(me.id) : (globalThis.__force.fly.has(me.id) && leapFly) || (globalThis.__force.now.has(me.id) && leapNow)) ? 0 : price * cheap * (full ? 1 : habit.price) * U);');
@@ -39,7 +42,7 @@ let rngState = 0;
 const rng = () => { rngState = (rngState + 0x6d2b79f5) >>> 0; let t = rngState; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 const M = Object.create(Math); M.random = rng;
 const ctx = vm.createContext({ window: {}, console, Math: M });
-const empty = () => ({ fly: new Set(), now: new Set(), dash: new Set(), any: new Set() });
+const empty = () => ({ fly: new Set(), now: new Set(), dash: new Set(), portal: new Set(), any: new Set() });
 ctx.__forbid = empty(); ctx.__force = empty();
 const gameFiles = require('../game-files.js'), files = gameFiles(root), read = f => fs.readFileSync(path.join(root, f), 'utf8');
 vm.runInContext(read('tuning.js'), ctx, { filename: 'tuning.js' });
@@ -56,6 +59,7 @@ function used(g, s) {
     if (MOVE === 'fly' && e.type === 'leap' && e.gold && s.flight?.held) return true; // (held: the full flight, 2y)
     if (MOVE === 'now' && e.type === 'leap' && e.now && !e.gold) return true;
     if (MOVE === 'dash' && e.type === 'dash' && !e.plain) return true;
+    if (MOVE === 'portal' && e.type === 'through') return true; // (following someone through a gold portal)
   }
   return false;
 }
