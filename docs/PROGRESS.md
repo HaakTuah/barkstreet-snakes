@@ -52,6 +52,8 @@ the second account until its usage is spent; on the main account the brake close
   *Left:* the menus, the news lines and the README's player text; the guide's Burrows, Jump, Cuts and Golden beetle rows
   and one name for each thing (hole, pit or gap; jump, hop or leap; the rings), once part 5 (#202) merges. Wildcard's
   and Mason's protected lines stay as they are; the Chinese is rewritten with each changed line.
+- **Mason's vein, marble not gold** (#431; the owner, 3 November 2026): his marble's vein turns a marble colour, slate
+  or rose, so gold stays for powers alone; a picture on its PR.
 - **What belongs:** whatever makes the game feel finished without changing how it plays: things drawn wrong, out of
   place, overlapping, flickering or cut off; the same thing drawn, named or worded differently in two places (a
   rival's colours, a move's name in the lesson and the Field guide); layout at 390 px and desktop, phone held upright and
@@ -128,7 +130,11 @@ landing is almost never contestable. The flight stays as built for now, and no r
    is at the 50 KB mark, so its step 0 split comes first.
 2. **The flight measured against fliers who fly like people** (a measurement, a side lane now): fliers who take off into
    contested rings, as people do, against the rivals who now take landings; per use and head to head.
-3. **Measured again after 2u and part 7,** whose stamina and pricing change what a flight costs. Only if it is still
+3. **Portals with a real cost** (#447; the owner, 3 November 2026): portals stay as built, followed one round in five
+   but never winning places, so the wrap's trade-off is not yet real. A measured experiment: a follower coming out
+   of the portal may cut off its owner. Built only if it makes following matter both ways, with no refuge for owner
+   or follower.
+4. **Measured again after 2u and part 7,** whose stamina and pricing change what a flight costs. Only if it is still
    even then does a bigger change go to the owner as a question: a longer flight, or the ring shown before take-off.
 
 ### 2z. The golden apple's worth (the owner, 2 November 2026; a measurement, then an engine-rules entry if needed)
@@ -141,6 +147,14 @@ is. If it does not: +3 and both rests refilled ("the apple of vigour"), measured
 
 One bar for both plain powers, no tail cost, each power a third to two thirds of plain power uses and neither better in
 aggregate, the pace kept: `docs/design/37-one-stamina.md`. Part 7's pricing then prices the one stamina.
+
+### 2u+. The golden apple's worth, against one stamina (the owner, 3 November 2026; #460; a measurement right after 2u, then an engine-rules entry if it pays)
+
+2z found the golden apple doesn't pay (its +3 costs time alive more than it helps), and the apple of vigour wouldn't
+either, since the two rests were mostly ready when one was eaten. Right after 2u, the same fork measures, on fresh
+seeds, the golden apple as +3 and the one stamina refilled, and as +3, refilled and supercharged for a few seconds (the
+owner: "Maybe it can even superchage your stamina for a little while?"; a first guess of 4 s at a faster refill), each
+against the apple as it is. The one that pays is built, with its cue, lesson, Field guide row and protocol bump.
 
 ### 5. Round six B: the new moves (DESIGN "Round six B")
 
