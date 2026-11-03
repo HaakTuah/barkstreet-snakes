@@ -99,7 +99,7 @@ Codex's usage can run out with no alert, so the orchestrator never waits on Code
   test task gets through, tried at most every few hours (not in use while Codex cannot build: "Status").
   Meanwhile the work is Claude's alone, as before Codex came.
   A take-back for a slow PR alone does not count: the next lane still goes to Codex.
-- The times were set from the first test: adjust them from what the first weeks show, and say so
+- The times were set from the first test (archive, 1 November 2026): adjust them from what the first weeks show, and say so
   here.
 
 ## Codex reviews
