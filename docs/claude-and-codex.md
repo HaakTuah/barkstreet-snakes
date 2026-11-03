@@ -118,9 +118,9 @@ goes to building. Its usage can run out like any other, and it may then not say 
    Codex's answer, so neither waits for the other, and the builder answers both lists in one round.
 6. **Docs-only PRs and the milestone PRs get no review,** as before. Codex's automatic review stays off in its settings
    for both repositories, so it reviews only when asked.
-   **Security reviews: one by itself when a PR is opened, one more only when asked** (the owner, 2 and 3 November
+   **Security reviews: one by itself when a PR is ready, one more only when asked** (the owner, 2 and 3 November
    2026: Codex spent as much of its week on reviews as Claude did on everything, two thirds of it on security reviews
-   run with every round). Codex's settings run one security review by itself [when: being tested], reporting Medium and above;
+   run with every round). Codex's settings run one security review by itself when a pull request is opened for review or a draft is marked ready, never while it is a draft, reporting Medium and above;
    it reads `docs/threat-model.md` as its threat model and `SECURITY.md` as its instructions. A builder asks for one
    more (the Codex mention followed by "security review", alone in a comment), which reports Low and above, only when
    a commit after the opening review changed what a security review is for: input from players, models or files, a
@@ -128,10 +128,13 @@ goes to building. Its usage can run out like any other, and it may then not say 
    once, on the round it expects to be the last. Never for a change proven unchanged in what it does (a split by
    meaning, unused code removed, a rename) nor for docs or the history dossiers: moving the code that writes a save is
    not changing it. Once means once: another ask only when a fix after the last one changed the risky part again, and
-   the PR names that part. **A security review ran only if Codex posts its "🛡️ Codex Security Review" comment:** an
-   ask that comes back as a code review alone is said in the PR, reported to the owner at the next wake, and not
-   counted as reviewed (tested 3 November 2026: an ask runs a security review only while Codex's "Review" setting for
-   the repository is "Team PRs"; with "Follow personal preferences", or the feature off, it runs a code review alone).
+   the PR names that part. **A security review ran only if Codex's review summary on the PR lists "🔒 Security Review" as completed on its
+   latest commit, or on the last commit that changed the risky part;** one with no findings posts nothing else. One
+   missing is said in the PR, reported to the owner at the next wake, and not counted as reviewed. Codex does not
+   review a commit twice: an ask on an already reviewed commit runs a code review alone. (Tested 3 November 2026: a
+   draft gets none, a draft marked ready gets one; an ask runs one only while Codex's "Review" setting for the
+   repository is "Team PRs", and with "Follow personal preferences", or the feature off, it runs a code review
+   alone.)
    Codex's automatic code review is off, so no code review runs unless a builder asks.
 7. **Checks that run the work, once Codex can build** (the owner, 2 November 2026; the words are in
    `docs/archive/instructions.md`). The native review reads the diff but runs nothing, so it cannot check a claim such
