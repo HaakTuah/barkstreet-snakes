@@ -60,6 +60,7 @@ check(boardMenus.length === 12 && boardMenus.every(m => m === 'none'), 'no menu 
 
 // Both buttons: the right pressed while the left is held (a chord: the browser sends it as a move).
 await ev('centre()');
+await ev(`Object.defineProperty(SnakeDebug.game().snakes[0], 'restedAt', { get: () => 0, set() {}, configurable: true }); 'ok'`); // (a stamina that never runs out: this checks the order the two go in; since 2u a plain jump and flash take more than a full bar, see the rules suite's "One stamina")
 await ev(`(() => { const g = SnakeDebug.game(), h = g.snakes[0].body[0]; g.holes.add(h.y * 24 + h.x + 1); return 'ok'; })()`);
 before = await powers();
 let steps = await ev('__log.steps.length');
@@ -68,6 +69,7 @@ await mouse('mouseReleased', 'right', onBoard); await mouse('mouseReleased', 'le
 for (let n = 0; n < 4; n++) await toTick();
 await ev(`SnakeDebug.game().holes.clear(); 'ok'`);
 const chord = { asked: await ev(`__log.powers.slice(${before}).map(p => p.kind).join(',')`), got: await ev(`__log.steps.slice(${steps}).flatMap(s => s.evs).join(' ')`) };
+await ev(`(() => { const me = SnakeDebug.game().snakes[0]; delete me.restedAt; me.restedAt = 0; return 'ok'; })()`);
 check(chord.asked === 'leap,flash' && chord.got === 'leap dash:plain', 'both mouse buttons at once: the jump, then the flash once down', JSON.stringify(chord));
 await ev('__menus.length = 0');
 
