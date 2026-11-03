@@ -171,7 +171,7 @@ and every lesson where your eyes already are.
 - *Where:* it keeps off your head, the 3 cells ahead, a turn you've pressed, the banner and the thing the line is about. It stays put while it can; when it must move it fades across in about 0.1 s, never gliding over your head. Its first place is chosen from the head's next tick, so it doesn't jump in its first half second. Rival bubbles make way for it.
 - *The words:* first person, one idea, at most 32 characters (a test checks every line), each mirroring the rivals' line for the same moment. Where the prototypes differ, the shorter line wins. Exclamation marks are rationed: pain and surprise get one, and everything else ends in a full stop or an ellipsis. The narrator (the banners) stays calm. The owner judges the tone.
 - *The cue:* a line that asks for a press carries a key cap ([Space], [E], [↓]) or a drawn fingertip tapping or swiping. Its key is named only until you've used it.
-- *How long:* its reading time, 1.2 s plus 0.45 s a word, 2.4–4.2 s. One line at a time. What just hurt you, or what you just got, takes over. The cough's line waits for the choke's. A line that can't show yet isn't used up.
+- *How long:* its reading time, 1.2 s plus 0.45 s a word, 2.4–4.2 s. One line at a time. What just hurt you, or what you just got, takes over. A line that can't show yet isn't used up.
 - *How often,* counted per device in one new key, 'snake-taught':
   - each rule's line comes in the first 2 rounds you meet it;
   - the last-life lines (a crash that leaves you at 3, at 3, starving at 3) come every round;

@@ -6,7 +6,7 @@ round five, round six A and B and the owner's playtest settled them (their text,
 in `docs/archive/design-rivals.md`). Elsewhere: what they do with food and beetles (`04-food-and-the-world.md`, from
 "Rivals see food as it is"), with the woodpecker ("The rivals tell a mark from a hole" in `38-the-woodpecker.md`),
 with fire, head-ons and their own beads (`41-crashes.md`), with each move (`40-powers-and-moves.md`); the power styles'
-measure ("Balance targets" in `29-round-six-b-the-new-moves.md`); their looks (`03-the-snake-as-a-character.md`); their
+measure ("Balance targets", below); their looks (`03-the-snake-as-a-character.md`); their
 lines (`09-voice-and-copy.md`, and the chatter, with Star's voice, in `13-lines-and-announcements.md`); Capricious,
 Copycat and Wildcard (`35-capricious-copycat-and-wildcard.md`); Sovereign's realm and Colonist's flags, and a pecked
 flag (`44-realms-and-colonies.md`); the tools that time and measure them
@@ -238,8 +238,8 @@ jumps neither help nor hurt measurably, and stay because they're the character.
 ### Every rival has a power style
 
 Each persona uses jumps and flashes its own way, through the same engine calls as a person. Most of it is still to
-build (part 7 of round six B, with one pricing model for every power, in `docs/PROGRESS.md`); "Balance targets" in
-`29-round-six-b-the-new-moves.md` is its measure.
+build (part 7 of round six B, with one pricing model for every power, in `docs/PROGRESS.md`); "Balance targets",
+below, is its measure.
 - **Built so far:** Star's habit ("Star"); a style's own price for a leap now and for a flier's ring (`leapNow`,
   `landing`: "Rivals use their powers, when it pays") and for a mushroom shot (`spit`: "Mushrooms, to a rival");
   everyone's island hop, and a tail dropped only when trapped ("The plain jump hops islands" and "Dropping your tail"
@@ -270,6 +270,14 @@ Every persona wins 15–35% of the rounds it plays, over several seeds (one pers
 points of noise; over five seeds about 660, ±3). A persona outside it is retuned, without losing its trademark; one at
 the floor whose retunes don't hold up on fresh seeds keeps its weights ("Gobbler, at the floor" under "Round six A,
 measured"). The latest rates by persona are in "Win rates by personality" there.
+
+### Balance targets
+
+The measure for the moves and the power styles, as round six B set it (simulation, paired seeds): powers on clearly beat
+powers off in the seat-split A/B; every persona in the band (above); rounds about 160–180 s; starving at most 8%;
+failed flashes rare enough to be a risk you take on purpose. The numbers chosen against it are in each move's section
+of `40-powers-and-moves.md`; the text as it was, with the A/B as it stood then, is in
+`docs/archive/design-arc-and-history.md`.
 
 ### How a change to the rivals is measured
 

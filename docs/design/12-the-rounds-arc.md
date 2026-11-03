@@ -1,16 +1,25 @@
 ## The round's arc
 
-A round has a shape, and the music follows it:
+How a round goes, from Go to its end: its timeline, sudden death closing in, starving, and how it ends. The timeline as
+the round files had it, with its music column, is in `docs/archive/design-arc-and-history.md`. Elsewhere: the music at
+each moment (the stages under "The music" in `21-sound.md`, the one place for them), the weather's own timing
+(`05-weather.md`), and how long a meal keeps you (`04-food-and-the-world.md`, "Food on the log").
 
-| Moment | Rules | Music |
-|---|---|---|
-| Start card, countdown, round over | - | A calm marimba loop (84 bpm) |
-| Opening | The first 3 ticks are eased (170 → 120 ms) | The loop plus a soft bass |
-| 0:45 | The speed-up (120 → 90 ms over 2 minutes) is well under way | A shaker joins; the tempo creeps up with the game's speed |
-| 2:00 | **Sudden death:** nothing new grows, but the last apples fall one at a time (round four); the woodpecker pecks the log away a patch at a time | Minor key, wood-block knocks |
-| Last two snakes | - | Faster and tense, with a heartbeat kick |
-| Watching | - | Quieter, no percussion |
-| Napping | - | Ducked to about a third |
+### The timeline
+
+A round has a shape. Times are the round's game time (`tuning.js`):
+
+| When | What changes |
+|---|---|
+| Go | The first 3 ticks are eased, 170 → 120 ms (`OPENING_TICK`, `OPENING_TICKS`, `START_TICK`); from there the ticks speed up evenly to 90 ms at 2:00 (`MIN_TICK`, `RAMP_MS`), about a third faster |
+| 0:15 | Beetles start coming out (`BEETLE_FIRST_MS`) |
+| 0:30 | A storm may come (`STORM_FROM_MS`) |
+| 0:45 | Mid-round: a meal keeps you 12 s, not 20 (`HUNGER_MID_FROM_MS`); winter may come (`SNOW_FROM_MS`); the music picks up (`MUSIC_MID_MS`) |
+| 2:00 | **Sudden death** (`SUDDEN_DEATH_MS`): the woodpecker arrives and pecks the log away a patch at a time; nothing new grows, but the last apples fall one at a time, and beetles still come out; the sky clears and stays clear; a meal keeps you 20 s again; the ticks are at their fastest |
+| Last two snakes | Only the music changes (the duel) |
+| One snake left, or none | The round is over |
+
+### Sudden death closes in
 
 **Sudden death closes in.** A round ends with the board closing in, not with long snakes waiting to starve: hunger
 bites no harder in sudden death than in the opening (`HUNGER_MS`), but **the woodpecker gets hungrier**: each rest is
@@ -27,8 +36,19 @@ they stand now are in `38-the-woodpecker.md`, and their text as it was, with the
 was, with what it measured, in `docs/archive/design-rivals.md`. Two heads that swap cells count as a head-on, as
 they look.
 
+### Starving
+
+A snake whose last meal has run out (`HUNGER_MS`, or `HUNGER_MID_MS` mid-round: "Food on the log" in
+`04-food-and-the-world.md`) loses a segment every `STARVE_EVERY_MS` (1.5 s), growth still to come first; one already
+at `MIN_LENGTH` (3) when the next is due starves (`step` in `engine/step.js`).
+
 **Starving is decided after eating**: its rule is in `04-food-and-the-world.md` under that name, and its text as it
 was in `docs/archive/design-food.md`.
+
+### The end
+
+The round is over when one snake is left, the winner, or none. Snakes out on the same tick share their place, ahead of
+those out before them; if nobody is left, the last share first place, a draw (`afterTick` in `game/core.js`).
 
 **The Hall of Fame ranks by place, then time alive, then food**: its rule is in `43-the-start-card-and-records.md`
 under that name, and its text as it was in `docs/archive/design-online.md`.
