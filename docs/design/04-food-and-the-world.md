@@ -50,6 +50,27 @@ was tried and measured, is in `docs/archive/design-food.md`).
   row its `mealMs`; the events say what was eaten, what rotted (an apple or a bead, and the bead's colour), what baked
   or burned to ash, what came, and where the last apples started to fall (`lastApples`).
 
+### Apples rot
+
+So nobody camps an apple, as crashes, not deaths, settled it (its text, with what was measured, is in
+`docs/archive/design-food.md`).
+- **An apple lasts about `APPLE_TICKS`** (110 ticks, give or take a quarter: about 10 to 16 s early in a round, 8 to 12
+  s once it's at full speed), twice as fast in winter (see "Weather").
+- **It goes off as it goes:** it bruises (brown spots), then rots (brown, wrinkled, its leaf dead, a fly circling),
+  shrivels and goes with a brown puff.
+- **A fresh one drops** from the tree above somewhere else: every new apple mid-round drops in from above, like a
+  windfall.
+
+### Food in the fire cooks
+
+Fire spreads onto food (see "Lightning and fire, fairly" in `05-weather.md`), as crashes, not deaths, settled it (its
+text is in `docs/archive/design-food.md`):
+- **Baked:** an apple or a bead that's been in a burning cell for `COOK_TICKS` (18 ticks) is baked, worth
+  `COOKED_GROWTH` (2), steaming, glazed and split; it stops rotting for a while (it lasts at least `APPLE_TICKS / 2`
+  more).
+- **Ash:** any food but a beetle (which runs) left in for `ASH_TICKS` (45 ticks) goes to ash in a grey puff.
+- **Getting at it** means waiting for the fire to die down, or taking the heat ("Fire on snakes" in `41-crashes.md`).
+
 ### Rivals see food as it is
 
 Rivals see other snakes a quarter of a second late, like a person's reaction, and food as it is now (seen late, they

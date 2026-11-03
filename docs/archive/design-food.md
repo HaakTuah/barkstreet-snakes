@@ -8,6 +8,12 @@ The current rules are in `docs/design/04-food-and-the-world.md`, under the same 
 
 **Starving is decided after eating.** A snake whose head reaches food on the tick it would starve eats instead.
 
+## From crashes, not deaths (`14-crashes-not-deaths-the-rules-reworked.md`)
+
+**Food in the fire cooks.** Fire can now spread onto food: an apple or a bead that's been in a burning cell for `COOK_TICKS` (18) is baked (worth `COOKED_GROWTH`, 2; an apple stops rotting for a while), steaming, glazed and split; left in for `ASH_TICKS` (45) it goes to ash in a grey puff. Getting at it means waiting for the fire to die down, or taking the heat.
+
+**Apples rot.** Each apple lasts about `APPLE_TICKS` (110, ±25%: about 10 to 16 s early in a round, 8 to 12 s once it's at full speed; it was 160, and apples still mostly got eaten before they went): it bruises (brown spots), then rots (brown, wrinkled, its leaf dead, a fly circling), shrivels and goes with a brown puff, and a fresh one drops from the tree above somewhere else (every new apple mid-round drops in from above, like a windfall). It keeps snakes from camping an apple. At first apples lasted 40 s and hardly any rotted (0.1 a round: they were eaten first), so they were shortened: about 1.2 rotted a round at 160 ticks, and about 7 do now (600 seeded rounds; the rounds are longer too).
+
 ## From round four (`24-round-four-the-owners-feedback-and-the-calls.md`)
 
 ### Food
