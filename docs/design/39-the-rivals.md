@@ -253,7 +253,30 @@ measured"). The latest rates by persona are in "Win rates by personality" there.
   move them ("Rules that stand" in `AGENTS.md`). A behaviour the census can't count gets a census of its own in
   `tools/dev/`.
 - **The cost:** a decision's time, from `tools/bench-ai.js`. Every new weight goes in `WEIGHTS` (`ai/rivals.js`), or
-  every search that reads it is slower ("One shape of weights" in `28-the-rivals-think-faster-round-six-as-optimization.md`).
+  every search that reads it is slower ("One shape of weights", below).
+
+### How they think quickly
+
+A rival's thinking (`decide()`, `ai/decide.js`) is most of the time the simulation and CI take, so its searches are
+built for speed, and a change made for speed alone keeps every decision ("How a change to the rivals is measured"; the
+tools in `28-the-rivals-think-faster-round-six-as-optimization.md`).
+- **The framed board.** The territory search, my room's flood fill and each rival's reach run on the grid framed by a
+  border of holes (`frameBoards` in `ai/buffers.js`), so a cell's neighbours are just a row up or down and a cell either
+  side, and no search tests for the edge. On the territory search's board (`terr`, which my room's fill reads too), one
+  Int32 a cell says everything a search asks of it: when the cell frees up for a rival (my body placed on it), or, once
+  the territory search has claimed it, `CLAIMED` plus when, with whose it is in the lowest bits. Each search state
+  starts from a copy of the board (`terrFree`) instead of undoing the last.
+- **Searches compiled once.** The searches over the framed board are functions of their own at the top level
+  (`ai/room.js`), outside `decide`, reading only typed arrays and plain numbers, so V8 compiles them once and they stay
+  compiled. A function that meets something of a new shape (a persona, a kind of food) is compiled all over again, and
+  runs uncompiled meanwhile.
+- **One shape of weights.** The search reads every persona's weights through one shape: a copy of the persona's own
+  over `WEIGHTS` (`ai/rivals.js`), which lists every weight. **A new weight goes in `WEIGHTS`.** One left out still
+  works, but every search that reads it is slower.
+- **The territory search stops early.** Once I claim nothing more, the rest is the rivals sharing out what's left among
+  themselves, which counts only for an aggressive snake; so for anyone else it stops there, unless a rival could still
+  claim food it can't eat (its own bead), which would still be mine to take. (The search still allows for a rival
+  that's coughing, `coughs`, but nobody coughs now.)
 
 ### The rival line-up
 
