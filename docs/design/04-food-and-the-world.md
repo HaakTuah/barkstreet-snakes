@@ -71,6 +71,14 @@ text is in `docs/archive/design-food.md`):
 - **Ash:** any food but a beetle (which runs) left in for `ASH_TICKS` (45 ticks) goes to ash in a grey puff.
 - **Getting at it** means waiting for the fire to die down, or taking the heat ("Fire on snakes" in `41-crashes.md`).
 
+### Mushrooms look poisonous
+
+A mushroom only costs you, so it looks it, as the first seconds settled it (its text is in
+`docs/archive/design-looks.md`, under "Looks"):
+- a violet haze round it that breathes, two wavy violet stink lines rising, and violet spores drifting off it
+  (`render/food.js`);
+- eat one and you go queasy green for a moment, in a puff of spores.
+
 ### Rivals see food as it is
 
 Rivals see other snakes a quarter of a second late, like a person's reaction, and food as it is now (seen late, they
