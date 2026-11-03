@@ -46,7 +46,10 @@ the same names, and their text as it was, with how Copycat's red was checked and
 **Controls anyone can guess**: its rules are in `42-controls.md` under the same name, and its text as it was, with
 what was measured, in `docs/archive/design-page.md`.
 
-**On a friend's screen** (protocol 10, wave 2): each beetle's dig (`digUntil`); the beetles underground (`game.unders`: when each comes up, when it would fly off, where it went down, golden or not); digs, dives (and whether one was a dig), and knocks (the kind, from where to where, or nowhere when the bird ate it; golden; a bead's colour); from the promise on (5 moves before the strike), where the strike promised each piece would land (`w.landings`, the verify pass: a friend's rings are the host's promise; the list can grow as food comes into the mark, and it's sent whole every tick, so the critique's earlier promise needed no new protocol); the burrows as the engine keeps them (where, the tick each opened, when a beetle last used it, whether a dig left it), one a dig opened and one closing over. Each is checked before it's drawn: a kind that exists, cells on the board, a landing on the board or none, a burrow on the board and opened on a tick (until the verify pass a burrow row needed only to be numbers), a promised landing a cell and a cell or none. online-test crosses each, staging any the rounds bring too few of, and feeds the guest malformed ones; on seeds 1 and 4 the guest matched the host every tick (seed 1's three rounds held 21 digs, 31 knocks and 9 burrows closing over; since the verify pass's engine fixes, 18, 12 and 9, with the promised landings crossing on 4 ticks, and staged in the last round when the rounds bring fewer than 3; at round six A's finish, with fewer beetles and the promise made earlier, 19, 19 and 3, and every kind of event crosses at least 3 times, the rarer ones staged).
+**On a friend's screen** (protocol 10, wave 2): what the beetles and burrows send is in `04-food-and-the-world.md`
+("Online" under "Less fruit, more beetles"), the woodpecker's knocks and promised landings in `38-the-woodpecker.md`
+("Online"), the general rules in `22-play-with-friends-online.md`, and this paragraph as it was, with what crossed on
+which seeds, in `docs/archive/design-online.md`.
 
 ### Round six A, measured
 

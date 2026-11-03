@@ -22,5 +22,6 @@ they look.
 
 **Starving is decided after eating.** A snake whose head reaches food on the tick it would starve eats instead.
 
-**The Hall of Fame ranks by place, then time alive, then food** (your call). Food stops appearing at 2:00 (since round four, all but the last apples, and since round six A, beetles still come out), so food eaten mostly measures how early you died; time alive measures how well you played. The rank on your death card already counts the snakes still alive (they'll all finish ahead of you), so it's the rank the round-over card will show.
+**The Hall of Fame ranks by place, then time alive, then food**: its rule is in `43-the-start-card-and-records.md`
+under that name, and its text as it was in `docs/archive/design-online.md`.
 

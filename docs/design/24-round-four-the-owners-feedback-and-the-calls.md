@@ -88,15 +88,6 @@ Docs that contradicted the game are corrected: the holes were said to be trenche
 
 ### Online
 
-Protocol 7, and 8 after the critique:
-- presses are three messages: a key's turn (`{t:'turn'}`, it only steers), a fresh swipe (`{t:'swipe'}`: the host decides whether it's "ahead", against its own queue, which a friend can't see) and a power (`{t:'pow'}`, jump or flash);
-- each snake's flash rest and flash request, and plain flashes;
-- beads' owner, and eating your own;
-- holes under bodies;
-- rot, saying whether it was an apple or a bead (and the bead's colour);
-- the trickle of last apples, and where the first fell;
-- whether a rival is desperate (the chatter voices it);
-- (8) where everyone goes next, from the host once its rivals have thought and again when a press changes it: `{t:'plan', k, s: [[way, jump, flash], …]}`, so a friend's screen draws everyone ahead the way they're really going;
-- (8) `'unleap'` among a friend's `{t:'pow'}` kinds: a jump a finger held still asked for, taken back (it turned out to be a swipe);
-- (8) each snake's `mealMs`, how long its last meal keeps it, for the hunger bar.
-
+Protocol 7 and 8's messages: what each move and thing on the log sends now is in its topic file's "Online"
+(`40-powers-and-moves.md`, `41-crashes.md`, `04-food-and-the-world.md`), the general rules and the plan message in
+`22-play-with-friends-online.md`, and this section as it was in `docs/archive/design-online.md`.

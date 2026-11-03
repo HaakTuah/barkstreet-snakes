@@ -33,17 +33,19 @@ a room on a newer version in `36-updating.md` ("Online"); the shared Hall of Fam
   it sends friends a compact picture of the board (`{t:'tick'}`: every snake's row, the food, the beetles underground,
   the holes, the woodpecker, the burrows, the fires, the sky and the tick's events; about 0.9 KB, so about 8 KB/s per
   friend), and where everyone goes next (`{t:'plan'}`) once its rivals have thought and again when a press changes it.
-  It also sends the room (`lobby`), a new round (`round`, with its first tick), the countdown and Go (`phase`), each
-  line of chatter (`say`), everyone's shared best rounds (`scores`), and that the room closed (`closed`).
+  A snake's row carries what the screens draw it from, its `memory` among them (a rival's home, colonies, mood, model,
+  style, target and whether it's desperate: `MEMORY` in `online.js`, checked by `saneMemory`). It also sends the room
+  (`lobby`), a new round (`round`, with its first tick), the countdown and Go (`phase`), each line of chatter (`say`),
+  everyone's shared best rounds (`scores`), and that the room closed (`closed`).
 - **Friends send back only their presses:** a key's turn (`{t:'turn'}`, it only steers), a fresh swipe
   (`{t:'swipe'}`: the host decides whether it's "ahead", against its own queue, which a friend can't see) and a power
   (`{t:'pow'}`: `'leap'`, `'flash'`, `'unleap'` and `'letgo'`, in `40-powers-and-moves.md`'s "Online"); and, besides,
   their hello (`hello`: their name, their player id, their best rounds and their version) and whether their page is out
   of sight (`away`, `back`). `net.js` adds its own: the host's `ping` every second and the friend's `pong`, and the
   friend's "still here" (`k`).
-- **Fair, in keeping with the AI rule:** the rivals never know who's a person. Lag would favour the host, who has none. A
-  friend sees each tick half a round trip late, and their turn takes another half to arrive, so the host's own turns
-  wait **a full average round trip** (at most 150 ms, `HOST_DELAY_MAX`), in the order they were pressed.
+- **Fair, in keeping with the AI rule:** the rivals never know who's a person. Lag would favour the host, who has
+  none. A friend sees each tick half a round trip late, and their turn takes another half to arrive, so the host's own
+  turns wait **a full average round trip** (at most 150 ms, `HOST_DELAY_MAX`), in the order they were pressed.
 
 ### The protocol's rules
 
