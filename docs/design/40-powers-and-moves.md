@@ -10,11 +10,10 @@ measured, is in `docs/archive/design-powers.md`). Elsewhere: how a held power, a
 (`38-the-woodpecker.md`); how a rival weighs a power, and the power styles and pricing still to build
 (`39-the-rivals.md`, "Rivals use their powers, when it pays"; "Every rival has a power style" and "Balance targets" in
 `29-round-six-b-the-new-moves.md`); the chosen numbers and what each move measured (round six B's "chosen numbers" in
-`29-round-six-b-the-new-moves.md`); swipes, taps and the mouse (`31-phones.md`, `33-one-screen.md`, "Controls that keep
-up" in `24-round-four-the-owners-feedback-and-the-calls.md` and "Controls anyone can guess" in
-`27-round-six-a-fairness-and-fixes.md`); teaching (`30-teaching-by-showing.md`); Capricious, Copycat and Wildcard
-(`35-capricious-copycat-and-wildcard.md`); sound in general (`21-sound.md`); one stamina for both plain powers, to
-build (`37-one-stamina.md`); and crashes, head-ons, fire on snakes and your own beads squashed (`41-crashes.md`).
+`29-round-six-b-the-new-moves.md`); the keys, swipes, taps and the mouse (`42-controls.md`); teaching
+(`30-teaching-by-showing.md`); Capricious, Copycat and Wildcard (`35-capricious-copycat-and-wildcard.md`); sound in
+general (`21-sound.md`); one stamina for both plain powers, to build (`37-one-stamina.md`); and crashes, head-ons,
+fire on snakes and your own beads squashed (`41-crashes.md`).
 
 ### The words
 

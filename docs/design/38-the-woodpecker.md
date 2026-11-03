@@ -4,8 +4,8 @@ From 2:00 a great spotted woodpecker comes for the log, a patch at a time: it is
 round's arc, round four, round six A and the owner's playtest settled them (their text, with what was tried and measured,
 is in `docs/archive/design-woodpecker.md`). Elsewhere: how beetles flee its mark ("Beetles and the woodpecker" in
 `04-food-and-the-world.md`), the last apples that fall meanwhile ("Food on the log", there), its perch on a phone
-(`31-phones.md`, and "The phone gap" and "The phone's bottom" in `32-the-owners-playtest.md`), the sound's levels
-(`21-sound.md`), and a flag it pecks out ("A pecked flag is a lost colony" in `27-round-six-a-fairness-and-fixes.md`).
+("The woodpecker's perch" in `31-phones.md`), the sound's levels (`21-sound.md`), and a flag it pecks out ("A pecked
+flag is a lost colony" in `27-round-six-a-fairness-and-fixes.md`).
 
 ### When it comes
 

@@ -1,65 +1,181 @@
 ## Phones
 
-The owner, on a phone: playable, but not optimal, with space wasted on the border; on its side, "the play area becomes miniscule"; where would the woodpecker go with a bigger board, since it perches outside it; and could the screen stay awake while you play or watch. These are the calls, as built. Every number is CSS px, measured in headless Chrome by `tools/layout-test.js`, which checks all of this on 24 screens and at every height in between held upright.
+The page on a phone, held upright and on its side: the board's size and place, the row and the chatter under it, the
+smallest phones, the woodpecker's perch there, full screen and the screen kept awake, as the phones work, one screen and
+the owner's playtest settled them (their text, with what was tried and measured, is in `docs/archive/design-page.md`).
+Every number is CSS px, measured in headless Chrome by `tools/layout-test.js`; the least board each screen gets is
+pinned in `tools/layout/00-screens.js`. Elsewhere: the page on every screen, the header's rows and the cards
+(`33-one-screen.md`); the keys, touch and swipes (`42-controls.md`); how a tap and a swipe use the powers ("Two
+powers, two presses" in `40-powers-and-moves.md`); the woodpecker's size on a phone ("The woodpecker, as big as it
+gets", "Clear of the row's words (2k+)" and "Bigger on a phone" in `38-the-woodpecker.md`); and a banner's place over
+the header (the placement under "As built, step 1" in `30-teaching-by-showing.md`).
 
-**A bigger board, held upright.** The board runs edge to edge: no page margin beside it, and its frame slims from 10 px to a 4 px rim (with a smaller radius). The moss and the corner leaves run off the screen's edges, where the page clips them, so nothing scrolls sideways; the leaves are a little smaller, their blades along the rim, never over a cell. The header, the tags, the chatter and the help keep 12 px from the screen's edge. You still see the whole log: no camera, no zoom.
-- *A phone too short for edge to edge* (an iPhone SE with Safari's bars showing, or a small Android with its browser's bar) gets a board as big as fits over the row under it (the page is one screen tall now: see "One screen"; it was as big as fits the height, its frame's bottom at the screen's, the row and the chatter below), centred, or, a little taller, as leaves the woodpecker its room (see below), never smaller than before. The height is what's left under the header and the tags as the page measures them, so it holds whatever the header's rows and font (it was a fixed 208 px, the header's three rows at 375 px then: at 390 to 440 px wide, where the header took two, a short phone's board stopped 29 px above the screen's bottom, and was smaller than before up to 585 px tall: 329 against 335 at 390×545; and before the web font arrived, the taller header pushed the frame's bottom 6 px off the screen). The header and the tags still keep their 12 px from the screen's edge, not from the board's (they used to sit inside the narrower page, twice as far in), and the moss and leaves show whole in the gutters beside the board. The page is laid out for the screen with the browser's bars showing (`svh`), so the board doesn't grow and shrink as Safari's bars come and go; a browser without `svh` (Safari before 15.4, Chrome before 108) falls back to `vh` (laid out for the bars-hidden screen there). (Each `svh` with a `var()` in it, and the side's `dvh` in a custom property, is in an `@supports` test of its own: such a value is only checked as it's used, so a second declaration can't fall back to a first, and a browser without the unit lost the property, the ledge or the board's size.)
-- *A phone of a height in between* (too tall for its board to leave a gutter beside it, too short to show the ledge whole: an iPhone 8 Plus in Safari at 414×622, an Android with its browser's bars at 412×604, an iPhone SE in Safari at 375×548 to 553, or in an app's browser at 375×580) leaves the woodpecker room for 24 px: the board is no bigger than leaves 13 px beside the frame each side, or 25 px under it on the screen, whichever is the bigger board. (Its board ran nearly edge to edge with the ledge below the fold, so the bird stood on the edge column.) The board gives up as much as 25 px for it, at the heights where the ledge is just below the fold: 343 at 375×555 against 367 without the bird's room, 286 at 320×490 against 310, 380 at 414×580 against 393. Every one is still bigger than before.
-- *Score and Best* sit at the header's right, held upright wider than 340 px: Score on the title's row, Best at the end of the buttons' row under it, its room kept for four digits so the buttons never move as it grows, its digits under Score's. As they grow to 100 and 1000, the header keeps its two rows and the board its size and place. (Beside the title the two ran out of room at 100 at 390 px wide, or at 1000 at 412 and 414: the header grew a row in the middle of a round, the page measured it again, and at a height in between the board shrank under it, 356 → 345 at 390×560 and 392 → 378 at 412×604; on a taller phone it moved down 28 px. The other ways were room kept beside the title for three digits, a third row from the start at 390 to 411 px wide, 28 px off a short phone's board, and still a row more at 1000 at 412 to 427; or the board held to its size through the round, still moved down a row.) At 375 px, where Best had a row of its own, the header is two rows now, not three, so an iPhone SE's board is bigger: 333 → 341 at 375×548, 341 → 367 at 375×580. On the narrowest phones (320 to 340 px) the three keep their row, where four digits fit; a touch screen's header keeps its buttons 6 px apart at least, as on its side, so the buttons' row has Best's room at 341 px. On a phone 320 to 332 px wide, Score and Best stay beside the title (the buttons' row has no room for Best there), and only four digits (a score of 1000, food eaten in one round: the best so far is 41) would push Best onto a row of its own and the board down about 23 px; up to 999 they fit. With the playtest's Field guide door the buttons' row has six where the browser allows full screen (Android), and under 396 px Best can't share it: with six, Score and Best sit beside the title at every width, the buttons have the row to themselves, and the title is as big as leaves the two room for four digits (see "The header's rows" under the owner's playtest).
+### Held upright
 
-| Held upright | Before | Now |
-|---|---|---|
-| 320×640 (a small Android, the first iPhone SE) | 276 | 312 |
-| 320×460 (the same, with its browser's bars) | 250 | 280 |
-| 360×780 | 316 | 352 |
-| 375×667 (iPhone SE) | 331 | 367 |
-| 375×635 (an iPhone 11 Pro in Safari) | 331 | 367 |
-| 375×580 (an iPhone SE in an app's browser) | 331 | 367 |
-| 375×553 (iPhone SE in Safari, its bars showing) | 331 | 341 |
-| 375×548 (the same, a little shorter) | 331 | 341 |
-| 390×844 (iPhone 13, 14) | 346 | 382 |
-| 412×604 (an Android with its browser's bars) | 368 | 392 |
-| 414×622 (iPhone 8 Plus in Safari) | 370 | 406 |
-| 412×915 (Pixel) | 368 | 404 |
-| 430×932 | 386 | 422 |
+A phone held upright is a screen up to 440 px wide.
+- **The board runs edge to edge:** no page margin beside it, its frame a 4 px rim (a 9 px radius). The moss and the
+  corner leaves (28 px, their blades along the rim, never over a cell) run off the screen's edges, where the page clips
+  them, so nothing scrolls sideways. The header, the tags, the row under the board and the chatter keep 12 px from the
+  screen's edge. You see the whole log: no camera, no zoom. 382 px on a 390 px phone.
+- **As big as fits:** the board is as big as fits, up to edge to edge, under what's above it (the page's top, the
+  header and the tags, as the page measures them, whatever their rows and font: game/screen.js `measureAbove`) and over
+  the row under the board (`--room`); a phone too short for edge to edge (an iPhone SE with Safari's bars showing, a
+  small Android with its browser's bar) has it centred. It is never smaller than before the page was one screen tall
+  (the owner's call: "The board first" in `33-one-screen.md`).
+- **Laid out for the bars showing** (`svh`), so the board doesn't grow and shrink as Safari's bars come and go; only
+  the chatter, the rest of the screen, does. A browser without `svh` (Safari before 15.4, Chrome before 108) falls back
+  to `vh`. Each `svh` with a `var()` in it, and the side's `dvh` in a custom property, is in an `@supports` test of its
+  own: such a value is only checked as it's used, so a second declaration couldn't fall back to a first.
+- **The header** is two rows, the title with Score (and Best) and then the buttons; where Score and Best sit, and the
+  title's size, are under "The header's rows" in `33-one-screen.md`. The tagline shows only from 800 px tall, the two
+  rows are 6 px apart, and the tags 25 px a row, 6 px under the header and over the frame, sitting over the frame's top
+  moss and corner leaves (which reach 12 px up into that gap).
 
-- *Your help under the board* is in the row under the board, always on the screen (see "One screen"). On a short phone it used to run off the bottom of the screen, where the page can't scroll while you play, and cut in half by the screen's edge it was hidden; whenever it isn't wholly on the screen or isn't shown as a round starts, the first Go says "Tap jumps. Swipe ahead flashes." instead.
-- *Watching,* the speed buttons take the help's place in the row under the board, so the chatter keeps its room and nothing scrolls (they came between the ledge and the chatter, a row of their own, and with the chatter full the page scrolled while you watched: see "One screen").
+### The phone gap
 
-**On its side.** The board takes the full height less a 5 px rim and the safe area (a notch, the home bar), and the column beside it gets compact enough to fit the screen's height, so nothing scrolls at all. (It used to run 144 px past a 320 px screen, so a round could start with the board half scrolled away, and during a round the page doesn't scroll.) Under about 600 px wide (568×320, the first iPhone SE) the board is as wide as the column leaves it, shorter than the screen, and the column still takes the screen's whole height (squeezed into the board's 276 px there, a full chatter's log ran out of its box, and watching, its first row was cut in half by the page's edge). In the column: the title smaller and no tagline, the tags two by two, smaller words, and the chatter taking what height is left, its newest lines first, whole (see "One screen"; the log used to end at its last whole row, by a clip, at its own box, the chatter's or the page's bottom, never through one: it showed the top of the next row's letters, sliced). Watching, the speed buttons take a row; where the chatter would then have no room for a row of words beside the help (780×320 in Safari, less a notch's home bar of 21 px, left it 0.6 px: an empty box, while the rivals talked), the help, which only says what the speed buttons do, gives the chatter its room. The game decides that with the help shown, as the window changes, the font arrives and the speed buttons come and go, so where a row fits beside the help, it stays: 780×320 without a notch, 780×340, a notched 844×340. (It gave way on every screen up to 340 px tall, by a rule on the height alone, which couldn't see the notch's 21 px: narrowed to 320 px, a notched 780×330 would have had no row.) The column keeps 6 px off the screen's top and 4 off its bottom. The frame's rim meets the screen's top and bottom, with no room for moss to hang off it, so there's no moss on the frame there (cut to its flat base, it read as green slabs on the rim), and the two leaves rest beside the frame's left corners, in the gap by the column, growing out from the rim (cut by the screen's edge, they were slivers); the two on the right are left off, against the screen's edge or in the bird's margin. The page is clipped only at the top and bottom, so a focus ring at the column's left edge is whole.
+- *The row under the board* (the help, or the speed buttons while you watch, and the voices' and the chatter's
+  switches) is right under the board, 6 px under its frame (`--over-foot`; 2 px on a phone less than 1.7 times as tall
+  as wide), and the chatter right under that. Watching, the speed buttons take the help's place in the row, so the
+  chatter keeps its room. The ledge (`#perch-ledge`) is still laid out, 0 px tall: it tells the page and the bird that
+  the phone is upright. The frame's bottom moss and corner leaves are left off wherever the row is closer than they
+  hang (12 px), which is any phone held upright (`.snug`, game/screen.js `placeBoard`): over the help and the switches
+  they're clutter.
+- *The help under the board* is always on the screen. Wherever it isn't wholly on the screen or isn't shown as a round
+  starts, the first Go teaches the powers instead: "Tap jumps. Swipe ahead dashes." (`powersFirst`).
+- *The woodpecker* perches over that row: "The woodpecker's perch", below.
 
-| On its side | Before | Now |
-|---|---|---|
-| 640×320 | 268 | 310 |
-| 667×375 | 323 | 365 |
-| 780×320 (a phone with its browser bars showing) | 268 | 310 |
-| 844×390 (the same phone in full screen) | 338 | 380 |
-| 915×412 | 360 | 402 |
-| 932×430 | 378 | 420 |
-| 844×390 with a notch (47 px each side, 21 below) | 338 | 359 |
-| 780×320 with a notch (an iPhone in Safari) | 268 | 289 |
-| 568×320 (the first iPhone SE) | 268 | 266 |
-| 480×320 (an iPhone 4) | 200 | 178 |
+### The phone's bottom
 
-The boards smaller than before are on their side and narrow: under about 570 px wide on a screen 320 px tall (625 on one 375 px tall), the board is as wide as the column leaves it, 2 to 22 px narrower than it was, as the column keeps 244 px for five buttons in a row and the tags two by two (it had what the board left it, 216 px at 480×320 and 236 at 568×320, with four buttons) and the woodpecker its 24 px gap (20 before); the rim's 5 px (10 before) give back 10. In exchange nothing scrolls there: the page before ran 176 px past a 320 px screen, as it did on the wider ones. That's the call made for the column at 640 px and up, holding on the old iPhones' narrower screens; it's the place to look if they matter.
+- *The chatter keeps the row's gap.* Open or folded, its panel starts `--over-foot` (6 px) under the row under the
+  board, so the buttons' rims never meet it.
+- *Open where there is room.* At the start, and as the phone turns or changes size, the chatter opens (its caption and
+  as many whole lines as fit, down to the screen's foot, its safe area kept) wherever three lines of a row fit open
+  (`CHAT_OPEN_ROWS`); where they don't (375×667) it starts folded: a strip of one row, the newest line cut to it, with
+  a down caret at its end (open, an up caret at its caption). A tap anywhere on it folds or opens it, and that choice is
+  kept from round to round and visit to visit (`snake-chatter-open`, `open` or `folded`, read and written in try/catch;
+  game/screen.js `fitChatter`). Mid-round the tap opens it (game/input.js treats the chatter as a button there), and a
+  swipe started on it still steers. Folded, the rivals' long lines also show in their bubbles on the board, as in any
+  strip. With no room for a row, no panel.
 
-A laptop's window 500 px tall or less (its DevTools docked below, say) is laid out the same way: 428 → 470 at 1000×480. Tablets and desktops are unchanged (724 at 768×1024, 716 at 1024×768, 748 at 1280×800, 800 at 1920×1080).
+### The smallest phones
 
-**The cards on the edge-to-edge boards.** On a board up to 330 px (310 on its side, 312 at 320×640), your death's card and the others keep their two buttons side by side, as they did on the small boards, so the card covers about half the board rather than three quarters.
+- *Phones less than 1.7 times as tall as wide* (an iPhone SE or mini in Safari, 375×548 to 635; a small Android with
+  its browser's bars, 320×460; 390 and 414 px wide under about 660 and 700 tall): the row's buttons are 30 px tall, not
+  a fingertip's 44 (24 is the least for a target), the help's two lines a little closer, the row 2 px under the board
+  and the page 2 px off the screen's bottom and 4 px off its top (the header's rows 4 px apart). So no board is smaller
+  than the phones work made it: 280 at 320×460, 341 at 375×548.
+- *The chatter* has no room for a row at 320×460, 375×548 to 553 and 390 and 414 px wide up to about 600 tall: its
+  switch is in the row, and the rivals' lines are in their bubbles on the board. Where it's a strip (375×635, 360×640,
+  390×664) it's slim, its padding 1 px over the words and 2 under them, so a line of two rows is whole in it where it
+  fits; where only one row fits, the newest line is cut to it, its words whole in its bubble on the board.
+- *A Galaxy Fold folded* (280 px; any screen up to 300 px wide), watching: the speed buttons drop their word, "Speed"
+  (the group's name, "Watching speed", says it), so the switch isn't cut by the screen's edge.
+- **Last words on phones.** Where the log can't show them whole (no panel at 320×460, a folded strip of one row), the
+  last words of the snake whose death ends the round stay in their bubble where it went out, whole and unfaded by your
+  snake beside it, and the round's card waits for them, their 2 s (chatter/talk.js `LAST_WORDS_MS`) from the death in
+  place of the usual 600 ms; it takes them away as it comes up. Beside the board, where the log shows them, nothing
+  changes. `tools/ui/07-last-words-on-phones.js`.
 
-**Full screen.** A button where the browser allows it (Android, desktops, iPads: `document.fullscreenEnabled`) gives the game the whole screen; on a phone on its side that's a board of 380 instead of 310. A tap goes in, another comes out, and its icon (corners going out, or coming in) and its label ("Full screen", "Leave full screen") follow; Esc leaves too. Where the browser can't, there's no button. An iPhone can't give a page the whole screen, so there "Add to Home Screen" opens the game on its own, without Safari's bars, under a see-through status bar that the page keeps clear of by the safe area. Its home-screen icon is the iPhone's own snapshot, since the game has no asset files.
-- *Where the button went:* the header, last in the row of buttons, after the Hall of Fame, where every other button is. Held upright, the buttons have a row under the title, so a sixth button never crowds it: at 320 px all six share their row (the playtest's Field guide door is the sixth), and the title's row keeps its room. On its side the column's icons' row holds five 44 px buttons in its narrowest 244 px, 6 px apart, so with the guide's door the full-screen button takes the column's top corner, beside the title, which leaves it 59 px or more (see "The header's rows" under the owner's playtest); with a mouse the icons are 34 px and keep their 10 px. The other place was beside the nap button on the board's frame; it's findable in the header, and it doesn't take a corner of the board.
+### On its side
 
-**The woodpecker's perch.** With the board edge to edge, there's no gutter beside it to perch in. *(Held upright, replaced since 27 October 2026: no ledge, the bird perches at full size over the row under the board. See "The phone gap" in `32-the-owners-playtest.md`.)*
-- *Held upright,* it perches on a ledge between the board and the chatter, in the height to spare. The ledge is a real part of the page (`#perch-ledge`), with height only on a phone held upright: what's left under the board up to 34 px, before the chatter has any room, and up to 11% of the width and 6 px (49 px on a 390 px phone) once the chatter has its caption and three lines (see "One screen"; it was 11% of the width, down to 28 px on a short phone, 12 px over what came next). Like the board, it's laid out for the screen with the browser's bars showing, so it doesn't change as they come and go. The bird stands just under the board's bottom edge, beside its spot on the middle's side and facing out to it, as big as the ledge lets it be: 53 px tall at 390×844 (a phone in full screen, or added to its home screen), against 34 in the old gutter, and about 38 on the short phones and on a 390 px iPhone in Safari with its bars showing (390×664, a 34 px ledge, 6 px over the row under the board). Standing on the middle's side, it flies out to drum its spot over the board: from the outer side, at the left and right columns most of it hovered past the screen's edge as it drummed. It stands clear of the moss and the leaves hanging off the board's bottom edge, in the gaps between them, still facing its spot (its crown and beak used to sit in the moss), the nearest gap on either side, except that for a spot near the screen's edge (five columns from it) it takes a gap on the middle's side, though it's further off: flying in from the outer side to strike there, its wings beat past the screen's edge. That moves it only where the moss is in the way, at columns 3, 4 and 19, to 100 to 135 px from its spot at 390×844. Like the bird beside the board on a laptop, it clings in the air by the log, with nothing drawn under it. On the ledge it only looks up a little at its chunk (0.3 radians), so its beak stays under the board.
-- *At a height in between* (the ledge only partly on the screen, the gutter beside the board narrow), it's smaller rather than over the cells: on the ledge or beside the board, whichever lets it be the bigger, as small as 24 px tall, the room the page leaves it there (about 28 px at 414×622, 25 at 412×604 and at 375×545 to 580, an iPhone SE in Safari among them). (It stood on the board's edge column, at every spot.)
-- *Where there's no ledge* (a phone too short for edge to edge, its board as big as fits over the row under it; the ledge was below the fold there), it perches in the gutter beside the board, as before there. The gutter is narrower than it was, as the board is bigger: at 320×460 the bird is about 29 px tall, where it was about 50 beside a board of 250. The call there is the board (280): a wider gutter for a bigger bird would give back the board's gain.
-- *On its side,* it perches beside the board, as before: in the margin where there is one (62 to 87 px tall), else in the 24 px gap between the column and the board (38 px). Under about 600 px wide, where the board is shorter than the screen, it stands under the board where all of it fits there, crouching too (480×320, an iPhone 4 on its side; 540×320), as on the ledge: its crown just under the board, looking up only a little at its chunk; else in the gap. (It stood there with room for less than all of it, pushed back onto the screen over the bottom rows, 790 px of it over the cells at 568×320 and 750 at 600×360; and eyeing a chunk from there, its head turned up over the board.)
-- *Perched, resting or eyeing its chunk, it never covers a cell.* It keeps its outline, and its beak as it turns to look, 1.5 px off the cells and off the page's furniture, and it stays inside the safe area, not under a notch; crouching as the strike nears, it keeps its tail on the screen too. (Before, a pixel or two of its beak's soft edge lay over the board on most screens, and up to four as it eyed a chunk.) Only with room nowhere, a tablet held upright with 22 px of gutter or a short phone's gutter, is it as it always was there: shrunk to fit, its beak's tip touching the edge, 32 px tall on the tablet (34 before: its outline now stays on the screen).
-- The page and the perch change together: the game tells the renderer how tall the ledge is, where the safe area runs and where the moss and leaves hang into the ledge, and `perchFor()` stands the bird on the ledge when there is one; it tells the page what's above the board, and the page leaves the bird its room.
-- *Done in round six A's woodpecker* (see "A woodpecker you can believe", As built): its flights and drums at the board's edges and corners, every 10 ms, from its own perch and from the far corner, are cut off by the screen's edge on none of `tools/layout-test.js`'s 24 screens, nor in a sweep of 51 screens (every height in between listed here, every 10 px); it beats a wing short of the edge, keeps in, and clings, leans, turns, lies level or shrinks to drum an edge row. *What was left for it then* (its flight and its drum, outside the perch; the next round's woodpecker gets a new animation, on a layer the size of the board and its perch): on a phone on its side, and held upright at a height in between, the board meets or nearly meets the screen's bottom, and the bird drumming the bottom two rows hung below it (on the bottom row, only its head showed); held upright with its whole 28 px ledge but little of the screen left under it (320×520 to 530, 360×570 to 580, 375×590 to 610, 390×600 to 620, 412×620 to 650, 414×630 to 650, 428 and 430 px wide from 640 to 670), flying in to the bottom row, a wingbeat reached past the screen's bottom, and on most of them drumming it too (an iPhone 11 Pro in Safari, 375×635, and 384×640 were among them while the header took three rows there); on its side, flying in to the top row, anywhere along it, a wingbeat reached past the screen's top (the board had a 22 px margin there before); from a perch in a margin at the screen's edge (844×390, 932×430, a laptop's window 480 px tall), its wings beat past it as it took off; and from a short phone's gutter (its ledge below the fold), flying out to the left and right columns, it ran past the screen's edge, as it did there before the phones work, and drumming them too, which before the phones work it did on some of them but not all: at the taller end of each width's short band (320×450 to 470, 360×480 to 500, 375×500 to 510, 390×510 to 520, 412 and 414 at 530 to 540, 428 and 430 at 540 to 560) its drum had stayed on the screen in the wider gutter (at 320×460, 25 px; 16 with the phones work) and ran past the edge; on its side under about 570 px wide (480×320, 540×320), flying in to the right column and drumming it reached past the screen's right edge. (`tools/layout-test.js` printed those it met on its screens, as "known"; the rest were found sweeping every 10 px of height. The known list is gone: it now fails on any.)
+A phone on its side is a screen at least 5:4, 480 px wide or more and 500 px tall or less; a laptop's window that short
+(its DevTools docked below, say) is laid out the same way.
+- **The board** takes the full height less a 5 px rim (a 12 px radius) and the safe area (a notch, the home bar), so
+  nothing scrolls at all: about 310 px with a phone's browser bars showing (780×320), about 380 in full screen
+  (844×390). Under about 600 px wide (568×320, the first iPhone SE) it's as wide as the column leaves it, shorter than
+  the screen.
+- **The column beside it** keeps at least 244 px (five 44 px buttons in a row, the tags two by two) and the woodpecker
+  a 24 px gap between it and the board, and takes the screen's whole height, 6 px off its top and 4 off its bottom: the
+  title smaller (1.4rem) and no tagline, the tags two by two, smaller words, and the chatter taking what height is left,
+  its newest lines first, whole (`fitChatter`). The page is clipped only at the top and bottom, so a focus ring at the
+  column's left edge is whole.
+- **The row:** the help sits beside the switches, in smaller words. Watching, the speed buttons take a row; where the
+  chatter would then have no room for a row of words beside the help (780×320 in Safari, less a notch's home bar of 21
+  px), the help, which only says what the speed buttons do, gives the chatter its room, and the speed buttons drop
+  their word (`help-yields`). It's decided with the help shown, as the window changes, the font arrives and the speed
+  buttons come and go (game/screen.js `fitColumn`), so where a row fits beside the help, it stays: 780×320 without a
+  notch, 780×340, a notched 844×340.
+- **The frame's rim** meets the screen's top and bottom, with no room for moss to hang off it, so there's no moss on
+  the frame, and the two left leaves (24 px) rest beside its corners, in the gap by the column, growing out from the
+  rim; the two on the right are left off, against the screen's edge or in the bird's margin.
+- **Its cards** go by the board's size: "The cards, by the board" in `33-one-screen.md`.
 
-**The screen stays awake** while you play, through the countdown, and while you watch a round, an AI round or the rest of yours after you're out (a screen wake lock). It's let go when you nap, when a card is up (your death's, the round's end) and while the Hall of Fame is open. A hidden tab loses it (the browser lets go); coming back asks again if it's still wanted then. Alone, you'll be napping by then, so waking asks; online, the round goes on, so it's asked at once. A refusal (a battery saver, say) isn't asked again until the next time it's wanted. Where there's no wake lock, nothing changes, and there are no hidden-video tricks.
+### The woodpecker's perch
 
-**Tests.** `tools/layout-test.js` (new) checks all of the above in headless Chrome on 24 screens, upright and on their sides, with and without a notch (the safe area set through the DevTools protocol), with a browser's bars showing, tablets and desktops: the board's size against the numbers above, wholly on the first screen held upright, and the header and tags 12 px from the screen's edge; no sideways scroll, and on its side no scroll at all (and since "One screen", nowhere); the header's buttons, the tags, the chatter's switch, the help and the buttons of the start card, a nap, your death's card and the round's end all on the screen and taking a tap; while you play, the help either wholly on the screen or hidden, and then the powers' lesson at Go; your death's card's two buttons side by side on a small board; on its side, the column off the screen's top and bottom, a full chatter's log, playing and watching, cut inside its box and the page, a row of words at least and none sliced (568×320, and the notched 780×320 and 780×330, watching, too), and the help giving way while you watch only where, made to show, it would leave the log no row (780×340 and a notched 844×340 keep it), no moss or leaf cut by the screen's edge, and the nap button's focus ring whole; with a mouse, the header's spacing as it was; the header's rows as designed, held upright, on its side, over the board and beside it, with the playtest's Field guide door (see "The header's rows"), and as Score and Best grow from 0 to 99, 100 and 1000 in a round, the header's rows and the board's size and place unchanged (390×545 to 600, 412×604 and seven more phones); the woodpecker perched for 11 spots, resting and eyeing its chunk, from its own layer's pixels (never over a cell, never over the page's furniture or the moss and leaves hanging into the ledge, never past the screen's edge or into its safe area, on the ledge or beside the board, and how tall), and flying out to 9 spots at the board's edges and corners, from its own perch and from the far corner, drumming them and flying home, drawn every 10 ms of the plan (each 104 ms wingbeat at ten moments), never cut off by the screen's edge or its layer's (since round six A's woodpecker, on every screen, tablets and desktops too, with no list of known cut-offs; before, at eight moments of each wingbeat, and only where the perch decided it; a single moment missed a wing past the edge); on its side under 600 px wide (480×320, 540×320, 600×360), perched under the board or beside it, never over a cell; held upright at every 5 px of height in between (320 px wide from 460 to 540 px tall; 375, 390 and 414 px wide from 545 to 640), and at 414×622, 412×604 and 375×553, the woodpecker perched never over a cell, 24 px tall or more and all on the screen, and the board bigger than before; in a browser without `svh` and `dvh` (the page's stylesheet with them made unknown), the board, its frame and the ledge as they are with them; the full screen button, in and out on a real tap, and none where it isn't allowed; the wake lock, through a stand-in that records every request and release, through the countdown, play, a nap, the Hall of Fame, a hidden tab, a lock the browser let go, your death's card, keeping watching, the round's end, a watched AI round, a refusal, and a browser with none; a real touch swipe on the board, upright and on its side; and no error events on the page, playing, watching or resized (a resize observer's loop isn't an exception, so it was never caught: the game sets what's above the board as the window changes, not from inside one's call). Each reading waits until the page has been drawn and its own resize observers have run (a fixed wait read it too early now and then on a busy machine).
+Its size, and where it clings on its side, are in `38-the-woodpecker.md` ("The woodpecker, as big as it gets", "Clear
+of the row's words (2k+)" and "Bigger on a phone"); its flights and drums at the board's edges, in "A woodpecker you can
+believe" there.
+- *Held upright,* it perches over the row under the board, its crown just under the board, at full size. Its room runs
+  from the board's bottom to the screen's, inside the safe area; the row and the chatter don't stop it (game/screen.js
+  `placeBoard`), so on the shortest phones it stands down over the chatter's strip too, and only where the screen's
+  foot is near (320×460, 375×548: 33 px) is it smaller. Its layer takes no taps (`pointer-events: none`), so a tap on the
+  help, a speed button or a switch under it goes through.
+- *It plays with the controls.* Under the board it clings to a button's rim where one is near (2.5 of its units, about
+  34 px on a 390 px phone): its toes on the side of a speed button or a switch, facing the button and its spot, as it
+  clings to the log; resting there, every 3 to 7 s it pecks at the button, two quick taps (render/bird-perch.js
+  `perchFor`, render/bird.js `headAndEye`). Going from one spot to the next it hops from rim to rim. With reduced
+  motion it clings but doesn't peck.
+- *On its side,* it perches beside the board: in the margin where there is one, else in the 24 px gap between the
+  column and the board.
+- *Perched, resting or eyeing its chunk, it never covers a cell.* It keeps its outline, and its beak as it turns to look,
+  1.5 px off the cells and off the page's furniture and the moss and leaves, and it stays inside the safe area, not
+  under a notch; crouching as the strike nears, it keeps its tail on the screen too. Only with room nowhere (a tablet
+  held upright, 22 px of gutter) is it shrunk to fit, its beak's tip touching the edge.
+- The page and the perch change together: the game tells the renderer where the free page runs round the board, where
+  the safe area runs, the moss and leaves hanging off the frame, the buttons' rims and the words under the board
+  (`placeBoard`, `Render.setBoardRect`), and `perchFor()` stands the bird there.
 
+### Full screen
+
+- **A button** where the browser allows it (Android, desktops, iPads: `document.fullscreenEnabled`) gives the game the
+  whole screen; on a phone on its side that's a board of about 380 instead of 310. A tap goes in, another comes out, and
+  its icon (corners going out, or coming in) and its label ("Full screen", "Leave full screen", its tooltip "Leave full
+  screen (Esc)") follow; Esc leaves too. Where the browser can't, there's no button.
+- **Where it is:** in the header, last in the row of buttons, after the Hall of Fame; on a phone on its side, or a
+  window 500 px tall or less, it takes the column's top corner beside the title ("The header's rows" in
+  `33-one-screen.md`).
+- **An iPhone** can't give a page the whole screen, so there "Add to Home Screen" opens the game on its own, without
+  Safari's bars, under a see-through status bar that the page keeps clear of by the safe area. Its home-screen icon is
+  the iPhone's own snapshot, since the game has no asset files.
+
+### The screen stays awake
+
+While you play, through the countdown, and while you watch a round, an AI round or the rest of yours after you're out,
+the game holds a screen wake lock (game/screen.js `keepAwake`). It's let go when you nap, when a card is up (your
+death's, the round's end) and while the Hall of Fame or the rival picker is open. A hidden tab loses it (the browser
+lets go); coming back asks again if it's still wanted then. Alone, you'll be napping by then, so waking asks; online,
+the round goes on, so it's asked at once. A refusal (a battery saver, say) isn't asked again until the next time it's
+wanted. Where there's no wake lock, nothing changes, and there are no hidden-video tricks.
+
+### Tests
+
+`tools/layout-test.js` (its parts in `tools/layout/`) checks all of this in headless Chrome on 24 screens, upright and
+on their sides, with and without a notch (the safe area set through the DevTools protocol), with a browser's bars
+showing, tablets and desktops, and held upright at every 5 px of height in between; the screens' least boards are
+pinned in `tools/layout/00-screens.js`. On each:
+- the board's size, wholly on the first screen held upright, and the header and tags 12 px from the screen's edge; no
+  scroll, down or sideways; in a browser without `svh` and `dvh`, the board, its frame and the ledge as with them;
+- every button (the header's, the tags, the switches, the help, the cards') on the screen and taking a tap; while you
+  play, the help wholly on the screen or hidden, and then the powers' lesson at Go;
+- on its side, the column off the screen's top and bottom, a full chatter's log cut inside its box and the page, a row
+  of words at least and none sliced, and the help giving way while you watch only where, shown, it would leave the log
+  no row; no moss or leaf cut by the screen's edge, and the nap button's focus ring whole;
+- held upright, the row at most 6 px under the frame and the ledge 0 px tall; the chatter folded and opened by a real
+  tap with the board unmoved and nothing scrolling; and (`tools/layout/13-the-phones-bottom.js`, at 390×844, 360×780,
+  412×915 and 375×667, playing and watching, open and folded) no button, the help or the chatter's panel meeting
+  another, the chatter's gap at least the row's, the chatter starting open exactly where three lines fit, a tap's choice
+  kept on the next visit, and a real tap on a speed button under the perched bird pressing it;
+- the woodpecker perched, resting and eyeing its chunk, from its own layer's pixels: never over a cell, the page's
+  furniture or the moss and leaves, never past the screen's edge or into its safe area, the switch and the chatter
+  taking a tap under it; and flying out to the board's edges and corners, drumming and flying home, drawn every 10 ms,
+  never cut off by the screen's edge or its layer's, on every screen;
+- the full-screen button, in and out on a real tap, and none where it isn't allowed; the wake lock, through a stand-in
+  that records every request and release, through the countdown, play, a nap, the Hall of Fame, a hidden tab, a lock
+  the browser let go, your death's card, keeping watching, the round's end, a watched AI round, a refusal, and a
+  browser with none; a real touch swipe on the board, upright and on its side;
+- and no error events on the page, playing, watching or resized (the game sets what's above the board as the window
+  changes, never from inside a resize observer's call). Each reading waits until the page has been drawn and its own
+  resize observers have run.
+
+`tools/ui/06-phones.js` checks the phones' header at 390 and 320 px; the one-screen checks are under "Tests" in
+`33-one-screen.md`.

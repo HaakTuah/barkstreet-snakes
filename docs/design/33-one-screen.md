@@ -1,59 +1,237 @@
 ## One screen
 
-The owner: "I notice that you have to scroll to see all the ui elements outside of the gameplay screen. Is it possible to make it all fit on screen so you don't have to scroll?" (on a 1920×1080 desktop's Chrome with its bookmarks bar, a 1920×945 page, and on a phone). It is: the page is one screen tall now, on every screen, in every state. Every number is CSS px, measured in headless Chrome.
+The page on every screen: one screen tall, the board first, the row under the board and the chatter in what's left,
+the header's rows and the Field guide's door, and the cards by the board, as one screen and the owner's playtest
+settled them (their text, with what was tried and measured, is in `docs/archive/design-page.md`). Every number is CSS
+px, measured in headless Chrome. Elsewhere: the page on a phone, upright and on its side, full screen and the screen
+kept awake (`31-phones.md`); the keys, the mouse and touch (`42-controls.md`); a rival's note on a card ("A rival's
+note" in `32-the-owners-playtest.md`); the words on the cards and in the hints (`09-voice-and-copy.md`); and a
+banner's place (the placement under "As built, step 1" in `30-teaching-by-showing.md`).
 
-**Why it scrolled.** A 1080p desktop's browser (945 or 969 px tall) had the header and the tags over the board, as the column beside it went only up to 900 px tall, and the board took the window's height less 260 px: room for a quiet chatter and the help, not a full one (its five lines, 85 px more) or the speed buttons (38). With the chatter full the page ran 78 px past the screen, 101 to 116 while you watched or after your death, the chatter's last lines and the help with the keys under the fold, where the arrows and Space can't scroll to. A tablet held upright the same (61 to 117 px). A phone held upright kept 300 px for all but the board and its ledge: with its browser's bars showing it scrolled at the start card (19 to 117 px), 159 to 347 while you watched, and mid-round a phone's page can't be scrolled at all.
+The owner asked for it: "I notice that you have to scroll to see all the ui elements outside of the gameplay screen. Is
+it possible to make it all fit on screen so you don't have to scroll?" (on a 1920×1080 desktop's Chrome with its
+bookmarks bar, a 1920×945 page, and on a phone).
 
-**The call: the page is the screen's height, and the chatter is what's left.**
-- The header, the tags, the board and a row under the board keep their size; the chatter takes the rest, down to nothing. What it shows is decided from that room alone (game/screen.js `fitChatter`, as lines come and as the room changes, never per frame), so nothing comes and goes as lines of one row or two arrive: its caption and as many whole lines as fit, newest first; with less room, the lines without the caption, a strip; where not even the newest fits whole, it's cut to the rows that do, ending in an ellipsis; with no room for a row, no panel, and the rivals' lines in their bubbles on the board (as in a strip, for the long ones). A line is never sliced through, and an older one shows whole or not at all.
-- **The row under the board** holds the speed buttons (while you watch), the help and the chatter's switch, its height kept (the help's two lines with a mouse, 30 px; a fingertip's 44 on a touch screen), so the board never changes between playing and watching, and the speed buttons no longer push the chatter down a row. The switch left the chatter's caption for it, so it's there when the chatter has no room: a speech bubble and its word (On, Off), named "Bark chatter" in its tooltip and to a screen reader; alone in the row, at the start card (whose card has the keys), it sits in the middle. Held upright on a phone, the speed buttons take the help's place while you watch. Beside the board, the help has a row of its own, then the speed buttons and the switch, just over the chatter; on a phone on its side the help sits beside the switch, and gives the chatter its room while you watch only where, with it, there'd be no row (as before). Anywhere, in any state, the help gives way where it doesn't fit its row (the owner's call, below).
-- **Beside the board up to 1180 px tall** (900 before), so a 1080p or 1200p desktop's browser has the column, as tall as the board: 880 px (665 at 1920×945, 689 at 969, 785 at 1920×1065, 770 at 1680×1050), and all five lines of the chatter beside it. The playtest's doors' own row (a window 700 px tall or more) costs the chatter lines now, never a scroll.
-- **Over the board** (taller than 1180, a 1440p screen's 1305; narrower than 5:4, half a 1080p screen, 960×945; a tablet held upright), the board leaves room above it for the header and the tags as they are, measured, and under it for the row and a chatter of its caption and two lines (it was a fixed 260 px for all of it), but never smaller than it was (the owner's call, below): where the window's height less 260 px is the bigger board, that's the board, and the chatter and the help give way under it. The page there is as wide as the board, and a narrower board can take the header and the tags onto more rows, so what's above is worked out from one row of each up, until it holds: the biggest board that does, whatever the window was before. 665 → 674 at 960×945; 724 at 768×1024 and 880 at 2560×1305, as they were.
-- **Held upright on a phone** *(the ledge and the sill replaced since 27 October 2026: the row and a folded chatter right under the board, the bird over the row; see "The phone gap" in `32-the-owners-playtest.md`)*, the board runs edge to edge where it fits with the row under it; the ledge takes what's left under it up to 34 px (the bird about 38 tall) before the chatter has any, and grows to 11% of the width and 6 px once the chatter has its caption and three lines (49 px on a 390 px phone, the bird 53). At a height in between, the board is as big as leaves the bird a 25 px sill under it or a 13 px gutter beside it, as before. The tagline shows from 800 px tall (720), the header's two rows are 6 px apart (16: the break between them had a gap each side) and the tags 25 px a row (29), so a phone with its browser's bars keeps more of the chatter.
+### The page is the screen's height
 
-**The owner's call, having looked at it: the board first.** "I like how you have altered the layout for desktop and made it more space effective... But on the phone, I really don't like that you make the gameplay screen smaller." So the desktop layout stays as it is, and on a phone, and wherever the header is over the board (a phone held upright, a tablet held upright, a near-square or narrow window, a 1440p screen's browser), the board is never smaller than it was before the page was one screen tall (main at 2ba41f9: over the board, the window's height less 260 px; on a phone, the phones work's). Where the page can't then hold everything, the help and the chatter give way, never the board:
-- the chatter to a strip or to none, the rivals' lines in their bubbles on the board (800×800: none; 1000×860 and 720×860: a strip of one line);
-- the help, in any state, where it doesn't fit its row (game/screen.js `fitColumn`): an item squeezed past its box (watching on a narrow touch screen, the speed buttons and the switch beside it: it ran under the switch and past the screen's edge, and 460 to 520 px wide it scrolled the page sideways), or its lines making the row taller and taking it off the screen (the keys' help on four to six lines in a narrow window with a mouse: 460×612 scrolled 34 px in the middle of a round). The start card, the nap's card and How to play have the keys; on a touch screen the first Go says how to jump and flash.
-- A little scrolling would have been the price on a phone where nothing else could give; none was needed: on every screen and sweep below the board is main's or bigger, and nothing scrolls.
+- **The chatter is what's left.** The header, the tags, the board and the row under the board keep their size; the
+  chatter takes the rest, down to nothing, so nothing scrolls, on any screen, in any state. What it shows is decided
+  from that room alone (game/screen.js `fitChatter`, as lines come and as the room changes, never per frame), so nothing
+  comes and goes as lines of one row or two arrive: its caption and as many whole lines as fit, newest first, 5 at most
+  (`CHAT_SHOWN`); with less room, the lines without the caption, a strip; where not even the newest fits whole, it's
+  cut to the rows that do, ending in an ellipsis; with no room for a row, no panel, and the rivals' lines in their
+  bubbles on the board (as in a strip, for the long ones). A line is never sliced through, and an older one shows whole
+  or not at all.
+- **The row under the board** (`.foot`) holds the speed buttons (while you watch), the help, and the voices' and the
+  chatter's switches, its height kept (`--foot`: 30 px with a mouse, the help's two lines; a fingertip's 44 on a touch
+  screen), so the board never changes between playing and watching. The chatter's switch is a speech bubble and its
+  word (On, Off), named "Bark chatter" in its tooltip and to a screen reader, there when the chatter has no room; the
+  voices' is "Voices (V)" ("The switches" in `21-sound.md`). Alone in the row, at the start card (whose card has the
+  keys), they sit in the middle. Beside the board, the help has a row of its own, then the speed buttons and the
+  switches, just over the chatter; on a phone, see `31-phones.md`.
+- **The help gives way** wherever it doesn't fit its row (game/screen.js `fitColumn`): an item squeezed past its box
+  (watching on a narrow touch screen, the speed buttons and the switches beside it), or its lines making the row taller
+  and taking it off the screen (the keys' help on four to six lines in a narrow window with a mouse). The start card,
+  the nap's card and How to play have the keys; on a touch screen the first Go says how to jump and dash.
 
-The first build took up to 92 px off the board over the board, to leave the chatter its two lines (800×800 520 → 452, which failed three of render-test's checks: the bridge's shading, the knock's rings at its landings and the rings' promise); held upright on a phone it was never smaller, measured at every 10 px of height from 440 to 940 at nine widths from 320 to 440 px, and on the named phones (390×844, 390×664, 360×640, 375×553, 320×460, 412×915, 430×740).
+### Beside the board
 
-| The board, CSS px | main | One screen's first build | Now |
-|---|---|---|---|
-| 390×844 (iPhone 13, 14) | 382 | 382 | 382 |
-| 390×664 (the same in Safari) | 382 | 382 | 382 |
-| 360×640 (an Android with its bars) | 352 | 352 | 352 |
-| 768×1024 (a tablet held upright) | 724 | 724 | 724 |
-| 800×800 (a window; with touch) | 520 | 452 (428) | 520 |
-| 540×720 (a Surface Duo) | 440 | 348 | 440 |
-| 1000×860 (a window) | 580 | 512 | 580 |
-| 460×612 (a window) | 332 | 271 | 332 |
-| 1920×945 (1080p Chrome, the column beside the board) | 665 | 880 | 880 |
+On a screen at least 5:4, 480 px wide or more and up to 1180 px tall (laptops, a 1080p or 1200p desktop's browser,
+short windows, phones on their side), the header and the tags sit in a column beside the board (180 to 300 px wide,
+20 px from it), which takes the full height up to 900 px (`--board`: the window's height less 32 px, and its width less
+260). The column is as tall as the board: the header, the tags, the help on a row of its own, then the speed buttons and
+the switches, and the chatter in what's left. 880 px at 1920×945, 1920×969, 1920×1065 and 1680×1050, with all five
+lines of the chatter beside it. The Field guide's and the Hall of Fame's own row (a window 700 px tall or more: "The
+Field guide's own door", below) costs the chatter lines, never a scroll. A phone on its side has its own compact
+column (`31-phones.md`).
 
-| Scroll, with the chatter full: playing / watching | Before | Now | The board |
-|---|---|---|---|
-| 1920×945 (1080p Chrome, bookmarks bar) | 78 / 116 | 0 / 0 | 665 → 880 |
-| 1920×969 (1080p Chrome) | 78 / 101 | 0 / 0 | 689 → 880 |
-| 1920×1065 (1200p Chrome) | 78 / 101 | 0 / 0 | 785 → 880 |
-| 960×945 (half a 1080p screen) | 78 / 116 | 0 / 0 | 665 → 674 |
-| 768×1024 (a tablet held upright) | 61 / 117 | 0 / 0 | 724 |
-| 1280×609 (1280×720's browser) | 25 / 48 | 0 / 0 | 557 |
-| 390×844 (iPhone 13, 14) | 86 / 121 | 0 / 0 | 382 |
-| 390×664 (the same in Safari, its bars showing) | 225 / 260 (47 at the start) | 0 / 0 | 382 |
-| 375×553 (iPhone SE in Safari) | 312 / 330 (117 at the start) | 0 / 0 | 341 → 343 |
+### Over the board
 
-Measured on 30 screens in 10 states each (the start card, the countdown, playing, playing with the chatter full, a nap, your death's card, the round's card, the Hall of Fame and the Field guide open, watching with the chatter full): it scrolled in 131 of the 300, 0 now. No board is smaller than it was on them. With the chatter full, a 1080p desktop's browser shows its five lines, a laptop's four or five, a tablet held upright two (four on an iPad in Safari), 390×844 three, a phone on its side one to five.
+Taller than 1180 px (a 1440p screen's browser, 2560×1305), narrower than 5:4 (half a 1080p screen, 960×945; a
+near-square window), or a tablet held upright: the header and the tags are over the board and the row and the chatter
+under it, the page as wide as the board. The board leaves room above it for the header and the tags as they are,
+measured (`--above`: game/screen.js `measureAbove`), and under it for the row and a chatter of its caption and two lines
+(`--below`, `--chat-room` 84 px), up to 900 px; but never smaller than the window's height less 260 px (the owner's
+call, below), and where that is the bigger board, it's the board, and the chatter and the help give way under it. A
+narrower board can take the header and the tags onto more rows, so what's above is worked out from one row of each up,
+until it holds: the biggest board that does, whatever the window was before. 674 at 960×945; 724 at 768×1024 and 880 at
+2560×1305.
 
-**Desktop chatter** (27 October 2026; the owner asked on 20 October whether the computer should get more dialogue: "It's short, with lots of space under it"). Beside the board on a desktop (the column beside it, 501 to 1180 px tall: not a phone on its side, whose column is too short), the chatter reads like a chat: newest at the bottom, the panel growing with its lines down to the board's bottom edge (it stopped at 5 lines, with about 290 px empty under it at 1920×945), then scrolling. A line's opacity runs from nothing at the log's top edge to whole two rows under it (a third of the log at most), so a line cut by the edge never shows sliced; scrolled back to the oldest, nothing fades. The wheel or the scroll bar reads back through the round's last 50 lines (chatter/talk.js `LOG_SIZE`, 5 before), the log's own scroll, never the page's. Everything else as above: the caption first to go, a strip, or none where not a row shows; elsewhere (over the board, a phone either way) the newest first, whole lines only, 5 at most, as before. The newest line never fades. A tablet on its side has the scroll too, but mid-round a finger on the log steers and jumps (the board's touch handling comes first), so it reads back by touch between rounds, while watching or after your death. game/screen.js `fadeChatter`; `tools/layout-test.js` checks it on every screen beside the board (the panel to the board's bottom edge, the newest at its bottom, a cut line not shown, the wheel back to the oldest, the page unscrolled) and that the log doesn't scroll anywhere else.
+### The board first
 
-**What gives on the smallest screens.**
-- *Phones less than 1.7 times as tall as wide* (an iPhone SE or mini in Safari, 375×548 to 635; a small Android with its browser's bars, 320×460; 390 and 414 px wide under about 660 and 700 tall): the row's buttons are 30 px tall, not a fingertip's 44 (24 is the least for a target), the help's two lines a little closer, 2 px under the board and off the screen's bottom, and the page 4 px off its top. So no board is smaller than the phones work made it (280 at 320×460, 341 at 375×548, 356 at 390×545; at 23 of the 80 heights in between that layout-test sweeps, up to 2 px bigger, the header and the tags being slimmer), where the old page ran its row and its chatter off the screen; the ledge on the edge to edge ones is 38 px over the 2 px gap, the bird as tall. Where the row is closer than the frame's moss and corner leaves hang off its bottom (12 px: the boards with a gutter and no ledge), they're left off, as on its side.
-- *The chatter* has no room for a row at 320×460, 375×548 to 553 and 390 and 414 px wide up to about 600 tall: its switch is in the row, and the rivals' lines are in their bubbles on the board. A strip at 375×635, 360×640 and 390×664, slim (right under the row on a phone, its padding 1 px over the words and 2 under them, a line's none), so a phone's line of two rows is whole in it at 360×640 and 375×635 (it was cut to its first, ending in an ellipsis); at 390×664 it has one row, the newest line cut to it, its words whole in its bubble on the board.
-- *Narrow or near-square windows over the board, not tall,* keep main's board (the owner's call, above): 1000×860 580, 460×612 332, 800×800 520, a Surface Duo 440. Their chatter is a strip or none, and the keys' help gives way where its lines don't fit its row. Smaller still, windows under about 500 px tall and narrower than about 620 px (470×376 among them), the board keeps its least, 280 px, and the page scrolls in every state, as it did on main.
-- *Held upright on a phone,* the name tags sit over the frame's top moss and corner leaves, which reach 12 px up into the 6 px between them (they hung over the second row's rims and hunger bars). On a Galaxy Fold folded (280 px), watching, the speed buttons drop their word, "Speed" (the group's name says it), so the switch isn't cut by the screen's edge.
-- *Last words on phones* (27 October 2026, the owner: "Yes to all, expertly!"): where the log can't show them whole (no panel at 320×460, a folded strip of one row at 390×664 and 375×553), the last words of the snake whose death ends the round stay in their bubble where it went out, whole and unfaded by your snake beside it, and the round's card waits for them, their 2 s (chatter/talk.js `LAST_WORDS_MS`) from the death in place of the usual 600 ms; it takes them away as it comes up. They used to go with the round's bubbles as the card came up, the strip's line cut and no panel at all. Beside the board, where the log shows them, nothing changes. `tools/ui/07-last-words-on-phones.js`.
+The owner's call, having looked at it: "I like how you have altered the layout for desktop and made it more space
+effective... But on the phone, I really don't like that you make the gameplay screen smaller." So on a phone, and
+wherever the header is over the board (a phone held upright, a tablet held upright, a near-square or narrow window, a
+1440p screen's browser), the board is never smaller than it was before the page was one screen tall (over the board,
+the window's height less 260 px; on a phone, the phones work's: both pinned in `tools/layout/00-screens.js`, `main`).
+Where the page can't then hold everything, the help and the chatter give way, never the board:
+- the chatter to a strip or to none, the rivals' lines in their bubbles on the board (800×800: none; 1000×860 and
+  720×860: a strip of one line);
+- the help, in any state, where it doesn't fit its row (above).
 
-**Not tested on real devices.** iOS Safari as its bars come and go: the page is the dynamic height and the board is laid out for the bars showing, so only the chatter should grow and shrink. Windows Chrome's own scrollbar: none should show, as nothing runs past the screen (headless Chrome has none to show), and a fraction of a pixel at 125%, 150% or zoomed in or out doesn't make one (checked at each).
+### Desktop chatter
 
-**Tests.** `tools/layout-test.js` fails if anything scrolls, down or sideways, in any of the 10 states on its 24 screens and on 11 desktops as browsers have them (1920×945 and 969, 1536×730 at 125%, 1280×609 at 150%, 1920×945 zoomed to 110% and 90%, 1366×657, 1920×1065, 1680×1050, 2560×1305, 960×945), the 1080p and 1200p ones with the column as tall as the board, the 1440p and the half-screen ones over it; held upright at every 10 px of height from 440 to 940 at seven widths (the start card, playing and watching, the chatter full); on every screen, a full chatter's lines whole under the row under the board (or none, the switch on the screen and taking a tap), the switch's name, the speed buttons in the row and taking a tap, and the help giving way while you watch only where, made to show, it would leave no row; lines streaming in that never move the board or set off a resize observer's loop; and the boards' floors as they were (layout-test's least for each screen, and at the heights in between bigger than before the phones work). 1715 checks (1083 before). Since the owner's call, the board against main's on every stacked screen, main's measured once and pinned: the upright phones of its 24 screens; 12 more over the board (800×800 with a mouse and with touch, 1000×860, 720×860, 460×612 with both, a Surface Duo, 600×700 with touch, 600×900, an iPad's Split View, an iPad mini, an iPad in Safari), in all 10 states and playing and watching with the chatter full, the help in its row and never squeezed past its box or the screen's edge; held upright at every 10 px of height from 440 to 940 at seven widths; and over the board at five widths from 460 to 1040, every 80 px of height from 560 to 1120, with a mouse and with touch (the start card, and playing and watching with the chatter full: nothing scrolls there either). The help's giving way while you watch is checked as built: where the chatter would have no row, or where the help doesn't fit its row. No no-scroll check needed relaxing: on none of these does the page scroll. 2049 checks. `tools/ui-test.js`: the header over the board where it still is, at each step's page now that a short window's page is its height less what's above and under the board, and a 1080p browser's column: 239 (a 1000×860 window has its one row again, a 600 px page).
+Beside the board on a desktop (the column beside it, 501 to 1180 px tall: not a phone on its side, whose column is too
+short), the chatter reads like a chat: newest at the bottom, the panel growing with its lines down to the board's
+bottom edge, then scrolling. A line's opacity runs from nothing at the log's top edge to whole two rows under it (a
+third of the log at most), so a line cut by the edge never shows sliced; scrolled back to the oldest, nothing fades,
+and the newest never fades (game/screen.js `fadeChatter`). The wheel or the scroll bar reads back through the round's
+last 50 lines (chatter/talk.js `LOG_SIZE`), the log's own scroll, never the page's. Everything else as above: the
+caption first to go, a strip, or none where not a row shows; elsewhere (over the board, a phone either way) the newest
+first, whole lines only, 5 at most. A tablet on its side has the scroll too, but mid-round a finger on the log steers
+and jumps (the board's touch handling comes first), so it reads back by touch between rounds, while watching or after
+your death. The owner asked on 20 October whether the computer should get more dialogue: "It's short, with lots of
+space under it".
 
+### What gives on the smallest screens
+
+- *Narrow or near-square windows over the board, not tall,* keep their board (the owner's call, above): 1000×860 580,
+  460×612 332, 800×800 520, a Surface Duo 440. Their chatter is a strip or none, and the keys' help gives way where its
+  lines don't fit its row. Smaller still, windows under about 500 px tall and narrower than about 620 px (470×376 among
+  them), the board keeps its least, 280 px, and the page scrolls in every state.
+- *Phones:* "The smallest phones" in `31-phones.md`.
+- *Where four tags in a row would cut the rivals' names* (a near-square window), they sit in two rows of two, as on a
+  phone.
+
+### The header's rows
+
+The header holds the title (and its tagline), Score and Best, and its buttons: nap, music, mute, the Field guide's
+book, the Hall of Fame's trophy and, where the browser allows full screen (Android, desktops, iPads), full screen: six,
+or five without it (an iPhone, an older Safari, a page in a frame). Rows for each screen, nothing alone on a row, the
+board where the phones work put it (the header no taller than it was there, but for the laptop's doors' own row), each
+door named where its row has room for its word with 5 px to spare, and Score and Best with room for four digits, so
+nothing moves as they grow from 0 to 1000.
+- **Held upright,** two rows. With six buttons, Score and Best sit beside the title and the buttons have a row of their
+  own; the title is as big as leaves the two room for four digits each (1.4rem at 360 px, 1.63 at 390, 1.7rem from
+  400, with Score and Best in 0.9rem), from the page's width less theirs, and its line keeps its height, so the rows and
+  the board don't move; the tagline (on a phone 800 px tall or more) is no wider than the title. The guide's word from
+  371 px, the trophy's too from 428. With five, Score is on the title's row and Best ends the buttons' row under it, its
+  room kept for four digits, its digits under Score's; the guide's word from 399. On the narrowest phones (320 to 340
+  px) the title, Score and Best share the first row (the title 1.25rem). A touch screen's buttons are 6 px apart at
+  least. *Turned down:* Best beside six only where it fits, from 396 px (Android phones would change layouts at 396, and
+  a 412 px one would have no room for the guide's word); 40 px buttons 4 px apart, under a fingertip's 44; the
+  full-screen button on the title's row, which leaves Score's digits no longer over Best's; a third row.
+- **Over the board** (a desktop, a tablet held upright, a narrow window): Score over Best beside the title, their words
+  to the right and their digits in a column with room for four, in 0.9rem, so the pair takes the width of one. The steps
+  go by the page's width (the window's less 24 px, or less where the window isn't tall: the page narrows with the
+  board, a 460×612 window's is 352), a mouse's 34 px buttons and a touch screen's 44:
+
+  | Page from (px) | Mouse, six | five | Touch, six | five |
+  |---|---|---|---|---|
+  | One row, both doors pictures | 592 | 552 | 652 | 602 |
+  | ...the Field guide named | 649 | 609 | 699 | 649 |
+  | ...both named | 716 | 676 | 756 | 706 |
+  | ...the buttons 8 px apart (6 under) | 728 | 686 | 768 | 716 |
+  | Two rows, both named | 384 | 340 | 404 | 354 |
+  | ...the Field guide named | 317 | any | 347 | 297 |
+
+  Narrower than one row, the title with Score and Best has the first row and the buttons the next. Under 352 px (348
+  with touch) the title is as big as leaves Score and Best their room, and under 299 a touch screen's six buttons are 40
+  px, 4 apart. In the stand-in font (offline, where Fredoka never arrives) nothing wraps either. *Turned down:* a
+  shorter word ("Guide": the button says what its tab says); keeping the full screen out of the row with a mouse (F11
+  isn't findable).
+- **Beside the board,** the title, Score and Best, then the icons. On a phone on its side, or a window 500 px tall or
+  less, the full-screen button takes the column's top corner, beside the smaller title, reaching down beside Score and
+  Best, so the column has three rows (95 px) and the icons' row its five (244 px); the guide's word from a 297 px column
+  (273 with a mouse: 780×320, 844×390 and up). On a laptop's column the six icons share their row: 34 px with a mouse
+  where they fit (254 px: 1366×657, the guide its book), else 32 px, 4 apart (in a 4:3 or 5:4 window's 216 px column,
+  800×600, and a window 230 to 250 px wider than tall, 920×690). With touch, six fit from 294 px; narrower, the title is
+  two lines and the full-screen button takes the corner beside them (a tablet on its side in full screen, 244 px), and a
+  touch column of 264 to 293 px, where the title is one line, has it end Score and Best's row instead. With five icons
+  a laptop's column has the guide's word from 273 px (297 with touch). A tall column keeps the doors' own row, the full
+  screen in the icons' row. A touch column under 244 px (a 4:3 or 5:4 touch screen in full screen) has its icons 40 px,
+  4 px apart.
+
+### The Field guide's own door
+
+The guide is the third tab of the same book as the Hall of Fame and Your story (its napping, its focus, the online
+check and the narrow-screen tabs are the book's), with a door everywhere a player looks:
+- **Its own button,** an open book, before the trophy. A door with room in its row for its word says it ("Field guide",
+  "Hall of Fame"), else it's its picture, round like the icons beside it, with its name in its tooltip ("Field guide
+  (G)") and for a screen reader (where, on each screen: "The header's rows", above).
+- **A laptop's column** beside the board gives both doors a row of their own, with their pictures and names, under the
+  icons (50 px), where the column still ends above the board's bottom with the chatter's log full: a window 700 px tall
+  or more (780 with touch) and a column 236 px wide or more. Elsewhere the doors stay in the icons' row.
+- **G** opens the guide, and H the Hall of Fame (or Your story, if that's where you were), never the guide. In the
+  book, H and G go to their tab, or close it from there; Esc closes it. The book is named for its tab, and a door opens
+  it at its top.
+- **How to play** on the start card, beside Play with friends, opens the guide at its first section, **The basics**:
+  Winning, Steering, Crashes and Hunger, in the renderer's own pictures (your snake in the win's confetti, your head with
+  a turn ahead of it, your head dazed with its stars, a tag's hunger bar).
+- **Field guide** on the napping card: a nap is when people read.
+- **Your death's card,** playing alone, names what got you: "Field guide: Crashes" (or Hunger, Fire, Holes, Golden
+  leaf). It opens the guide at that row, scrolled into view and lit in Honey for 2.4 s (with reduced motion, lit and
+  still); focus goes to the book's Close without scrolling the page back up, and the book's tabs and its × stay at the
+  top of its page as it scrolls, inside its ring. The lit row is wholly in view under them. **The round's card,** when
+  your death ends the round (you came second, or a draw), is your death's card: it names what got you too, and so does
+  the round's card after your death's. Every rule needs a cue and a lesson; this is the lesson, when it's wanted.
+- **The keys** under the board say "G opens the Field guide" too, and the start card's say it instead of H's (a
+  first-timer's Hall of Fame is empty). The touch hints have no room to spare: How to play is their way in.
+- *Turned down:* a dialog of its own (the book's machinery twice over); a "?" icon (it reads as help or about; the book
+  matches the name, and How to play on the start card teaches it); a button called How to play (the button should say
+  what its tab says); opening the guide by itself on a first visit (pushy); a "press G" banner (banners are short, and
+  the death card's link does it at the moment it's wanted).
+
+### The cards, by the board
+
+The cards (the start card, a nap's, your death's, the round's end) sit on the board, and go by the board's size (the
+board is a size container), whichever way the phone is held:
+- **A phone's card** on any board up to 490 px, which is every phone's, held upright (up to 432) or on its side (up to
+  490 in full screen), and a short or narrow window's: tighter, and the rivals as a row of names (a tag's tap gives how
+  one plays). On a small board (380 px or less) a rival's note stands in for the start card's row of names, the new
+  best's badge and the carve ("A rival's note" in `32-the-owners-playtest.md`).
+- **Two buttons side by side** on a board up to 330 px (a phone's edge-to-edge board, 310 on its side, 312 at
+  320×640), so the card covers about half the board rather than three quarters.
+- **The fullest card,** a first good round's with the new best's badge, the carve and the Field guide's link, fits its
+  board with the longest reason a round gives ("You crashed head-on into Capricious, the same length: both out · 4th
+  place · score 128"): up to 403 px the death's quip waits while the carve is offered, up to 340 the badge gives way to
+  the carve (a Galaxy Fold's cover screen, 336 px), and up to 300 the card's links wait while you carve. A note stands
+  in for the badge and the carve up to 455 px. Once your name's in ("Carved: Perry.", or "Hall of Fame #4, as Perry." if
+  you had one) the field goes, the row is one line and the link is back. The rename that a field would offer there is
+  the one thing given up, on the smallest boards only.
+- **The round's card when your death ends it** (it has the carve, the badge and the link then) says a little more
+  ("· lasted 2:41"): while the carve is offered, its quip waits up to 419 px, and the new best's badge up to 390.
+- **On the smallest boards** the last pixels go too: up to 330 px the roll-call's names are 1 px from each other's rows,
+  and up to 300 a note keeps 4 px over the buttons, How to play and Play with friends share a row (2 px from their edges
+  and 6 apart), and the hint keeps its first two items ("Swipe to steer · Tap to jump").
+- **What still scrolls:** at 568×320 (the first iPhone SE on its side, a 266 px board) the start card scrolls 18 px with
+  the longest names, and the round's card 10 px with the longest words, past nothing but its bottom edge: everything
+  left on it is wanted. Everything else fits, from 320×460 to 1920×1080.
+
+### Not tested on real devices
+
+iOS Safari as its bars come and go: the page is the dynamic height and the board is laid out for the bars showing, so
+only the chatter should grow and shrink. Windows Chrome's own scrollbar: none should show, as nothing runs past the
+screen (headless Chrome has none to show), and a fraction of a pixel at 125%, 150% or zoomed in or out doesn't make one
+(checked at each).
+
+### Tests
+
+- `tools/layout-test.js` (its parts in `tools/layout/`) fails if anything scrolls, down or sideways, in any of 10 states
+  (the start card, the countdown, playing, playing with the chatter full, a nap, your death's card, the round's card,
+  the Hall of Fame and the Field guide open, watching with the chatter full) on its 24 screens and on 11 desktops as
+  browsers have them (1920×945 and 969, 1536×730 at 125%, 1280×609 at 150%, 1920×945 zoomed to 110% and 90%, 1366×657,
+  1920×1065, 1680×1050, 2560×1305, 960×945); held upright at every 10 px of height from 440 to 940 at seven widths; and
+  over the board at five widths from 460 to 1040, every 80 px of height from 560 to 1120, with a mouse and with touch.
+  On every screen: a full chatter's lines whole under the row (or none, the switch on the screen and taking a tap), the
+  switch's name, the speed buttons in the row and taking a tap, the help giving way where the chatter would have no row
+  or where it doesn't fit its row, and never squeezed past its box or the screen's edge; lines streaming in that never
+  move the board or set off a resize observer's loop; the boards' floors (`least`), and on every stacked screen the
+  board against main's (`main`, pinned in `tools/layout/00-screens.js`); the desktop chatter on every screen beside the
+  board (the panel to the board's bottom edge, the newest at its bottom, a cut line not shown, the wheel back to the
+  oldest, the page unscrolled) and the log scrolling nowhere else.
+- The header, on its 24 screens and 35 more from 360×640 to 2560×1305: its rows as designed for the screen, no button
+  alone on a row, the full-screen button ending a row, each door its picture only where its word (put in to see, 5 px
+  wider) would wrap the row, the guide's tooltip and spoken name, the guide's door costing the header no height, the
+  header no taller than the phones work's, and Score and Best at 100 and 1000 moving nothing.
+- `tools/ui-test.js` (its parts in `tools/ui/`): a rival's note's ways in and out and every door to the guide, with a
+  mouse, keys and touch, on a desktop and on phones at 390 and 320 px; Fire's row, far down the guide, lit and in view;
+  the book's × on the screen when a death's link opens it far down, and a real click or tap on it closing the book; the
+  round's card naming what got you when your death ends it, and opening the guide there; the header at every step over
+  the board, its page and a pixel under it, with six buttons and five, a mouse and touch, and Score and Best at 100 and
+  1000 moving nothing; the columns at 1366×657 (with full screen and without), 1280×800, 920×690 and 800×600, watching
+  with the chatter full (no scroll); a real first good round's death card, with the longest reason, on phones from
+  320×460 to 428×926, with a note and without, and at 320×460 carving your name and the next good round; the start card
+  and the fullest death card on phones on their sides (844×391, 896×414, 929×430, 972×450) and on a Galaxy Fold's cover
+  screen (344×882); the round's card when your death ends it at 390×844, 844×391 and 896×414; and the start card's two
+  links on one row at 568×320.
