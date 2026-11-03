@@ -108,4 +108,5 @@ Its rules are in `44-realms-and-colonies.md` ("Flags in depth, hit head-on"), an
 
 ### Beetles and the woodpecker
 
-Its rules are in `04-food-and-the-world.md` under the same name.
+Its rules are in `04-food-and-the-world.md` under the same name, and its text as it was in
+`docs/archive/design-food.md`.
