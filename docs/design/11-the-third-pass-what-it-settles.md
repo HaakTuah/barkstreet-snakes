@@ -4,7 +4,9 @@
 `03-the-snake-as-a-character.md` under "Gold means power", "A power is one token, not a ring" and "Bridges and
 jumps you can see", and their text as it was in `docs/archive/design-looks.md`.
 
-**Reduced motion removes movement, never information.** Being in the air is a rule, so a leap keeps a still airborne pose. The woodpecker cuts between perches instead of swooping. Rain holds still rather than vanishing (it puts fire out), a burning leaf appears where it lands instead of flying, and a death is a still starburst that fades.
+**Reduced motion removes movement, never information**: its rule is in
+`02-art-direction-storybook-bark-on-a-mossy-log.md` under the same name, and its text as it was in
+`docs/archive/design-art-weather-voice.md`.
 
 **The narrator speaks less, and better**: its rules (the banner's levels, repeats, and the lessons' waiting and
 words) are in `30-teaching-by-showing.md` under the same name and "Lessons", and its text as it was in

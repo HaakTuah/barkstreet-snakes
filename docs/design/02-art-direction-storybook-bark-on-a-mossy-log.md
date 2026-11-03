@@ -36,6 +36,15 @@ There are also two functional tints that aren't separate colors. **Parchment-2**
 - **A living wood:** the shadows of leaves overhead sway gently over the log (one small soft layer, drawn stretched over the board each frame), and now and then an autumn leaf drifts down onto it, turning as it goes, under the food and the snakes so it never hides anything that matters. With reduced motion, the shadows hold still and no leaves fall.
 - **Depth:** buttons have a 3 px "lip" and press down 2 px. Cards float on a soft 0 10 30 shadow. Snakes cast a small offset shadow on the bark. There's no blur anywhere on the canvas.
 
+### Reduced motion removes movement, never information
+
+With reduced motion (`prefers-reduced-motion`: `reduced` in `render/core.js`), what moves holds still or simply appears,
+and nothing a player needs goes. Being in the air is a rule, so a leap keeps a still airborne pose. The woodpecker
+glides in once, its wings out and still, instead of swooping ("A woodpecker you can believe" in
+`38-the-woodpecker.md`). Rain and snow hold still rather than vanishing (they put fire out), a burning leaf appears
+where it lands instead of flying, and a death is a still starburst and ring that fades ("A crash you don't survive goes
+off with a bang" in `41-crashes.md`). Each look's own version is with it, under "With reduced motion".
+
 ### Borders and frames
 
 One treatment, used everywhere:
