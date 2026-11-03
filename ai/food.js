@@ -153,6 +153,7 @@ function readFood() {
     if (f.kind === 'beetle' && bugCount < BUGS) { bugFood[bugCount++] = f; continue; }
     const own = f.kind === 'pellet' && f.owner === me.id, i = cellOf(f);
     if (i < 0) continue; // (nowhere to knock it: the bird eats it)
+    if (f.spitBy === me.id && f.slideUntil > view.tick) foodFrom[i] = Math.max(foodFrom[i], f.slideUntil - view.tick + 1); // (what I just spat I slide over, as the engine has it, till then)
     foodGrow[i] = own ? 0 : f.kind === 'mushroom' ? -(f.power || TUNE.SHRINK) : f.kind === 'golden' ? TUNE.GOLDEN_GROWTH : f.kind === 'beetle' ? TUNE.BEETLE_GROWTH : f.cooked ? TUNE.COOKED_GROWTH : 1;
     let v = own ? 0 : f.kind === 'mushroom' ? shroomWorth(f) : worth[f.kind] ?? 0;
     if (!v) continue;

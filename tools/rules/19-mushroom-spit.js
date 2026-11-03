@@ -167,3 +167,50 @@ function spitScene(key, rival, person, { back = 3, food = [] } = {}) {
   const gone = spitOf(shut);
   check('...and with holes all round it, nowhere to roll: gone', gone && gone.lx === null && gone.hit === -1 && !shut.food.some(f => f.power), JSON.stringify(gone));
 }
+
+{ // The spitter slides over its own mushroom (2x): for OWN_SPIT_TICKS after the spit, its head goes over it as a full
+  // mouth goes over food, and it stays; anyone else is hit by it as before. (Before, a snake that kept going ate it
+  // three moves later, shrank again, and spat it again: a loop.) The spitter, ten long, swallows the mushroom at
+  // (10,10) going right and spits it from (18,10) to (21,10).
+  const scene = () => {
+    const g = board([[line(9, 10, 10), 'right'], [Array.from({ length: 4 }, (_, i) => [2, 5 - i]), 'down']], { food: [[10, 10, 'mushroom']] });
+    g.food[0].expires = g.tick + 200;
+    calm(g);
+    return [g, untilSpit(g)];
+  };
+  const [g, e] = scene(), s = g.snakes[0], long = s.body.length;
+  for (let i = 1; i < T.SPIT_REACH; i++) calm(g); // (it moved one on the spit's tick)
+  check('going straight on, the spitter slides over its own mushroom: no shrink, its mouth empty', e && s.body[0].x === e.tx && s.body.length === long && !s.cheek, JSON.stringify([e && e.tx, s.body[0], s.body.length, long]));
+  check('...and the mushroom stays where it lay', e && g.food.some(f => f.kind === 'mushroom' && f.x === e.tx && f.y === e.ty));
+  // After OWN_SPIT_TICKS it's a mushroom like any: turned down, and the mushroom put back in its way, it swallows it.
+  const [h] = scene(), r = h.snakes[0];
+  r.queue.push(D.down);
+  for (let i = 0; i < T.OWN_SPIT_TICKS; i++) calm(h);
+  Object.assign(h.food.find(f => f.kind === 'mushroom'), { x: r.body[0].x, y: r.body[0].y + 1 });
+  calm(h);
+  check('...but only for OWN_SPIT_TICKS: after that, it swallows it as anyone would', !!r.cheek, JSON.stringify(r.body[0]));
+  // Anyone else: hit as before. Just after the spit, another snake heads up onto it from right below.
+  const [o, e3] = scene(), q = o.snakes[1];
+  q.body = Array.from({ length: 6 }, (_, i) => ({ x: e3.tx, y: e3.ty + 1 + i })); q.dir = D.up;
+  calm(o);
+  check('...while anyone else who comes over it swallows it, as before', !!q.cheek, JSON.stringify(q.body[0]));
+}
+
+{ // The rivals know it too (2x): a rival that has just spat its mushroom two ahead of it, an apple three beyond, plays
+  // as if the mushroom weren't there, as a person can, and slides over it; any other mushroom there turns most aside.
+  const paths = shroom => {
+    const out = {};
+    for (const key of ['sniper', 'joker', 'drab', 'mason', 'gobbler', 'ghost', 'vulture', 'creeper']) {
+      const g = spitScene(key, [line(8, 12, 6), 'right'], [Array.from({ length: 5 }, (_, i) => [17 + i, 22]), 'left'], { food: shroom ? [[10, 12, 'mushroom'], [13, 12]] : [[13, 12]] });
+      const r = g.snakes[1], path = [];
+      if (shroom === 'own') Object.assign(g.food[0], { power: T.SHRINK + 1, spitBy: r.id, slideUntil: g.tick + T.OWN_SPIT_TICKS });
+      for (let n = 0; n < 6; n++) { calm(g); path.push(`${r.body[0].x},${r.body[0].y}${r.cheek ? ' swallowed' : ''}`); }
+      out[key] = path.join(' ');
+    }
+    return out;
+  };
+  const none = paths(null), own = paths('own'), any = paths('any');
+  const same = Object.keys(none).filter(k => own[k] === none[k]), aside = Object.keys(none).filter(k => any[k] !== none[k]);
+  check('a rival plays on over its own fresh spit as if it weren\'t there, and slides over it', same.length === 8, JSON.stringify(own));
+  check('...where any other mushroom there turns most of them aside', aside.length >= 6, JSON.stringify(any));
+}

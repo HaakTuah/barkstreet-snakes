@@ -357,6 +357,10 @@ A mushroom is a weapon you aim:
   in its turn), unless its own mouth is full, when it bounces off as off a body; on a body, food or a burrow, it rolls
   off by the roll rule ("Where it rolls is a rule, never chance"), and with nowhere to roll it's gone; off the board, in
   a hole or in a fire, it's gone.
+- **You slide over your own.** For `OWN_SPIT_TICKS` (6) moves after the spit, the spitter's head goes over the mushroom
+  it spat, as a full mouth goes over food, and it stays; anyone else who comes over it swallows it as ever. (2x, the
+  owner's playtest: before, a snake that kept going swallowed it again three moves later, shrank, and spat it again, a
+  loop.) The rivals know it as you do (`ai/food.js`: their own fresh spit can't be eaten till then).
 - **Stronger each time.** A mushroom takes `SHRINK` (3) segments the first time, and one more each time it comes back
   up, to `SHRINK_MAX` (5); it darkens a shade each time. It never kills by itself: it shrinks you no further than
   `MIN_LENGTH`. A spat mushroom wilts in half the time it had left, but lies at least `SPIT_WILT_MIN` (20) ticks.
