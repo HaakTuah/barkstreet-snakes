@@ -2,7 +2,8 @@
 
 The rivals' sections as the round files and the owner's playtest had them, word for word, with their superseded
 versions and measurements. "The rivals look further ahead" was a file of its own, so its headings sit a level lower here.
-The current rules are in `docs/design/39-the-rivals.md`.
+The current rules are in `docs/design/39-the-rivals.md`, Capricious, Copycat and Wildcard's in
+`docs/design/35-capricious-copycat-and-wildcard.md`, and the looks in `docs/design/03-the-snake-as-a-character.md`.
 
 ## From the round's arc (`12-the-rounds-arc.md`)
 
@@ -168,6 +169,14 @@ The owner (28 October 2026), answering PR #83's question: "gobbler and Desperado
 
 **Mason builds double walls.** A plain flash cuts a wall one thick, so Mason, who lives by straight walls ("Keep watch!"), lays them two thick where it can, running back alongside. Its straight runs are measured before and after.
 
+**Every rival has a power style.** Each persona uses jumps and flashes its own way, through the same engine calls as a person:
+- Sniper cuts off its target; Mute seals boxes; Gobbler races for food; Vulture flashes to beads; Ghost keeps a flash ready to escape.
+- Sovereign and Colonist chase intruders off their land; Mason finishes walls; Creeper flashes in behind tails; Desperado for the thrill; Joker springs its lures; Ouroboros jumps its own coils and drops its own tail.
+- Star is the addict; Wildcard is random; Capricious and Copycat borrow; Metagamer reads its rivals; Drab is the baseline.
+- All of them: a ready flash is worth keeping (a reserve value); length is worth trading for room when boxed in (jump to an island, or drop the tail); keep a jumpable way out; cross the woodpecker's mark when they'll be out of it before the strike.
+- *The test case:* the owner's screenshot (Gobbler folded on a strip, an island across a hollow). The rival must find the hop, the flight or the tail drop.
+- **Gobbler's endgame.** Round six A left Gobbler the lowest (18% over five seeds): it grows longest and most of its deaths come late (78% after 2:00, at about 53 cells), in pockets too small for it, and no weight change held up. Its style here is the cure, not a number: it hops to the next island for food, and drops its tail when a pocket is too small. Measured: Gobbler comfortably inside 15–35%, its food share still the field's biggest.
+
 ## From the owner's playtest (`32-the-owners-playtest.md`)
 
 ### A meal isn't a pin
@@ -245,3 +254,147 @@ Who you meet is dealt from a deck, and you may choose instead, seat by seat.
     sent whenever it changes; the round message carries the round's as before.
 - *The Hall of Fame:* every entry of a round with any chosen rival (yours, the rivals', a friend's) is marked "chosen"
   after its name. Protocol 12 carries the round's `chosen` flag and a shared best round's.
+
+## From Ouroboros, and the golden beetle's leap (`17-ouroboros-and-the-golden-beetles-leap.md`)
+
+**Ouroboros** (the snake that eats its own tail) is the 17th rival, and the first that looks like a real snake: dark gold with a python's dark diamonds down its back (a pale fleck in each), a wedge-shaped head with a diamond on the crown, amber eyes with black slits, nostrils. Its tongue gag is its fangs (only people get a forked tongue), and when its own tail is right in front of it, it opens wide and bites it: the symbol itself, for a moment. Its remains are gold beads with a dark diamond. **How it plays:** a new `coil` weight rewards keeping its head close behind its own tail once it's 10 or longer, so it moves as a ring (head within 3 cells of its tail about two thirds of the time when long); food pulls it along, so the ring rolls over food, and anything caught inside is boxed in. It's distinct from Mute (who boxes in one chosen victim) and Sovereign (who guards land). A two-headed, head-on-tail look was considered and turned down: in a game where which end is the head decides everything, a decoy head would mislead you. **Tuned in the simulator:** at first it won 32-34% (the ring is a strong, safe shape; a stronger coil made it stronger still, 39%), so it got a gentler coil (weight 20 from length 10), less caution and less appetite: over 1600 seeded rounds it wins 31%, level with Mason at the top of a field running 16% to 31%. Its lines are cyclical ("All things return.", "Full circle, Green.", "…and begin again.").
+
+## From round five: Star (`26-round-five-star.md`)
+
+The owner's idea: bring back the rainbow body we dropped and give it to a new rival, **Star**. Star is inspired by the stars of the original Paper Mario, the one with the big mustache, so it looks like a star with a rainbow following it. It's a power addict that jumps and flashes as often as it can. These are the calls, as they were built; where the build changed one, it says so.
+
+**Why it belongs.** Round four made jumping and flashing central, but every rival prices them the same way. Star is the first rival whose whole character is the powers: it shows what they can do. The rainbow also finally gets a home that fits.
+- It was Wildcard's first, then Mute's.
+- Mute became a mood ring, because a mime's colour should be its mood.
+- A shooting star dragging a rainbow is the most natural use the rainbow has had.
+
+**How it plays.** Star prices powers far below anyone else, by the same rules and the same engine calls. It's two persona weights, both off for everyone else, so rounds without Star play exactly as before (100 rounds drawn without it, seed 3, give the stub's fingerprint, 202796421):
+- **`w.powers`** `{ price: 0, risk: 350, everyWay, jumpAny, dashSpend }`. Its powers are free to it, unless one ends where its risk is over 350 (a rival could strike there: in reach of its powers, or nearer), and there it pays the full price, as anyone would. A power still has to beat crawling by a point. (The brief said a fraction of the price: at 0.05 Star flashed 8.2 times a minute and won no more, 22 / 19%.)
+  - **Flashes:** whenever it's rested and the flash doesn't run into anything, weighed every way, not just the way it would crawl: about four times as often as anyone else.
+  - **Jumps:** any hurdle with somewhere free to land beyond it that no rival could get to before it's down, not just out of a crash or onto food. (A head moving into the landing stops a jump, and it crawled into what it meant to hop: about one avoidable crash every two rounds, until the critique.)
+  - **Golden dashes:** spent on speed too, not only on cuts and golden things, but at anyone's price for one (0.6 of an apple), so only for a real gain, such as beating a rival to an apple. (Free to it, it spent both in the two ticks after a leaf, in a zig-zag that cut nobody: 69% of its dashes, against 18% now.)
+- **`w.golden`** `{ power: 6, apple: 1.5, contested: 0.5 }`. It craves golden things above everything, to feed the habit: golden power food (golden beetles, golden leaves and golden mushrooms; a plain beetle is worth to it what it's worth to anyone) is worth six times as much to it, a golden apple one and a half times, and golden power food a rival will reach first still counts half. (Without `contested` it ate 1.0 golden power food a round, against 0.68 for the rest.)
+- **Territory 1.2**, from the stub's 0.6: of everything tried, the only change that moved its win rate (23% to 26.5%, over 800 rounds with Star in every one).
+
+Round four measured that spending powers on small gains makes a rival weaker. So Star stays a real threat in two ways. Each power goes by the same tests of where it goes as anyone's, and pays the full price where a rival could strike, so it rarely flashes into a crash: 0.5% of its flashes crash that tick, against 1.7% for the rest's, and 1.4% of its plain jumps crash within 0.3 s of taking off. And its craving keeps it stocked with golden jumps. It's tuned by simulation into the same 15–35% band as everyone. Tried and no better (Star in every round, both seeds): more room wanted (`margin` 6); more fear of heads (`headRisk` 900); no habitual jumps (22 / 19%: they neither help nor hurt measurably, and stay because they're the character); the plain jump at a third of its price; `space` 1.4 with `territory` 1.0.
+
+## From the rivals think faster (`28-the-rivals-think-faster-round-six-as-optimization.md`)
+
+Every balance call in the design is checked by simulation, and CI plays seeded rounds on every push. Most of that time went on the rivals' thinking (`decide()` in `ai.js`). It now takes less than half as long, and no decision changed.
+
+**What changed in `ai.js`:**
+- **The framed board.** The territory search, my room's flood fill and each rival's reach run on the grid framed by a border of holes, so a cell's neighbours are just a row up or down and a cell either side, and no search tests for the edge. On the territory search's board (which my room's fill reads too), one Int32 a cell says everything a search asks of it: when the cell frees up for a rival (my body placed on it), or, once the territory search has claimed it, `CLAIMED` plus when, with whose it is in the lowest bits. That's three tables and two "is it free?" tests in one. Each search state starts from a copy of the board instead of undoing the last.
+- **Searches compiled once.** The searches over the framed board are functions of their own at the module's top level, outside `decide`, reading only typed arrays and plain numbers, so V8 compiles them once and they stay compiled. Before, a `decide` or `evaluate` that met something of a new shape (a persona, a kind of food) was compiled all over again, at 50–110 ms a time, and ran uncompiled meanwhile: in 8 rounds there were 1462 deoptimizations and 6.5 s of compiling, now about 140 and 3.0 s.
+- **One shape of weights.** The search reads every persona's weights through one shape: a copy of the persona's own over `WEIGHTS`, which lists every weight. **A new weight goes in `WEIGHTS`.** One left out still works, but every search that reads it is slower.
+- **The territory search stops early.** Once I claim nothing more, the rest is the rivals sharing out what's left among themselves, which counts only for an aggressive snake; so for anyone else it stops there, unless a rival could still claim food it can't eat (while it's coughing, or its own bead), which would still be mine to take.
+
+**Measured:**
+- a decision (bench-ai, the same positions through both copies side by side): 2.26 times faster on average, 2.10 times at the 99th percentile;
+- `simulate.js 60`: 520 → 215 s of CPU;
+- CI: about 1,275 → 108 s of CPU, with the test suites trimmed too (seeded rounds, waiting only for what's ready, rare events staged, four rounds for the determinism step).
+
+**No decision changed.** Every step had to pass bench-ai (every position going the same way and noting the same in memory), then the fingerprints, which are unchanged: 300 rounds of seeds 3, 11 and 29 give 139025481, 745200860 and 489503396, and `simulate.js 60 --seed 3` gives 353710037 with and without `--ahead`.
+
+**The tools it brought:**
+- **`tools/bench-ai.js`** times `decide()` on positions recorded from seeded rounds, through two copies of the game loaded side by side, each position through both in turn (so a busy machine slows both alike), and fails on any position that comes out different: the way it went, its memory, how many random numbers it drew, and whether it changed the view it was handed. Positions come from 100 rounds (40 each), the line-ups dealt so every persona plays; a run that leaves a persona out fails too. It's the first check of any change to `ai.js`, before the fingerprints.
+- **`tools/simulate.js`** caches each seeded round by the files that played it, and hands the rounds out to whichever core is free. It reads the files once its turn on the machine comes and hands the cores those very texts, so a round is always stored under the files that played it, even when one is edited while the run waits. Runs waiting for the machine queue first come, first served (a ticket each; only the oldest live one may take the lock): before, a run started the moment the last ended, as abtest's are, usually got in first, and a waiting run could wait many minutes, so agents skipped the queue with --no-wait. It fast-forwards too: `--save-at` stores the rounds part way, through `tools/snapshots/state.js` (which keeps what's shared, cycles, Maps, Sets, typed arrays, and the game's own objects by name), and `--from` goes on with them under any copy.
+- **`tools/abtest.js`** compares two copies on paired seeded rounds, in looks of 100 rounds a seed, and stops once the rows it waits for are decided. Its intervals hold all at once over the looks and the rows, so the chance that any verdict in its table is wrong is at most 5%. Measured on experiments where the two copies play alike but never the same round (both sides drawn at random from 1500 real rounds, 500 each of seeds 3, 11 and 29, two seeds of up to 600 rounds as it plays them): its first version, at 5% a row and with every row but the trademarks by default, ended 58 of 200 with at least one wrong row (0.43 a table) and never stopped early. Now, with those same 54 rows asked for, 1 of 100 ends with one (and none has every row decided, even at the last look: so many rows widen every interval); with the default rows (the median round and sudden death), 1 and 3 of 400 did in two runs (0.25-0.75% of tables), and about half stop before the last look. With sudden death really 5 s shorter, `--metrics sd` says so in all 200, after 2.7 looks on average (two or fewer in 87); with rounds really 3 s longer (the round's margin, as hard as it gets), the defaults say longer in 87-89%, and "the same" rarely (0 of 200 and 1 of 150 in two runs): any wrong verdict is held to 5% a table, not ruled out.
+
+**Tried and not adopted: an approximate board split.** A rougher territory search was 1.38 times faster, but 6.7% of positions went another way, and play shifted. A checked version saved only 1.07–1.15 times.
+
+## From Capricious, Copycat and Wildcard (`35-capricious-copycat-and-wildcard.md`)
+
+Proposed by Claude on 26 October 2026, at the owner's request; the owner on Capricious: it should "be able to emulate far
+more, if not all". Three rivals change who they are: Capricious by the moment, Copycat by whoever leads, Wildcard by
+the round. Today they blur. Capricious has four impressions (Sniper, Gobbler, Ghost, Mason), so the same faces keep
+coming back. Copycat copies only the leader's steering. Wildcard's habits are drawn evenly from wide ranges, so most
+rounds they average out into a muddled Drab. Each should be a clear character with a tell.
+
+**Capricious: every rival, by turns.**
+- It does impressions of every other rival, dealt from a shuffled deck so it shows each once before any comes back.
+  Each lasts 8–15 s as now, with its moment of dithering in between. Its own undecided self (Drab's habits) is the
+  dithering, not a card in the deck.
+- A rival whose style needs long memory gets the short form of it for the mood's length: Sovereign claims a small
+  home and guards it, Colonist lays a small claim, Metagamer counters whoever it watched during the mood, Ouroboros
+  coils, Copycat shadows the leader, Wildcard draws a mix for the mood, Star spends its powers the moment it can.
+- **The tell:** for each mood its head wears the rival's signature mark as a costume over its own colours (Sovereign's
+  crown, Star's mustache, Copycat's ears, Wildcard's pompadour, and so on), and it opens the mood with one of that
+  rival's lines, marked as an impression (*does its best Sovereign*: "..."). Field guide: "Capricious does
+  impressions of the others."
+- **Measured:** while a mood lasts, the rival's trademark shows at a rate near the rival's own; Capricious stays in
+  the win band.
+
+**Copycat: copies the winner's play, not just its steering.**
+- While a rival leads, Copycat takes that rival's habits (its weights and its driver: how it hunts, eats and keeps
+  safe), as Capricious takes a mood, and keeps shadowing it a few cells away in a pale copy of its colours.
+- While a snake without a persona leads (you, or a friend online), it plays as that snake has played: it reads the
+  leader's behaviour the way Metagamer does (aggressive, greedy or evasive) and takes the habits that match. A person
+  is copied by what they do, never for being a person ("The rivals never treat a person differently").
+- It changes model only when another snake leads by 3 or more, as now.
+
+**Wildcard: a few strong traits each round, and you can see them.**
+- Each round it draws two or three traits from a list (hungry, reckless, hunter, coward, wall-hugger, territorial,
+  tail-rider, show-off), each pushed to an extreme, with everything else plain, instead of an even draw of every habit.
+- Its name tag's note says the round's mix ("This round: hungry, reckless, hunts"), and its first line of the round
+  brags about it. Still a wildcard: you know what it is this round, never what it will be next.
+
+All three keep the rules that stand: no `isPlayer`, every trademark measured before and after, every new look a cue
+with its Field guide line, and online in step (the mood, the copied model and the round's mix travel with the snakes,
+with a protocol bump).
+
+**Built (3b), Capricious (PR #126).** As above, with these readings:
+- The deck is the 16 others (not Drab, which is its dithering, nor itself), shuffled; the top of a fresh deck is never
+  the mood just over. A round's moods rarely get through all 16, so a round shows each rival at most once.
+- Short forms (`MOOD_FORMS` in `ai/moods.js`): Sovereign's home starts at radius 3 and grows to 4 at most; Colonist plants
+  one flag of radius 3 where the mood starts and no more (a pecked one is replanted); Ouroboros coils from 7 long, not
+  10. Each mood starts with its driver's memory empty (`MOOD_MEMORY`), so Metagamer watches afresh, Wildcard draws
+  afresh, and a realm or a flag goes when its mood does. The rest play as themselves.
+- The costume (`coatOf` in `render/looks.js`): its body keeps Capricious's own pink ramp and markings; its head is the
+  mood's face (hat, crown, glasses, beak...) on its pink head (its pink ring is gone: see "A costume change" below). Doing Star, it keeps a round head
+  and wears Star's mustache (no star-shaped head). Faces that are only eyes (Ghost, Creeper) or cheeks (Gobbler) are
+  weak tells, so its name tag's note also says who it is doing ("Doing its best Ghost now.").
+- The impression: one of the rival's own `start` lines, `*does its best Sovereign*: “Kneel.”` (a mime's, all stage
+  direction). The four hand-written mood lines it had are gone. Copycat echoes it in Chinese.
+- Measured: the simulation's `--signatures` counts each mood's ticks again under the mood's name, and prints each
+  impression's trademark beside the rival's own.
+
+**Built (3b), Copycat (PR #142).** With these readings:
+- The AI's view carries no persona, and must not ("The rivals never treat a person differently"), so Copycat reads
+  every leader, rival or person, by behaviour alone. Over the ticks it has watched (as it saw them, its reaction time
+  late), each snake's eight traits: moves per turn, coiling, riding tails, distance from heads, heads near, growth,
+  jumps and flashes, and how far it strays (`watchStyles`, `traitsOf` in `ai/moods.js`). The style is the nearest of twelve
+  rivals' own (`styleOf`, `STYLES`, measured by `tools/dev/copycat-styles.js`), after 60 ticks watched. So a person
+  is copied as Mason if they run long and straight, as Gobbler if they eat a lot and go near heads, and so on.
+- It takes the style's habits (weights, the short forms of `MOOD_FORMS`, and the driver), with its pull to move the way
+  its model moves cut from 120 to 40 so the habits show, and shadows the model (its lure), unless the copy has a lure
+  of its own (Vulture's, Joker's). A new model, or a new read of it, starts the copy's memory afresh.
+- Not styles: Capricious, Copycat and Wildcard (mixes of others); Mute and Metagamer, which play like Sniper and Drab
+  from outside; Colonist, whose mark is its flags. In play (`tools/dev/copycat-reads.js`, 120 rounds) it has a style
+  96% of the time it has a model, and reads Star, Joker, Mason, Ghost, Gobbler and Ouroboros as themselves 86-100% of
+  the time; Sniper, Sovereign, Desperado and Vulture about half; Creeper poorly (shadowing it, its own head is what
+  rides the tail).
+- A new read of its model holds 40 ticks before Copycat changes style (its first, it takes at once), so a realm or a
+  victim doesn't come and go with a moment's change of pace.
+- It shadows its model unless its copy has a lure or a victim of its own: copying Joker or Vulture it lures whoever
+  they would, and copying Sniper its model may be its prey. Copying Sovereign it plants a small home where it is, and
+  its pull toward its model works against it. As the rival it copies would.
+- The cue: its pale copy of the model's colours, as before; its note says "Copying Mason, playing as Mason does."
+  (or "Copying you, playing as Gobbler does."). Field guide row: "Copycat".
+
+### A costume change (2t)
+
+The owner (30 October 2026): "i think now that capricious is always pink, it doesnt need that weird border effect around
+its head anymore. Agreed? Though it maybe should be more apparent when it transforms, like an coded animation that works
+for all of them, or something?", and to the design session's take: "Agreed to both, expertly!".
+- *Before:* a breathing pink ring with pale dashes round Capricious's head, kept so it could be found while its body
+  changed with its mood, and a ring that flashed out when its mood changed (`MOOD_RING_MS`). Its pink coat does the
+  first job now.
+- *Now* (`costumeChange` and `drawChange` in `render/bodies.js`): one animation for every change of costume, over
+  `COSTUME_MS` (500 ms), in the face's frame. Capricious taking up a mood, putting one down (undecided again), or
+  changing one for another; Copycat taking on a new model, or losing one. A puff of nine little clouds swells round the
+  head and clears, in Capricious's pink or in Copycat's red. The old costume (its face, and its head's colour, so
+  Copycat's old copied head goes too) pops off, growing and fading, in the first half. The new one pops on from 30% of
+  the way, past full size and back, as food pops in. With reduced motion it is a plain crossfade. Seen, not played:
+  each screen draws it from the mood and the model it has, so online play needs nothing new.
+- The name tag's dot in the list beside the board keeps its pink ring (`game/hud.js`): it is not on the board, and in a
+  list of dots it still marks the one that changes.

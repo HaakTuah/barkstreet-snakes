@@ -1,6 +1,6 @@
 // Joker's lines, by moment (see chatter/voices.js), their Chinese for Copycat, and its punchlines.
 addVoice('joker', {
-  hungry: ["Why did the snake cross the bark? It was starving.", 'Knock knock! Who’s there? Lunch, I hope.'],
+  hungry: ["Why did the snake cross the bark? It was starving.", 'My stomach’s doing stand-up.'],
   desperate: ['No more jokes. Food.'],
   start: ['Knock knock!', 'Who wants to play a game?'],
   idle: ['Catch me if you can!', 'Why so slithery, {who}?', 'Follow me, it’s a shortcut!', 'Honk honk!', 'Pull my tail!', 'Wanna hear a joke, {who}?'],
@@ -19,11 +19,11 @@ addVoice('joker', {
   cut: ['Hey! Sawing in half is MY trick, {who}!'],
   choke: ['Hack! That joke went down the wrong way.'],
   dug: ['Ha! The old trapdoor trick.', 'Where’d the bug go? Hole in one!'],
-  knocked: ['Knock knock! Who’s there? {who}, with my lunch.'],
+  knocked: ['The bird set it up. {who} got the punchline.'],
   gloat: ['Knock knock, {who}! …Bonk!', 'Boing! Do it again, {who}!', 'Classic {who}. Never gets old.'],
   leap: ['Hup! Ta-daaa!'],
   dies: ['Tough crowd…'],
-  diesBy: { edge: ['Edgy humour. Not for me.'], hole: ['Fell for the oldest one.'], woodpecker: ['Knock knock! …Oh no.'], hunger: ['Dying of hunger. Literally.'], fire: ['Roasted. Tough crowd.'], self: ['The joke’s on me.'] },
+  diesBy: { edge: ['Edgy humour. Not for me.'], hole: ['Fell for the oldest one.'], woodpecker: ['Knock knock! …Oh no.'], hunger: ['I’m dying out here. No, really.'], fire: ['Roasted. I’ve had worse reviews.'], self: ['Ate my own punchline.'] },
   dash: ['Wheeee, nyoom!'],
   flash: { first: ['Now you see it, {who}. Now you don’t!'], past: ['Beep beep, {who}!'] },
   snip: ['Ta-da! {who}, sawn in half!'],
@@ -60,7 +60,7 @@ addVoice('joker', {
   "Hup! Ta-daaa!": "嘿！哒哒——！",
   "Wheeee, nyoom!": "呜——嗖！",
   "Ta-da! {who}, sawn in half!": "当当！{who}，被锯成两半！",
-  "Knock knock! Who’s there? Lunch, I hope.": "咚咚！谁呀？希望是午饭。",
+  "My stomach’s doing stand-up.": "我的肚子在说单口相声。",
   "Pull my tail!": "拉拉我的尾巴！",
   "Wanna hear a joke, {who}?": "想听个笑话吗，{who}？",
   "Fungi! Fun guy! …No?": "蘑菇！魔菇！……不好笑？",
@@ -80,14 +80,14 @@ addVoice('joker', {
   "Hack! That joke went down the wrong way.": "咳！这个笑话呛到我了。",
   "Ha! The old trapdoor trick.": "哈！老掉牙的活板门戏法。",
   "Where’d the bug go? Hole in one!": "虫子去哪儿了？一杆进洞！",
-  "Knock knock! Who’s there? {who}, with my lunch.": "咚咚！谁呀？{who}，拿着我的午饭。",
+  "The bird set it up. {who} got the punchline.": "鸟铺好了梗。{who}抖了包袱。",
   "Edgy humour. Not for me.": "边缘幽默。不适合我。",
   "Fell for the oldest one.": "上了最老的当。",
   "Knock knock! …Oh no.": "咚咚！……哦不。",
-  "Dying of hunger. Literally.": "饿死了。字面意思。",
-  "Roasted. Tough crowd.": "被烤了。观众真难搞。",
-  "The joke’s on me.": "我自己成了笑话。"
+  "I’m dying out here. No, really.": "我快死了。不，真的。",
+  "Roasted. I’ve had worse reviews.": "被烤了。我收到过更差的评价。",
+  "Ate my own punchline.": "吃掉了自己的包袱。"
 }, [
-  'Why did the snake cross the bark? It was starving.', 'Knock knock! Who’s there? Lunch, I hope.', 'Knock knock! Oh. It’s the woodpecker.', 'Somewhere over the… oh, there it is.', 'Knock knock, {who}! …Bonk!',
-  'Ha! The bird’s got jokes.', 'Follow me, it’s a shortcut!', 'Fungi! Fun guy! …No?', 'Not so funny now.', 'Mushroom? I hardly know ’em!', 'Classic {who}. Never gets old.', 'Pull my tail!', 'Wanna hear a joke, {who}?', 'Ta-da! {who}, sawn in half!', 'Hey! Sawing in half is MY trick, {who}!', 'Fire’s out! What a wet blanket.', 'Ashes to ashes, snack to dust!', 'Rotten luck!', 'Hole-y moly!', 'Now you see it, {who}. Now you don’t!', 'Beep beep, {who}!', 'Hack! That joke went down the wrong way.', 'Ha! The old trapdoor trick.', 'Where’d the bug go? Hole in one!', 'Knock knock! Who’s there? {who}, with my lunch.',
+  'Why did the snake cross the bark? It was starving.', 'My stomach’s doing stand-up.', 'Knock knock! Oh. It’s the woodpecker.', 'Somewhere over the… oh, there it is.', 'Knock knock, {who}! …Bonk!',
+  'Ha! The bird’s got jokes.', 'Follow me, it’s a shortcut!', 'Fungi! Fun guy! …No?', 'Not so funny now.', 'Mushroom? I hardly know ’em!', 'Classic {who}. Never gets old.', 'Pull my tail!', 'Wanna hear a joke, {who}?', 'Ta-da! {who}, sawn in half!', 'Hey! Sawing in half is MY trick, {who}!', 'Fire’s out! What a wet blanket.', 'Ashes to ashes, snack to dust!', 'Rotten luck!', 'Hole-y moly!', 'Now you see it, {who}. Now you don’t!', 'Beep beep, {who}!', 'Hack! That joke went down the wrong way.', 'Ha! The old trapdoor trick.', 'Where’d the bug go? Hole in one!', 'The bird set it up. {who} got the punchline.',
 ]);

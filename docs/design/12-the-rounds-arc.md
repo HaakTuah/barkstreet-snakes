@@ -20,7 +20,8 @@ they stand now are in `38-the-woodpecker.md`, and their text as it was, with the
 was, with what it measured, in `docs/archive/design-rivals.md`. Two heads that swap cells count as a head-on, as
 they look.
 
-**Starving is decided after eating.** A snake whose head reaches food on the tick it would starve eats instead.
+**Starving is decided after eating**: its rule is in `04-food-and-the-world.md` under that name, and its text as it
+was in `docs/archive/design-food.md`.
 
 **The Hall of Fame ranks by place, then time alive, then food**: its rule is in `43-the-start-card-and-records.md`
 under that name, and its text as it was in `docs/archive/design-online.md`.

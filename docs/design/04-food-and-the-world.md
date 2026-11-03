@@ -9,9 +9,9 @@
 - **Burrows** (the beetles' homes): an oval opening in the bark, splintered round its rim with a little sawdust, and cracks that spread from it over about half a minute, each burrow's its own. Wood splits along its grain, so the cracks run along the log either way from the hole, tapering, now and then forking (they used to fan out in every direction, and with a beetle beside them they looked like a spider's legs). The first beetle cracks one open where it's quiet; later ones come out of a free burrow or, half the time, open another (up to three). A scared beetle runs for a burrow within 6 cells and dives in (it shrinks away into the hole), then comes out of another a second or so later. Burrows are safe to cross, and nothing grows on them. **Tuned in the simulator (300 seeded rounds):** beetles are still caught 90% of the time (91% before), and rounds are as long (68 s median, 69 before). **Since round six A** a cornered beetle's dig leaves a burrow too, freshly bored rather than popping open, and past three the one unused longest closes over (sawdust and moss fill it; since the owner's playtest it grows shut over 6 to 14 s first, beetles going in but none coming out: see "Burrows grow shut"); knocked food never lands on one, nor, since the verify pass, a dead snake's beads or a tail a crash knocks off (before, a bead on a burrow sat there 2 to 3 s a round). A bead a choke spits, or food a cough nudges, can still roll onto one (the roll's rule has no burrow in it, and the rivals work rolls out by the same rule): about once in 40 rounds. See "Less fruit, more beetles".
 - **Holes** are pits in the log, one per hollow, traced along the cell edges: a torn inked lip, a dark floor, the far wall lit from the upper left, splinters over the rim and sawdust round it, and at the board's edge a notch bitten out of the log. They lie on the static layer under everything, so a body bridging a hole is drawn across it. A strike paints again only the box round its new holes. (Until round four they were ragged gouges, then one dark disc a cell, which read as bubble wrap.)
 - **The corner leaves move onto the frame** and never cover playable cells.
-- **Borders: Sovereign's realm and Colonist's colonies** (round four; they were force fields). The land is drawn as on a map: its cells, exactly the land the rules mean, under a light wash in the owner's colour; a band and a riband of the colour inside a true ink line with rounded corners, a parchment keyline just inside the ink, so a border reads for every eye (no line along the board's edge or round a hole: holes are lost land); where two owners' land meets, the line is dashed in both colours over true ink, the dashes standing still, and land both claim is hatched in both. (Without the keyline, Colonist's rose went grey-khaki to colour-blind eyes, its ink no darker than the bark's grain.) Land grows a ring of cells at a time as a realm widens, and shrinks back into its capital when its owner goes. The border flares as it changes and when lightning strikes, breathes while a rival's head is on it, and lights up from where a head crosses in. A rival on the land wears the land's colour round its pieces on the land's own cells, with a parchment keyline outside it, so it shows round a red body too. If it's you, you hear it: a muffled drum and a fife (see Sound). (Drawing only: the rules of trespass are as they were, and the AIs know nothing more than before.) *History:* they began as flat tinted discs with a hard edge, and nothing happened when you went in. The third pass made them domes of light with a honeycomb, ripples, sparks round the rim, rain dimples, frost and a wind shiver; those cost 2.3–2.6 times the same board without them, and round four replaced them with these borders (see "Borders, not force fields").
-- **Sovereign's realm grows and moves.** It starts at radius 4 and gains a cell of radius for every 8 segments Sovereign grows, up to 7. If Sovereign wastes away, it shrinks back (2 segments' grace, so it doesn't flicker). Every 1.5 s it checks whether a cell's step would put clearly more of it on open log (holes and fire are lost land) and drifts that way, one cell at a time. On screen its land grows or shrinks a ring of cells at a time, and its border flares. Its capital flies a swallow-tailed banner in parchment and ink, its crown inked, trimmed in the realm's colour (no gold: gold means a power). Sovereign remarks on it ("Our realm expands!", "A strategic retreat. A royal one.", "The court relocates."). Over 600 seeded rounds it wins as often as before (28% to 27%); over 120 rounds against two others its realm reached radius 5 to 7 in four rounds of five.
-- **Colonist's flags.** It plants the Union Flag and it flies (drawn in strips that ripple out from the pole), on an inked pole with a parchment knob (round four; it had a gilt finial). It used to be St George's cross, which is England's flag; redcoats were the British Army from 1707, and the colonies were claimed under the Union Flag. The game uses the 1801 flag everyone recognises, the one of the Empire's great colonising century (a tricorn-era purist would leave out St Patrick's red saltire). **Its later colonies fly colonial ensigns**, as the Empire's colonies did: the Union Flag in the corner of a Blue Ensign with the Southern Cross (the second, fourth, …) or a Red Ensign with the colony's badge, here the log's own oak on a white roundel (the third, fifth, …). The first colony keeps the Union Flag. Each colony remembers its number, so its flag never changes.
+- **Borders: Sovereign's realm and Colonist's colonies**, **Sovereign's realm grows and moves** and **Colonist's
+  flags**: their rules are in `44-realms-and-colonies.md` ("Borders, not force fields" and the same names), and their
+  text as it was in `docs/archive/design-realms.md`.
 
 
 ### Food on the log
@@ -26,6 +26,9 @@ was tried and measured, is in `docs/archive/design-food.md`).
   how long its last meal keeps it (`mealMs`, carried online), and its tag's bar is measured against that, so it's full
   after any meal. Under `HUNGER_WARN_MS` (6 s) left, the tag shows it's starving: the bar in Berry, a ring pulsing round
   the tag, and "starving" for a screen reader.
+- **Starving is decided after eating:** a snake whose head reaches food on the tick it would starve eats instead
+  (`ateTick`, in `engine/food.js` and `engine/step.js`). A mushroom doesn't save it, nor does its own bead, which it
+  squashes.
 - **Your own beads aren't a meal:** you squash them (see "Choking on your own tail" in `41-crashes.md`). Beads carry
   their owner, so it's the same rule for everyone, rivals included. Poison would punish picking your tail back up after
   a crash, and seat colours can look alike.
@@ -38,6 +41,9 @@ was tried and measured, is in `docs/archive/design-food.md`).
   It's announced once, with its own falling notes: "The last apples are falling." (Round news, after the tick's
   other news: it waits its turn, and gets through a card; "The narrator speaks less, and better" in
   `30-teaching-by-showing.md`.)
+- **More golden power food,** since golden powers stack and the rivals use them: a gust of wind may blow in a golden
+  leaf (`LEAF_CHANCE`, 0.25 a gust, one at a time), a rain spell may bring up a golden mushroom (`GOLDCAP_CHANCE`, 0.55,
+  one a spell at most), and one beetle in six is golden (`GOLD_BEETLE_CHANCE`; see "Less fruit, more beetles").
 - **No winter before 45 s** (`SNOW_FROM_MS`): snow in the first half-minute starved short snakes.
 - **Mushrooms never sprout within 2 cells of a head:** nobody could see one appear in front of them in time.
 - **Golden apples, leaves and mushrooms land somewhere quiet** (the farthest of 8 tries from every head), so each is a
@@ -46,6 +52,35 @@ was tried and measured, is in `docs/archive/design-food.md`).
   owner, its heat and whether it's cooked, and a spat mushroom's strength (`MealRow` in `online.js`), and each snake's
   row its `mealMs`; the events say what was eaten, what rotted (an apple or a bead, and the bead's colour), what baked
   or burned to ash, what came, and where the last apples started to fall (`lastApples`).
+
+### Apples rot
+
+So nobody camps an apple, as crashes, not deaths, settled it (its text, with what was measured, is in
+`docs/archive/design-food.md`).
+- **An apple lasts about `APPLE_TICKS`** (110 ticks, give or take a quarter: about 10 to 16 s early in a round, 8 to 12
+  s once it's at full speed), twice as fast in winter (see "Weather").
+- **It goes off as it goes:** it bruises (brown spots), then rots (brown, wrinkled, its leaf dead, a fly circling),
+  shrivels and goes with a brown puff.
+- **A fresh one drops** from the tree above somewhere else: every new apple mid-round drops in from above, like a
+  windfall.
+
+### Food in the fire cooks
+
+Fire spreads onto food (see "Lightning and fire, fairly" in `05-weather.md`), as crashes, not deaths, settled it (its
+text is in `docs/archive/design-food.md`):
+- **Baked:** an apple or a bead that's been in a burning cell for `COOK_TICKS` (18 ticks) is baked, worth
+  `COOKED_GROWTH` (2), steaming, glazed and split; it stops rotting for a while (it lasts at least `APPLE_TICKS / 2`
+  more).
+- **Ash:** any food but a beetle (which runs) left in for `ASH_TICKS` (45 ticks) goes to ash in a grey puff.
+- **Getting at it** means waiting for the fire to die down, or taking the heat ("Fire on snakes" in `41-crashes.md`).
+
+### Mushrooms look poisonous
+
+A mushroom shrinks whoever eats it, so it looks it, as the first seconds settled it (its text is in
+`docs/archive/design-looks.md`, under "Looks"):
+- a violet haze round it that breathes, two wavy violet stink lines rising, and violet spores drifting off it
+  (`render/food.js`);
+- eat one and you go queasy green for a moment, in a puff of spores.
 
 ### Rivals see food as it is
 
