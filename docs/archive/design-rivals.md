@@ -2,7 +2,8 @@
 
 The rivals' sections as the round files and the owner's playtest had them, word for word, with their superseded
 versions and measurements. "The rivals look further ahead" was a file of its own, so its headings sit a level lower here.
-The current rules are in `docs/design/39-the-rivals.md`.
+The current rules are in `docs/design/39-the-rivals.md`, Capricious, Copycat and Wildcard's in
+`docs/design/35-capricious-copycat-and-wildcard.md`, and the looks in `docs/design/03-the-snake-as-a-character.md`.
 
 ## From the round's arc (`12-the-rounds-arc.md`)
 

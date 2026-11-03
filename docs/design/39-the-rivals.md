@@ -2,18 +2,17 @@
 
 Three rivals play every round with you (four when you watch), dealt from a cast of eighteen. Each is the same AI with
 its own weights and, for some, a driver that runs once a decision. The rules as the rivals' look ahead, round four,
-round six B and the owner's playtest settled them (their text, with what was tried and measured, is in
-`docs/archive/design-rivals.md`). Elsewhere: what they do with food and beetles (`04-food-and-the-world.md`, from
+round five, round six A and B and the owner's playtest settled them (their text, with what was tried and measured, is
+in `docs/archive/design-rivals.md`). Elsewhere: what they do with food and beetles (`04-food-and-the-world.md`, from
 "Rivals see food as it is"), with the woodpecker ("The rivals tell a mark from a hole" in `38-the-woodpecker.md`),
-with fire, head-ons and their own beads (`41-crashes.md`), with each move (`40-powers-and-moves.md`), and the power styles still to build ("Every
-rival has a power style", "Balance targets" and "Gobbler's endgame" in `29-round-six-b-the-new-moves.md`); their looks
-(`03-the-snake-as-a-character.md`); their lines
-(`09-voice-and-copy.md`, `13-lines-and-announcements.md`, `19-looks-and-lines.md`); Capricious, Copycat and Wildcard
-(`35-capricious-copycat-and-wildcard.md`); Ouroboros (`17-ouroboros-and-the-golden-beetles-leap.md`); Star
-(`26-round-five-star.md`); Sovereign's realm and Colonist's flags, and a pecked flag
-(`44-realms-and-colonies.md`); how they think quickly, and its tools
-(`28-the-rivals-think-faster-round-six-as-optimization.md`); and how each round measured them ("Round four, measured" in
-`25-round-four-measured.md`, "Round six A, measured" in `27-round-six-a-fairness-and-fixes.md`).
+with fire, head-ons and their own beads (`41-crashes.md`), with each move (`40-powers-and-moves.md`); the power styles'
+measure ("Balance targets" in `29-round-six-b-the-new-moves.md`); their looks (`03-the-snake-as-a-character.md`); their
+lines (`09-voice-and-copy.md`, `13-lines-and-announcements.md`, `19-looks-and-lines.md`, and Star's voice in
+`26-round-five-star.md`); Capricious, Copycat and Wildcard (`35-capricious-copycat-and-wildcard.md`); Sovereign's
+realm and Colonist's flags, and a pecked flag (`44-realms-and-colonies.md`); the tools that time and measure them
+(`28-the-rivals-think-faster-round-six-as-optimization.md`); and how each round measured them ("Round four, measured"
+in `25-round-four-measured.md`, "Round five, measured" in `26-round-five-star.md`, "Round six A, measured" in
+`27-round-six-a-fairness-and-fixes.md`).
 
 ### What a rival sees
 
