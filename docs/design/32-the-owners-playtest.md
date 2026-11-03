@@ -17,7 +17,7 @@ what was measured on each board, in `docs/archive/design-online.md`.
 
 ### The Field guide's own door
 
-Its rules are in `33-one-screen.md` under the same name, and its text as it was, with how it was tested,
+Its rules are in `30-teaching-by-showing.md` under the same name, and its text as it was, with how it was tested,
 in `docs/archive/design-page.md`.
 
 ### The cards, by the board

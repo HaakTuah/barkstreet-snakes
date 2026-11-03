@@ -8,7 +8,7 @@ pinned in `tools/layout/00-screens.js`. Elsewhere: the page on every screen, the
 (`33-one-screen.md`); the keys, touch and swipes (`42-controls.md`); how a tap and a swipe use the powers ("Two
 powers, two presses" in `40-powers-and-moves.md`); the woodpecker's size on a phone ("The woodpecker, as big as it
 gets", "Clear of the row's words (2k+)" and "Bigger on a phone" in `38-the-woodpecker.md`); and a banner's place over
-the header (the placement under "As built, step 1" in `30-teaching-by-showing.md`).
+the header (the placement under "The banner" in `30-teaching-by-showing.md`).
 
 ### Held upright
 

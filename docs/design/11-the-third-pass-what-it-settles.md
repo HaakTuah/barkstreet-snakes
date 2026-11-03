@@ -6,13 +6,9 @@ jumps you can see", and their text as it was in `docs/archive/design-looks.md`.
 
 **Reduced motion removes movement, never information.** Being in the air is a rule, so a leap keeps a still airborne pose. The woodpecker cuts between perches instead of swooping. Rain holds still rather than vanishing (it puts fire out), a burning leaf appears where it lands instead of flying, and a death is a still starburst that fades.
 
-**The narrator speaks less, and better.** Banners go through a small queue (since "Teaching by showing", step 1, each waits its turn and is held for its reading time: see there):
-- **Lessons** (the first crash, the first leap, a power's first pickup, dropping to your smallest) wait 6 s of the round at most.
-- **Round news and the weather** wait as long as it takes; a spawn's news shows only when the banner is free, else the next one tells it.
-- **Repeats** don't get banners: only the first golden apple and the first beetle of a round are announced, and a repeat crash or a pickup's "+3" is left to the board's own floaters.
-- **While a card is up,** only what changes the round gets through.
-
-Lessons are one idea and 60 characters or fewer (since round six A's critique, input-test checks every one, with keys and on touch). The fine print lives in the README, or comes when it happens (*Snip!*).
+**The narrator speaks less, and better**: its rules (the banner's levels, repeats, and the lessons' waiting and
+words) are in `30-teaching-by-showing.md` under the same name and "Lessons", and its text as it was in
+`docs/archive/design-teaching.md`.
 
 **One word for each thing.** The leap was *ahead*: "Press ahead to leap", "Swipe ahead to leap". Since round four the two powers are a *jump* and a *flash*, each with its own press: "Space jumps", "E or Shift flashes", "Tap to jump", "Swipe ahead to flash" (a golden beetle's are *golden jumps* and a golden leaf's *golden flashes*; the rules and the AI call them leaps and dashes). **Since 1 November 2026 the flash is the *dash*** (the owner: "dash is better actually", and "Yes, i think so", to calling it the dash wherever a player sees it): "E, Shift or right-click dashes", "Swipe ahead to dash", and a golden leaf's *golden dashes*, in the key help, the lessons, the Field guide, the banners, the chatter (English and Chinese) and the README; the notes below from before that day keep the word they were written with. The code already said dash (only some of its names and the Field guide's picture keys still say flash). The edge of the log is the *edge*, never a wall. *Bonk!* is for a knock you survive; a death gets a word that means out.
 
