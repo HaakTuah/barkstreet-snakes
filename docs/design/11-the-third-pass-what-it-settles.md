@@ -36,7 +36,9 @@ The rival's quip stays as flavour. A death that ends the round says it on the ro
 - A first round's score is a best only by default: no fanfare until there's a best to beat. Carving your name is offered once a round, not on both cards, and never pressed on you: on a keyboard the card keeps the focus (R and Enter mean what they always mean; Space, since round four, starts nothing) and Tab reaches the field. It stays while you type, even if the round ends under it; named already, the card says "as the owner"; carving says "Carved".
 - Where four tags in a row would cut the rivals' names (a near-square window), they sit in two rows of two, as on a phone.
 
-**Every sound survives a phone speaker.** A cue's weight can't live only below 150 Hz, so the low cues (death, bonks, thunder, boom, the stinger, the heartbeat) get a midrange knock or body that implies their bass. Every envelope starts from silence. Your own sounds come before rivals', and both come before the world's. A cue's shortest gap between plays (so a burst doesn't stack up) is kept apart for yours: a rival's waits on yours and on other rivals', and yours waits only on your own, so a rival's flash or jump, golden or plain, never silences yours. A golden flash's gap (50 ms) is under a tick and a jump's (120 ms) under two, so your own golden ones in a row are each heard (round four's critique; `tools/chatter-test.js` plays the sound to check). Ambient beds stop when the round does.
+**Every sound survives a phone speaker**: its rules are in `21-sound.md` under the same name (and the gaps that keep
+yours apart from a rival's under "Yours, a rival's and the world's"), and its text as it was in
+`docs/archive/design-sound.md`.
 
 ### Feel targets for the third pass
 
