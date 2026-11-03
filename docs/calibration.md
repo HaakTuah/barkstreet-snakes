@@ -1,7 +1,7 @@
 # Calibration
 
-The log of the checks that keep the review bar from slipping, the weekly blind re-reviews and the canaries, newest
-first ("Reviews", point 5, in `docs/claude-and-codex.md`).
+The log of the checks that keep the review bar from slipping, the weekly blind re-reviews, the canaries and the monthly
+slop checks, newest first ("Reviews", point 5, in `docs/claude-and-codex.md`).
 
 | Date | Check | PR | Reviewer checked | Misses | What changed |
 | --- | --- | --- | --- | --- | --- |
