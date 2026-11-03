@@ -10,21 +10,14 @@ at a time, as before; delete a line here when its block moves, and this file whe
 - 07 3–10 "One treatment…": 02 (art direction).
 - 11 13 "One word for each thing": 09. 11 15–22 "Every death says why": 41. 11 7 "Reduced motion removes movement": 02,
   or a new topic, accessibility.
-- 12 23 "Starving is decided after eating": 04 (hunger).
-- 14 8 "Food in the fire cooks", 14 10 "Apples rot": 04.
-- 16 7 "Looks." (mushrooms look poisonous): 04 (food's looks).
 - 17 3 Ouroboros, the 17th rival: 39, its look in 03.
 - 18 7 "Sudden death closes in": 12 (the round's arc) or 38.
-- 19 5 "A crash you don't survive goes off with a bang": 41. 19 9 "Fields that overlap": 04 (realms and colonies).
-- 24 40–55 "Borders, not force fields": 04, measurements to the archive. 24 59–62 weather from a shuffled bag, the fire
-  budget, more golden power food: 05 and 04.
+- 19 5 "A crash you don't survive goes off with a bang": 41.
 - 26 3–8, 14–22 Star, the idea and how it plays: 39.
-- 27 17–21 "A pecked flag is a lost colony": 04 (realms and colonies) and 38.
 - 28 3–23 the rivals think faster: 39 ("how they think quickly"), measurements to the archive.
 - 29 12 and 32–62 "the chosen numbers" (2y, parts 1, 3, 3b, 4): 40, measurements to the archive. 29 22–28 "Every rival
   has a power style": 39.
-- 32 43–51 "Rainbows upright": 05 (or 03). 32 99–110 "Flags that bend under a snake", 112–134 "Flags in depth, hit
-  head-on": 04. 32 136–138 "Beetles and the woodpecker": its pointer needs the archive clause.
+- 32 43–51 "Rainbows upright": 05 (or 03).
 - 35 9–39, 41–78 Capricious, Copycat and Wildcard: 39 (play, measurements to the archive), 80–96 "A costume change": 03.
 
 **New topics (a file each, when taken):**
