@@ -108,6 +108,14 @@ const portalRun = (gap, ticks = 40, stun = 0) => {
   check('an AI keeps its head off a portal\'s exit a rival could come out of next (it sees portals used against it)', !open.left && none.left === 20, JSON.stringify({ open, none }));
 }
 
+{ // ...and a rival's dash through one: three cells on from its exit, so an AI two cells in keeps out of that line.
+  const view = shutAt => () => aiView({ me: aiMe([[2, 10], [3, 10], [4, 10], [5, 10]], 'left'), others: [{ ...aiRival(1, [[N21 - 1, 10], [N21 - 2, 10], [N21 - 3, 10], [N21 - 4, 10]], 'right'), dashes: 1 }], tickMs: 110,
+    food: [{ x: 1, y: 10, kind: 'food', expires: 999 }, { x: 2, y: 3, kind: 'food', expires: 999 }],
+    portals: shutAt === null ? [] : [{ x: N21 - 1, y: 10, dx: 1, dy: 0, tx: 0, ty: 10, owner: 0, shutAt }] });
+  const open = picks(view(30000 + 800), 'drab', 20), none = picks(view(null), 'drab', 20);
+  check('an AI keeps out of the line a rival\'s dash would take through a portal (its powers, traced through it)', !open.left && none.left === 20, JSON.stringify({ open, none }));
+}
+
 { // ...and see the chance from a few moves off, not only beside it: heading up three cells in from the right edge,
   // level with an open portal's entry there, an apple just beyond its exit on the far side (five moves through it)
   // and another straight ahead (nine), an AI turns for the portal; with it shut, never toward the edge. (Its room's
