@@ -19,7 +19,7 @@ fire on snakes and your own beads squashed (`41-crashes.md`).
 
 The rules and the code say *leap* for a jump and *dash* for a golden flash; the plain flash is `flash`. On the page the
 two powers are the **jump** and the **dash** (since 1 November 2026: "One word for each thing" in
-`11-the-third-pass-what-it-settles.md`), and a golden leaf's are *golden dashes*. Below, "flash" is the plain one and
+`09-voice-and-copy.md`), and a golden leaf's are *golden dashes*. Below, "flash" is the plain one and
 "golden flash" or "dash" the golden one, as the code has them; every quoted line is the page's.
 
 ### Two powers, two presses
