@@ -99,7 +99,7 @@ and the owner's notes of 2 November, among them).
   followed, in `39-the-rivals.md` (PR #429). The snakes'
   looks followed, in `03-the-snake-as-a-character.md` (PR #430). The powers and
   moves followed, in `40-powers-and-moves.md`, and the crashes in `41-crashes.md` (PR #432). Sound followed, in
-  `21-sound.md` (PR #PRNUM). Next: phones and the page.
+  `21-sound.md` (PR #433). Next: phones and the page.
 - **Waiting for a gap:** `render/world.js` (50 KB), the last big file now that `ai/` and `engine/` are split (2y+). Split
   in a PR of its own when no open lane touches it, proven by fingerprints and suites.
 
