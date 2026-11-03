@@ -56,8 +56,7 @@ function readAppetite() {
 // flies off (in winter an apple rots twice as fast, and has done since I saw it).
 // (readFood() sets these for each decision:)
 let ticksLeft, appleWorth, craving, worth, spitTaste, shroomWorth, mute, stampFood, stampOwn, marksEnd, burrows,
-  engine, strikeAt, lands, beakOf, knockedTo, peckGame, cellOf, foodCount, goldCount, bugCount, bugFood, coughMax,
-  beadCount;
+  engine, strikeAt, lands, beakOf, knockedTo, peckGame, cellOf, foodCount, goldCount, bugCount, bugFood, beadCount;
 function readFood() {
   ticksLeft = f => winter && f.kind === 'food' && !f.cooked ? (f.expires - view.tick - age) / 2 : f.expires - view.tick; // (baked, it keeps)
 
@@ -97,8 +96,8 @@ function readFood() {
   // then it's food for nobody (worth nothing to me in the search: valued
   // as a meal, it read as eating, and an aggressive rival took risks for
   // it). A rival's own beads are the same to it: whoever gets there
-  // first, they're gone. mute: how many of my next moves eat nothing (none,
-  // now there's no cough: kept for the search's tables). marks: where
+  // first, they're gone. mute: how many of my next moves eat nothing (a
+  // mushroom in my cheek, till it's spat). marks: where
   // there's food (stampFood), and my own beads (stampOwn).
   mute = me.spitIn || 0; // (a mushroom in my cheek: my mouth is full till it's spat)
   stampFood = ++markStamp, stampOwn = ++markStamp, marksEnd = stampOwn + 1;
@@ -109,7 +108,6 @@ function readFood() {
   // until it closes over.)
   burrows = [];
   if (view.burrows) for (const b of view.burrows) burrows.push(b.y * N + b.x);
-  for (let k = 0; k < others.length; k++) coughs[k] = 0;
   engine = window.SnakeEngine || {};
   // The woodpecker's mark: at the strike, each piece of food in it is
   // knocked aside to where the engine's own rule puts it (E.knocks: what
@@ -166,8 +164,7 @@ function readFood() {
     if (craving.contested && v > 0 && (f.gold || f.kind === 'leaf' || f.kind === 'goldcap')) goldCells[goldCount++] = i;
   }
   // (For the territory search, which can stop once I claim nothing more
-  // unless food a rival gets to could still be mine: how long any rival
-  // still coughs, and the rivals' own beads.)
-  coughMax = 0, beadCount = 0;
-  for (let k = 0; k < others.length; k++) coughMax = Math.max(coughMax, coughs[k]);
+  // unless food a rival gets to could still be mine: the rivals' own
+  // beads.)
+  beadCount = 0;
 }
