@@ -141,9 +141,7 @@ pressed only when it beats crawling (`powerPick` in `ai/powers.js`):
 - *Golden jumps:* whenever one pays, at a third of an apple (0.35).
 - *Golden dashes:* 0.6 of an apple, pressed out of a trap or for a cut that puts a rival out.
 - Desperate, every power is half the price.
-- *Star's habit* (`powers`: `price` 0, `risk` 350, `everyWay`, `jumpAny`, `dashSpend`): its powers are free unless one
-  ends where a rival could strike, it weighs the flash every way, jumps any hurdle with somewhere free to land, and
-  spends golden dashes on speed (at the full price).
+- *Star's habit* (`powers`): its powers are free unless one ends where a rival could strike ("Star", below).
 - *A style's own price,* where a persona has one: a leap now out of a trap (`leapNow`, times the jump's price: Drab 4,
   Ghost 0.8, Desperado 0.6), and putting a flier out by lying on its ring (`landing`, 0.6 by default: Drab 0.15,
   Desperado 1.2, Sniper 1.5).
@@ -207,6 +205,36 @@ Its `coil` weight (`{ weight: 20, from: 10 }`) rewards keeping its head close be
 longer, so it moves as a ring; food pulls it along, so the ring rolls over food, and anything caught inside is boxed in.
 It's distinct from Mute (who boxes in one chosen victim) and Sovereign (who guards land). The ring is a strong, safe
 shape, so its coil is gentle and its caution and appetite low (`headRisk` 800, `food` 3), to keep it in the band.
+
+### Star
+
+The owner's idea: the rainbow body, dropped before, given to a new rival, a star with a rainbow following it, inspired
+by the stars of the original Paper Mario (its look and tell: "Star" in `03-the-snake-as-a-character.md`; its voice:
+"Its voice" in `26-round-five-star.md`). *Why it belongs:* every rival prices jumps and flashes the same way, and Star
+is the first whose whole character is the powers, a power addict that jumps and flashes as often as it can, so it
+shows what they can do; a shooting star dragging a rainbow is the most natural home the rainbow has had.
+
+It prices powers far below anyone else, by the same rules and the same engine calls, through two persona weights that
+are off for everyone else, so rounds without Star play exactly as if it didn't exist:
+- **`w.powers`** `{ price: 0, risk: 350, everyWay, jumpAny, dashSpend }`. Its powers are free to it, unless one ends
+  where its risk is over 350 (a rival could strike there: in reach of its powers, or nearer), and there it pays the
+  full price, as anyone would. A power still has to beat crawling by a point.
+  - **Flashes:** whenever it's rested and the flash doesn't run into anything, weighed every way, not just the way it
+    would crawl: about four times as often as anyone else.
+  - **Jumps:** any hurdle with somewhere free to land beyond it that no rival could get to before it's down, not just
+    out of a crash or onto food.
+  - **Golden dashes:** spent on speed too, not only on cuts and golden things, but at anyone's price for one (0.6 of
+    an apple), so only for a real gain, such as beating a rival to an apple.
+- **`w.golden`** `{ power: 6, apple: 1.5, contested: 0.5 }`. It craves golden things above everything, to feed the
+  habit: golden power food (golden beetles, golden leaves and golden mushrooms; a plain beetle is worth to it what
+  it's worth to anyone) is worth six times as much to it, a golden apple one and a half times, and golden power food a
+  rival will reach first still counts half.
+- **`territory` 1.2:** of everything tried, the only change that moved its win rate.
+
+Spending powers on small gains makes a rival weaker, so Star stays a threat in two ways: each power goes by the same
+tests of where it goes as anyone's, and pays the full price where a rival could strike, so it rarely flashes into a
+crash; and its craving keeps it stocked with golden jumps. It's tuned into the same band as everyone; its habitual
+jumps neither help nor hurt measurably, and stay because they're the character.
 
 ### The band
 
