@@ -97,7 +97,7 @@ and the owner's notes of 2 November, among them).
   playtest's burrows and beetles (32) followed (PR #426). The woodpecker
   followed, in a file of its own, `38-the-woodpecker.md` (PR #428). The rivals
   followed, in `39-the-rivals.md` (PR #429). The snakes'
-  looks followed, in `03-the-snake-as-a-character.md` (PR #PRNUM). Next: the powers and moves.
+  looks followed, in `03-the-snake-as-a-character.md` (PR #430). Next: the powers and moves.
 - **Waiting for a gap:** `render/world.js` (50 KB), the last big file now that `ai/` and `engine/` are split (2y+). Split
   in a PR of its own when no open lane touches it, proven by fingerprints and suites.
 
