@@ -119,7 +119,7 @@ function eat(game) {
       const i = game.food.findIndex(f => f.x === c.x && f.y === c.y);
       if (i < 0) continue;
       const f = game.food[i], own = f.kind === 'pellet' && f.owner === s.id;
-      if (s.cheek && !own) continue; // (its mouth is full: it goes over it, and it stays)
+      if ((s.cheek || f.spitBy === s.id && game.tick < f.slideUntil) && !own) continue; // (its mouth is full, or it's what it just spat: it goes over it, and it stays)
       game.food.splice(i, 1);
       if (own) game.events.push({ type: 'squash', snake: s, x: c.x, y: c.y });
       else consume(game, s, f, c.x, c.y);
@@ -172,7 +172,9 @@ function shrink(s, n) {
 // own mouth is full: then it bounces off, as off a body; on a body, it rolls
 // off by the roll rule (see rollSide), as it does off food or a burrow
 // (with nowhere to roll, it's gone); on bark, it lies there, wilting in half
-// the time it had left. Worked out in seat order, at the start of the tick
+// the time it had left. Where it lies, the spitter slides over it for
+// OWN_SPIT_TICKS (spitBy, slideUntil: see eat), as a full mouth goes over
+// food; anyone else is hit by it as ever. Worked out in seat order, at the start of the tick
 // its time is up, before anyone moves: the head and the way it faces as
 // the ring showed them. Never kills: a shrink stops at MIN_LENGTH. (A head
 // over a hole or in a fire it hits isn't swallowed: it's gone, as there.)
@@ -202,7 +204,7 @@ function spit(game) {
       at = rollSide(game, along, c.x, c.y, (x, y) => foodRoom(game, x, y), (x, y) => foodPast(game, x, y));
       if (!at) continue; // (nowhere to roll: gone)
     }
-    game.food.push({ x: at.x, y: at.y, kind: 'mushroom', power, expires: game.tick + left });
+    game.food.push({ x: at.x, y: at.y, kind: 'mushroom', power, expires: game.tick + left, spitBy: s.id, slideUntil: game.tick + T.OWN_SPIT_TICKS });
     e.lx = at.x; e.ly = at.y;
   }
 }

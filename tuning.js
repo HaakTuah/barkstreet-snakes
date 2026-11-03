@@ -74,6 +74,7 @@ window.TUNING = Object.freeze({
   SPIT_REACH: 3,
   SHRINK_MAX: 5,
   SPIT_WILT_MIN: 20,        // a spat mushroom wilts in half the time it had left, but lies at least this many ticks
+  OWN_SPIT_TICKS: 6,        // (2x) the spitter slides over its own spat mushroom this many moves, as a full mouth goes over food: straight on, it would swallow it again
   START_LENGTH: 4,          // every snake starts this long: one more than the least, so a first crash costs a segment, not the round
 
   // --------------------------------------------------------------- crashes

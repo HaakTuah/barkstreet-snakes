@@ -84,7 +84,7 @@ const GUIDE_ROWS = [
     ['dig', 'Burrows', `${TUNE.BURROW_FROM_DIG ? 'A beetle that digs in leaves a burrow, taking the place of any burrow near it (burrows keep apart). ' : ''}A burrow left unused grows shut (past ${inWords(TUNE.BURROW_MAX)}, the one unused longest): beetles still go in, but none come out.`],
     [['pellet', 'squash'], 'Beads', `What a crash knocks off, and what a dead snake leaves (${TUNE.CORPSE_EVERY === 2 ? 'every other segment' : TUNE.CORPSE_EVERY === 1 ? 'all of it' : `one segment in ${TUNE.CORPSE_EVERY}`}). Worth 1 each, and they rot. Your own beads you squash flat as you pass, so they feed nobody: run them over to keep them from the others.`],
     [['baked', 'roast'], 'Baked and roast', `Food left in a fire bakes: worth ${TUNE.COOKED_GROWTH}, if you can take the heat. Then it’s ash.`],
-    ['mushroom', 'Mushroom', `Poison: ${TUNE.SHRINK} off your tail (never below ${TUNE.MIN_LENGTH}). A second later it comes back up, ${inWords(TUNE.SPIT_REACH)} ahead of you: steer to aim it at a head. Each time it comes back up it takes one more, up to ${TUNE.SHRINK_MAX}, a shade darker. Keep out of a green ring.`],
+    ['mushroom', 'Mushroom', `Poison: ${TUNE.SHRINK} off your tail (never below ${TUNE.MIN_LENGTH}). A second later it comes back up, ${inWords(TUNE.SPIT_REACH)} ahead of you: steer to aim it at a head; you slide over it while it's wet. Each time it comes back up it takes one more, up to ${TUNE.SHRINK_MAX}, a shade darker. Keep out of a green ring.`],
   ]],
   ['Golden things', [
     ['goldbeetle', 'Golden beetle', `${TUNE.LEAP_CHARGES} golden jumps: free, no rest. Tap for the plain hop; hold the jump and you fly ${TUNE.GOLD_FLY} cells, always, steering in the air to land where it's safe. Hold up to ${TUNE.LEAP_MAX}.`],

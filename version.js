@@ -9,6 +9,7 @@
 window.SnakeVersion = {
   build: 'dev',
   news: [
+    { on: '2026-11-03', line: 'Spat a mushroom? You slide over it while wet.' },
     { on: '2026-11-03', line: 'Gold portals: dive off an edge, anyone may follow.' },
     { on: '2026-11-02', line: 'Hunger warns you in time, even in the snow.' },
     { on: '2026-11-02', line: 'Golden flights fly 5; rivals take your landing!' },

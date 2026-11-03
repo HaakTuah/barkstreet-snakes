@@ -37,7 +37,7 @@ function ensureBuffers(N) {
   ridesWas = new Int32Array(size); // (round six B: a rival's body over a pit, a bridge for my head till it leaves, ticks from now; 0: none)
   foodValue = new Float64Array(size); // what eating a cell is worth
   foodGrow = new Int8Array(size);     // what eating a cell does to my length
-  foodFrom = new Int32Array(size);    // the first move that can eat it, if it isn't there yet (food the woodpecker will knock there; 0: it's there)
+  foodFrom = new Int32Array(size);    // the first move that can eat it, if it isn't there yet (food the woodpecker will knock there, or a mushroom I just spat, which I slide over till then; 0: it's there)
   foodCells = new Int32Array(size);   // food never shares a cell
   goldCells = new Int32Array(size);
   beadCells = new Int32Array(size);   // (the rivals' own beads among them)
@@ -84,12 +84,10 @@ function ensureBuffers(N) {
 }
 
 // Where each snake's territory search starts, for up to `n` snakes.
-// (And coughs: how many of each rival's next moves eat nothing.)
-let ownersCap = 0, srcI, srcT, srcOwn, coughs, headX, headY;
+let ownersCap = 0, srcI, srcT, srcOwn, headX, headY;
 function ensureOwners(n) {
   if (n <= ownersCap) return;
   ownersCap = n;
-  coughs = new Int32Array(n);
   headX = new Int32Array(n); // (the rivals' heads where I reckon they are now, for the beetle)
   headY = new Int32Array(n);
   srcI = new Int32Array(n);
