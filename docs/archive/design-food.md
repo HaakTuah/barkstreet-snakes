@@ -3,6 +3,8 @@
 The food topic's sections as the round files and the owner's playtest had them, word for word, with their superseded
 versions and measurements.
 The current rules are in `docs/design/04-food-and-the-world.md`, under the same names.
+Round four's weather bullets sit with its golden food under "Events and timings"; their current rules are in
+`docs/design/05-weather.md`.
 
 ## From the round's arc (`12-the-rounds-arc.md`)
 
@@ -41,6 +43,12 @@ The calls:
 - **No winter before 45 s.** Snow in the first half-minute starved 5-long snakes in about 1 round in 5. *Measured*, 55% of early starving happened in snow, which is 8% of that time.
 - **Mushrooms never sprout within 2 cells of a head.** Nobody can see one appear in front of them in time.
 - **Golden apples, leaves and mushrooms land somewhere quiet** (the farthest of 8 tries from every head). They become a race you can see, instead of gone in 1.5 s.
+
+### Events and timings (its weather and golden food bullets)
+
+- **Weather comes from a shuffled bag:** every kind before any repeats. *Measured*, 42% of rounds saw no storm, and half saw three kinds or fewer. `WEATHER_ODDS` now counts how many of each kind go in the bag: one each, since two of a kind could repeat before the others came. A storm drawn before 0:30, or snow before 0:45, waits in the bag.
+- **A lightning fire has a budget:** at most 12 cells over its life (`FIRE_TOTAL`), besides 6 at once. Fires kept themselves going until rain came, some for over a minute.
+- **More golden power food.** Golden things are worth more now that they stack and the rivals use them: leaves 0.07 → 0.25 a gust, golden mushrooms 0.12 → 0.55 a rain spell (at 0.4 the wrap still missed most rounds), golden beetles 0.3 → 0.4 (0.16 since round six A, with beetles out more often).
 
 ## From round six A (`27-round-six-a-fairness-and-fixes.md`)
 

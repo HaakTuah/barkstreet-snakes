@@ -41,6 +41,9 @@ was tried and measured, is in `docs/archive/design-food.md`).
   It's announced once, with its own falling notes: "The last apples are falling." (Round news, after the tick's
   other news: it waits its turn, and gets through a card; "The narrator speaks less, and better" in
   `30-teaching-by-showing.md`.)
+- **More golden power food,** since golden powers stack and the rivals use them: a gust of wind may blow in a golden
+  leaf (`LEAF_CHANCE`, 0.25 a gust, one at a time), a rain spell may bring up a golden mushroom (`GOLDCAP_CHANCE`, 0.55,
+  one a spell at most), and one beetle in six is golden (`GOLD_BEETLE_CHANCE`; see "Less fruit, more beetles").
 - **No winter before 45 s** (`SNOW_FROM_MS`): snow in the first half-minute starved short snakes.
 - **Mushrooms never sprout within 2 cells of a head:** nobody could see one appear in front of them in time.
 - **Golden apples, leaves and mushrooms land somewhere quiet** (the farthest of 8 tries from every head), so each is a
@@ -73,7 +76,7 @@ text is in `docs/archive/design-food.md`):
 
 ### Mushrooms look poisonous
 
-A mushroom only costs you, so it looks it, as the first seconds settled it (its text is in
+A mushroom shrinks whoever eats it, so it looks it, as the first seconds settled it (its text is in
 `docs/archive/design-looks.md`, under "Looks"):
 - a violet haze round it that breathes, two wavy violet stink lines rising, and violet spores drifting off it
   (`render/food.js`);

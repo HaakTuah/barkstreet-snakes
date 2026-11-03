@@ -44,9 +44,12 @@ Its rules are in `44-realms-and-colonies.md` under the same name, and its text a
 
 ### Events and timings
 
-- **Weather comes from a shuffled bag:** every kind before any repeats. *Measured*, 42% of rounds saw no storm, and half saw three kinds or fewer. `WEATHER_ODDS` now counts how many of each kind go in the bag: one each, since two of a kind could repeat before the others came. A storm drawn before 0:30, or snow before 0:45, waits in the bag.
-- **A lightning fire has a budget:** at most 12 cells over its life (`FIRE_TOTAL`), besides 6 at once. Fires kept themselves going until rain came, some for over a minute.
-- **More golden power food.** Golden things are worth more now that they stack and the rivals use them: leaves 0.07 → 0.25 a gust, golden mushrooms 0.12 → 0.55 a rain spell (at 0.4 the wrap still missed most rounds), golden beetles 0.3 → 0.4 (0.16 since round six A, with beetles out more often).
+- **Weather comes from a shuffled bag:** its rule is in `05-weather.md` ("Spells of weather"), and its text as it was,
+  with its measurements, in `docs/archive/design-food.md`.
+- **A lightning fire has a budget:** its rule is in `05-weather.md` ("Lightning and fire, fairly"), and its text as it
+  was in `docs/archive/design-food.md`.
+- **More golden power food.** Its rule is in `04-food-and-the-world.md` (in "Food on the log"), and its text as it was
+  in `docs/archive/design-food.md`.
 - **Unchanged, because measured right:** the woodpecker at 2:00, and the 120 → 90 ms speed ramp.
 - **Changed once the rest was built:** the woodpecker's patches; their sizes now are in `38-the-woodpecker.md` ("How it picks a
   patch"), and this call as it was, with its measurements, in `docs/archive/design-woodpecker.md`.

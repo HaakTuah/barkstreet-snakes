@@ -5,8 +5,8 @@ golden beetle, leaf or mushroom gives golden ones, and a crash costs length rath
 crashes, the powers, round four, round six A and round six B settled them (their text, with what was tried and
 measured, is in `docs/archive/design-powers.md`). Elsewhere: how a held power, a jump and a bridge look
 (`03-the-snake-as-a-character.md`: "Gold means power", "A power is one token, not a ring", "Telling powers apart" and
-"Bridges and jumps you can see"); how often golden food comes, and food and beetles (`04-food-and-the-world.md`, and
-"Events and timings" in `24-round-four-the-owners-feedback-and-the-calls.md`); the woodpecker's holes
+"Bridges and jumps you can see"); how often golden food comes, and food and beetles (`04-food-and-the-world.md`: "More golden
+power food" in "Food on the log"); the woodpecker's holes
 (`38-the-woodpecker.md`); how a rival weighs a power, and the power styles and pricing still to build
 (`39-the-rivals.md`, "Rivals use their powers, when it pays"; "Every rival has a power style" and "Balance targets" in
 `29-round-six-b-the-new-moves.md`); the chosen numbers and what each move measured (round six B's "chosen numbers" in
