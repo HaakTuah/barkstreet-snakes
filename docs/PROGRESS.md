@@ -9,7 +9,7 @@ The first open entry below is next. The older state notes (27 October 2026) are 
 
 **On resume, a canary for Codex's code review** ("Reviews", point 5, in `docs/claude-and-codex.md`): the review
 guidelines moved to `docs/review-guidelines.md` (archive, 3 November 2026), so a test PR with planted faults, one breaking
-a line only that file holds (such as "What the rivals know"), proves Codex follows the pointer from `AGENTS.md`. Never
+a line only that file holds (such as "Text a player reads"), proves Codex follows the pointer from `AGENTS.md`. Never
 merged.
 
 **2 November 2026, a fresh week:** the main lane is part 4 (#198, merged as it stands so the owner can play it), then
@@ -101,6 +101,10 @@ and the owner's notes of 2 November, among them).
 - **The design by topic, not by round** (#336): *Done:* the round files are pointers and records; topics made or widened:
   `02`–`05`, `09`, `12` (the round's arc), `13`, `21`, `22`, `30`, `31`, `33` and `38`–`45`, their history in
   `docs/archive/design-*.md` (PR #425 to PR #451).
+- **The rule-file audit's larger moves** (the workshop check's point 6; archive, 3 November 2026): (1)
+  `docs/claude-and-codex.md` (23 KB) is past the 20 KB warning: the sections that wait until Codex can build, "What goes
+  to Codex" to "When Codex is not there", into a file of their own; (2) the slop bar a home of its own, since
+  `docs/review-guidelines.md` points to the slop audit's entry in this file, which moves to the archive when done.
 - **Waiting for a gap, splits by meaning:** `style/screens.css` (52 KB) and `render/looks.js` (51 KB), past the 50 KB
   mark, so an entry that must change one splits it first (Step 0, "Split by meaning" in `AGENTS.md`); and
   `render/world.js` (40 KB), the file-by-file review's last part. Each in a PR of its own when no open lane touches it,
