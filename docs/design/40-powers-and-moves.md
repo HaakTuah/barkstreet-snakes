@@ -9,8 +9,8 @@ measured, is in `docs/archive/design-powers.md`). Elsewhere: how a held power, a
 power food" in "Food on the log"); the woodpecker's holes
 (`38-the-woodpecker.md`); how a rival weighs a power, and the power styles and pricing still to build
 (`39-the-rivals.md`, "Rivals use their powers, when it pays" and "Every rival has a power style"; "Balance targets" in
-`29-round-six-b-the-new-moves.md`); the chosen numbers and what each move measured (round six B's "chosen numbers" in
-`29-round-six-b-the-new-moves.md`); the keys, swipes, taps and the mouse (`42-controls.md`); teaching
+`29-round-six-b-the-new-moves.md`); what each move measured, with the numbers chosen
+(round six B's "chosen numbers" in `docs/archive/design-powers.md`); the keys, swipes, taps and the mouse (`42-controls.md`); teaching
 (`30-teaching-by-showing.md`); Capricious, Copycat and Wildcard (`35-capricious-copycat-and-wildcard.md`); sound in
 general (`21-sound.md`); one stamina for both plain powers, to build (`37-one-stamina.md`); and crashes, head-ons,
 fire on snakes and your own beads squashed (`41-crashes.md`).
@@ -160,6 +160,11 @@ who never double-presses.
   `flyTurn`), and the rival plans its turn again every move it's up. A leap now, a held flight and a turned one take
   off only toward a landing no rival's head could get to first; once up, a landing a rival could reach first is priced
   as a head-on, so it steers away where something better is left.
+- *What a landing is worth to a rival:* one that shuts a nearby rival in is worth apples (`shutIn`): the share of the
+  room that rival reaches in 10 moves that its landed body takes away (4 apples for all of it), and the moves it adds
+  to that rival's nearest food (2 apples at 12 moves or more); times (0.5 + its aggression, +0.5 for a hunter), its
+  victim twice, half for a rival holding a golden jump. A held flight with no other safe landing left at its last turn
+  costs `SPARE` (0.3 apples).
 
 ### Taking a landing
 
@@ -269,7 +274,7 @@ not a crash's 3 and 4 ("Crashes, not deaths" in `41-crashes.md`). Without the ri
 
 A cut needs free log beyond the body, so a body lying along the edge, or against a hole or another body, can't be cut
 from that side, a neck cut included. The edge keeps that upside, with its price (fewer ways out). Measured in round six
-B's part 3: no refuge ("Part 3, the chosen numbers" in `29-round-six-b-the-new-moves.md`).
+B's part 3: no refuge ("Part 3, the chosen numbers" in `docs/archive/design-powers.md`).
 
 ### The golden flash cuts deeper
 
@@ -342,7 +347,8 @@ A mushroom is a weapon you aim:
 - **Stronger each time.** A mushroom takes `SHRINK` (3) segments the first time, and one more each time it comes back
   up, to `SHRINK_MAX` (5); it darkens a shade each time. It never kills by itself: it shrinks you no further than
   `MIN_LENGTH`. A spat mushroom wilts in half the time it had left, but lies at least `SPIT_WILT_MIN` (20) ticks.
-  Golden mushrooms are a power, eaten as before.
+  Golden mushrooms are a power, eaten as before. A mushroom in a cheek still counts toward the board's mushrooms, so the
+  log holds no more poison than before.
 - **Eating one on purpose** is a real choice: a few segments for a shot at a rival, best when you're long and they're
   close.
 - *The cue:* the green bulge, the ring, the arc and a "ptoo"; a hit is a green puff on the target's head.
@@ -351,9 +357,11 @@ A mushroom is a weapon you aim:
 - *The Field guide's Mushroom row:* "Poison: 3 off your tail (never below 3). A second later it comes back up, three
   ahead of you: steer to aim it at a head. Each time it comes back up it takes one more, up to 5, a shade darker. Keep
   out of a green ring."
-- *The rivals* (`ai/spit.js`): everyone aims one in the cheek, and keeps its head out of any ring due within its search;
+- *The rivals* (`ai/spit.js`): everyone aims one in the cheek (the last moves before the spit), closes in on where it
+  could hit a head before that, and keeps its head out of any ring due within its search;
   eating one on purpose is weighed only at a mushroom within 4 of its head with a rival's head close and a line to spit
-  along, by its taste for it ("Mushrooms, to a rival" in `39-the-rivals.md`).
+  along, as a shot worth its taste for it × 0.35 (`SPIT_HIT`) × half an apple (`SPIT_SEG`) for each segment it would
+  take off ("Mushrooms, to a rival" in `39-the-rivals.md`).
 
 ### The spit flies along the line
 
