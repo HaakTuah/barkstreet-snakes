@@ -51,8 +51,18 @@ const portalRun = (gap, ticks = 40, stun = 0) => {
   me.leaps = 2;
   E.leap(g, me); E.leap(g, me); // (held: a golden flight, out through the portal)
   const seen = [];
-  for (let t = 0; t < T.GOLD_FLY + 3 && me.alive; t++) { quiet(g); seen.push(`${me.body[0].x}${me.flight ? '^' : ''}:${g.portals.length}`); }
+  for (let t = 0; t < T.GOLD_FLY + 3 && me.alive; t++) { quiet(g); seen.push(`${me.body[0].x}${me.flight ? '^' : ''}:${g.portals.filter(p => p.shutAt > g.time).length}`); } // (open as everyone sees it: its shutAt still ahead)
   check('a flight through a portal comes out at its exit though the portal was due to shut, and it shuts once the flight is past it', me.alive && me.body[0].x < 6 && seen.includes(`${N21 - 1}^:1`) && seen.includes('0^:0') && g.portals.length === 0, JSON.stringify({ seen, alive: me.alive, cause: me.cause }));
+}
+
+{ // A second snake the edges wrap for, going through after the owner's tail has passed: the portal stays open while its body spans it (three ticks, for a body of four).
+  const g = board([[line(N21 - 1, 10, 4), 'right'], [line(4, 3, 4), 'right']], { time: 30000 });
+  const [a] = g.snakes;
+  a.wrapUntil = g.time + 60000;
+  g.portals.push({ x: N21 - 1, y: 10, dx: 1, dy: 0, tx: 0, ty: 10, owner: 1, shutAt: g.time + 1, followed: [] });
+  const open = [];
+  for (let t = 0; t < 3; t++) { feed(g); quiet(g); open.push(g.portals.length === 1 && g.portals[0].owner === 1 && !g.portals[0].shutAt); }
+  check('a second wrapping snake going through keeps the portal open while its body spans it', open.every(Boolean), JSON.stringify({ open, portals: g.portals, ev: g.events.map(e => e.type) }));
 }
 
 { // Following close behind (the body passing, then a moment after): through, out at the exit, nothing crashed.
