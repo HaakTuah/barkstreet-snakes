@@ -36,8 +36,10 @@ https://haaktuah.github.io/barkstreet-snakes/.
 
 ## How to work
 
-Every rule here says what it is for. The aim behind them all: as much finished work of full quality as the week's
-usage allows, at the lowest cost now and later.
+Every rule here says what it is for. The aim behind them all: as much finished work of full quality as the week's usage
+allows, at the lowest cost now and later. Four of them are the pillars that hold the rest up: **one fact, one place**,
+**split by meaning**, **keep it lean** and **read little**. Every review enforces the first three ("What blocks" in
+`docs/review-guidelines.md`), and the workshop check measures what every session reads.
 
 - **A question is a question.** Answer it; act on it only when the owner says so.
 - **Match effort to the task,** and take the cheapest approach that does the job well, since usage is limited. Docs,
@@ -52,11 +54,15 @@ usage allows, at the lowest cost now and later.
 - **Edit in place,** and **don't loop:** if the same approach fails twice, stop, write down what you tried, and change
   course, hand it to escalation, or mark the item blocked in the PR and `docs/PROGRESS.md`, with its brief ready for a
   later session (the problem, what was tried, the files and lines), and go on to the next.
-- **One fact, one place.** Link instead of copying. A design call goes into its topic file in `docs/design/`.
+- **One fact, one place, everywhere** (archive, 3 November 2026): in code, data, tests, docs, rule files and the briefs
+  agents are given. Point to where a thing lives and never copy it, whole or as a selection of its lines: every copy
+  drifts from the original, and is paid for again on every read. The copies check (`tools/copies-test.js`, on every PR)
+  fails a new copy of code or of the rule files' prose; its baseline lists the old ones, which are removed over time and
+  never added to. A design call goes into its topic file in `docs/design/`.
 - **Keep it lean.** Every change removes what it replaces, in the same PR: no commented-out code, no "old" copies,
   nothing it made unused (code, files, settings, assets, test helpers). Look for an existing helper before writing one.
   A leftover is a finding in every review.
-- **Split by meaning, from the start,** so a reader loads only what it needs. Each file holds one thing people look up
+- **Split by meaning, from the start,** so each reader reads only what it needs and nothing it must read past. Each file holds one thing people look up
   on its own (a rival, a voice, a system, a screen), as small as that thing is; new work goes into its own file as it
   is written, never into a big file to be split later. Smaller is not better: one thing spread over several files costs
   every reader more, and every file is also a script tag and an `sw.js` entry. Where a family differs only in part
@@ -202,7 +208,7 @@ explained in the PR and left to the owner, who alone can dismiss it.
 
 ```bash
 scripts/cloud-setup.sh                 # cloud machines: Chromium for the browser suites, if missing
-scripts/test.sh                        # the types (tsc) and all twelve suites, quiet; or name some: scripts/test.sh rules render
+scripts/test.sh                        # the types (tsc) and every suite, quiet; or name some: scripts/test.sh rules render
                                        # (exits 1 if any fails; piped, as in `| tail`, the pipe's code is tail's: use set -o pipefail)
 scripts/sim.sh 200 --seed 3 --census   # tools/simulate.js, quiet: fingerprint, check and tables (also seed 11)
 scripts/codemap.sh engine/step.js       # the functions of a game file, with line numbers (ai/*.js, render/*.js, game/*.js too)
