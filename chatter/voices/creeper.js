@@ -7,7 +7,7 @@ addVoice('creeper', {
   kill: ['hehe. gotcha.'],
   ash: ['aww. crispy.'],
   rot: ['mm. mouldy.'],
-  weather: { storm: ['hehe. flickery.'], rain: ['drip drip.'], snow: ['cold tail. still following.'] },
+  weather: { storm: ['flickery. good for sneaking.'], rain: ['drip drip.'], snow: ['cold tail. still following.'] },
   woodpecker: ['pecky pecky. hehe.'],
   rainbow: ['shiny…'],
   bonk: ['oof.', 'shh. nobody saw that.'],
@@ -21,10 +21,10 @@ addVoice('creeper', {
   gloat: ['hehe. bonk, {who}.', 'peekaboo, {who}.', 'i was right here, {who}.'],
   flash: { first: ['hehe. mine, {who}.'], past: ['zip. right past you, {who}.'] },
   dies: ['…aww.'],
-  diesBy: { edge: ['oh. the edge. …aww.'], hole: ['down the hole. …aww.'], woodpecker: ['birdie got me. …aww.'], hunger: ['no snacks. …aww.'], fire: ['hot hot. …aww.'], self: ['my own tail. cozy. …aww.'] },
+  diesBy: { edge: ['oh. the edge. nobody to hide behind.'], hole: ['down the hole. dark. cozy, almost.'], woodpecker: ['birdie got me. …aww.'], hunger: ['no snacks. …aww.'], fire: ['hot hot. shouldn’t have followed the smoke.'], self: ['my own tail. finally caught up.'] },
 }, {
   "cold tail. still following.": "尾巴好冷。还在跟着。",
-  "hehe. flickery.": "嘿嘿。一闪一闪的。",
+  "flickery. good for sneaking.": "一闪一闪的。适合偷偷摸摸。",
   "drip drip.": "滴答滴答。",
   "so… hungry…": "好……饿……",
   "psst.": "嘘。",
@@ -57,12 +57,12 @@ addVoice('creeper', {
   "aww. it hid.": "哎。它躲起来了。",
   "i’ll find you, little bug.": "我会找到你的，小虫子。",
   "that was mine, {who}. hehe.": "那是我的，{who}。嘿嘿。",
-  "oh. the edge. …aww.": "哦。边。……唉。",
-  "down the hole. …aww.": "掉洞里了。……唉。",
+  "oh. the edge. nobody to hide behind.": "哦。边缘。没人可以躲在后面了。",
+  "down the hole. dark. cozy, almost.": "掉进洞里。黑黑的。还挺舒服。",
   "birdie got me. …aww.": "小鸟抓到我了。……唉。",
   "no snacks. …aww.": "没零食了。……唉。",
-  "hot hot. …aww.": "好烫好烫。……唉。",
-  "my own tail. cozy. …aww.": "自己的尾巴。好舒服。……唉。"
+  "hot hot. shouldn’t have followed the smoke.": "好烫好烫。不该跟着烟走。",
+  "my own tail. finally caught up.": "我自己的尾巴。终于追上了。"
 }, [
   'nice tail, {who}.', 'we should hang out, {who}.', 'peekaboo, {who}.', 'shh. nobody saw that.', 'blegh. tastes like me.',
 ]);
