@@ -13,7 +13,7 @@ const fly = (g, n) => { const at = []; for (let i = 0; i < n; i++) { quiet(g); a
   E.leap(g, me); E.letGo(g, me);
   const way = fly(g, 4);
   check('a second press while it waits: leap now, up three ticks and down on the fourth cell', way === '7,10^ 8,10^ 9,10^ 10,10' && me.alive, way);
-  check('...at the plain jump\'s price', me.body.length === 6 - T.LEAP_COST && me.leapReadyAt > 0);
+  check('...at the plain jump\'s price: stamina, no tail', me.body.length === 6 && me.restedAt > g.time);
 }
 
 { // The golden jump flies: held, GOLD_FLY cells in the air, always, down on the next (2y); a quick press, the plain hop.
@@ -143,7 +143,7 @@ const fly = (g, n) => { const at = []; for (let i = 0; i < n; i++) { quiet(g); a
   const g = E.createGame({ withPlayer: false, personas: ['drab', 'drab'] });
   g.snakes = g.snakes.slice(0, 2);
   const [a, b] = g.snakes;
-  a.body = Array.from({ length: 5 }, (_, i) => ({ x: x - i, y: 10 })); a.dir = D.right; a.leaps = 1; a.flashReadyAt = 1e9;
+  a.body = Array.from({ length: 5 }, (_, i) => ({ x: x - i, y: 10 })); a.dir = D.right; a.leaps = 1; a.restedAt = 1e9;
   b.body = Array.from({ length: N }, (_, i) => ({ x: x + 1, y: i })); b.dir = D.up; b.isPlayer = true; b.persona = null; b.queue = []; b.stunUntil = 1e9;
   for (let y = 0; y < N; y++) if (y !== 10) g.holes.add(K(x, y));
   for (const k of [K(x + 3, 10), K(x + 4, 10), K(x + 2, 9), K(x + 2, 11)]) g.holes.add(k);
@@ -163,7 +163,7 @@ const fly = (g, n) => { const at = []; for (let i = 0; i < n; i++) { quiet(g); a
     const g = E.createGame({ withPlayer: false, personas: [key, 'drab'] });
     g.snakes = g.snakes.slice(0, 2);
     const [a, b] = g.snakes;
-    a.body = Array.from({ length: 7 }, (_, i) => ({ x: 6 - i, y: 10 })); a.dir = D.right; a.leaps = 0; a.leapReadyAt = 0; a.flashReadyAt = 1e9;
+    a.body = Array.from({ length: 7 }, (_, i) => ({ x: 6 - i, y: 10 })); a.dir = D.right; a.leaps = 0; a.restedAt = 30000 + T.STAMINA_MS - T.DASH_STAMINA_MS + 1; // (as much in the bar as a jump can have with no flash: just under a dash's worth, at the time set below)
     b.body = Array.from({ length: 5 }, (_, i) => ({ x: 7, y: 11 + i })); b.dir = D.up; b.isPlayer = true; b.persona = null; b.queue = [];
     for (const k of [K(6, 9), K(6, 11), K(5, 9), K(5, 11)]) g.holes.add(k);
     g.food = []; g.time = 30000;
@@ -181,8 +181,8 @@ const fly = (g, n) => { const at = []; for (let i = 0; i < n; i++) { quiet(g); a
     const g = E.createGame({ withPlayer: false, personas: [key, 'drab'] });
     g.snakes = g.snakes.slice(0, 2);
     const [a, b] = g.snakes;
-    a.body = Array.from({ length: 7 }, (_, i) => ({ x: 6 - i, y: 10 })); a.dir = D.right; a.leaps = 0; a.leapReadyAt = 0; a.flashReadyAt = 1e9;
-    b.body = Array.from({ length: 5 }, (_, i) => ({ x: 20, y: 20 + i })); b.dir = D.up; b.flashReadyAt = 1e9; b.leapReadyAt = 1e9;
+    a.body = Array.from({ length: 7 }, (_, i) => ({ x: 6 - i, y: 10 })); a.dir = D.right; a.leaps = 0; a.restedAt = 0; // (a full bar: as before, the jump and the flash both ready)
+    b.body = Array.from({ length: 5 }, (_, i) => ({ x: 20, y: 20 + i })); b.dir = D.up; b.restedAt = 1e9;
     for (let x = 5; x <= 8; x++) { g.holes.add(K(x, 9)); g.holes.add(K(x, 11)); }
     g.holes.add(K(9, 10));
     g.food = []; g.time = 30000;
@@ -200,8 +200,8 @@ const fly = (g, n) => { const at = []; for (let i = 0; i < n; i++) { quiet(g); a
   const g = E.createGame({ withPlayer: false, personas: ['star', 'drab'] });
   g.snakes = g.snakes.slice(0, 2);
   const [a, b] = g.snakes;
-  a.body = Array.from({ length: 7 }, (_, i) => ({ x: 6 - i, y: 10 })); a.dir = D.right; a.leaps = 0; a.leapReadyAt = 0; a.flashReadyAt = 1e9;
-  b.body = Array.from({ length: 5 }, (_, i) => ({ x: 11, y: 13 + i })); b.dir = D.up; b.flashReadyAt = 1e9; b.leapReadyAt = 1e9;
+  a.body = Array.from({ length: 7 }, (_, i) => ({ x: 6 - i, y: 10 })); a.dir = D.right; a.leaps = 0; a.restedAt = 30000 + T.STAMINA_MS - T.DASH_STAMINA_MS + 1; // (as much in the bar as a jump can have with no flash: just under a dash's worth, at the time set below)
+  b.body = Array.from({ length: 5 }, (_, i) => ({ x: 11, y: 13 + i })); b.dir = D.up; b.restedAt = 1e9;
   g.food = [{ x: 10, y: 10, kind: 'food', expires: g.tick + 900 }]; g.given = new Set([10 * T.GRID + 10]); g.time = 30000;
   let now = null;
   for (let n = 0; n < 8 && a.alive; n++) { feed(g); look(g); quiet(g); now ||= g.events.find(e => e.type === 'leap' && e.snake === a && e.now); }
@@ -215,7 +215,7 @@ const fly = (g, n) => { const at = []; for (let i = 0; i < n; i++) { quiet(g); a
   const g = E.createGame({ withPlayer: false, personas: ['drab', 'drab'] });
   g.snakes = g.snakes.slice(0, 2);
   const [a, b] = g.snakes;
-  a.body = Array.from({ length: 6 }, (_, i) => ({ x: 5 - i, y: 10 })); a.dir = D.right; a.leaps = 1; a.flashReadyAt = 1e9;
+  a.body = Array.from({ length: 6 }, (_, i) => ({ x: 5 - i, y: 10 })); a.dir = D.right; a.leaps = 1; a.restedAt = 1e9;
   b.body = Array.from({ length: 7 }, (_, i) => ({ x: 14 - i, y: 10 })); b.dir = D.right; b.isPlayer = true; b.persona = null; b.queue = []; b.stunUntil = 1e9;
   g.food = []; g.time = 30000;
   E.leap(g, a); E.leap(g, a);
@@ -236,7 +236,7 @@ const fly = (g, n) => { const at = []; for (let i = 0; i < n; i++) { quiet(g); a
     const g = E.createGame({ withPlayer: false, personas: [key, 'drab'] });
     g.snakes = g.snakes.slice(0, 2);
     const [a, b] = g.snakes;
-    a.body = Array.from({ length: 6 }, (_, i) => ({ x: 13 + i, y: 11 })); a.dir = D.left; a.leaps = 0; a.leapReadyAt = 1e9; a.flashReadyAt = 1e9; a.stunUntil = g.tick + 3;
+    a.body = Array.from({ length: 6 }, (_, i) => ({ x: 13 + i, y: 11 })); a.dir = D.left; a.leaps = 0; a.restedAt = 1e9; a.stunUntil = g.tick + 3;
     b.body = Array.from({ length: 6 }, (_, i) => ({ x: 6 - i, y: 10 })); b.dir = D.right; b.isPlayer = true; b.persona = null; b.queue = []; b.leaps = 1;
     g.food = [{ x: 8, y: 11, kind: 'food', expires: g.tick + 900 }]; g.given = new Set([11 * T.GRID + 8]); g.time = 30000;
     E.leap(g, b); E.leap(g, b);

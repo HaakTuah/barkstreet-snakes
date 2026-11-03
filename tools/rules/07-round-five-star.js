@@ -42,7 +42,7 @@ const powered = (got, mark) => Object.entries(got).filter(([, out]) => Object.ke
   const g = E.createGame({ withPlayer: false, personas: ['star', 'drab'] });
   g.snakes = g.snakes.slice(0, 2);
   const [a, b] = g.snakes;
-  a.body = line(6, 12, 5).map(([x, y]) => ({ x, y })); a.dir = D.right; a.flashReadyAt = 1e9; // (its flash resting: it could cut through)
+  a.body = line(6, 12, 5).map(([x, y]) => ({ x, y })); a.dir = D.right; a.restedAt = g.time + T.STAMINA_MS - T.DASH_STAMINA_MS + 1; // (a jump can go, a flash not: just under a dash's worth in the bar)
   b.body = wall.map(([x, y]) => ({ x, y })); b.dir = D.up;
   g.food = [{ x: 10, y: 12, kind: 'food', expires: 999 }];
   g.given = new Set(g.food.map(f => f.y * T.GRID + f.x));

@@ -25,36 +25,38 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   E.leap(g, me);
   quiet(g);
   check('a leap: up over the body in front', me.alive && me.body[0].x === 6 && me.body[0].y === 10 && !!me.flight && g.events.some(e => e.type === 'leap' && !e.gold), JSON.stringify(me.body[0]));
-  check('...for the tip of its tail', me.body.length === 5 - T.LEAP_COST, me.body.length);
+  check('...free of tail, but it spends stamina', me.body.length === 5 && me.restedAt > g.time, me.body.length);
   me.queue = [D.down]; // (a turn while it's in the air waits till it lands)
   quiet(g);
   check('...and down on the far side next tick', me.alive && me.body[0].x === 7 && me.body[0].y === 10 && me.body[1].x === 6 && !me.flight, JSON.stringify(me.body.slice(0, 2)));
   check('...its body still joined up, and the one hopped is fine', joined(me.body) && g.snakes[1].alive);
   quiet(g);
   check('...then the turn', me.body[0].x === 7 && me.body[0].y === 11, JSON.stringify(me.body[0]));
-  check('...and it needs a moment before the next', E.leapIn(g, me) > 0 && E.leapIn(g, me) <= T.LEAP_COOLDOWN_MS, E.leapIn(g, me));
+  me.restedAt = g.time + T.STAMINA_MS; // (the bar spent)
+  check('...and with the bar spent it needs a moment before the next', E.leapIn(g, me) > 0 && E.leapIn(g, me) <= T.JUMP_STAMINA_MS, E.leapIn(g, me));
 }
 
-{ // ...not again until it's ready: a crash instead.
+{ // ...not again until the bar holds a jump's worth: a crash instead.
   const g = board([[line(5, 10, 6), 'right'], wall(6), wall(8, 4, 12)]);
   const me = g.snakes[0];
   E.leap(g, me); quiet(g); quiet(g); // (over the first, landing at 7)
+  me.restedAt = g.time + T.STAMINA_MS; // (the bar spent)
   E.leap(g, me); quiet(g);
   check('a leap needs a moment before the next', !g.events.some(e => e.type === 'leap') && g.events.some(e => e.type === 'crash' && e.snake === me));
   const g2 = board([[line(5, 10, 6), 'right'], wall(6), wall(8, 4, 12)]);
   const m2 = g2.snakes[0];
   E.leap(g2, m2); quiet(g2); quiet(g2);
-  g2.time += T.LEAP_COOLDOWN_MS;
+  m2.restedAt = g2.time + T.STAMINA_MS - T.JUMP_STAMINA_MS - 1; // (the bar spent, then a jump's worth back)
   feed(g2);
   E.leap(g2, m2); quiet(g2);
-  check('...and then it can again', g2.events.some(e => e.type === 'leap') && m2.body[0].x === 8);
+  check('...and then it can again', g2.events.some(e => e.type === 'leap') && m2.body[0].x === 8, JSON.stringify([m2.body[0], g2.events.map(e=>e.type+(e.why||'')), E.leapIn(g2,m2), m2.restedAt, g2.time]));
 }
 
-{ // Never at its smallest (it costs a segment), never off the board, never onto a body; it waits for something to hop.
+{ // Even at its smallest (a jump costs no tail now), never off the board, never onto a body; it waits for something to hop.
   const g = board([[line(5, 10, T.MIN_LENGTH), 'right'], wall(6)]);
   E.leap(g, g.snakes[0]);
   quiet(g);
-  check('no leap at its smallest', !g.events.some(e => e.type === 'leap'));
+  check('a snake at its smallest can leap', g.events.some(e => e.type === 'leap') && g.snakes[0].body.length === T.MIN_LENGTH);
   const g2 = board([[line(22, 10, 5), 'right'], wall(23)]);
   E.leap(g2, g2.snakes[0]); quiet(g2);
   check('...never off the board', !g2.events.some(e => e.type === 'leap') && g2.events.some(e => e.type === 'crash'));
@@ -82,7 +84,7 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   for (let n = 0; n < 4; n++) { quiet(g); seen.push([me.body[0].x, !!me.flight]); }
   check('an island hop: over three, up three ticks, a cell a tick', JSON.stringify(seen.slice(0, 3)) === '[[6,true],[7,true],[8,true]]' && g.events.length >= 0, JSON.stringify(seen));
   check('...and down on the fourth, on the first free cell beyond', me.alive && JSON.stringify(seen[3]) === '[9,false]' && joined(me.body) && !(me.burnUntil > g.tick), JSON.stringify(seen[3]));
-  check('...its body over what it hopped (a hole holds it), and the one hopped is fine', me.body.slice(1, 4).every((c, i) => c.x === 8 - i && c.y === 10) && g.snakes[1].alive && me.body.length === 6 - T.LEAP_COST);
+  check('...its body over what it hopped (a hole holds it), and the one hopped is fine', me.body.slice(1, 4).every((c, i) => c.x === 8 - i && c.y === 10) && g.snakes[1].alive && me.body.length === 6);
   const g2 = board([[line(5, 10, 5), 'right'], wall(6), wall(7)]); // (two abreast, the first free cell is the third)
   E.leap(g2, g2.snakes[0]); quiet(g2); quiet(g2); quiet(g2);
   check('...over two, it lands on the third tick', g2.snakes[0].body[0].x === 8 && !g2.snakes[0].flight && g2.snakes.every(o => o.alive), JSON.stringify(g2.snakes[0].body[0]));
@@ -97,7 +99,7 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   check('a golden leap: up over what\'s in front', me.body[0].x === 6 && !!me.flight && me.leaps === 1 && g.events.some(e => e.type === 'leap' && e.gold && e.reach === 2));
   quiet(g); quiet(g);
   check('...landing on the first free cell beyond', me.alive && me.body[0].x === 8 && !me.flight && joined(me.body) && g.snakes.every(o => o.alive), JSON.stringify(me.body[0]));
-  check('...free, and ready again at once', me.body.length === 5 && me.leapReadyAt === 0, me.body.length);
+  check('...free, and ready again at once', me.body.length === 5 && me.restedAt === 0, me.body.length);
 }
 
 { // A press stays armed LEAP_WINDOW ticks: pressed with the hurdle 5 cells ahead, it hops when it gets there; and nothing hops without a press.
@@ -118,7 +120,7 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
     const g = E.createGame({ withPlayer: false, personas: ['drab', 'drab'] });
     g.snakes = g.snakes.slice(0, 2);
     const [a, b] = g.snakes;
-    a.body = [[5, 0], [4, 0], [4, 1], [5, 1], [5, 2], [4, 2]].map(([x, y]) => ({ x, y })); a.dir = D.right; a.leaps = golden ? 1 : 0; a.flashReadyAt = 1e9; // (its flash resting: it could cut through the rival)
+    a.body = [[5, 0], [4, 0], [4, 1], [5, 1], [5, 2], [4, 2]].map(([x, y]) => ({ x, y })); a.dir = D.right; a.leaps = golden ? 1 : 0; a.restedAt = g.time + T.STAMINA_MS - T.DASH_STAMINA_MS + 1; // (a jump can go, its flash not: it could cut through the rival)
     b.body = [...Array.from({ length: 13 }, (_, i) => ({ x: 6, y: 12 - i })), { x: 7, y: 0 }]; b.dir = D.down;
     b.isPlayer = true; b.persona = null; b.queue = [];
     g.food = [];
@@ -233,7 +235,7 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   const m2 = g2.snakes[0];
   m2.leaps = 1;
   E.leap(g2, m2); quiet(g2); quiet(g2);
-  check('...one that can\'t land three on lands on the first free cell, still free', m2.leaps === 0 && m2.alive && m2.body[0].x === 7 && m2.leapReadyAt <= g2.time && m2.body.length === 5, JSON.stringify(m2.body[0]));
+  check('...one that can\'t land three on lands on the first free cell, still free', m2.leaps === 0 && m2.alive && m2.body[0].x === 7 && m2.restedAt <= g2.time && m2.body.length === 5, JSON.stringify(m2.body[0]));
 }
 
 { // In the air: no eating, no catching fire, and nothing arriving under you meets you.
@@ -316,7 +318,7 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   const me = g.snakes[0];
   E.flash(g, me); quiet(g);
   check('a plain flash: two cells in one tick, eating on the way', me.body[0].x === 7 && joined(me.body) && me.eaten === 1 && g.events.some(e => e.type === 'dash' && e.plain && e.n === T.FLASH_LENGTH), JSON.stringify(me.body.slice(0, 3)));
-  check('...then it rests', E.flashIn(g, me) > 0 && E.flashIn(g, me) <= T.FLASH_COOLDOWN_MS);
+  check('...then it has spent stamina and must wait', me.restedAt > g.time && E.flashIn(g, me) > 0 && E.flashIn(g, me) <= T.DASH_STAMINA_MS);
   E.flash(g, me); quiet(g);
   check('...a flash while resting fizzles (a crawl instead)', me.body[0].x === 8 && g.events.some(e => e.type === 'fizzle' && e.why === 'resting' && e.flash), JSON.stringify(g.events.map(e => e.type)));
 }
@@ -342,7 +344,13 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   check('...it puts out the first fire it passes', !g7.fires.has(K(6, 10)) && g7.snakes[0].body[0].x === 7 && !(g7.snakes[0].burnUntil > g7.tick), JSON.stringify(g7.events.map(e => e.type)));
   const g8 = flashAt([[line(23, 10, 9), 'right'], [line(5, 20, 3), 'right']]);
   check('...into the edge, a plain flash fails (a golden one blows up)', g8.snakes[0].alive && failed(g8, 9), JSON.stringify(g8.events));
-  check('...and it rests 10 to 12 s', T.FLASH_COOLDOWN_MS >= 10000 && T.FLASH_COOLDOWN_MS <= 12000);
+  { // (one bar for both: a jump then a flash can't go at once if the two cost more than the bar holds, and a full bar allows the costlier)
+    const gs = board([[line(5, 10, 5), 'right'], wall(6)]), ms = gs.snakes[0];
+    E.leap(gs, ms); quiet(gs); // (a plain jump from a full bar)
+    check('...the jump and the flash share one bar: after a jump, a flash waits when the two cost more than the bar holds', ms.restedAt > gs.time && (E.flashIn(gs, ms) > 0) === (T.JUMP_STAMINA_MS + T.DASH_STAMINA_MS > T.STAMINA_MS), E.flashIn(gs, ms));
+    const gf = board([[line(5, 10, 5), 'right'], [line(5, 20, 3), 'right']]);
+    check('...and a full bar allows the costlier power', T.STAMINA_MS >= Math.max(T.JUMP_STAMINA_MS, T.DASH_STAMINA_MS) && E.leapIn(gf, gf.snakes[0]) === 0 && E.flashIn(gf, gf.snakes[0]) === 0);
+  }
   const g10 = flashAt([[line(5, 10, 9), 'right'], [col(8, 4, 12), 'up'], [col(9, 9, 6), 'up']], g => { g.snakes[0].dashes = 1; }); // (a golden flash's last cell, (8,10), one thick; a neck one beyond its reach, at (9,10))
   check('a golden flash cuts only what it reaches: a neck one cell beyond its last is left alone', g10.snakes[2].alive && g10.snakes[1].body.length < 12 && g10.snakes[0].body[0].x === 8 && g10.events.filter(e => e.type === 'cut').length === 1, JSON.stringify(g10.events.map(e => e.type)));
   const coil = [[5, 10], [5, 11], [6, 11], [7, 11], [7, 10], [7, 9], [6, 9], [5, 9], [4, 9], [3, 9], [2, 9], [1, 9]]; // ((7,10), two ahead, its own fifth segment; (8,10) free)
@@ -461,10 +469,10 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   m2.stunUntil = g2.tick + 3; // (stunned for 3 more ticks)
   E.leap(g2, m2); // (pressed at the start of the stun)
   for (let t = 0; t < 4; t++) { feed(g2); quiet(g2); }
-  check('...a power pressed early in a stun still goes when it ends', !!m2.flight || m2.body[0].x === 8, JSON.stringify(m2.body[0]));
+  check('...a power pressed early in a stun still goes when it ends', !!m2.flight || m2.body[0].x === 8, JSON.stringify([m2.body[0], g2.events.map(e=>e.type+(e.why||'')), E.leapIn(g2,m2), m2.restedAt, g2.time]));
   const g3 = board([[line(6, 10, 8), 'right'], wall(7, 6, 12)]);
   const m3 = g3.snakes[0];
-  m3.leapReadyAt = g3.time + 3000; // (resting)
+  m3.restedAt = g3.time + T.STAMINA_MS; // (the bar spent: resting)
   E.leap(g3, m3); quiet(g3);
   check('...a press that can\'t leap says why', g3.events.some(e => e.type === 'fizzle' && e.why === 'resting'), JSON.stringify(g3.events.map(e => e.type)));
 }
@@ -484,7 +492,7 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
 }
 
 { // A leap asked for in a stun that can't go (too small, resting, or at the edge) says so, and the auto-turn still takes you clear.
-  for (const [what, setup] of [['resting', s => { s.leapReadyAt = 1e9; }], ['at the edge', () => {}]]) {
+  for (const [what, setup] of [['resting', s => { s.restedAt = 1e9; }], ['at the edge', () => {}]]) {
     const g = board([[line(23, 5, 8), 'right'], [line(5, 20, 3), 'right']]);
     const me = g.snakes[0];
     setup(me);
@@ -502,7 +510,7 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   const [me, wall, tail] = g.snakes;
   wall.stunUntil = 1e9; // (the body in front stays put)
   tail.stunUntil = 1e9;
-  me.leapReadyAt = 0;
+  me.restedAt = 0;
   E.step(g); // (into the body: a crash, a stun)
   tail.stunUntil = me.stunUntil; // (still till the very tick the stun ends, then on its way: its tail leaves (12,10) then)
   E.leap(g, me);

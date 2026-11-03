@@ -105,7 +105,7 @@ function spitScene(key, rival, person, { back = 3, food = [] } = {}) {
   p.body = person[0].map(([x, y]) => ({ x, y })); p.dir = D[person[1]];
   g.food = food.map(([x, y, kind = 'food']) => ({ x, y, kind, expires: 9999 }));
   g.given = new Set(g.food.map(f => f.y * T.GRID + f.x));
-  for (const s of g.snakes) { s.lastAte = g.time; s.nextStarve = g.time + T.HUNGER_MS; s.leapReadyAt = 1e9; s.flashReadyAt = 1e9; } // (fed; no jump or flash: it's the mushroom that's weighed)
+  for (const s of g.snakes) { s.lastAte = g.time; s.nextStarve = g.time + T.HUNGER_MS; s.restedAt = 1e9; } // (fed; no jump or flash: it's the mushroom that's weighed)
   const snap = k => ({ snakes: g.snakes.map(q => ({ id: q.id, body: q.body.map(c => q === p ? { x: c.x - p.dir.x * k, y: c.y - p.dir.y * k } : { ...c }), dir: q.dir, stun: 0, leaps: 0, dashes: 0, wrap: 0, air: 0, land: -1,
     spitIn: q.cheek ? q.cheek.spitAt - (g.tick - k) : 0, spitPower: q.cheek ? Math.min(T.SHRINK_MAX, q.cheek.power + 1) : 0 })), holes: 0, fires: [], pecks: [] });
   g.reset = () => { g.history = Array.from({ length: back + 1 }, (_, i) => snap(back - i)); };

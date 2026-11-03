@@ -143,9 +143,9 @@ function golden(before, after, id, persona, otherMeal) {
   const A = play(() => {});
   const B = play((x, s) => { s.grow -= G; s.eaten -= G; if (!otherMeal) for (const k of ['lastAte', 'nextStarve', 'mealMs', 'ateTick']) s[k] = was[k]; }); // (another meal the same tick, a flash's on the way, keeps its refill: one meal's is any meal's)
   const P = play((x, s) => { s.grow -= G - 1; s.eaten -= G - 1; });
-  const V = play((x, s) => { s.leapReadyAt = Math.min(s.leapReadyAt, x.time); s.flashReadyAt = Math.min(s.flashReadyAt, x.time); });
+  const V = play((x, s) => { s.restedAt = Math.min(s.restedAt, x.time); });
   const d = (a, b) => ({ place: b.place - a.place, win: (a.place === 1) - (b.place === 1), alive: (a.alive - b.alive) / 1000, out5: (b.alive < 5000) - (a.alive < 5000), len10: a.len10 - b.len10 });
-  diffs.push({ ...d(A, B), plain: d(A, P), vigour: d(V, A), rested: (now.snakes[id].leapReadyAt > now.time) + (now.snakes[id].flashReadyAt > now.time), persona });
+  diffs.push({ ...d(A, B), plain: d(A, P), vigour: d(V, A), rested: now.snakes[id].restedAt > now.time ? 1 : 0, persona });
 }
 const mean = k => diffs.reduce((t, d) => t + d[k], 0) / Math.max(1, diffs.length);
 const se = k => { const m = mean(k); return Math.sqrt(diffs.reduce((t, d) => t + (d[k] - m) ** 2, 0) / Math.max(1, diffs.length - 1) / Math.max(1, diffs.length)); };

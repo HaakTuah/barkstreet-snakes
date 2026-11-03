@@ -11,7 +11,7 @@ function cutScene(personas, bodies, { holes = [], food = [] } = {}) {
   for (const k of holes) g.holes.add(k);
   g.food = food.map(([x, y]) => ({ x, y, kind: 'food', expires: 9999 }));
   g.given = new Set(g.food.map(f => f.y * T.GRID + f.x));
-  for (const s of g.snakes) { s.lastAte = g.time; s.nextStarve = g.time + T.HUNGER_MS; s.leapReadyAt = 1e9; } // (fed, and no jump: it's the flash that's weighed)
+  for (const s of g.snakes) { s.lastAte = g.time; s.nextStarve = g.time + T.HUNGER_MS; s.restedAt = 0; } // (fed; the stamina full, a jump possible too: only the flash is weighed)
   const snap = () => ({ snakes: g.snakes.map(q => ({ id: q.id, body: q.body.map(c => ({ ...c })), dir: q.dir, stun: 0, leaps: 0, dashes: 0, wrap: 0, air: 0, land: -1, cough: 0 })), holes: g.holes.size, fires: [], pecks: [] });
   g.history = [snap(), snap(), snap()];
   return g;
@@ -24,12 +24,12 @@ function cutScene(personas, bodies, { holes = [], food = [] } = {}) {
   const drops = {};
   for (const key of ['drab', 'gobbler', 'ouroboros', 'ghost']) {
     const g = cutScene([key, 'drab'], [[long, 'right'], [line(20, 2, 3), 'right']], { holes: [K(4, 11)] }), s = g.snakes[0]; // (a hole shuts its one gap)
-    let cut = false;
-    for (let n = 0; n < 6 && s.alive && !cut; n++) { quiet(g); cut = g.events.some(e => e.type === 'cut' && e.snake === s && e.by === s.id); }
+    let cut = false, ev = [];
+    for (let n = 0; n < 6 && s.alive && !cut; n++) { quiet(g); ev.push(...g.events.map(e => e.type)); cut = g.events.some(e => e.type === 'cut' && e.snake === s && e.by === s.id); }
     for (let n = 0; n < 6 && s.alive; n++) quiet(g);
-    drops[key] = cut && s.alive ? 'dropped' : s.alive ? 'alive' : 'out';
+    drops[key] = cut && s.alive ? 'dropped' : ev.includes('leap') && s.alive ? 'hopped' : s.alive ? 'alive' : 'out'; // (a jump is free of tail now, stamina only, and a snake with a flash has one too: hopping its own body is as good a way out)
   }
-  check('boxed in a pocket of its own body, every rival drops its tail and gets out', Object.values(drops).every(v => v === 'dropped'), JSON.stringify(drops));
+  check('boxed in a pocket of its own body, every rival gets out (drops its tail, or hops it, a jump being as free as a flash now)', Object.values(drops).every(v => v === 'dropped' || v === 'hopped'), JSON.stringify(drops));
 }
 
 { // A rival lying one thick across the way, a long tail behind the cut and open log beyond: the hunters cut their target.

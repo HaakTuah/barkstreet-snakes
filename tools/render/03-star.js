@@ -22,8 +22,8 @@ const stars = await ev(`(() => {
   const seg = (s, i) => { const [cx, cy] = at(s); return rgb(cx - i + 0.04, cy + 0.04); }; // (segment i's middle, below its sheen)
   const SEGS = [2, 3, 4, 7], out = {};
   const g = stage(['star', 'star', 'mason']), [you, rest, ready] = g.snakes;
-  setBody(rest, Array.from({ length: 16 }, (_, i) => [16 - i, 8]), 'right'); rest.flashReadyAt = g.time + 1e6;
-  setBody(ready, Array.from({ length: 16 }, (_, i) => [16 - i, 14]), 'right'); ready.flashReadyAt = 0;
+  setBody(rest, Array.from({ length: 16 }, (_, i) => [16 - i, 8]), 'right'); rest.restedAt = (g.time + TUNING.STAMINA_MS - TUNING.DASH_STAMINA_MS + 1e6);
+  setBody(ready, Array.from({ length: 16 }, (_, i) => [16 - i, 14]), 'right'); ready.restedAt = 0;
   R.setReducedMotion(true); // (its rainbow drifting slowly where it is: its neck isn't yellow, nor its points twinkling)
   __t = 7e6; show(g); drawN(20);
   out.points = [0.66, 0.7].map(r => runs(ring(rest, r), yellow));
@@ -132,20 +132,20 @@ const tell = await ev(`(() => {
   const points = s => [0, 1, 4].map(j => lit(s, (270 + 72 * j) * Math.PI / 180, 0.55)).join(''); // (its first, second and fifth)
   const middle = s => lit(s, 0, 0.33) && lit(s, Math.PI, 0.33) ? 1 : 0;
   const down = (s, x) => setBody(s, Array.from({ length: 10 }, (_, i) => [x, 14 - i]), 'down');
-  const out = { now: {}, run: {}, rest: TUNING.FLASH_COOLDOWN_MS }, REST = TUNING.FLASH_COOLDOWN_MS;
+  const out = { now: {}, run: {}, rest: TUNING.DASH_STAMINA_MS }, REST = TUNING.DASH_STAMINA_MS;
   for (const still of [true, false]) {
     R.setReducedMotion(still);
     const how = still ? 'reduced' : 'lively';
     // Just flashed, half rested, rested.
     const g = stage(['star', 'star', 'star']), [, a, b2, c] = g.snakes;
     down(a, 6); down(b2, 12); down(c, 18);
-    a.flashReadyAt = g.time + REST; b2.flashReadyAt = g.time + REST / 2; c.flashReadyAt = g.time;
+    a.restedAt = (g.time + TUNING.STAMINA_MS - TUNING.DASH_STAMINA_MS + REST); b2.restedAt = (g.time + TUNING.STAMINA_MS - TUNING.DASH_STAMINA_MS + REST / 2); c.restedAt = (g.time + TUNING.STAMINA_MS - TUNING.DASH_STAMINA_MS + 0);
     show(g); drawN(20);
     out.now[how] = [a, b2, c].map(s => ({ points: points(s), middle: middle(s) }));
     // A whole rest, a frame every 100 ms of the game's clock: its points lit, and its middle.
     const g2 = stage(['star', 'mason', 'ghost']), st = g2.snakes[1];
     down(st, 12);
-    st.flashReadyAt = g2.time + REST;
+    st.restedAt = (g2.time + TUNING.STAMINA_MS - TUNING.DASH_STAMINA_MS + REST);
     show(g2); drawN(20, 0.5, 100);
     const run = [];
     for (let t = 0; t <= REST + 500; t += 100) { g2.time = 60000 + t; drawN(1, 0.5, 100); run.push([t, points(st).split('').reduce((n, v) => n + +v, 0), middle(st)]); }
@@ -156,12 +156,12 @@ const tell = await ev(`(() => {
   const white = s => { const [cx, cy] = at(s), p = pixels(cx - 1.2, cy - 1.2, 2.4, 2.4); let n = 0; for (let i = 0; i < p.data.length; i += 4) if (p.data[i] > 240 && p.data[i + 1] > 240 && p.data[i + 2] > 240) n++; return n; };
   const g3 = stage(['star', 'mason', 'ghost']), st3 = g3.snakes[1];
   down(st3, 12);
-  st3.flashReadyAt = g3.time + 100;
+  st3.restedAt = (g3.time + TUNING.STAMINA_MS - TUNING.DASH_STAMINA_MS + 100);
   show(g3); drawN(20);
   const base = white(st3);
   g3.time += 200; // (its flash back)
   let back = 0; for (let i = 0; i < 8; i++) { drawN(1); back = Math.max(back, white(st3) - base); }
-  st3.flashReadyAt = g3.time + REST; g3.tick++;
+  st3.restedAt = (g3.time + TUNING.STAMINA_MS - TUNING.DASH_STAMINA_MS + REST); g3.tick++;
   R.onTick([{ type: 'dash', snake: st3, x: 12, y: 11, n: 3, plain: 1 }]); // (it flashes)
   let flash = 0; for (let i = 0; i < 8; i++) { drawN(1); flash = Math.max(flash, white(st3) - base); }
   out.burst = { base, back, flash };
@@ -197,7 +197,7 @@ const face = await ev(`(() => {
   setBody(heads[2], Array.from({ length: 8 }, (_, i) => [8 + i, 20]), 'left');
   setBody(heads[3], Array.from({ length: 8 }, (_, i) => [20 - i, 4]), 'right');
   heads[0].persona = heads[1].persona; heads[0].personaKey = 'star'; heads[0].memory = {}; // (you, as a Star)
-  for (const s of heads) s.flashReadyAt = g.time + 3000;
+  for (const s of heads) s.restedAt = (g.time + TUNING.STAMINA_MS - TUNING.DASH_STAMINA_MS + 3000);
   show(g); R.setViewer(99); drawN(20);
   const out = heads.map(s => { const [cx, cy] = at(s), p = pixels(cx - 1, cy - 1, 2, 2); let n = 0, sy = 0;
     for (let y = 0; y < p.height; y++) for (let x = 0; x < p.width; x++) {
@@ -225,7 +225,7 @@ const gag = await ev(`(() => {
   const count = (x, y, w, h, is) => { const p = pixels(x, y, w, h); let n = 0; for (let i = 0; i < p.data.length; i += 4) if (is(p.data[i], p.data[i + 1], p.data[i + 2])) n++; return n; };
   const white = (r, g, b) => Math.min(r, g, b) > 200 && Math.max(r, g, b) - Math.min(r, g, b) < 40, bright = (r, g, b) => Math.max(r, g, b) > 150 && Math.max(r, g, b) - Math.min(r, g, b) > 90;
   const g = stage(['star', 'copycat', 'mason']), [, st, cc] = g.snakes;
-  setBody(st, Array.from({ length: 8 }, (_, i) => [8, 9 - i]), 'down'); st.flashReadyAt = g.time + 3000; // (half rested: no twinkles)
+  setBody(st, Array.from({ length: 8 }, (_, i) => [8, 9 - i]), 'down'); st.restedAt = (g.time + TUNING.STAMINA_MS - TUNING.DASH_STAMINA_MS + 3000); // (half rested: no twinkles)
   setBody(cc, Array.from({ length: 8 }, (_, i) => [13 - i, 16]), 'right'); cc.memory.modelId = st.id;
   show(g); R.setViewer(99); drawN(20);
   const look = () => { const [x, y] = at(st), [cx, cy] = at(cc);
