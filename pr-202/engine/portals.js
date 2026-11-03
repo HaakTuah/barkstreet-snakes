@@ -9,8 +9,13 @@
 // owner (whose it is), shutAt (the game time it shuts; 0 while its owner's
 // body is still through it), followed (the ids of those who followed) }]. Events: 'portal' (opened), 'through'
 // (someone else followed, as it went), 'portalShut'.
-function portals(game) {
-  const kept = new Set();
+// `moved`: the game time this tick's moves were made at, so a wrap that ran
+// out with this tick still opens the portal it crossed by. A portal a snake
+// in the air has planned its way through (its exit still ahead, in its
+// hop or where it lands) doesn't shut under it till it's down.
+function portals(game, moved = game.time) {
+  const kept = new Set(), wrapped = s => s.wrapUntil > moved;
+  const flying = p => game.snakes.some(s => s.alive && s.flight && [...s.flight.over, s.flight.land].some(c => c.x === p.tx && c.y === p.ty));
   for (const s of game.snakes) {
     if (!s.alive) continue;
     for (let i = 0; i + 1 < s.body.length; i++) {
@@ -19,18 +24,18 @@ function portals(game) {
       const dx = a.x === b.x ? 0 : b.x > a.x ? -1 : 1, dy = a.y === b.y ? 0 : b.y > a.y ? -1 : 1;
       let p = game.portals.find(q => q.x === a.x && q.y === a.y && q.dx === dx && q.dy === dy);
       if (!p) {
-        if (!wraps(game, s)) continue; // (only one the edges wrap for opens one, as it goes through: its head, or a dash's or a flight's cell beyond it)
+        if (!wrapped(s)) continue; // (only one the edges wrap for opens one, as it goes through: its head, or a dash's or a flight's cell beyond it)
         p = { x: a.x, y: a.y, dx, dy, tx: b.x, ty: b.y, owner: s.id, shutAt: 0, followed: [] };
         game.portals.push(p);
         game.events.push({ type: 'portal', snake: s, x: a.x, y: a.y, tx: b.x, ty: b.y });
-      } else if (p.owner !== s.id && !wraps(game, s) && !p.followed?.includes(s.id)) { p.followed?.push(s.id); game.events.push({ type: 'through', snake: s, x: a.x, y: a.y, tx: b.x, ty: b.y, owner: p.owner }); } // (once a follower: as its head goes through, or a dash's or a flight's cell)
+      } else if (p.owner !== s.id && !wrapped(s) && !p.followed?.includes(s.id)) { p.followed?.push(s.id); game.events.push({ type: 'through', snake: s, x: a.x, y: a.y, tx: b.x, ty: b.y, owner: p.owner }); } // (once a follower: as its head goes through, or a dash's or a flight's cell)
       if (p.owner === s.id) kept.add(p);
     }
   }
   for (const p of [...game.portals]) {
     if (kept.has(p)) { p.shutAt = 0; continue; }
     if (!p.shutAt) p.shutAt = game.time + T.PORTAL_MS;
-    else if (game.time >= p.shutAt) {
+    else if (game.time >= p.shutAt && !flying(p)) {
       game.portals.splice(game.portals.indexOf(p), 1);
       game.events.push({ type: 'portalShut', x: p.x, y: p.y, tx: p.tx, ty: p.ty });
     }
