@@ -3,7 +3,10 @@
   "copies": {
     "05a905a63b7a": {
       "count": 2,
-      "places": "tools/layout/01-probes.js:282-289 tools/ui/03-header-over-the-board.js:7-14"
+      "places": "tools/layout/01-probes.js:282-289 tools/ui/03-header-over-the-board.js:7-14",
+      "windows": [
+        "05a905a63b7a"
+      ]
     }
   }
 }
