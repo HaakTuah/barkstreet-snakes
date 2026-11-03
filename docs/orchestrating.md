@@ -15,8 +15,7 @@ builder sessions at all does it say so and stop, and the owner starts them. Why:
 so building in it costs the most; it runs at its own effort, not the work's; and if it dies, every lane stops with it.
 
 **The rules, re-read when they change** (archive, 2 November 2026). A running orchestrator remembers the rules as they
-stood when it started. So on every wake, the hourly check included, it pulls `develop`, and if `AGENTS.md`, `CLAUDE.md`,
-`SECURITY.md`, `docs/claude-and-codex.md` or this file changed since it last read them, it re-reads the changed parts,
+stood when it started. So on every wake, the hourly check included, it pulls `develop`, and if any rule file among the protected files (`SECURITY.md`, rule 3: `AGENTS.md`, `CLAUDE.md`, `SECURITY.md`, the threat model, the rule docs and this file) changed since it last read them, it re-reads the changed parts,
 passes what touches them on to its running builders in one message, and says so in one line to the owner. Nobody has
 to tell it. The same wake reads `docs/PROGRESS.md`'s diff since it last looked: it acts on what is new there (an entry
 added or moved, an answer of the owner's, a lane opened or a bug put first), opening a lane where one is due, and skips
@@ -61,4 +60,7 @@ At every milestone, say in one line of the milestone PR what slows the work as t
 mark: (1) how long the checks take for a docs-only and a code PR, finding out why if either grew by over a fifth since the last check; (2) the files every session reads, `AGENTS.md`, `CLAUDE.md` and `docs/PROGRESS.md`,
 each kept under about 20 KB, with done entries and answered questions moved to `docs/archive/` and a line pointing to
 them; (3) files that should be split by meaning (`AGENTS.md`, "How to work"), each in a PR of its own with behaviour proven unchanged; (4)
-merged branches, deleted from GitHub; (5) leftovers nobody uses, archived or removed; (6) the README current.
+merged branches, deleted from GitHub; (5) leftovers nobody uses, archived or removed; (6) the README current; (7) the rule files (`AGENTS.md`, `CLAUDE.md`,
+`SECURITY.md`, the threat model and the rule docs they name), audited by a fresh reviewer for contradictions,
+duplication, stale lines, unclear instructions and broken pointers, once at the first milestone after 10 November 2026
+and then whenever more than about a fifth of their lines changed since the last audit (archive, 3 November 2026).

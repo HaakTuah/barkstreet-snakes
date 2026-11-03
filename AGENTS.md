@@ -77,7 +77,7 @@ usage allows, at the lowest cost now and later.
 - **The owner's words are kept, in the archive.** Quote each instruction he gives word for word, dated, in the PR and
   in `docs/archive/instructions.md`, leaving out personal details as `SECURITY.md`, point 11, says. A standing rule
   goes, as briefly as it can be said and with what it is for, into the section of this file where it applies (or
-  `CLAUDE.md`, if only Claude uses it). Rule files state rules, never quotes or dates, with at most a pointer to the
+  `CLAUDE.md`, if only Claude uses it). Rule files state rules, never quotes or dated history (a date a measurement or a status needs may stay), with at most a pointer to the
   archive, "(archive, D Month YYYY)": every session pays to read them, and the archive keeps his words.
 - **Each game's files stay in its own repository.** Never write this project's notes, logs or files into another
   project's repository or folders, such as Amarna Letters'.
@@ -154,8 +154,7 @@ The owner's words behind them are in `docs/archive/instructions.md`.
   and how often it worked. A move too rare to move whole rounds is judged per use, each use forked and played on with
   and without it; and a move is measured against rivals who play its counter (a dodge is worth only what the threat it
   dodges is worth).
-- **Every new rule needs a visible cue and a lesson** (a one-time lesson and a Field guide row): a rule without both
-  is not done (archive, 20 October 2026).
+- **Every new rule needs a visible cue and a lesson** (a one-time lesson and a Field guide row): it always comes with both (archive, the round six A notes, before 20 October 2026).
 - **Every rival keeps its trademark,** measured before and after a change: Mason's straight runs, Ouroboros's coiling,
   Creeper's tail-riding, Ghost's distance, Gobbler's food share, Vulture's beads, Sovereign's time home, Mute's boxing,
   Joker's lures, Desperado's skims, Star's flash rate.
