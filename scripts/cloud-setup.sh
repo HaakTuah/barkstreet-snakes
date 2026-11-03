@@ -17,7 +17,7 @@ else echo "NOT INSTALLED: Node 26 (see /tmp/node-install.log); the suites run on
 # here so the suites run without the network (Codex's cloud has none while it works). From the repository this script
 # is in, or, pasted into a setup field, the folder it runs in. The lock is copied in beside them once installed, so an
 # update to it (Dependabot's) is installed on the next run.
-here=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." 2>/dev/null && pwd); [ -f "$here/tools/package-lock.json" ] || here=$PWD
+here=$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")/.." 2>/dev/null && pwd); [ -f "$here/tools/package-lock.json" ] || here=$PWD
 lock="$here/tools/package-lock.json"
 if [ ! -f "$lock" ]; then echo "NOT INSTALLED: the tools' packages (no tools/package-lock.json in $here)"
 elif cmp -s "$lock" "$here/tools/node_modules/.installed-lock"; then echo "tools: present"

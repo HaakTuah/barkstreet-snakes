@@ -13,6 +13,8 @@
 //   node tools/dev/fork-moves.js <root> --move fly|now|dash|portal [--rounds 40] [--seed 1] [--per-round 4] [--forced] [--rest] [--json]
 //     fly: a golden flight held past the plain hop (always GOLD_FLY cells); now: a plain leap now; dash: a golden flash;
 //     portal: following someone through a gold portal (no --forced)
+//     golden (2z): a golden apple eaten, played on four ways from the tick after: as it went; uneaten (its growth and its
+//       meal undone); as a plain apple (+1); and as the apple of vigour (+3, both rests refilled). No --forced or --rest.
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const args = process.argv.slice(2);
@@ -62,6 +64,7 @@ function used(g, s) {
     if (MOVE === 'now' && e.type === 'leap' && e.now && !e.gold) return true;
     if (MOVE === 'dash' && e.type === 'dash' && !e.plain) return true;
     if (MOVE === 'portal' && e.type === 'through') return true; // (following someone through a gold portal)
+    if (MOVE === 'golden' && e.type === 'eat' && e.kind === 'golden') return true;
   }
   return false;
 }
@@ -117,6 +120,7 @@ for (let r = 0; r < ROUNDS; r++) {
     const s0 = g.snakes.find(s => !s.isPlayer && used(g, s));
     if (!s0) continue;
     const id = s0.id, after = snap(g);
+    if (MOVE === 'golden') { golden(before, after, id, g.snakes[id].name, g.events.some(e => e.type === 'eat' && e.snake === s0 && e.kind !== 'golden' && e.kind !== 'mushroom')); forks++; g = back(after); continue; }
     const A = back(before), B = back(before);
     rngState = before.rng; E.step(A); const afterA = rngState;
     if (process.env.FORK_CHECK && (sig(A) !== sig(back(after)) || afterA !== after.rng)) throw new Error(`round ${r}, tick ${g.tick}: the fork's own play differs from the round's`);
@@ -130,8 +134,28 @@ for (let r = 0; r < ROUNDS; r++) {
     g = back(after);
   }
 }
+// 2z: one golden apple eaten, played on as it went (A), uneaten (B), as a plain apple (P) and as the apple of vigour (V),
+// all from the same random numbers after the tick. Diffs: what the apple as it is gave (A against B), its +3 over a
+// plain apple's +1 (A against P), and what vigour would add (V against A).
+function golden(before, after, id, persona, otherMeal) {
+  const was = back(before).snakes[id], now = back(after), G = T.GOLDEN_GROWTH;
+  const play = edit => { const x = back(after), s = x.snakes[id]; edit(x, s); rngState = after.rng; return playOut(x).get(id); };
+  const A = play(() => {});
+  const B = play((x, s) => { s.grow -= G; s.eaten -= G; if (!otherMeal) for (const k of ['lastAte', 'nextStarve', 'mealMs', 'ateTick']) s[k] = was[k]; }); // (another meal the same tick, a flash's on the way, keeps its refill: one meal's is any meal's)
+  const P = play((x, s) => { s.grow -= G - 1; s.eaten -= G - 1; });
+  const V = play((x, s) => { s.leapReadyAt = Math.min(s.leapReadyAt, x.time); s.flashReadyAt = Math.min(s.flashReadyAt, x.time); });
+  const d = (a, b) => ({ place: b.place - a.place, win: (a.place === 1) - (b.place === 1), alive: (a.alive - b.alive) / 1000, out5: (b.alive < 5000) - (a.alive < 5000), len10: a.len10 - b.len10 });
+  diffs.push({ ...d(A, B), plain: d(A, P), vigour: d(V, A), rested: (now.snakes[id].leapReadyAt > now.time) + (now.snakes[id].flashReadyAt > now.time), persona });
+}
 const mean = k => diffs.reduce((t, d) => t + d[k], 0) / Math.max(1, diffs.length);
 const se = k => { const m = mean(k); return Math.sqrt(diffs.reduce((t, d) => t + (d[k] - m) ** 2, 0) / Math.max(1, diffs.length - 1) / Math.max(1, diffs.length)); };
 const res = { move: MOVE, forced: FORCED, seed: SEED, rounds: ROUNDS, uses: diffs.length, place: mean('place'), placeSE: se('place'), win: mean('win'), winSE: se('win'), alive: mean('alive'), aliveSE: se('alive'), out5: mean('out5'), out5SE: se('out5'), len10: mean('len10'), len10SE: se('len10') };
-if (JSON_OUT) console.log(JSON.stringify({ ...res, diffs }));
+if (MOVE === 'golden') { // (the three comparisons, each paired over the same eats)
+  const row = (name, pick) => { const xs = diffs.map(pick), m = k => xs.reduce((t, d) => t + d[k], 0) / Math.max(1, xs.length), e = k => Math.sqrt(xs.reduce((t, d) => t + (d[k] - m(k)) ** 2, 0) / Math.max(1, xs.length - 1) / Math.max(1, xs.length)); return `${name}: place ${m('place').toFixed(3)} ± ${e('place').toFixed(3)} · wins ${(100 * m('win')).toFixed(1)} ± ${(100 * e('win')).toFixed(1)} points · alive ${m('alive').toFixed(1)} ± ${e('alive').toFixed(1)} s · length at 10 s ${m('len10').toFixed(2)} ± ${e('len10').toFixed(2)}`; };
+  console.log(`golden apples: ${diffs.length} eaten in ${ROUNDS} rounds (seed ${SEED}); rests not ready when eaten, of 2: ${(diffs.reduce((t, d) => t + d.rested, 0) / Math.max(1, diffs.length)).toFixed(2)}`);
+  console.log('  ' + row('eaten, against uneaten', d => d));
+  console.log('  ' + row('+3, against a plain +1', d => d.plain));
+  console.log('  ' + row('vigour, against as it is', d => d.vigour));
+  if (JSON_OUT) console.log(JSON.stringify({ seed: SEED, rounds: ROUNDS, diffs }));
+} else if (JSON_OUT) console.log(JSON.stringify({ ...res, diffs }));
 else console.log(`${FORCED ? 'forced ' : ''}${MOVE}: ${diffs.length} uses in ${ROUNDS} rounds (seed ${SEED}) · place gained a use ${res.place.toFixed(3)} ± ${res.placeSE.toFixed(3)} · wins ${(100 * res.win).toFixed(1)} ± ${(100 * res.winSE).toFixed(1)} points · alive ${res.alive.toFixed(1)} ± ${res.aliveSE.toFixed(1)} s · out within 5 s saved ${(100 * res.out5).toFixed(1)} ± ${(100 * res.out5SE).toFixed(1)} points · length at 10 s ${res.len10.toFixed(2)} ± ${res.len10SE.toFixed(2)}`);

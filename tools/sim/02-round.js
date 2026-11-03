@@ -54,7 +54,8 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
     if (late) { c.sdTicks++; c.sdBurrowTicks += g.burrows.length; }
     for (const u of g.unders) if (g.tick >= u.until) c.underWait++;
     if (!late) { c.ticksEarly++; c.freeEarly += freeCells(g, N); }
-    const bugs = g.food.filter(f => f.kind === 'beetle');
+    const bugs = g.food.filter(f => f.kind === 'beetle'), golds = g.food.filter(f => f.kind === 'golden');
+    for (const f of golds) (st.goldAt ||= new Map()).has(f) || st.goldAt.set(f, g.tick);
     for (const f of bugs) { const b = st.bugs.get(f); if (b && b.near < 0 && g.snakes.some(s => s.alive && Math.abs(s.body[0].x - f.x) + Math.abs(s.body[0].y - f.y) <= CHASE_NEAR)) b.near = g.tick; }
     const riding = new Set(g.snakes.filter(s => s.alive && !s.flight && g.holes.has(s.body[0].y * N + s.body[0].x)));
     const rings = ringsUp(g); // (2y: each jump's ring before the tick, and who could get there first)
@@ -73,6 +74,14 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
       if (g.snakes.some(s => s.alive && s.id !== p.owner && !(s.wrapUntil > g.time) && Math.abs(s.body[0].x - p.x) + Math.abs(s.body[0].y - p.y) < left)) { st.chanced.add(p); c.portalChances++; }
     }
     beetleCensus(g, c, st, bugs);
+    for (const f of golds) { // (2z: how each golden apple went, and whether another head was near it then)
+      if (g.food.includes(f)) continue;
+      const ate = g.events.find(e => e.type === 'eat' && e.kind === 'golden' && e.x === f.x && e.y === f.y)?.snake;
+      const near = g.snakes.some(s => s !== ate && s.alive && Math.abs(s.body[0].x - f.x) + Math.abs(s.body[0].y - f.y) <= GOLD_NEAR);
+      if (ate) { c.goldEaten++; c.goldTicks += g.tick - 1 - st.goldAt.get(f); if (near) c.goldContested++; (st.goldEaters ||= new Set()).add(ate); }
+      else { c.goldGone++; if (near) c.goldGoneNear++; }
+      st.goldAt.delete(f);
+    }
     woodpeckerCensus(g, c, st, dying, N, T);
     if (mid) c.mealsMid += new Set(g.events.filter(e => e.type === 'eat' && e.kind !== 'mushroom').map(e => e.snake)).size;
     if (signs) signatures(g, T, per, was);
@@ -153,6 +162,10 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
   { // (leap now's users: the snakes of a round that leapt now more than its average, against the rest: a refuge would show as users outliving everyone)
     const n = s => st.nowN?.get(s) || 0, mean = g.snakes.reduce((t, s) => t + n(s), 0) / Math.max(1, g.snakes.length);
     if (mean > 0) for (const s of g.snakes) { const u = n(s) > mean ? 'nowUser' : 'nowOther', won = alive.length === 1 && alive[0] === s && g.time < MAX_TIME ? 1 : 0; c[u + 's']++; c[u + 'Wins'] += won; c[u + 'Place'] += place.get(s) || 1; }
+  }
+  if (st.goldEaters) for (const s of g.snakes) { // (2z: a round with a golden apple eaten: its eaters against the rest)
+    const k = st.goldEaters.has(s) ? 'goldEater' : 'goldOther', won = alive.length === 1 && alive[0] === s && g.time < MAX_TIME ? 1 : 0;
+    c[k + 's']++; c[k + 'Wins'] += won; c[k + 'Place'] += place.get(s) || 1;
   }
   for (const s of g.snakes) { // (the edge's huggers, and the rest)
     const [ticks, on] = st.edge?.[s.id] || [0, 0], hug = ticks && on >= ticks / 8, won = alive.length === 1 && alive[0] === s && g.time < MAX_TIME ? 1 : 0;
