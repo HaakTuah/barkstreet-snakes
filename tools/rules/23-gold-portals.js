@@ -37,6 +37,24 @@ const portalRun = (gap, ticks = 40, stun = 0) => {
   check('a dash across the edge while wrapping opens a gold portal where it crossed', g.events.some(e => e.type === 'portal') && p && p.x === N21 - 1 && p.dx === 1 && p.tx === 0 && a.body[0].x > 0, JSON.stringify({ head: a.body[0], portals: g.portals }));
 }
 
+{ // A wrap that runs out on the very tick a snake goes off the edge still opens the portal it crossed by.
+  const g = board([[line(N21 - 1, 10, 4), 'right']], { time: 30000 });
+  g.snakes[0].wrapUntil = g.time + 1;
+  feed(g); quiet(g);
+  check('a wrap running out the tick it crosses still opens the portal it went through', g.snakes[0].body[0].x === 0 && g.portals.length === 1 && g.portals[0].x === N21 - 1, JSON.stringify({ head: g.snakes[0].body[0], portals: g.portals }));
+}
+
+{ // A flight planned through an open portal: the portal doesn't shut under it while its exit is still ahead in the air (a cell or two short of it here, when it was due).
+  const g = board([[line(N21 - 3, 10, 6), 'right'], [line(4, 3, 4), 'right']], { time: 30000 });
+  const me = g.snakes[0];
+  g.portals.push({ x: N21 - 1, y: 10, dx: 1, dy: 0, tx: 0, ty: 10, owner: 1, shutAt: g.time + 1, followed: [] });
+  me.leaps = 2;
+  E.leap(g, me); E.leap(g, me); // (held: a golden flight, out through the portal)
+  const seen = [];
+  for (let t = 0; t < T.GOLD_FLY + 3 && me.alive; t++) { quiet(g); seen.push(`${me.body[0].x}${me.flight ? '^' : ''}:${g.portals.length}`); }
+  check('a flight through a portal comes out at its exit though the portal was due to shut, and it shuts once the flight is past it', me.alive && me.body[0].x < 6 && seen.includes(`${N21 - 1}^:1`) && seen.includes('0^:0') && g.portals.length === 0, JSON.stringify({ seen, alive: me.alive, cause: me.cause }));
+}
+
 { // Following close behind (the body passing, then a moment after): through, out at the exit, nothing crashed.
   const { b, through, seen } = portalRun(3);
   check('another snake following it goes through the portal, out at the exit', b.alive && through && through.snake === 1 && through.owner === 0 && through.tx === 0 && b.body[0].y === 10 && b.body[0].x < 5 && !seen.some(e => e.includes('crash')), JSON.stringify({ head: b.body[0], through, seen }));
