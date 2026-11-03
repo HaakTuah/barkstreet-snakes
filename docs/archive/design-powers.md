@@ -59,6 +59,10 @@ Snake plus a little Smash Bros: movement with options, a cost, and a moment to w
 - **Fixed in the tests:** several were flaky or weak.
 - **Kept on purpose:** powers resolve in seat order when two snakes dash on the same tick (rare, and deterministic). *Fixed in round four's critique:* flashes and dashes are worked out on the board as it was before any of them moved. Two through one cell meet there head-on, whatever their seats, and cuts are made once every flash has moved. (Two golden leaps passing over the same free cell on the same tick still go in seat order; it takes two of them side by side.)
 
+## From looks and lines (`19-looks-and-lines.md`)
+
+- **A crash you don't survive goes off with a bang.** A comic starburst (flat, inked, a cached sprite) and a thick shockwave ring in the snake's colour with an ink edge at its head, a spray of pieces from the head and along the body, and a little smoke; your kill shakes the board a touch. (Before, a snake just burst into its beads, which read the same as a crash you survive.) With reduced motion it's a still starburst and ring, fading.
+
 ## From round four (`24-round-four-the-owners-feedback-and-the-calls.md`)
 
 ### Two powers, two presses
