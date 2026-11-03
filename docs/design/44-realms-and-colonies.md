@@ -16,13 +16,20 @@ were and the rivals know nothing more than before.
   `render/land.js`), its corners rounded, with a parchment keyline just inside the ink, so a border reads for every
   eye: without it, Colonist's rose went grey-khaki to colour-blind eyes, its ink no darker than the bark's grain. No line
   along the board's edge or round a hole: holes are lost land.
-- **Where two owners' land meets,** the line is dashed in both colours over true ink, the dashes standing still, and land
-  both claim is hatched in both (see "Fields that overlap").
+- **Where two owners' land meets:** see "Fields that overlap".
 - **It moves:** land grows a ring of cells at a time as a realm widens, and shrinks back into its capital when its owner
   goes. The border flares as it changes and when lightning strikes, breathes while a rival's head is on it, and lights
   up from where a head crosses in.
 - **A snake on the land** (any but its owner, you too) wears the land's colour round its pieces on the land's own
   cells, with a parchment keyline outside it, so it shows round a red body too. Crossing in, you hear it.
+
+### Fields that overlap
+
+- **A snake's own land is one:** where its fields overlap (Colonist's colonies), they are drawn as one land with one
+  line round the lot, not rings crossing rings.
+- **Where two snakes' land meets** (a colony planted in Sovereign's realm, say), the line between them is dashed in both
+  colours over true ink, standing still, and the land both claim is hatched in both.
+- **Colonist may plant in anyone's land:** the border is a look, and the rules don't change.
 
 ### Sovereign's realm grows and moves
 
