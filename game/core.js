@@ -170,6 +170,7 @@ const FLAVOR = {
   youRingRaced: 'A rival could get to your ring first. Steer away!', // (2y: the first time a rival could reach your ring before you're down)
   leapNow: 'Press twice to leap now, anywhere!', // (the first time a flier comes down just ahead of you: you could have cut it off)
   youMushroomSpit: 'Bleh! Steer to aim it: it lands three ahead.', // (round six B: your first mushroom, which comes back up)
+  youSpitWet: 'Still wet: you slide over your own.', // (2x: the first time you spit one, as it lies)
   youSpatOn: name => `Ptoo! ${name} got you. Steer to spit it back.`, // (the first time one hits your head)
   youHungry: ['Your tummy is rumbling. Time for a snack.', 'Getting peckish… find food soon.'],
   youStarvingSmall: 'Starving at\u00a03, with nothing to spare. Eat now.',

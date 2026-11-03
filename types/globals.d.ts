@@ -56,6 +56,8 @@ declare namespace Engine {
     color?: string; heat?: number; cooked?: Flag; owner?: number;
     /** A mushroom come back up: the segments it takes (SHRINK when not set). */
     power?: number;
+    /** Who spat it, and the tick from which that snake can swallow it again (before, it slides over it). */
+    spitBy?: number; slideUntil?: number;
   }
 
   /** A beetle underground. */

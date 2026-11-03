@@ -1,6 +1,6 @@
 {
-  "version": 23,
-  "fingerprint": "40ed95ba91c9a3b3",
+  "version": 24,
+  "fingerprint": "64d8c6e153152d1d",
   "kinds": {
     "away": "{1} t: string",
     "back": "{1} t: string",
@@ -66,7 +66,7 @@
     "tick e weather": "[2] string number",
     "tick e woodpecker": "[1] string",
     "tick f beetle": "[12] number number number number number number number number number number number number",
-    "tick f meal": "[9] number number number number string number number number number",
+    "tick f meal": "[10] number number number number string number number number number number",
     "tick fi": "[5] number number number number number",
     "tick s": "[27] number number number number number array<number> object(colonies,desperate,home,lureId,modelId,mood,moodChangedAt,site,victimId) number number number number number number number number number number number number number number number number number number number number",
     "tick sky": "[3] number number number",

@@ -53,7 +53,7 @@ function roomOn(start) {
 
 // What food that isn't there yet pulls (the woodpecker will knock it
 // there: see foodFrom), as food `range` pulls: there from move `from`, I'd
-// be there on move `at` (from t; coughing till `mute`, I'd only nudge it).
+// be there on move `at` (from t; my mouth full till `mute`, I'd only nudge it).
 // It counts from when it lands, and every move I'd be there before I need
 // be counts EARLY more: nearby, I can be on it as it lands; anywhere I
 // could just get back from in time, I'm racing the clock.
@@ -78,7 +78,7 @@ function fillRoom(headP, t, cap, need, eager, foodRange, mute, bodyMark, stampF,
   Q[0] = headP;
   let read = 0, write = 1, space = 0, anyFood = 0, trail = HOLE, neckCount = 0;
   for (let d = 1; read < write && (space < cap || (eager && !anyFood && d <= foodRange)); d++) {
-    const levelEnd = write, by = t + d, pull = eager ? Math.max(0, foodRange - (t + d > mute ? d : mute + 1 - t)) : 0; // (coughing, I'd only nudge it)
+    const levelEnd = write, by = t + d, pull = eager ? Math.max(0, foodRange - (t + d > mute ? d : mute + 1 - t)) : 0; // (my mouth full, I'd only nudge it)
     while (read < levelEnd) {
       const p = Q[read++];
       let q = p - Wd;
@@ -131,10 +131,10 @@ function fillRoom(headP, t, cap, need, eager, foodRange, mute, bodyMark, stampF,
 // The territory search (see evaluate): its sources in srcI, srcT, srcOwn
 // [0, ns), my body on the board placed at time t. Into `tally`: my count
 // and the rivals'. stop: it may stop once I claim nothing more, when no
-// rival still coughs after coughMax and no rival's own bead is left
-// unclaimed (beadCells[0, beadCount)) (see evaluate).
+// rival's own bead is left unclaimed (beadCells[0, beadCount)) (see
+// evaluate).
 const tally = new Int32Array(2);
-function spreadTerritory(ns, t, age, bits, tags, stop, coughMax, beadCount) {
+function spreadTerritory(ns, t, age, bits, tags, stop, beadCount) {
   const B = terr, Q = queue, ML = meLater, Wd = W;
   let mine = 0, theirs = 0, si = 0, T = srcT[0], read = 0, write = 0; // (Q[read, write): the cells claimed at time T)
   while (read < write || si < ns) {
@@ -180,7 +180,7 @@ function spreadTerritory(ns, t, age, bits, tags, stop, coughMax, beadCount) {
       if (tag === 1) { if (s <= T1) { if (ML[q] <= T1) { B[q] = mineNext; mine++; Q[write++] = q; } } else if (s >= next && o > 1) { theirs--; B[q] = next; } }
       else if (s <= T1) { B[q] = next + tag; theirs++; Q[write++] = q; } else if (s >= next && o && o !== tag) { if (o === 1) mine--; else theirs--; B[q] = next; }
     }
-    if (mine === mineBefore && T >= t && stop && T1 + 1 > coughMax) {
+    if (mine === mineBefore && T >= t && stop) {
       let open = false; // (a rival's own bead nobody's claimed yet)
       for (let k = 0; k < beadCount && !open; k++) open = foodValue[beadCells[k]] > 0 && B[framed[beadCells[k]]] < CLAIMED;
       if (!open) break;

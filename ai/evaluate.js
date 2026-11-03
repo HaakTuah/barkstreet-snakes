@@ -136,35 +136,25 @@ function evaluate(body, len, grow, t) {
   if (!meFirst) { srcI[ns] = headP; srcT[ns] = t; srcOwn[ns++] = 1; }
   // Once I claim nothing more, the rest is the rivals sharing out what's
   // left among themselves, which counts only for an aggressive snake,
-  // or where a rival claims food it can't eat (it's coughing, or it's
-  // its own bead): with none of that, the search can stop there.
-  spreadTerritory(ns, t, age, bits, tags, !w.aggression, coughMax, beadCount);
+  // or where a rival claims food it can't eat (its own bead): with none
+  // of that, the search can stop there.
+  spreadTerritory(ns, t, age, bits, tags, !w.aggression, beadCount);
   const mine = tally[0], theirs = tally[1]; // (how many cells are mine, and how many the rivals')
 
   // 3. Food: a steady pull of foodW per step closer. Normally only food I
-  //    reach before any rival counts in full, or that a rival gets to
-  //    but can't eat (its own bead, or it's coughing and I can be there
-  //    before it's over). (What I'd reach coughing, I'd only nudge: it's
-  //    a meal once I'm over it, if no rival could get there before that.)
+  //    reach before any rival counts in full. (What I'd reach with my
+  //    mouth full, I'd only nudge: it's a meal once I've spat, if no
+  //    rival could get there before that.)
   //    Food the woodpecker will knock to a cell is there from the strike
   //    on: mine as any food is, if I'd get there first (whoever's nearer
   //    is nearer as it lands, if both wait for it), from when it lands.
   let foodScore = 0;
   for (let k = 0; k < foodCount; k++) {
     const i = foodCells[k], v = foodValue[i], s = terr[framed[i]], from = foodFrom[i];
-    if (v <= 0 || s < CLAIMED) continue;
+    if (v <= 0 || s < CLAIMED || (s & tags) !== 1) continue; // (not mine: a rival's, or contested)
     let when = ((s - CLAIMED) >> bits) - age, early = 0;
-    if ((s & tags) !== 1) {
-      const o = (s & tags) - 2;
-      if (o < 0) continue;
-      const can = coughs[o]; // (till when it can't eat it: never, now)
-      if (Math.max(when, from) > can) continue;
-      when = Math.max(from, t + (seenF[framed[i]] === stampF ? distF[framed[i]] : Math.abs(i % N - head.x) + Math.abs((i - i % N) / N - head.y))); // (as the crow flies, past my room's count)
-      if (when > can) continue;
-    } else {
-      if (from > when) { early = EARLY * (from - when); when = from; } // (see latePull)
-      if (when <= mute && reach[framed[i]] <= mute) continue;
-    }
+    if (from > when) { early = EARLY * (from - when); when = from; } // (see latePull)
+    if (when <= mute && reach[framed[i]] <= mute) continue;
     foodScore = Math.max(foodScore, v * Math.max(0, w.foodRange - (Math.max(when, mute + 1) - t) + early));
   }
   //    The beetles: how soon I'd catch each from here, playing the chase
