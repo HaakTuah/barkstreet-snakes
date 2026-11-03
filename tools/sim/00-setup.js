@@ -11,6 +11,7 @@ const argRoot = process.argv.indexOf('--root');
 const ROOT = isMainThread ? (argRoot > 0 ? path.resolve(process.argv[argRoot + 1]) : path.join(__dirname, '..')) : workerData.root;
 const MAX_TIME = 600000; // a round still going after 10 minutes counts as stalled
 const CHASE_NEAR = 6; // (a beetle counts as chased once a head is this near: fixed, not BEETLE_FEAR, so a change to how soon beetles take fright is measured on the same chases (2w))
+const GOLD_NEAR = 5; // (2z: a golden apple counts as contested when another head is this near as it's eaten)
 const gameFiles = require('./game-files.js');
 const GAME_FILES = gameFiles(ROOT); // (tuning.js, the AI's files, the engine's: index.html's order)
 
