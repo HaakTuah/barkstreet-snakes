@@ -168,6 +168,14 @@ The owner (28 October 2026), answering PR #83's question: "gobbler and Desperado
 
 **Mason builds double walls.** A plain flash cuts a wall one thick, so Mason, who lives by straight walls ("Keep watch!"), lays them two thick where it can, running back alongside. Its straight runs are measured before and after.
 
+**Every rival has a power style.** Each persona uses jumps and flashes its own way, through the same engine calls as a person:
+- Sniper cuts off its target; Mute seals boxes; Gobbler races for food; Vulture flashes to beads; Ghost keeps a flash ready to escape.
+- Sovereign and Colonist chase intruders off their land; Mason finishes walls; Creeper flashes in behind tails; Desperado for the thrill; Joker springs its lures; Ouroboros jumps its own coils and drops its own tail.
+- Star is the addict; Wildcard is random; Capricious and Copycat borrow; Metagamer reads its rivals; Drab is the baseline.
+- All of them: a ready flash is worth keeping (a reserve value); length is worth trading for room when boxed in (jump to an island, or drop the tail); keep a jumpable way out; cross the woodpecker's mark when they'll be out of it before the strike.
+- *The test case:* the owner's screenshot (Gobbler folded on a strip, an island across a hollow). The rival must find the hop, the flight or the tail drop.
+- **Gobbler's endgame.** Round six A left Gobbler the lowest (18% over five seeds): it grows longest and most of its deaths come late (78% after 2:00, at about 53 cells), in pockets too small for it, and no weight change held up. Its style here is the cure, not a number: it hops to the next island for food, and drops its tail when a pocket is too small. Measured: Gobbler comfortably inside 15–35%, its food share still the field's biggest.
+
 ## From the owner's playtest (`32-the-owners-playtest.md`)
 
 ### A meal isn't a pin

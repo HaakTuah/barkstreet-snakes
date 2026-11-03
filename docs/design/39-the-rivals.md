@@ -236,6 +236,35 @@ tests of where it goes as anyone's, and pays the full price where a rival could 
 crash; and its craving keeps it stocked with golden jumps. It's tuned into the same band as everyone; its habitual
 jumps neither help nor hurt measurably, and stay because they're the character.
 
+### Every rival has a power style
+
+Each persona uses jumps and flashes its own way, through the same engine calls as a person. Most of it is still to
+build (part 7 of round six B, with one pricing model for every power, in `docs/PROGRESS.md`); "Balance targets" in
+`29-round-six-b-the-new-moves.md` is its measure.
+- **Built so far:** Star's habit ("Star"); a style's own price for a leap now and for a flier's ring (`leapNow`,
+  `landing`: "Rivals use their powers, when it pays") and for a mushroom shot (`spit`: "Mushrooms, to a rival");
+  everyone's island hop, and a tail dropped only when trapped ("The plain jump hops islands" and "Dropping your tail"
+  in `40-powers-and-moves.md`).
+- **To build, each its own:** Sniper cuts off its target; Mute seals boxes; Gobbler races for food; Vulture flashes to
+  beads; Ghost keeps a flash ready to escape. Sovereign and Colonist chase intruders off their land; Mason finishes
+  walls; Creeper flashes in behind tails; Desperado for the thrill; Joker springs its lures; Ouroboros jumps its own
+  coils and drops its own tail. Star is the addict; Wildcard is random; Capricious and Copycat borrow; Metagamer reads
+  its rivals; Drab is the baseline.
+- **To build, all of them:** a ready flash is worth keeping (a reserve value); length is worth trading for room when
+  boxed in (jump to an island, or drop the tail); keep a jumpable way out; cross the woodpecker's mark when they'll be
+  out of it before the strike (today they keep out of a mark as out of a hole: "The rivals tell a mark from a hole" in
+  `38-the-woodpecker.md`).
+- *The test case:* the owner's screenshot (Gobbler folded on a strip, an island across a hollow). The rival must find
+  the hop, the flight or the tail drop.
+
+### Gobbler's endgame
+
+To build, with the power styles. Gobbler grows longest, and most of its deaths come late, in pockets too small for it;
+no weight change held it up ("Gobbler, at the floor" under "Round six A, measured" in
+`27-round-six-a-fairness-and-fixes.md`). Its style is the cure, not a number: it hops to the next island for food, and
+drops its tail when a pocket is too small. The aim: Gobbler comfortably inside 15–35%, its food share still the
+field's biggest.
+
 ### The band
 
 Every persona wins 15–35% of the rounds it plays, over several seeds (one persona on one seed is about 130 rounds, ±7
