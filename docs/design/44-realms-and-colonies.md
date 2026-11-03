@@ -11,6 +11,8 @@ the land a strike leaves, drawn ahead during the aim (`38-the-woodpecker.md`).
 
 The land is drawn as on a map (round four; it was domes of light): drawing only, so the rules of trespass are as they
 were and the rivals know nothing more than before.
+- **Land is one rule everywhere** (the AI, the chatter, the HUD and the borders): a cell is land if its centre is within
+  the field's radius plus `LAND_REACH` (0.5) of the field's centre.
 - **The land:** its cells, exactly the land the rules mean, under a light wash in the owner's colour.
 - **The border:** a band and a riband of the colour along the inside of a true ink line (`#1c1209`, `LAND_INK` in
   `render/land.js`), its corners rounded, with a parchment keyline just inside the ink, so a border reads for every
@@ -21,14 +23,18 @@ were and the rivals know nothing more than before.
   goes. The border flares as it changes and when lightning strikes, breathes while a rival's head is on it, and lights
   up from where a head crosses in.
 - **A snake on the land** (any but its owner, you too) wears the land's colour round its pieces on the land's own
-  cells, with a parchment keyline outside it, so it shows round a red body too. Crossing in, you hear it.
+  cells (where two claim it, the later realm's colour), with a parchment keyline outside it, so it shows round a red
+  body too. Crossing in, you hear it.
+- **No dome left:** snow lies on land like anywhere else, tinted by it, and of the domes' weather effects only a flare
+  when lightning strikes stays.
 
 ### Fields that overlap
 
 - **A snake's own land is one:** where its fields overlap (Colonist's colonies), they are drawn as one land with one
   line round the lot, not rings crossing rings.
 - **Where two snakes' land meets** (a colony planted in Sovereign's realm, say), the line between them is dashed in both
-  colours over true ink, standing still, and the land both claim is hatched in both.
+  colours over true ink, standing still (cached in one small layer: marching, their many short pieces cost about as
+  much as all the rest of the land), and the land both claim is hatched in both.
 - **Colonist may plant in anyone's land:** the border is a look, and the rules don't change.
 
 ### Sovereign's realm grows and moves
@@ -40,7 +46,7 @@ were and the rivals know nothing more than before.
   open log (holes and fire are lost land) and drifts that way, one cell at a time. On screen its land grows or shrinks a
   ring of cells at a time, and its border flares.
 - **Its banner:** its capital flies a swallow-tailed banner in parchment and ink, its crown inked, trimmed in the
-  realm's colour (no gold: gold means a power).
+  realm's colour (a blue banner vanished into the blue wash; no gold: gold means a power).
 - **Its lines:** Sovereign remarks on it ("Our realm expands!", "A strategic retreat. A royal one.", "The court
   relocates.").
 
