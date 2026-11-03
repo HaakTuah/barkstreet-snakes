@@ -87,7 +87,7 @@ const FLAVOR = {
   wall: ['You ran out of log.', 'Straight off the edge.', 'Even logs have edges.'],
   self: ['Of all the snakes to bite.', 'You were in your own way.', 'You can’t outrun yourself.'],
   boom: ['A golden dash needs somewhere to go.', 'Full speed, no brakes.', 'Gold doesn’t bounce.'],
-  hole: ['The woodpecker’s handiwork.', 'Down the hole.', 'A hole is just an edge in the middle.'],
+  hole: ['The woodpecker’s handiwork.', 'That hole was there all along.', 'A hole is just an edge in the middle.'],
   pecked: ['The woodpecker didn’t miss.', 'Rat-a-tat. That was you.'],
   starved: ['Should have eaten something.', 'Thinner, paler, gone.', 'All slither, no snacks.'],
   fire: ['The fire took the last bite.', 'Fire doesn’t care whose tail it is.', 'Lightning never strikes twice. It didn’t need to.', 'Rain was on its way, too.'],
