@@ -2,8 +2,9 @@
 
 The rules every builder and reviewer keeps. Who might attack, what is protected and where they could get in is the
 threat model, `docs/threat-model.md`; Codex's security review reads that as its threat model and this file as its
-instructions. A break of a rule here is **blocking** in every review, and P0 or P1 in Codex's terms. The owner,
-1 November 2026: "taking account of all attack vector and security concerns".
+instructions. A break of a rule here is **blocking** in every review, and P0 or P1 in Codex's terms. The rules
+take account of every way in and every security concern: a review that finds one no rule covers reports it too
+(archive, 1 November 2026).
 
 ## The rules
 
@@ -63,7 +64,7 @@ instructions. A break of a rule here is **blocking** in every review, and P0 or 
    scanning) are seen only by the owner, and no agent is given a token to read them. One he passes on is never copied
    into an issue, a comment or a report: it is fixed in a PR that says what it hardens, never how to attack it. A real
    secret that reaches the repository is the owner's to replace; a fix only removes it from the files.
-10. **Licences: free to use, kept that way** (archive: 2 November 2026). Two lists, by what reaches players.
+10. **Licences: free to use, kept that way** (archive, 2 November 2026). Two lists, by what reaches players.
    - **What ships, or is built into it** (the files the live site serves): every package, the ones it pulls in
      included, and every font, image, sound and data set, is under a licence on this list: MIT, MIT-0, ISC,
      BSD-2-Clause, BSD-3-Clause, Apache-2.0, 0BSD, CC0-1.0, Unlicense, Zlib, BlueOak-1.0.0, Python-2.0, CC-BY-3.0 and
@@ -83,7 +84,7 @@ instructions. A break of a rule here is **blocking** in every review, and P0 or 
    its list; one the owner wants anyway is a `question` issue, never merged on its own. The audit of every licence, with
    which list each is held to, is `tools/licences.json`. The owner's own code carries no licence file, by his choice:
    all rights reserved. Never add one.
-11. **Nothing personal, ever** (archive: 2 November 2026). No file, commit message, PR, issue, comment, log or picture
+11. **Nothing personal, ever** (archive, 2 November 2026). No file, commit message, PR, issue, comment, log or picture
    holds personal information about the owner or anyone in his life: no names (he is "the owner"), no profession,
    employer or workplace, no family, home or age, no health, memberships or money, and nothing else about his life
    outside this project. His words in the archive are kept word for word except such details, which are left out as

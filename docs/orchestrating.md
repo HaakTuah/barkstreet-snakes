@@ -1,12 +1,11 @@
 # Orchestrating the builders
 
-The full text of two of the owner's instructions, for the session that starts builder sessions (the orchestrator) and
-for any builder that needs the detail. "How work flows" in `AGENTS.md` keeps what every builder needs from them. Codex's
+How the session that starts builder sessions (the orchestrator) runs them, for it and for any builder that needs the
+detail. "How work flows" in `AGENTS.md` keeps what every builder needs from them. Codex's
 lanes, its fallback and the reviews between the two builders: `docs/claude-and-codex.md`; a draft PR labelled
 `codex` is a claimed lane like any other.
 
-**The orchestrator builds nothing itself** (the owner, 2 November 2026: "Why is the orchestrator doing things
-directly?", then "yes please, expertly!"). Every lane, the item or main lane included, goes to a builder session of its
+**The orchestrator builds nothing itself** (archive, 2 November 2026). Every lane, the item or main lane included, goes to a builder session of its
 own, with its own brief, at the builder's effort (for Claude: `CLAUDE.md`). Helpers belong to builders, never to the
 orchestrator: a lane is never a helper of the orchestrator's. The orchestrator keeps its own context small, for what
 only it does: claims, starting and handing over sessions, merging Codex's work, and the owner's questions word for
@@ -15,7 +14,7 @@ hard work more effort inside its own session (`docs/claude-and-codex.md`, "Who d
 builder sessions at all does it say so and stop, and the owner starts them. Why: its context is re-read on every turn,
 so building in it costs the most; it runs at its own effort, not the work's; and if it dies, every lane stops with it.
 
-**The rules, re-read when they change** (the owner, 2 November 2026). A running orchestrator remembers the rules as they
+**The rules, re-read when they change** (archive, 2 November 2026). A running orchestrator remembers the rules as they
 stood when it started. So on every wake, the hourly check included, it pulls `develop`, and if `AGENTS.md`, `CLAUDE.md`,
 `SECURITY.md`, `docs/claude-and-codex.md` or this file changed since it last read them, it re-reads the changed parts,
 passes what touches them on to its running builders in one message, and says so in one line to the owner. Nobody has
@@ -27,8 +26,8 @@ given is not), so a stall shows in one line, the Codex security reviews asked si
 night, and every PR merged since then on the security gate's fallback, or without passing the security gate ("Codex
 reviews", point 6, in `docs/claude-and-codex.md`), so a gap shows too.
 
-- **28 October 2026: pipeline, don't wait.** "Yes, please, organize it expertly so we maximize token caching, time spent, and all other concerns." (to Claude's proposal; the words are in
-  `docs/archive/instructions.md`). Waiting is lost time and, past an hour, a lost cache. The builder's part (review in
+- **Pipeline, don't wait** (archive, 28 October 2026): organise the work so the token cache is used to the full and
+  no time is lost, with every other cost weighed too. Waiting is lost time and, past an hour, a lost cache. The builder's part (review in
   the background, the next entry from `develop`) is "How work flows" in `AGENTS.md`, points 1 and 2; the
   orchestrator's:
   1. **Bigger review fixes in a session of their own.** If a review asks for more than about an hour's work, the
@@ -36,7 +35,7 @@ reviews", point 6, in `docs/claude-and-codex.md`), so a gap shows too.
      builder goes on.
   2. **Keep the cache warm.** One session per task, continued for its review fixes and its milestone while its context
      is under an hour old, rather than a fresh session reading everything again. A new task goes to whichever does the
-     most work for the fewest tokens without losing quality (the owner, 1 November 2026: "We should do whatever is most effective at acheivein the goal, which is accomplishing them most possible, with the least tokens, without sacrifacing quality."): a session already open when the task touches
+     most work for the fewest tokens without losing quality (archive, 31 October 2026): a session already open when the task touches
      the same files, its context is under an hour old and still small, and its last task has merged; otherwise a fresh
      session, and always one when a session's context has grown large. Long runs and checks go in the background; no turn sits idle waiting. Files every
      session reads stay small (the workshop check), since they are the start of every call.
@@ -45,14 +44,15 @@ reviews", point 6, in `docs/claude-and-codex.md`), so a gap shows too.
   4. **The same helpers, used better.** Pipelining spends the same tokens sooner and adds no agents beyond "Models,
      effort and helpers" in `CLAUDE.md`: a reviewer or search helper may run in the background while the builder works.
 
-- **28 October 2026: as many lanes as can run in parallel.** "Yes, allow for as many lanes as can be parallelized, expert." (the words are in `docs/archive/instructions.md`).
+- **As many lanes as can run in parallel** (archive, 28 October 2026).
   What a lane is, how it is claimed and how it runs on its own: "How work flows" in `AGENTS.md`, point 3; when an
   orchestrator runs, it makes the claims. Each lane's builder keeps its own helpers ("Helpers: when they pay" in
   `CLAUDE.md`).
   1. **The orchestrator opens a lane for every independent entry it can see,** each a builder session with its own
      brief and check-in, and passes on every lane's "Questions for the owner" word for word.
   2. **The brake closes lanes first** ("How work flows", point 4, and "Usage" in `AGENTS.md`). Only the measured share
-     counts (the owner, 29 October 2026, when a builder stopped at the app's weekly usage warning: "They weren't supposed to stop before 90%. We're still at only 76%"), and a session that cannot
+     counts, never the app's weekly usage warning: no builder stops for it below about 90% measured (archive,
+     29 October 2026), and a session that cannot
      read the share carries on until the owner says to stop.
 
 ## The workshop check

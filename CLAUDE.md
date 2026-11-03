@@ -23,7 +23,7 @@ reviews" and "Reviews", point 7, "The briefs"); this table gives only the model 
 | Escalation | Opus (`model: "opus"`, `effort: "high"`, or `"xhigh"` if you already run at high) | high or extra high | the escalation step, when Codex is unavailable or has failed at it too (Codex comes first once it can build) |
 | Last escalation | Fable (`model: "fable"`, `effort: "high"`) | high | a problem the escalation step could not solve either, such as the rivals' planning, with the same brief. Otherwise Fable only for the design check, planning design and work the owner gives it by name (the writing pass, entry 9 in `docs/PROGRESS.md`), since its usage runs out first |
 
-**Helpers: when they pay** (the words are in `docs/archive/instructions.md`, 2 November 2026). A helper starts cold,
+**Helpers: when they pay** (archive, 2 November 2026). A helper starts cold,
 rereads what it needs and returns only a summary, so it is worth its cost only when the work has one of these shapes:
 
 - *Parallel and independent:* parts that touch different files and need nothing from each other.
