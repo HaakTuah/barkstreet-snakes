@@ -5,10 +5,11 @@ and carving it. They get a file of their own because no topic file held them: `3
 layout, `09-voice-and-copy.md` their words and `39-the-rivals.md` who is dealt, and the records' rules were spread
 over the round's arc, online play and the owner's playtest (their text as it was, with what was measured, is in
 `docs/archive/design-online.md`). Elsewhere: how rivals are dealt from the deck and chosen seat by seat, alone and
-online ("The rival line-up" in `39-the-rivals.md`); the cards by the board's size and the Field guide's door ("The
-cards, by the board" and "The Field guide's own door" in `33-one-screen.md`); every card's words (the start prompt,
-the death titles, the new best, round over and the Hall of Fame's rows in `09-voice-and-copy.md`); the start card's
-"New: …" line (`36-updating.md`); and the keys on a card ("Small mercies at the keys" in `42-controls.md`).
+online ("The rival line-up" in `39-the-rivals.md`); the cards by the board's size ("The cards, by the board" in
+`33-one-screen.md`) and the Field guide's door ("The Field guide's own door" in `30-teaching-by-showing.md`); every
+card's words (the start prompt, the death titles, the new best, round over and the Hall of Fame's rows in
+`09-voice-and-copy.md`); the start card's "New: …" line (`36-updating.md`); and the keys on a card ("Small mercies at
+the keys" in `42-controls.md`).
 
 ### The start card
 

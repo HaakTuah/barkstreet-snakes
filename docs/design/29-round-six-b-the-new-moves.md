@@ -2,7 +2,8 @@
 
 The owner's notes after Star turned the powers into moves you plan with: hopping between islands, flying a golden jump, flashing through a thin body (yours too), and a wrap you can see. Round six A's rules hold: every new rule has a visible cue and a lesson; every rival uses each move when it pays and sees it used against it (the owner's core premise: no ability that only people use); every rival keeps its trademark; no move may become a way to be safe.
 
-**Teaching.** The owner found round six A's banners too quick to read in a fast game, and in the way on a phone, and asked whether the game could show rather than tell: your own snake speaking in a bubble when it does something it shouldn't, and pictures in play of what you can do (a jump you could make, a bridge on someone's back, where a flash would cut). So every move here is taught that way, through the teaching system (see "Teaching by showing" below): the lesson lines below are the words, said by your snake or drawn as a hint, and a banner only where a rule has no better place.
+**Teaching**: how the moves are taught by showing is in `30-teaching-by-showing.md` (under "Steps 2–6, to build", and
+"With PR B" there), and this paragraph as it was in `docs/archive/design-teaching.md`.
 
 **Why** (the island hop's), **The plain jump hops islands** (with **Leap now**) and **The golden jump flies** (with
 **Taking a landing**): their rules are in `40-powers-and-moves.md` under those names (the why under "The plain jump

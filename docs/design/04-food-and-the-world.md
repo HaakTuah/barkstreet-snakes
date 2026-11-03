@@ -35,8 +35,9 @@ was tried and measured, is in `docs/archive/design-food.md`).
   nearest the tail make up the number), so a kill doesn't snowball. Crash drops, cut tails and burnt bits stay whole.
 - **The last apples fall one at a time.** In sudden death, once the board has no apple, another drops, each wait longer
   than the last (`SD_APPLE_GAP`, 20 ticks, times its number: about 2 s, 4 s, 6 s…), never in the woodpecker's mark.
-  It's announced once, with its own falling notes: "The last apples are falling." (At a lesson's level, after the
-  tick's other news: it waits out a banner that's holding, and replaces only routine news.)
+  It's announced once, with its own falling notes: "The last apples are falling." (Round news, after the tick's
+  other news: it waits its turn, and gets through a card; "The narrator speaks less, and better" in
+  `30-teaching-by-showing.md`.)
 - **No winter before 45 s** (`SNOW_FROM_MS`): snow in the first half-minute starved short snakes.
 - **Mushrooms never sprout within 2 cells of a head:** nobody could see one appear in front of them in time.
 - **Golden apples, leaves and mushrooms land somewhere quiet** (the farthest of 8 tries from every head), so each is a

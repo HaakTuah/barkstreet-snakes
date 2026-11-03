@@ -75,14 +75,18 @@ The completeness audit went through every request across three sessions. About 1
 - the board-split fix;
 - the trappers' thicker walls;
 - lines for being put out by rain, for ash and for rot, and Sovereign and Colonist complaining when rot ruins their land (see "Lines and announcements");
-- a steering hint beside the YOU arrow: "Swipe to steer" or "Arrows or WASD to steer" ("Arrow keys to steer (or WASD)" since round six A), riding with your head until you steer (a banner moves aside for it), on whichever side of YOU is clear of the rivals' speech bubbles (since the critique: it used to sit on top of one).
+- a steering hint beside the YOU arrow: its rule is in `30-teaching-by-showing.md` under "The first seconds", and
+  this item as it was in `docs/archive/design-teaching.md`.
 
 Things an expert would expect, added:
-- a **Field guide** beside Hall of Fame and Your story: every food and power, with its picture and a one-line rule, and the keys for each power. Since the critique it also shows how a held power looks (a snake in gold with a sky pip and an ember diamond: "Golden powers") and your two rests ("Resting"), and its mushroom sits on bark in its purple haze (its cream stem vanished on the card). A screen reader hears each row's name, a pause, then its rule. On phones (440 px or narrower) the Hall of Fame tab is a trophy, so three tabs fit 320 px; "Clear everything" hides on the guide;
+- a **Field guide** beside Hall of Fame and Your story: its rules are in `30-teaching-by-showing.md` under "The Field
+  guide", and this item as it was in `docs/archive/design-teaching.md`;
 - powers you can tell apart (above);
 - beads that rot (above);
 - a stop to eating back your own crash;
-- new lessons: "Your own tail won't feed you.", "Pecking under you! Only your head can fall in.", the flash's key, and the round's news "The last apples are falling."
+- new lessons: each lesson as it is now is in its topic file (the woodpecker's in `38-the-woodpecker.md`, the
+  dash's key in `40-powers-and-moves.md`, the last apples' news in `04-food-and-the-world.md`; your own tail is
+  squashed, not eaten, since round six B: `41-crashes.md`), and this item as it was in `docs/archive/design-teaching.md`.
 
 Docs that contradicted the game are corrected: the holes were said to be trenches, the power marks were described from before the third pass, the "rare" golden apple came 5 times a round, and Joker's mushroom habit was missing. The critique found that the older sections still described the game before round four (force fields, Space naps, pressing ahead to leap, a woodpecker that cuts); they're brought up to it now, each older call kept and marked as superseded.
 

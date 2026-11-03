@@ -1,12 +1,12 @@
 ## One screen
 
 The page on every screen: one screen tall, the board first, the row under the board and the chatter in what's left,
-the header's rows and the Field guide's door, and the cards by the board, as one screen and the owner's playtest
-settled them (their text, with what was tried and measured, is in `docs/archive/design-page.md`). Every number is CSS
-px, measured in headless Chrome. Elsewhere: the page on a phone, upright and on its side, full screen and the screen
-kept awake (`31-phones.md`); the keys, the mouse and touch (`42-controls.md`); a rival's note on a card ("A rival's
-note" in `32-the-owners-playtest.md`); the words on the cards and in the hints (`09-voice-and-copy.md`); and a
-banner's place (the placement under "As built, step 1" in `30-teaching-by-showing.md`).
+the header's rows, and the cards by the board, as one screen and the owner's playtest settled them (their text, with
+what was tried and measured, is in `docs/archive/design-page.md`). Every number is CSS px, measured in headless Chrome.
+Elsewhere: the page on a phone, upright and on its side, full screen and the screen kept awake (`31-phones.md`); the
+keys, the mouse and touch (`42-controls.md`); a rival's note on a card ("A rival's note" in
+`43-the-start-card-and-records.md`); the words on the cards and in the hints (`09-voice-and-copy.md`); and a banner's
+place and the Field guide's doors ("The banner" and "The Field guide's own door" in `30-teaching-by-showing.md`).
 
 The owner asked for it: "I notice that you have to scroll to see all the ui elements outside of the gameplay screen. Is
 it possible to make it all fit on screen so you don't have to scroll?" (on a 1920×1080 desktop's Chrome with its
@@ -42,7 +42,7 @@ short windows, phones on their side), the header and the tags sit in a column be
 260). The column is as tall as the board: the header, the tags, the help on a row of its own, then the speed buttons and
 the switches, and the chatter in what's left. 880 px at 1920×945, 1920×969, 1920×1065 and 1680×1050, with all five
 lines of the chatter beside it. The Field guide's and the Hall of Fame's own row (a window 700 px tall or more: "The
-Field guide's own door", below) costs the chatter lines, never a scroll. A phone on its side has its own compact
+Field guide's own door" in `30-teaching-by-showing.md`) costs the chatter lines, never a scroll. A phone on its side has its own compact
 column (`31-phones.md`).
 
 ### Over the board
@@ -144,33 +144,7 @@ nothing moves as they grow from 0 to 1000.
 
 ### The Field guide's own door
 
-The guide is the third tab of the same book as the Hall of Fame and Your story (its napping, its focus, the online
-check and the narrow-screen tabs are the book's), with a door everywhere a player looks:
-- **Its own button,** an open book, before the trophy. A door with room in its row for its word says it ("Field guide",
-  "Hall of Fame"), else it's its picture, round like the icons beside it, with its name in its tooltip ("Field guide
-  (G)") and for a screen reader (where, on each screen: "The header's rows", above).
-- **A laptop's column** beside the board gives both doors a row of their own, with their pictures and names, under the
-  icons (50 px), where the column still ends above the board's bottom with the chatter's log full: a window 700 px tall
-  or more (780 with touch) and a column 236 px wide or more. Elsewhere the doors stay in the icons' row.
-- **G** opens the guide, and H the Hall of Fame (or Your story, if that's where you were), never the guide. In the
-  book, H and G go to their tab, or close it from there; Esc closes it. The book is named for its tab, and a door opens
-  it at its top.
-- **How to play** on the start card, beside Play with friends, opens the guide at its first section, **The basics**:
-  Winning, Steering, Crashes and Hunger, in the renderer's own pictures (your snake in the win's confetti, your head with
-  a turn ahead of it, your head dazed with its stars, a tag's hunger bar).
-- **Field guide** on the napping card: a nap is when people read.
-- **Your death's card,** playing alone, names what got you: "Field guide: Crashes" (or Hunger, Fire, Holes, Golden
-  leaf). It opens the guide at that row, scrolled into view and lit in Honey for 2.4 s (with reduced motion, lit and
-  still); focus goes to the book's Close without scrolling the page back up, and the book's tabs and its × stay at the
-  top of its page as it scrolls, inside its ring. The lit row is wholly in view under them. **The round's card,** when
-  your death ends the round (you came second, or a draw), is your death's card: it names what got you too, and so does
-  the round's card after your death's. Every rule needs a cue and a lesson; this is the lesson, when it's wanted.
-- **The keys** under the board say "G opens the Field guide" too, and the start card's say it instead of H's (a
-  first-timer's Hall of Fame is empty). The touch hints have no room to spare: How to play is their way in.
-- *Turned down:* a dialog of its own (the book's machinery twice over); a "?" icon (it reads as help or about; the book
-  matches the name, and How to play on the start card teaches it); a button called How to play (the button should say
-  what its tab says); opening the guide by itself on a first visit (pushy); a "press G" banner (banners are short, and
-  the death card's link does it at the moment it's wanted).
+Its rules are in `30-teaching-by-showing.md` under the same name, with the rest of the Field guide.
 
 ### The cards, by the board
 
