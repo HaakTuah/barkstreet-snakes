@@ -33,8 +33,8 @@ than everything, and length is your armour.
   "Bonk!" pops up, and for you a "-3" and a shake; its head wobbles and stars go round it while it's stunned.
 - *The sound:* for you, a hollow wooden bonk with a spring's boing and a twinkle (a failed flash's is bigger); someone
   else's crash is a dull thud.
-- *The lessons:* your first crash, "Crashes cost tail. At 3, or boxed in, a crash ends you." (or "That crash cost
-  tail. At 3, or boxed in, you’re out."); down to 3, "Crashes cost tail. You’re at 3: the next one ends you." The death
+- *The lessons:* your first crash, "Crashes cost tail. At length 3, or boxed in, one ends you." (or "That crash cost
+  tail. At length 3, or boxed in, you’re out."); down to 3, "Crashes cost tail. You’re at 3: the next one ends you." The death
   card says why a crash was the end (the engine records it): "…at your smallest", "…with nowhere to turn", "…, and it
   was longer", "…, the same length: both out".
 - *The Field guide's Crashes row:* "An edge, a snake or your own tail costs you tail. At 3, or boxed in, a crash ends
@@ -83,7 +83,7 @@ The name stays from when your head choked on them; the choke, the cough and the 
   spray of crumbs, no gulp and no "Splat!" over your head (`drawSplats()` in `render/weather.js`).
 - *The sound:* a soft wet splat, low, with a little squelch after it (softer for a rival's).
 - *The lesson:* the first squash, "Your own beads feed nobody."
-- *The Field guide's Beads row* ends "Your own you squash flat as you pass: food for nobody, so chase them down to keep
+- *The Field guide's Beads row* ends "Your own beads you squash flat as you pass, so they feed nobody: run them over to keep
   them from the others."
 - *The rivals:* their own beads are worth nothing to them; squashing to deny is left to people and to the pricing part
   (part 7).

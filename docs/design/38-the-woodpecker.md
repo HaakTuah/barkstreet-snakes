@@ -251,9 +251,9 @@ phone's address bar never resizes it.
     woodpecker's mark flies to its ring." (the one idea you can act on, one line on a phone; that it won't shut you in
     if it can help it is the Field guide's);
   - the first time it pecks under you: "Pecking under you! Only your head can fall in.";
-  - the first mark that cuts a piece loose (or as it falls, if the banner was busy): "Cut loose, it falls! Get off the
-    shaded piece.";
-  - the first beetle it eats: "The woodpecker eats beetles too!".
+  - the first mark that cuts a piece loose (or as it falls, if the banner was busy): "The shaded piece is cut loose and will fall.
+    Get off it!";
+  - the first beetle it eats: "The woodpecker eats beetles too.".
 - **Death:** the card's title is **Pecked!** (or "Drilled!") for a head in the patch, "Down the hole!" for one on a
   piece cut loose, and "Flattened!" for a hole you hit (`09-voice-and-copy.md`, "Death titles").
 - **The Field guide's** Woodpecker row (`game/friends.js`, with a picture of an apple flying out of the mark to its

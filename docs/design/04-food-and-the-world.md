@@ -175,7 +175,7 @@ their little island"; burrows ran out as the woodpecker pecked them; and beetles
   way, else it digs in if the dig is done before the strike. A dig there leaves no burrow, and it comes up elsewhere. A
   dig already under way that won't be done in time is dropped, and it runs.
 - **No teleporting.** A beetle still on the mark at the strike is the bird's: a `knock` with no landing, a puff and a
-  soft crunch, no ring through the aim. Its lesson, the first time: "The woodpecker eats beetles too!". The Field
+  soft crunch, no ring through the aim. Its lesson, the first time: "The woodpecker eats beetles too.". The Field
   guide's Beetles and Woodpecker rows say so.
 - **The rivals** move each beetle in their search by the same rule (`bugCrawl` in `ai/beetles.js`, with `E.beakDepth` and
   `E.beakGap`). So a beetle bound down a burrow beyond the mark isn't chased, and one running off it toward a rival is.
