@@ -7,7 +7,7 @@ mouse or a finger plays by the same engine calls. Elsewhere: how the powers are 
 jump, a swipe ahead's dash, the turn swiped twice, a card that comes up by itself: "Two powers, two presses" and
 "Pressing during a stun" in `40-powers-and-moves.md`); waking a nap with any key (the Pause row of
 `09-voice-and-copy.md`); the buttons and where they sit (`31-phones.md`, `33-one-screen.md`); a rival's note from its
-tag ("A rival's note" in `32-the-owners-playtest.md`); and how a stunned press looks ("Your rests" under "Telling
+tag ("A rival's note" in `43-the-start-card-and-records.md`); and how a stunned press looks ("Your rests" under "Telling
 powers apart" in `03-the-snake-as-a-character.md`).
 
 ### Controls anyone can guess

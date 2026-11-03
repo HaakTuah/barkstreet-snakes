@@ -179,7 +179,7 @@ board is a size container), whichever way the phone is held:
 - **A phone's card** on any board up to 490 px, which is every phone's, held upright (up to 432) or on its side (up to
   490 in full screen), and a short or narrow window's: tighter, and the rivals as a row of names (a tag's tap gives how
   one plays). On a small board (380 px or less) a rival's note stands in for the start card's row of names, the new
-  best's badge and the carve ("A rival's note" in `32-the-owners-playtest.md`).
+  best's badge and the carve ("A rival's note" in `43-the-start-card-and-records.md`).
 - **Two buttons side by side** on a board up to 330 px (a phone's edge-to-edge board, 310 on its side, 312 at
   320×640), so the card covers about half the board rather than three quarters.
 - **The fullest card,** a first good round's with the new best's badge, the carve and the Field guide's link, fits its

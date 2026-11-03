@@ -41,6 +41,10 @@ was tried and measured, is in `docs/archive/design-food.md`).
 - **Mushrooms never sprout within 2 cells of a head:** nobody could see one appear in front of them in time.
 - **Golden apples, leaves and mushrooms land somewhere quiet** (the farthest of 8 tries from every head), so each is a
   race you can see.
+- **Online** (the general rules: `22-play-with-friends-online.md`): each food row carries its kind, a bead's colour and
+  owner, its heat and whether it's cooked, and a spat mushroom's strength (`MealRow` in `online.js`), and each snake's
+  row its `mealMs`; the events say what was eaten, what rotted (an apple or a bead, and the bead's colour), what baked
+  or burned to ash, what came, and where the last apples started to fall (`lastApples`).
 
 ### Rivals see food as it is
 
@@ -117,6 +121,12 @@ beetles well, beetles carry more of the food (this section also holds what "Fewe
   6) says so as it goes under, at most every 30 s (Gobbler: "NO! My snack went DOWN!"; Mason: "Diggus escapus.";
   Desperado: "Varmint went to ground."; Mute *knocks on the bark, then shrugs*; Copycat: 深挖洞，广积粮！). One caught
   mid-dig is just a catch, and nobody speaks for you.
+- **Online:** each beetle's row carries its dig (`digUntil`, `BeetleRow` in `online.js`); the beetles underground
+  cross as `game.unders` (when each comes up, when it would fly off, where it went down, golden or not: `UnderRow`);
+  the burrows as the engine keeps them (where, the tick each opened, when a beetle last used it, whether a dig left it:
+  `BurrowRow`); and the events `dig`, `dive` (and whether it was a dig), `burrow` (a dug one opening) and `heal` (one
+  closing over). Each is checked before it's drawn: a kind that exists, cells on the board, a burrow on the board and
+  opened on a tick. The knocks and the promised landings are the woodpecker's ("Online" in `38-the-woodpecker.md`).
 
 ### Burrows grow shut
 

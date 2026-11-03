@@ -383,7 +383,7 @@ else is pushed aside by a head.
 
 ### Online
 
-Everything here crosses to a friend's screen (protocol 22; `net.js` lists each bump): a power press is its own message
+Everything here crosses to a friend's screen (protocol 22; `VERSION` in `online.js` lists each bump): a power press is its own message
 (`{t:'pow', k}`: `'leap'`, `'flash'`, `'unleap'`, a jump a finger held still asked for, taken back, and `'letgo'`, a
 jump let go); each snake's row carries its golden charges (`leaps`, `dashes`), its rests (`leapReadyAt`,
 `flashReadyAt`), a waiting press (`leapArmed`, `flashArmed`), its wrap (`wrapUntil`), its stun and burn, its flight
