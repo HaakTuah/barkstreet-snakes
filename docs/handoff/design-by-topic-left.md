@@ -7,7 +7,6 @@ the block's first words, and where it belongs. A census, round record or a topic
 at a time, as before; delete a line here when its block moves, and this file when none is left.
 
 **To move into a topic file:**
-- 18 7 "Sudden death closes in": 12 (the round's arc) or 38.
 - 19 5 "A crash you don't survive goes off with a bang": 41.
 - 29 12 and 32–62 "the chosen numbers" (2y, parts 1, 3, 3b, 4): 40, measurements to the archive.
 - 32 43–51 "Rainbows upright": 05 (or 03).
