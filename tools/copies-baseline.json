@@ -1,12 +1,6 @@
 {
-  "about": "The old copies the copies check (tools/copies-test.js) still allows. Each is removed by pointing to one place; never add an entry or raise a count.",
-  "copies": {
-    "05a905a63b7a": {
-      "count": 2,
-      "places": "tools/layout/01-probes.js:282-289 tools/ui/03-header-over-the-board.js:7-14",
-      "windows": [
-        "05a905a63b7a"
-      ]
-    }
+  "about": "The old copies the copies check still allows, window by window: each copied run of lines or words, by its hash, and how many places it stands in. They are removed over time by pointing to one place; never add a window or raise a count.",
+  "windows": {
+    "05a905a63b7a": 2
   }
 }
