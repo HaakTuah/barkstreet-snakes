@@ -116,6 +116,7 @@ function news(dying) {
     if (e.type === 'eat' && e.kind === 'goldcap') { flashFrame('gold', true); return toast(FLAVOR.youGoldcap(Math.round((me.wrapUntil - theGame.time) / 1000)), 3000, 'gold', 'lesson'); } // (a second one adds to the first: the real total)
     if (e.type === 'eat' && e.kind === 'beetle') flashFrame('beetle');
     if (e.type === 'eat' && e.kind === 'golden') flashFrame('gold', true);
+    if (e.type === 'spit' && e.lx != null && once('spitWet')) return toast(FLAVOR.youSpitWet, 2400, 'warn', 'lesson'); // (2x: your first spit that lies: wet, you slide over it)
     if (e.type === 'eat' && e.kind === 'mushroom' && once('mushroom')) return toast(FLAVOR.youMushroomSpit, 2600, 'warn', 'lesson'); // (round six B: it comes back up, aimed by steering)
     if (e.type === 'leap' && !e.gold && once('leap')) return toast(FLAVOR.youLeapFirst, 3000, 'you', 'lesson');
     if (e.type === 'dash' && e.snake === me) flashedEver = true; // (you know the key: no more telling)
