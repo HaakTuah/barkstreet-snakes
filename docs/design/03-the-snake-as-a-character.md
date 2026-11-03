@@ -7,7 +7,7 @@ tried and measured, is in `docs/archive/design-looks.md`). All of it is drawing 
 plays. Elsewhere: the interface's eight colours (`02-art-direction-storybook-bark-on-a-mossy-log.md`); beads and remains
 ("Remains" in `04-food-and-the-world.md`); the YOU marker at the start ("YOU" in `16-the-first-seconds.md`) and friends'
 arrows and the crash's bang (`19-looks-and-lines.md`); people's seat colours and markings (`22-play-with-friends-online.md`);
-Ouroboros (`17-ouroboros-and-the-golden-beetles-leap.md`); a costume change ("A costume change" in
+a costume change ("A costume change" in
 `35-capricious-copycat-and-wildcard.md`); each move's own cue (its section in `40-powers-and-moves.md`); the
 woodpecker (`38-the-woodpecker.md`); the rivals' play (`39-the-rivals.md`).
 
@@ -120,7 +120,11 @@ Everything that comes out is drawn with a dark outline or a bright colour so it 
   about to bite) and nose, and a harlequin diamond round each eye, in its hat's purple and orange.
 - **Desperado:** a cowboy hat tipped back, a red bandana on its neck, and woven cream poncho stripes every fourth
   segment (cream, not Honey: gold means a power).
-- **Ouroboros:** a real snake's look ("Ouroboros" in `17-ouroboros-and-the-golden-beetles-leap.md`).
+- **Ouroboros,** the snake that eats its own tail, is the first that looks like a real snake: dark gold (`#b8860b`) with
+  a python's dark diamonds down its back (a pale fleck in each), a wedge-shaped head with a diamond on the crown, amber
+  eyes with black slits, nostrils. When its own tail is right in front of it, it opens wide and bites it: the symbol
+  itself, for a moment. Its remains are gold beads with a dark diamond. One head only: a decoy head would mislead you,
+  where which end is the head decides everything.
 - **Mute** is a mood-ring mime ("Mute is a mood ring, not a rainbow").
 - **Copycat** is in the flag's red ("Copycat in the flag's red" and "Copycat's face"), with dashed rings round its
   segments: a copy of someone.

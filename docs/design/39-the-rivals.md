@@ -200,6 +200,14 @@ driver are in `ai/rivals/`, over the shared template in `ai/rivals.js` (`DRAB`, 
 Still to build (part 7 of round six B, in `docs/PROGRESS.md`): measures that catch Mute's boxing, Joker's lures and
 Mason's body beside itself, which show little over the field on a simple measure, and Joker lifted into the band.
 
+### Ouroboros
+
+The snake that eats its own tail, the 17th rival (its look: "The rivals' looks" in `03-the-snake-as-a-character.md`).
+Its `coil` weight (`{ weight: 20, from: 10 }`) rewards keeping its head close behind its own tail once it's 10 or
+longer, so it moves as a ring; food pulls it along, so the ring rolls over food, and anything caught inside is boxed in.
+It's distinct from Mute (who boxes in one chosen victim) and Sovereign (who guards land). The ring is a strong, safe
+shape, so its coil is gentle and its caution and appetite low (`headRisk` 800, `food` 3), to keep it in the band.
+
 ### The band
 
 Every persona wins 15–35% of the rounds it plays, over several seeds (one persona on one seed is about 130 rounds, ±7
