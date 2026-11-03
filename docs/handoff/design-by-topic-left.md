@@ -7,7 +7,6 @@ the block's first words, and where it belongs. A census, round record or a topic
 at a time, as before; delete a line here when its block moves, and this file when none is left.
 
 **New topics (a file each, when taken):**
-- Balance targets: 29 30 (or it stays as round six B's record).
 
 **History, to the archive:** 23 3–12 (the architecture now is in `docs/developing.md`), 24 73–79 and 91 (the audit's
 remaining items, docs that contradicted the game), and 34 (skipped or adapted guidelines,

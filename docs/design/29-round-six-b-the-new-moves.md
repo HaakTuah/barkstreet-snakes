@@ -23,7 +23,8 @@ for the wrap** and **Mushrooms come back up** (with **The spit flies along the l
 **Every rival has a power style** (with **Gobbler's endgame**): its rules, built and to build, are in `39-the-rivals.md`
 under those names, and its text as it was in `docs/archive/design-rivals.md`.
 
-**Balance targets** (simulation, paired seeds): powers on clearly beat powers off in the seat-split A/B (today they're even, 2.499 against 2.497); every persona wins 15–35% of rounds; rounds about 160–180 s; starving at most 8%; failed flashes rare enough to be a risk you take on purpose. The chosen numbers (the jump's rest, the flash's rest, a failed flash's cost) go here, for the owner's playtest.
+**Balance targets**: the measure for the moves and the power styles is in `39-the-rivals.md` under that name, and its
+text as it was, with the A/B as it stood then, in `docs/archive/design-arc-and-history.md`.
 
 **The chosen numbers so far** (part 1, PR #158), **Part 3, the chosen numbers** (PR #183),
 **Part 3b, the chosen numbers** (PR #195) and **Part 4, the chosen numbers** (PR #198): the numbers they chose are in
