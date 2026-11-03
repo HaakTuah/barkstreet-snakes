@@ -1,24 +1,55 @@
 ## The round's arc
 
-A round has a shape, and the music follows it:
+How a round goes, from Go to its end: its timeline, sudden death closing in, starving, and how it ends. The timeline as
+the round files had it, with its music column, is in `docs/archive/design-arc-and-history.md`. Elsewhere: the music at
+each moment (the stages under "The music" in `21-sound.md`, the one place for them), the weather's own timing
+(`05-weather.md`), and how long a meal keeps you (`04-food-and-the-world.md`, "Food on the log").
 
-| Moment | Rules | Music |
-|---|---|---|
-| Start card, countdown, round over | - | A calm marimba loop (84 bpm) |
-| Opening | The first 3 ticks are eased (170 → 120 ms) | The loop plus a soft bass |
-| 0:45 | The speed-up (120 → 90 ms over 2 minutes) is well under way | A shaker joins; the tempo creeps up with the game's speed |
-| 2:00 | **Sudden death:** nothing new grows, but the last apples fall one at a time (round four); the woodpecker pecks the log away a patch at a time | Minor key, wood-block knocks |
-| Last two snakes | - | Faster and tense, with a heartbeat kick |
-| Watching | - | Quieter, no percussion |
-| Napping | - | Ducked to about a third |
+### The timeline
 
-**The woodpecker comes at 2:00, not 3:00** (your call, and the numbers agree). With hunger, food is what keeps a round going, and late rounds were dragging. Over 600 simulated AI rounds the median round lasts 71 s, the middle half 46-112 s, and 21% of rounds reach the woodpecker, so it's a real event rather than a rarity. Every personality wins 15-31% of the rounds it plays. (Gobbler had slipped to 8%: it chased food straight into other snakes. It now flinches from heads a little more, so it lives longer and, true to form, eats a third more.)
+A round has a shape. Times are the round's game time (`tuning.js`):
 
-**The woodpecker, rebuilt: big, telegraphed, in chunks** (since reworked again: patches anywhere, see "Crashes, not deaths"). It used to sit on the board as a small sprite, pecking a cell every other tick. Now a big great spotted woodpecker (about six cells tall) lands beside the board, on its own layer over the page, on whichever side has room on this screen (with room nowhere, as on a phone, shrunk into the gutter on the side nearer its patch, its beak never over a cell). Then, over and over: it picks the next run of up to 8 free cells along the outermost ring left (never within 3 cells of a head, never a body or food), eyes it for 13 ticks (about a second and a half; the chunk glows red and cracks, the pulse quickening, and the bird crouches), swoops in, drums it all out in a shower of chips (except any cell a body is on by then), flies back, and rests for 6 ticks. The AIs keep out of a marked chunk as they keep out of holes, with their usual reaction delay. Over 300 simulated rounds the median round is as long as before (69 s); deaths in its holes fell from 0.29 to 0.06 per woodpecker round, because every strike is announced, so the squeeze now comes from shrinking room and hunger (starving rose from 2% to 5% of deaths). Online it's protocol 3.
+| When | What changes |
+|---|---|
+| Go | The first 3 ticks are eased, 170 → 120 ms (`OPENING_TICK`, `OPENING_TICKS`, `START_TICK`); from there the ticks speed up evenly to 90 ms at 2:00 (`MIN_TICK`, `RAMP_MS`), about a third faster |
+| 0:15 | Beetles start coming out (`BEETLE_FIRST_MS`) |
+| 0:30 | A storm may come (`STORM_FROM_MS`) |
+| 0:45 | Mid-round: a meal keeps you 12 s, not 20 (`HUNGER_MID_FROM_MS`); winter may come (`SNOW_FROM_MS`); the music picks up (`MUSIC_MID_MS`) |
+| 2:00 | **Sudden death** (`SUDDEN_DEATH_MS`): the woodpecker arrives and pecks the log away a patch at a time; nothing new grows, but the last apples fall one at a time, and beetles still come out; the sky clears and stays clear; a meal keeps you 20 s again; the ticks are at their fastest |
+| Last two snakes | Only the music changes (the duel) |
+| One snake left, or none | The round is over |
 
-**A cornered AI makes the sensible last move.** When every move looks fatal, a wall, a hole or its own body is certain death, but a rival's cell may already be free (it sees rivals as they were a moment ago), so it bets on the cell that frees up soonest. It used to pick at random, and those were the deaths that looked dumbest: self-bites fell from 15% to 8% of AI deaths and wall crashes from 7% to 2%. Two heads that swap cells now count as a head-on, as they look.
+### Sudden death closes in
 
-**Starving is decided after eating.** A snake whose head reaches food on the tick it would starve eats instead.
+**Sudden death closes in.** A round ends with the board closing in, not with long snakes waiting to starve: hunger
+bites no harder in sudden death than in the opening (`HUNGER_MS`), but **the woodpecker gets hungrier**: each rest is
+shorter than the one before and each patch a cell bigger, so the log shrinks faster and faster (`PECK_HUNGRIER`,
+`PECK_REST_MIN` and `PECK_CHUNK_MAX`: "When it comes" and "How it picks a patch" in `38-the-woodpecker.md`). Ghost,
+which keeps its distance, eats with a normal appetite up to 18 long so it doesn't starve first in a long endgame
+("Nobody's picky in sudden death" in `39-the-rivals.md`).
 
-**The Hall of Fame ranks by place, then time alive, then food** (your call). Food stops appearing at 2:00 (since round four, all but the last apples, and since round six A, beetles still come out), so food eaten mostly measures how early you died; time alive measures how well you played. The rank on your death card already counts the snakes still alive (they'll all finish ahead of you), so it's the rank the round-over card will show.
+**The woodpecker comes at 2:00, not 3:00**, and **The woodpecker, rebuilt: big, telegraphed, in chunks**: its rules as
+they stand now are in `38-the-woodpecker.md`, and their text as it was, with their measurements, in
+`docs/archive/design-woodpecker.md`.
+
+**A cornered AI makes the sensible last move**: its rule is in `39-the-rivals.md` under that name, and its text as it
+was, with what it measured, in `docs/archive/design-rivals.md`. Two heads that swap cells count as a head-on, as
+they look.
+
+### Starving
+
+A snake whose last meal has run out (`HUNGER_MS`, or `HUNGER_MID_MS` mid-round: "Food on the log" in
+`04-food-and-the-world.md`) loses a segment every `STARVE_EVERY_MS` (1.5 s), growth still to come first; one already
+at `MIN_LENGTH` (3) when the next is due starves (`step` in `engine/step.js`).
+
+**Starving is decided after eating**: its rule is in `04-food-and-the-world.md` under that name, and its text as it
+was in `docs/archive/design-food.md`.
+
+### The end
+
+The round is over when one snake is left, the winner, or none. Snakes out on the same tick share their place, ahead of
+those out before them; if nobody is left, the last share first place, a draw (`afterTick` in `game/core.js`).
+
+**The Hall of Fame ranks by place, then time alive, then food**: its rule is in `43-the-start-card-and-records.md`
+under that name, and its text as it was in `docs/archive/design-online.md`.
 

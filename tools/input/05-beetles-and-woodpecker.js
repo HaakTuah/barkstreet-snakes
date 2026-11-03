@@ -33,7 +33,7 @@ const reach = BEETLE_DIG + 1;
 const DIG_LESSON = 'A cornered beetle digs in. Grab it before it’s gone!', FAIR_LESSON = 'Food in the woodpecker’s mark flies to its ring.';
 const BURROW_LESSON = 'A beetle that digs in leaves a burrow behind.', BOTH_LESSON = 'A cornered beetle digs in, leaving a burrow.';
 const HEAL_LESSON = 'Old burrows grow shut: beetles go in, none come out.';
-const TAKEN_LESSON = 'A beetle that digs in by a burrow takes its place.';
+const TAKEN_LESSON = 'A new burrow by an old one: the old one grows shut.';
 const dugPairAt = (x, y, shut = '') => ev(`stageEvents(() => [{ type: 'dive', x: ${x}, y: ${y}, dug: 1 }${shut && `, { type: 'shut', ${shut}, at: 1e9 }`}, { type: 'burrow', x: ${x}, y: ${y}, dug: 1 }])`); // (a dig over: the engine's pair; at the cap, the one unused longest starting to grow shut between them)
 const cues = () => ev('__cues.splice(0).join(" ")');
 const digNear = (dx, dy) => ev(`stageEvents(g => { const h = g.snakes[0].body[0]; return [{ type: 'dig', x: h.x + ${dx}, y: h.y + ${dy}, until: g.tick + ${BEETLE_DIG} }]; })`);

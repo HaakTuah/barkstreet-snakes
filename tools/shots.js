@@ -32,7 +32,7 @@ fs.mkdirSync(out, { recursive: true });
   const playUntil = async (ms, length, rivals) => {
     for (let attempt = 0; attempt < 6; attempt++) {
       await b.eval(`document.getElementById('start').click(); pilot.on = true; pilot.crash = false; 'ok'`);
-      const ok = await b.eval(`waitFor(() => SnakeDebug.state() === 'over' || !me().alive || (SnakeDebug.game().time > ${ms} && me().body.length >= ${length} && SnakeDebug.game().snakes.filter(s => s.alive).length >= ${rivals}), 90000).then(() => me().alive && SnakeDebug.state() === 'running')`);
+      const ok = await b.eval(`waitFor(() => SnakeDebug.state() === 'over' || !you().alive || (SnakeDebug.game().time > ${ms} && you().body.length >= ${length} && SnakeDebug.game().snakes.filter(s => s.alive).length >= ${rivals}), 90000).then(() => you().alive && SnakeDebug.state() === 'running')`);
       if (ok) return;
     }
     throw new Error('could not stay alive long enough');
@@ -44,7 +44,7 @@ fs.mkdirSync(out, { recursive: true });
     for (let attempt = 0; attempt < 6; attempt++) {
       await b.eval(`SnakeDebug.setup(['star', 'ouroboros', 'desperado']); document.getElementById('start').click(); pilot.on = true; pilot.crash = false; 'ok'`);
       const ok = await b.eval(`(() => { const st = () => SnakeDebug.game().snakes.find(s => s.personaKey === 'star');
-        return waitFor(() => SnakeDebug.state() === 'over' || !me().alive || !st().alive || SnakeDebug.game().time > 12000, 90000).then(() => me().alive && st().alive && SnakeDebug.state() === 'running'); })()`);
+        return waitFor(() => SnakeDebug.state() === 'over' || !you().alive || !st().alive || SnakeDebug.game().time > 12000, 90000).then(() => you().alive && st().alive && SnakeDebug.state() === 'running'); })()`);
       if (ok) return true;
     }
     return false;
@@ -123,6 +123,15 @@ fs.mkdirSync(out, { recursive: true });
         setBody(gh, [[4, 17], [5, 17], [6, 17]], 'left');
         setBody(ma, Array.from({ length: 8 }, (_, i) => [20, 4 + i]), 'up');
         show(g); drawN(12, 0.5);
+      })()`,
+      portal: `(() => {
+        const g = stage(['gobbler', 'mason', 'ghost']), [you, gob, ma, gh] = g.snakes;
+        setBody(you, [[2, 11], [1, 11], [0, 11], [23, 11], [22, 11], [21, 11], [20, 11], [19, 11]], 'right'); you.wrapUntil = g.time + 9000;
+        setBody(gob, Array.from({ length: 7 }, (_, i) => [17 - i, 11]), 'right');
+        setBody(ma, Array.from({ length: 6 }, (_, i) => [8, 4 + i]), 'up');
+        setBody(gh, Array.from({ length: 6 }, (_, i) => [14 - i, 19]), 'right');
+        g.portals = [{ x: 23, y: 11, dx: 1, dy: 0, tx: 0, ty: 11, owner: you.id, shutAt: 0 }];
+        show(g); drawN(12, 0.5, 40);
       })()`,
       'star-gag': `(() => {
         const g = stage(['star', 'copycat', 'mason']), [you, st, cc, ma] = g.snakes;
@@ -237,7 +246,7 @@ fs.mkdirSync(out, { recursive: true });
 
     // Just after a bite: crumbs, the gulp, "+1" (a round where you go hungry first doesn't count: play on).
     for (let tries = 0; ; tries++) {
-      const bit = await b.eval(`(() => { const n = me().eaten; return waitFor(() => me().eaten > n || !me().alive, 40000).then(() => me().alive); })()`);
+      const bit = await b.eval(`(() => { const n = you().eaten; return waitFor(() => you().eaten > n || !you().alive, 40000).then(() => you().alive); })()`);
       if (bit) break;
       if (tries === 3) throw new Error('could not catch a bite');
       await playUntil(22000, 10, 3);
@@ -251,13 +260,13 @@ fs.mkdirSync(out, { recursive: true });
     // rival given dashes uses them at once), then both your plain rests
     // cooling (the half-rings round your head), then a plain flash a moment
     // after it went (its ember streak).
-    await b.eval(`(() => { const r = SnakeDebug.game().snakes.find(s => s.alive && s.persona); me().leaps = 2; me().dashes = 2; if (r) r.leaps = 3; return 1; })()`);
+    await b.eval(`(() => { const r = SnakeDebug.game().snakes.find(s => s.alive && s.persona); you().leaps = 2; you().dashes = 2; if (r) r.leaps = 3; return 1; })()`);
     await b.sleep(400);
     await shot('powers-held.jpg');
-    await b.eval(`(() => { const g = SnakeDebug.game(); me().leaps = 0; me().dashes = 0; me().leapReadyAt = g.time + 2500; me().flashReadyAt = g.time + 4500; return 1; })()`);
+    await b.eval(`(() => { const g = SnakeDebug.game(); you().leaps = 0; you().dashes = 0; you().leapReadyAt = g.time + 2500; you().flashReadyAt = g.time + 4500; return 1; })()`);
     await b.sleep(300);
     await shot('powers-resting.jpg');
-    const flashed = await b.eval(`(() => { const g = SnakeDebug.game(); me().flashReadyAt = 0; SnakeEngine.flash(g, me()); return waitFor(() => me().flashReadyAt > 0 || !me().alive, 3000).then(() => me().alive); })()`);
+    const flashed = await b.eval(`(() => { const g = SnakeDebug.game(); you().flashReadyAt = 0; SnakeEngine.flash(g, you()); return waitFor(() => you().flashReadyAt > 0 || !you().alive, 3000).then(() => you().alive); })()`);
     if (flashed) { await b.sleep(60); await shot('powers-flash.jpg'); }
 
     // A nap over a live board, then back (waking takes a beat).
@@ -269,7 +278,7 @@ fs.mkdirSync(out, { recursive: true });
     await b.sleep(200);
 
     // Crash on purpose: the freeze-frame, then the death card.
-    await b.eval(`pilot.crash = true; waitFor(() => !me().alive, 20000).then(() => 1)`);
+    await b.eval(`pilot.crash = true; waitFor(() => !you().alive, 20000).then(() => 1)`);
     await b.sleep(120);
     await shot('death.jpg');
     await b.eval(`waitFor(cardUp, 5000).then(() => 1)`);
@@ -327,10 +336,10 @@ fs.mkdirSync(out, { recursive: true });
     await shot('mobile-title.jpg');
     await playUntil(18000, 8, 2);
     await shot('mobile-gameplay.jpg');
-    await b.eval(`(() => { const g = SnakeDebug.game(); me().leapReadyAt = g.time + 2500; me().flashReadyAt = g.time + 4500; return 1; })()`);
+    await b.eval(`(() => { const g = SnakeDebug.game(); you().leapReadyAt = g.time + 2500; you().flashReadyAt = g.time + 4500; return 1; })()`);
     await b.sleep(300);
     await shot('mobile-powers-resting.jpg'); // (your two rests, at phone size)
-    await b.eval(`pilot.crash = true; waitFor(() => !me().alive, 20000).then(() => waitFor(cardUp, 5000)).then(() => 1)`);
+    await b.eval(`pilot.crash = true; waitFor(() => !you().alive, 20000).then(() => waitFor(cardUp, 5000)).then(() => 1)`);
     await b.sleep(450);
     await shot('mobile-death.jpg');
     await b.go(URL);

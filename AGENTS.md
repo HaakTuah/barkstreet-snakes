@@ -16,20 +16,16 @@ it directly. Codex: read the "For Codex" section of `docs/claude-and-codex.md` a
 | What is done and the queue, in order | `docs/PROGRESS.md` |
 | Claude and Codex: who builds what, the hand-over, the fallback, the reviews' score | `docs/claude-and-codex.md` |
 | Security: what is protected, and the rules every builder and reviewer keeps | `SECURITY.md` |
-| How builder sessions and lanes are run (for the orchestrator) | `docs/orchestrating.md` |
-| Running and checking it: switches, the browser suites' Chrome, PR pictures, Dependabot and CodeQL, every tool | `docs/developing.md` |
+| How builder sessions and lanes are run (for the orchestrator), and the workshop check's marks | `docs/orchestrating.md` |
+| Running and checking it, every tool, PR pictures, GitHub's REST calls, Dependabot and CodeQL; each file of the game and its tools, and where each folder lists its parts ("How it's put together") | `docs/developing.md` |
 | The design, one file per topic | `docs/design/` (index: `DESIGN.md`) |
 | Materials the queue points to, with the open entries' specs word for word (`queue-specs.md`) | `docs/handoff/` |
-| The game (what each file does: `docs/developing.md`, "How it's put together") | `index.html`, `style/` (listed in `style/base.css`), `engine.js`, `ai.js`, `render/` (listed in `render/core.js`), `game/` (in `game/core.js`), `chatter/` (in `chatter/voices.js`), `audio/` (in `audio/cues.js`), `net.js`, `online.js`, `records.js`, `lineup.js`, `scores-screen.js`, `tuning.js`, `sw.js` |
-| Tests, simulation, browser tooling | `tools/` (the suites `*-test.js`, each running its folder of parts, such as `tools/rules/` (`tools/parts.js`); `simulate.js` (its parts in `tools/sim/`), `abtest.js`, `bench-ai.js`, `browser.js`; `protocol-shapes.json`, the online messages' pinned shapes) |
-| The online messages' types (checked by `tsc`, never shipped) | `jsconfig.json`, `types/globals.d.ts`, and the JSDoc in `net.js` and `online.js` |
 | Study and measuring tools from earlier rounds (censuses, audits, PR pictures) | `tools/dev/` (done ones: `docs/archive/`) |
 | History: the old polish audit, the plan as it grew, the owner's instructions word for word | `docs/archive/` |
 
 ## Starting a task
 
-1. Work from `develop`: if you are on `main`, check out `develop` first (this file and `docs/` live there until the owner
-   next merges `develop` into `main`).
+1. Work from `develop`: if you are on `main`, check out `develop` first.
 2. Take the first open item in `docs/PROGRESS.md`. Its full text, in `docs/handoff/queue-specs.md` under the same title,
    and the design sections it names, are the spec.
 3. Read only those sections: `grep -rn "## Section" docs/design` finds a section that code or the queue names.
@@ -47,7 +43,7 @@ usage allows, at the lowest cost now and later.
 - **A question is a question.** Answer it; act on it only when the owner says so.
 - **Match effort to the task,** and take the cheapest approach that does the job well, since usage is limited. Docs,
   READMEs, small fixes and config: one pass, no helpers.
-- **Read little.** Never read a large game file whole (`engine.js` and `ai.js` are over 100 KB): find what you need
+- **Read little.** Never read a large game file whole (`render/world.js` is about 40 KB): find what you need
   with `scripts/codemap.sh <file>` or grep, then read that line range. Don't re-read what you just edited.
 - **Print little.** `scripts/test.sh` and `scripts/sim.sh` print a summary and the failures and keep the full log in a
   file; never paste a full log into the conversation. Run long ones in the background (the Bash tool's background mode)
@@ -68,7 +64,7 @@ usage allows, at the lowest cost now and later.
   file past about 20 KB probably holds more than one thing. Splitting an existing file goes in its own PR, with
   behaviour proven unchanged (fingerprints and suites) and what it saves said in the PR. **Step 0:** before an entry or
   lane changes a file past about 50 KB, that file is split by meaning first, in its own PR; and new work for a file
-  past the mark goes in as a new file, never as more lines in it (archive, 2 November 2026). Drift still adds up, so
+  past the mark goes in as a new file, never as more lines in it. Drift still adds up, so
   the workshop check and the file-by-file reviews keep running, with their tracking.
 - **Principles over rules.** Where a rule's letter would defeat what it is for, follow its purpose, say so in the PR
   under "Readings taken", and flag the rule to be fixed. Never for the safety rules: `SECURITY.md`, `main`, keys and
@@ -85,8 +81,8 @@ usage allows, at the lowest cost now and later.
   quote, since every session pays to read this file.
 - **Each game's files stay in its own repository.** Never write this project's notes, logs or files into another
   project's repository or folders, such as Amarna Letters'.
-- **Sessions.** When sessions are started for you task by task (a Claude Code Project does this), stop when your task
-  is merged and say what is next; otherwise carry on with the next task in the same session.
+- **Sessions.** When sessions are started for you task by task, stop when your task is merged and say what is next;
+  otherwise carry on with the next task in the same session.
 
 ## Questions, readings and ideas
 
@@ -99,9 +95,9 @@ never has to hunt.
 - **One inbox: issues assigned to the owner** (`HaakTuah` on GitHub). A question he must answer, or a reading he should see (a matter of taste,
   or one no rule settles), is an issue labelled `question`, with the reading taken and its alternative. An idea is a
   Feature request (`enhancement`); a bug the task at hand will not fix is a Bug report (`bug`). File an idea or a
-  bug with its template's headings and label (`.github/ISSUE_TEMPLATE/`; a question needs none), copied into the body,
-  since the API applies no template. Search the open issues first and add to one rather than file it twice. Each issue
-  holds the whole of it, answerable from a phone.
+  bug with its template's headings and label (`.github/ISSUE_TEMPLATE/`), copied into the body: the API applies none.
+  Search the open issues first and add to one rather than file it twice. Each issue holds the whole of it, answerable
+  from a phone.
 - **Everywhere else, only a pointer.** A PR, a report and a session's last message never repeat an issue: under
   "Questions for the owner" they list the issues they opened or touched, one line and a link each ("none" if none). An
   orchestrator passes every new link on to him.
@@ -136,11 +132,9 @@ Waiting is lost time and, past an hour, a lost cache. The orchestrator's part, a
 
 ## The workshop check
 
-At every milestone, say in one line of the milestone PR what slows the work as the game grows, and fix what passes its
-mark: (1) how long the checks take for a docs-only and a code PR, finding out why if either grew by over a fifth since the last check; (2) the files every session reads, this one, `CLAUDE.md` and `docs/PROGRESS.md`,
-each kept under about 20 KB, with done entries and answered questions moved to `docs/archive/` and a line pointing to
-them; (3) files that should be split by meaning (above), each in a PR of its own with behaviour proven unchanged; (4)
-merged branches, deleted from GitHub; (5) leftovers nobody uses, archived or removed; (6) the README current.
+At every milestone, the milestone PR says in one line what slows the work as the game grows, and fixes what passes its
+mark. Its six marks, among them the files every session reads (this one, `CLAUDE.md` and `docs/PROGRESS.md`), each
+kept under about 20 KB: `docs/orchestrating.md`, "The workshop check".
 
 ## Rules that stand
 
@@ -197,12 +191,10 @@ whether that PR was merged; if it was, start a new branch and PR. Don't stack PR
 saying what to try, with its line of what is new at the top of `version.js`'s news; merge it yourself once its CI is
 green, and carry on without waiting for the owner.
 
-**Dependabot and CodeQL** (details, and the REST calls that open, merge and check PRs, since cloud sessions can't use
-GitHub's GraphQL API and `gh pr create` and `gh pr view` fail: `docs/developing.md`, "GitHub: the REST calls,
-Dependabot and CodeQL"). Dependabot's security PRs are the one other way into `main`, only under the five conditions in
-`SECURITY.md`, point 4. A CodeQL finding on your PR is fixed in it, or, if a false alarm, explained in the PR and left
-to the owner, who alone can dismiss it. PR pictures go on the orphan branch `pr-media`, linked by commit SHA:
-`docs/developing.md`, "PR pictures".
+**Dependabot, CodeQL, PR pictures and the REST calls** (cloud sessions can't use GitHub's GraphQL API, so `gh pr
+create` and `gh pr view` fail): `docs/developing.md`. Dependabot's security PRs are the one other way into `main`, only
+under the five conditions in `SECURITY.md`, point 4. A CodeQL finding on your PR is fixed in it, or, if a false alarm,
+explained in the PR and left to the owner, who alone can dismiss it.
 
 ## Commands
 
@@ -211,7 +203,7 @@ scripts/cloud-setup.sh                 # cloud machines: Chromium for the browse
 scripts/test.sh                        # the types (tsc) and all twelve suites, quiet; or name some: scripts/test.sh rules render
                                        # (exits 1 if any fails; piped, as in `| tail`, the pipe's code is tail's: use set -o pipefail)
 scripts/sim.sh 200 --seed 3 --census   # tools/simulate.js, quiet: fingerprint, check and tables (also seed 11)
-scripts/codemap.sh engine.js           # the functions of a game file, with line numbers (render/*.js, game/*.js too)
+scripts/codemap.sh engine/step.js         # the functions of a game file, with line numbers (ai/*.js, render/*.js, game/*.js too)
 scripts/usage.sh                       # weekly usage, if this session can read it
 ```
 
@@ -236,6 +228,10 @@ method, with its guards against endless rounds and a slipping bar, is "Codex rev
 **What a player sees, for every reviewer** of a change a player can see: the README, the one-time lesson and its Field
 guide row, the visible cue, and online play in step each come with it; one missing is a P1 (the rules in "Rules that
 stand" and "How to work").
+
+**Text a player reads,** for every reviewer of a change that adds or rewrites it: report as a finding any line that
+reads machine-made (one shape filled in again and again, filler, clichés, two voices alike); the slop audit in
+`docs/PROGRESS.md` sets the bar.
 
 **One idea, for every reviewer** of a change to the game (not docs, design copies or Dependabot's updates): end the
 review with one thing outside this change that would make the game better, or "none", the usual answer when nothing is

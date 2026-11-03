@@ -95,7 +95,7 @@
 // The checks are in tools/render/, one file per area, run in name order as the body of this one
 // (tools/parts.js): 01 a flash, as drawn, 02 beads and golden pips, 03 Star, 04 scorch, rainbows,
 // jumps and bridges, 05 the squash and beetles, 06 flags, strikes and the Field guide, 07 the
-// woodpecker, 08 hunger, 09 the chomps (what the round plays when you or a rival eats), 10 flags bending under a snake, standing in depth and hit head-on, 11 the costume change (Capricious without its ring), 12 a piece falling. A new check goes in its area's file, or a new one.
+// woodpecker, 08 hunger, 09 the chomps (what the round plays when you or a rival eats), 10 flags bending under a snake, standing in depth and hit head-on, 11 the costume change (Capricious without its ring), 12 a piece falling, 13 a body through a gold portal. A new check goes in its area's file, or a new one.
 const path = require('path');
 const runParts = require('./parts.js');
 const { launch, serve, reporter } = require('./browser');
@@ -129,7 +129,7 @@ const PRE = `(() => {
 const STAGE = `(() => {
   window.__autoRaf = false;
   window.E = SnakeEngine; window.R = SnakeRender;
-  window.__t = performance.now() + 1e6;
+  window.__t = 1e9; // (the virtual clock's start, fixed: from the page's own clock, each run drew the pulses and the bird's motion at another phase, and a check could pass or fail on the time it took to get here)
   window.drawN = (n, alpha = 0.5, step = 33) => { for (let i = 0; i < n; i++) { __t += step; R.frame(alpha, __t); } return n; };
   window.setBody = (s, cells, dir) => { s.body = cells.map(([x, y]) => ({ x, y })); s.prev = s.body.map(c => ({ ...c })); s.dir = E.DIRS[dir]; s.queue = []; s.planned = null; };
   let boards = 0;

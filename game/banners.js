@@ -104,6 +104,7 @@ function news(dying) {
     if (e.type === 'spawn' && e.kind === 'goldcap') { flashFrame('gold'); if (newsOnce('goldcap')) return toast(lineFor('goldcap'), 2400, 'gold'); }
     if (e.type === 'knock' && e.kind === 'beetle' && e.tx == null && newsFree() && once('birdBeetle')) return toast(FLAVOR.birdBeetle, 2400, 'bird', 'lesson'); // (round six B, 2m: the first beetle the bird eats, anyone's to catch)
     if ((e.type === 'aim' ? theGame.woodpecker?.fall?.length : e.type === 'peck' && e.fall?.length) && newsFree() && once('cutLoose')) return toast(FLAVOR.cutLoose, 2600, 'bird', 'lesson'); // (2s: the first piece cut loose, as its mark shows it, or as it falls if the banner was busy)
+    if (e.type === 'through' && newsFree() && once('portalFollow')) return toast(FLAVOR.portalFollow, 2600, 'gold', 'lesson'); // (round six B, part 5: the first time anyone follows anyone through a gold portal)
     if (e.type === 'peck' && me?.alive && e.under?.includes(me.id) && once('peckedUnder')) return toast(FLAVOR.youPeckedUnder, 2800, 'bird', 'lesson'); // (struck under your body: a bridge, not a cut)
     if (e.type === 'death' && e.snake.fatal === 'cut' && newsFree() && once('neckCut')) return toast(FLAVOR.neckCut, 2400, 'warn', 'lesson'); // (the first neck cut you see, anyone's)
     if (e.type === 'dig' && me?.alive && Math.abs(me.body[0].x - e.x) + Math.abs(me.body[0].y - e.y) <= DIG_NEAR && newsFree() && once('dig')) return toast(FLAVOR.youDig, 2600, 'beetle', 'lesson'); // (it's over in a second: shown now or kept for the next one, never left waiting)
@@ -125,7 +126,7 @@ function news(dying) {
     if (e.type === 'cut' && e.by === me.id && once('youCutFirst')) return toast(FLAVOR.youCutFirst, 2400, 'gold', 'lesson');
     if (e.type === 'cut' && e.by === me.id) return toast(FLAVOR.youSnip(who(e.snake, true)), 1800, 'gold');
     if (e.type === 'crash' && e.air && isMe(e.snake) && once('youBumped')) return toast(FLAVOR.youBumped, 2400, 'warn', 'lesson');
-    if (e.type === 'leap' && e.gold && isMe(e.snake) && once('youGoldFly')) return toast(touchFirst ? FLAVOR.youGoldFly.replace('Hold', 'Hold your finger down') : FLAVOR.youGoldFly, 2800, 'gold', 'lesson');
+    if (e.type === 'leap' && e.gold && isMe(e.snake) && once('youGoldFly')) return toast(FLAVOR.youGoldFly, 2800, 'gold', 'lesson');
     if (e.type === 'crash' && e.failed && once('youFlashFailed')) return toast(FLAVOR.youFlashFailed, 2600, 'warn', 'lesson');
     if (e.type === 'cut' && e.by != null) return toast(FLAVOR.youSnipped(theGame.snakes[e.by]?.name || 'Someone'), 2200, 'warn', 'lesson');
     if (e.type === 'alight') { flashFrame('kill'); if (once('alight')) return toast(pick(FLAVOR.youAlight), 2600, 'fire', 'lesson'); } // (later burns: the flames and the -1s say it)

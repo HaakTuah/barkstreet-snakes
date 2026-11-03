@@ -1,5 +1,5 @@
 // Every number that controls how Barkstreet Snakes plays and feels, in one place.
-// Rules are read by engine.js (and by the headless simulator); feel and juice
+// Rules are read by engine/ (and by the headless simulator); feel and juice
 // by game/ and render/. Times are in milliseconds unless noted.
 window.TUNING = Object.freeze({
   // ------------------------------------------------------------- the board
@@ -63,6 +63,7 @@ window.TUNING = Object.freeze({
   GOLDCAP_TICKS: 120,       // ...and withers after this many ticks
   WRAP_MS: 12000,           // ...eat it, and for this long the edges wrap round (off one side, in at the other); another adds as much again...
   WRAP_MAX_MS: 20000,       // ...up to this much in all
+  PORTAL_MS: 2000,          // (round six B, part 5) going off an edge while the edges wrap opens a pair of gold portals there: anyone may follow through while that body passes and for this long after
   SHRINK: 3,                // a mushroom takes this many segments off the first time...
   MIN_LENGTH: 3,            // ...but never below this
   // Round six B: a mushroom comes back up. Swallowed, it sits in the cheek

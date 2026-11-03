@@ -80,16 +80,16 @@ const GUIDE_ROWS = [
   ['Food', [
     ['apple', 'Apple', `Worth 1, and a full tummy. ${inWords(TUNE.APPLES).replace(/^./, c => c.toUpperCase())} on the log at a time; leave one too long and it rots.`],
     ['golden', 'Golden apple', `Worth ${TUNE.GOLDEN_GROWTH}, and everyone saw it land.`],
-    ['beetle', 'Beetles', `Worth ${TUNE.BEETLE_GROWTH}, up to ${inWords(TUNE.BEETLE_MAX ?? 2)} out at once, even in sudden death. They scurry from heads at half your speed. A cornered one digs in: come straight at it and it’s gone, so be nearer, or cut it off from its burrow. They flee the woodpecker’s mark too: one still on it when it strikes, it eats.`],
+    ['beetle', 'Beetles', `Worth ${TUNE.BEETLE_GROWTH}, up to ${inWords(TUNE.BEETLE_MAX ?? 2)} out at once, even in sudden death. They scurry from heads at half your speed. A cornered one digs in: come straight at it and it’s gone, so be nearer, or cut it off from its burrow. They flee the woodpecker’s mark too, and it eats any still on it when it strikes.`],
     ['dig', 'Burrows', `${TUNE.BURROW_FROM_DIG ? 'A beetle that digs in leaves a burrow, taking the place of any burrow near it (burrows keep apart). ' : ''}A burrow left unused grows shut (past ${inWords(TUNE.BURROW_MAX)}, the one unused longest): beetles still go in, but none come out.`],
-    [['pellet', 'squash'], 'Beads', `What a crash knocks off, and what a dead snake leaves (${TUNE.CORPSE_EVERY === 2 ? 'every other segment' : TUNE.CORPSE_EVERY === 1 ? 'all of it' : `one segment in ${TUNE.CORPSE_EVERY}`}). Worth 1 each, and they rot. Your own you squash flat as you pass: food for nobody, so chase them down to keep them from the others.`],
+    [['pellet', 'squash'], 'Beads', `What a crash knocks off, and what a dead snake leaves (${TUNE.CORPSE_EVERY === 2 ? 'every other segment' : TUNE.CORPSE_EVERY === 1 ? 'all of it' : `one segment in ${TUNE.CORPSE_EVERY}`}). Worth 1 each, and they rot. Your own beads you squash flat as you pass, so they feed nobody: run them over to keep them from the others.`],
     [['baked', 'roast'], 'Baked and roast', `Food left in a fire bakes: worth ${TUNE.COOKED_GROWTH}, if you can take the heat. Then it’s ash.`],
     ['mushroom', 'Mushroom', `Poison: ${TUNE.SHRINK} off your tail (never below ${TUNE.MIN_LENGTH}). A second later it comes back up, ${inWords(TUNE.SPIT_REACH)} ahead of you: steer to aim it at a head. Each time it comes back up it takes one more, up to ${TUNE.SHRINK_MAX}, a shade darker. Keep out of a green ring.`],
   ]],
   ['Golden things', [
     ['goldbeetle', 'Golden beetle', `${TUNE.LEAP_CHARGES} golden jumps: free, no rest. Tap for the plain hop; hold the jump and you fly ${TUNE.GOLD_FLY} cells, always, steering in the air to land where it's safe. Hold up to ${TUNE.LEAP_MAX}.`],
     ['leaf', 'Golden leaf', `${TUNE.DASH_CHARGES} golden dashes: three cells at once, cutting through a body up to ${TUNE.DASH_THICK} thick and putting out every fire. Never at an edge or a hole: you blow up.`],
-    ['goldcap', 'Golden mushroom', `Up in the rain. The edges wrap round for you, ${secs(TUNE.WRAP_MS)} s a mushroom (up to ${secs(TUNE.WRAP_MAX_MS)}).`],
+    ['goldcap', 'Golden mushroom', `Up in the rain. The edges wrap round for you, ${secs(TUNE.WRAP_MS)} s a mushroom (up to ${secs(TUNE.WRAP_MAX_MS)}). Going off one opens gold portals: anyone may follow you through, for a moment.`],
   ]],
   ['Your powers', [
     ['jump', 'Jump', `${touchFirst ? 'A tap' : 'Space or a click on the log'}: hop snakes, holes or fire, up to ${TUNE.LEAP_REACH} cells, to the first free cell: across a gap too. ${touchFirst ? 'Tap twice' : 'Press twice'} to leap now, open ground too. A ring shows where you’ll land. It costs your tail’s tip, then rests ${secs(TUNE.LEAP_COOLDOWN_MS)} s. Bump into a flier in the air and you drop: onto a body or into a hole, you’re out. Lie on a flier’s ring before it lands and it’s out: rivals will try it on you.`],
@@ -101,10 +101,10 @@ const GUIDE_ROWS = [
   ]],
   ['The log', [
     ['fire', 'Fire', 'Lightning lights it. Crawl in and it takes 3 bites of tail; rain puts it out.'],
-    ['knock', 'Woodpecker', 'From 2:00 it pecks out patches, and won’t shut you in if it can help it. A piece it cuts loose from the log is shaded in its mark, and falls with the strike: the log stays one piece. Food in its mark is knocked to the nearest free cell, where the ring is; a beetle there, it eats.'],
-    ['hole', 'Holes', 'The woodpecker’s, from 2:00. Bump one like the edge; a peck right under your head is the end.'],
+    ['knock', 'Woodpecker', 'From 2:00 it pecks out patches, and won’t shut you in if it can help it. A piece it cuts loose from the log is shaded in its mark, and falls with the strike: the log stays one piece. Food in its mark is knocked to the nearest free cell, shown by a ring; a beetle still in its mark gets eaten.'],
+    ['hole', 'Holes', 'The woodpecker’s, from 2:00. Bumping one is a crash, like the edge; a peck right under your head is the end.'],
     ['bridge', 'Bridges', 'A snake lying across a pit is a bridge: crawl onto its back there, or land on it from a jump. Get off onto bark before its tail passes, or you fall in.'],
-    ['land', 'Borders', 'Sovereign’s realm and Colonist’s colonies. Cross one and it notices.'],
+    ['land', 'Borders', 'Sovereign’s realm and Colonist’s colonies. Cross one and its owner notices, and says so.'],
     ['lostflag', 'Lost flags', 'A flag the woodpecker pecks out is lost: the colony goes, and a capital moves.'],
   ]],
   ['Rivals who change', [

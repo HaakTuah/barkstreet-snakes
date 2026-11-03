@@ -105,9 +105,33 @@ const covered = [...anyones].filter(m => !OWN.some(o => m === o || m.startsWith(
 for (const m of covered) ok(starHas.has(m), `Star has '${m}' lines`);
 for (const k of ['zoom', 'ready', 'resting', 'stash']) ok(VOICES.star[k]?.length, `Star has its own '${k}' lines`);
 for (const k of ['wildcard', 'mason']) ok(VOICES[k].showoff?.length, `${k} answers Star's showing off`);
+// No formula: too many lines of one voice may not share one shape, so a filled-in template
+// ("Sunshine! I love sunshine! Today.", "Rain! I love rain! For now.", …) can't creep back (the
+// slop audit, docs/PROGRESS.md). A line's shapes: its opening two words with its last mark, and,
+// with more than one sentence, its marks in order with the second sentence's opening two words.
+// Mason's "Et tu, …?" is the owner's gag, kept word for word, so its shape may repeat.
+const SHAPE_MAX = 4, SHAPE_KEPT = { mason: ['open:et tu|?'] };
+const sentencesOf = l => l.trim().match(/[^.!?…]+[.!?…]+|[^.!?…]+$/g) || [l];
+const wordsOf = s => s.toLowerCase().replace(/\{who\}/g, 'who').match(/[\p{L}’']+/gu) || [];
+const shapesOf = l => {
+  const ss = sentencesOf(l), marks = ss.map(s => (s.trim().match(/[.!?…]$/) || [''])[0]).join('');
+  const out = [`open:${wordsOf(ss[0]).slice(0, 2).join(' ')}|${marks.slice(-1)}`];
+  if (ss.length > 1) out.push(`inner:${marks}|${wordsOf(ss[1]).slice(0, 2).join(' ')}`);
+  return out;
+};
+const formulas = (said, kept = []) => {
+  const by = {};
+  for (const l of new Set(said)) if (!chinese(l)) for (const s of shapesOf(l)) (by[s] = by[s] || []).push(l);
+  return Object.entries(by).filter(([s, ls]) => ls.length > SHAPE_MAX && !kept.includes(s));
+};
+ok(formulas(['Sunshine! I love sunshine! Today.', 'Rain! I love rain! For now.', 'Snow! I love snow! For a bit.', 'A bird! I love birds! Not this one.', 'A hole! I love holes! Not under me.']).length === 1,
+  'the shape guard catches a filled-in template (Capricious\'s old weather lines)');
+for (const v of added) for (const [s, ls] of formulas(lines.filter(([p]) => p.split('.')[0] === v.key).map(([, l]) => l), SHAPE_KEPT[v.key]))
+  ok(false, `${v.key}: ${ls.length} lines share one shape (${s}), more than ${SHAPE_MAX}: ${ls.join(' / ')}`);
 if (fails) { console.error(`${fails} failed`); process.exit(1); }
 console.log(`ok   ${lines.length} lines, every one in Chinese too`);
 console.log(`ok   ${Object.keys(ZH).length} Chinese lines, none left over`);
 console.log(`ok   ${PUNCHLINES.length} punchlines, each told once a round`);
+console.log(`ok   no voice repeats one shape more than ${SHAPE_MAX} times`);
 console.log(`ok   every voice: ${EVERYONE.join(', ')}`);
 console.log(`ok   Star: all ${covered.length} moments anyone has (${[...starHas].length} with its own), in Chinese too; Wildcard and Mason answer it`);

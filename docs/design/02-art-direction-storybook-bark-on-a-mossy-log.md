@@ -21,7 +21,7 @@ Everything in the UI uses only these. (The drawn characters bring their own colo
 
 There are also two functional tints that aren't separate colors. **Parchment-2** is a darker parchment used for rings and tracks. **Berry** `#dc2626` is used only for danger: hunger, mushrooms and the "starving" state.
 
-**The cast palette is a deliberate exception.** The 18 personalities plus you need 19 separable identities, which 8 colors can't give. Each character keeps its own color, but it's never the only identifier: every character also has a face or body pattern (crown, tricorn and cross-belts, a scope and a squint, bricks and laurel, jester two-tone, the flag and hair, a mime's face, cat ears, a mustached star, and so on). You get a cream outline.
+**The cast palette is a deliberate exception:** its rule is in `03-the-snake-as-a-character.md` under "The cast palette", and its text as it was in `docs/archive/design-looks.md`.
 
 ### Shape, line, texture, corners
 
@@ -35,6 +35,32 @@ There are also two functional tints that aren't separate colors. **Parchment-2**
 - **Texture:** only the log has texture, prerendered once a round: **a different stretch of log every round** (a new seed), so no two rounds look alike. Soft patches of sun and shade, furrows along the grain, raised plates lit along one edge, a few cracks, knots with growth rings, a little shadow down both sides, and small cushions of moss. The moss is dark and olive on purpose so it never passes for food. Parchment stays flat, and its paper feel comes from the ring and a soft shadow.
 - **A living wood:** the shadows of leaves overhead sway gently over the log (one small soft layer, drawn stretched over the board each frame), and now and then an autumn leaf drifts down onto it, turning as it goes, under the food and the snakes so it never hides anything that matters. With reduced motion, the shadows hold still and no leaves fall.
 - **Depth:** buttons have a 3 px "lip" and press down 2 px. Cards float on a soft 0 10 30 shadow. Snakes cast a small offset shadow on the bark. There's no blur anywhere on the canvas.
+
+### Reduced motion removes movement, never information
+
+With reduced motion (`prefers-reduced-motion`: `reduced` in `render/core.js`), what moves holds still or simply appears,
+and nothing a player needs goes. Being in the air is a rule, so a leap keeps a still airborne pose. The woodpecker
+glides in once, its wings out and still, instead of swooping ("A woodpecker you can believe" in
+`38-the-woodpecker.md`). Rain and snow hold still rather than vanishing (they put fire out), a burning leaf appears
+where it lands instead of flying, and a death is a still starburst and ring that fades ("A crash you don't survive goes
+off with a bang" in `41-crashes.md`). Each look's own version is with it, under "With reduced motion".
+
+### Borders and frames
+
+One treatment, used everywhere:
+- **Board:** a carved Heartwood frame with leaves resting on its corners. The leaves sway, each from its stalk on its
+  own beat; now and then a band of light runs along the wood; and **the frame lights up round its edge for the big
+  moments**, in the moment's colour: green for Go!, gold for a golden apple or any golden pickup, emerald for a beetle,
+  red for a knockout (strongest for yours) or catching fire, orange for the woodpecker, honey for a win or a new best,
+  and each kind of weather in its own as it comes ("Spells of weather" in `05-weather.md`). Only its opacity moves
+  (`flashFrame()` in `game/toasts.js`); with reduced motion it doesn't light.
+- **Panels:** parchment with an inset Parchment-2 ring. This covers the cards, the dialog, the name tags, banners and
+  bubbles.
+- **Buttons:** pills with a lip.
+  - Primary: Leaf with cream text.
+  - Secondary: transparent with an Ink ring.
+  - Small: Heartwood with cream text.
+- **Focus:** a Honey ring on dark backgrounds and an Ink ring on parchment, always visible with `:focus-visible`.
 
 ### Typography
 

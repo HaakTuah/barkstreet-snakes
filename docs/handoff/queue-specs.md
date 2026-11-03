@@ -31,7 +31,7 @@ replaced is in git history (the file-by-file review, 2 November 2026).
 **Every move of the round, in this order** (the owner, 29 October 2026, when the design session found the entry listed only
 part of "Round six B": "Yes, they are all part of the power update! What i have been looking forwards to!"). Each part
 is its own playable PR, tested both ways (`tools/abtest.js`) with every trademark measured, as the island hop was; the
-design's words for each are in `docs/design/29-round-six-b-the-new-moves.md`:
+design's words for each are in `docs/design/40-powers-and-moves.md` (as first decided, in `docs/archive/design-powers.md`):
 1. **The island hop and no auto-jump** (done, PR #158).
 2. **Bridges** (done, PR #174). Rare by design, about one ride in twenty rounds (the owner, 29 October 2026: "Agreed with
    you expert take!"): part 4 and item 6 each report bridge rides again, adding no rule to make them commoner.
@@ -204,7 +204,7 @@ entry doesn't specify them, and the art waits for his description. Everything el
 - **His tongue is a hairspray can:** a little spritz when he flicks it.
 - **Lines** in his own voice for kills, wins and chatter, as every rival has (`chatter/`), and a blurb for the start
   screen.
-- **Built from the one template** (`ai.js`: his weights, and a driver for courting), measured like every rival: his
+- **Built from the one template** (`ai/rivals.js`; his own file in `ai/rivals/`: his weights, and a driver for courting), measured like every rival: his
   trademark (time spent alongside a rival's head, and apples stolen from the snake he courts) and an `abtest.js` run on
   fresh seeds showing courting pays against a Charmer who doesn't court; every other rival's trademark within noise.
 - **The cast grows to nineteen:** the start screen, the Field guide's row for him, the lobby's line-up, `CLAUDE.md`'s
@@ -235,7 +235,7 @@ public: no look, line, laugh or catchphrase of its characters. Their looks and e
   and the mind steering change. Any part of the body tells who is steering, even with the head off screen. It flips every so often (a first guess: every 8 to 15 seconds,
   at random), and at once after a scare: a near miss, a bump in the air, or a rival crashing beside them. A crash that
   kills still kills: the flip never saves them.
-- **Two minds, two styles, in the one template** (`ai.js`: two sets of weights and the swap):
+- **Two minds, two styles, in the one template** (`ai/rivals.js`; its own file in `ai/rivals/`: two sets of weights and the swap):
   - **Boot-Snake, the bossy one,** hunts: he picks a victim by its position (never by who plays it: "The rivals never
     treat a person differently") and drives it toward a wall, a hole or fire.
   - **Barkis, the jittery one,** forgets the hunt and chases the nearest apple, golden first.
@@ -285,7 +285,7 @@ The prototypes and the judges' verdicts are in `docs/handoff/teaching-prototypes
 Banner time rose to 55–61% of play in step 1, because lessons are still banners; step 3 should bring it to about 20%.
 The teaching audits in `tools/dev/teach/audit` and `tools/dev/teach-build/audit` play rounds as a new player and measure
 every banner: use them to measure it. The patches were made before DESIGN.md was split: their DESIGN.md hunks now belong
-in `docs/design/29-round-six-b-the-new-moves.md` and `docs/design/30-teaching-by-showing.md`.
+in `docs/design/40-powers-and-moves.md` and `docs/design/30-teaching-by-showing.md`.
 
 ### 6. Round six C: the woodpecker in three acts
 

@@ -19,7 +19,7 @@ function animOf(s, now) {
       // This frame's layout (see prepare): segment centres, the corner each
       // band bends through, radii and fills, sized for the body as it grows.
       n: 0, pts: new Float32Array(64), cor: new Float32Array(64), rad: new Float32Array(32), fills: new Array(32),
-      offs: null, offList: [], offPool: [], // (where it's drawn across a wrapped edge, if it is: see unwrap)
+      offs: null, offList: [], offPool: [], seenPortal: false, // (where it's drawn across a wrapped edge, if it is: see unwrap; seenPortal: see acrossEdges)
       look: '', color: '', isPlayer: false, costume: null, costumeAt: -1e9, oldLook: '', oldColor: '', oldHead: null, wornLook: '', wornColor: '', wornHead: null, // (costume: see costumeChange)
       rim: false, bump: 0, tickPos: 0, lean: 0,
       // Drawn ahead (see predict): the cell its head goes to next (mx, my),
@@ -606,9 +606,10 @@ function prepare(s, alpha, now, dead, impact = 0) {
   }
   a.n = m;
   const prev = s.prev, { pts, cor } = a;
-  // (A snake that's had the edges wrap this round: its body may run off one
-  // edge and on at the other, and a segment may move across one.)
-  const wrapped = s.wrapUntil >= 0;
+  // (A snake that's had the edges wrap this round, or may have followed
+  // through a gold portal: its body may run off one edge and on at the
+  // other, and a segment may move across one.)
+  const wrapped = acrossEdges(s, a);
   let behind = s.body[n - 1]; // (dashed: where its tail was a cell back along its body, if it moved)
   if (ran) for (let j = prev.length - 2; j >= 0; j--) if (prev[j].x === behind.x && prev[j].y === behind.y) { behind = prev[j + 1]; break; }
   for (let i = 0; i < n; i++) {
@@ -770,7 +771,7 @@ function liftOf(s, a, at, k2, now) {
 // from (x0, y0) to (x1, y1): at the top over them, down a cell either side.
 function archAt(s, x, y, x0, y0, x1, y1) {
   let dx = x / CELL - 0.5 - x0, dy = y / CELL - 0.5 - y0, sx = x1 - x0, sy = y1 - y0;
-  if (s.wrapUntil >= 0) { dx = wd(dx); dy = wd(dy); sx = wd(sx); sy = wd(sy); } // (across a wrapped edge)
+  if (acrossEdges(s, anim.get(s))) { dx = wd(dx); dy = wd(dy); sx = wd(sx); sy = wd(sy); } // (across a wrapped edge)
   const l2 = sx * sx + sy * sy;
   if (l2) { const t = Math.max(0, Math.min(1, (dx * sx + dy * sy) / l2)); dx -= sx * t; dy -= sy * t; }
   const d = Math.hypot(dx, dy);
@@ -783,7 +784,7 @@ function archAt(s, x, y, x0, y0, x1, y1) {
 function hopped(s, e, now) {
   const a = animOf(s, now), hops = a.hops, reach = e.reach || 1, d = s.flight?.dir || s.dir;
   if (hops.length >= 3) hops.shift();
-  const x1 = s.wrapUntil >= 0 ? (e.x + d.x * (reach - 1) + GRID) % GRID : e.x + d.x * (reach - 1), y1 = s.wrapUntil >= 0 ? (e.y + d.y * (reach - 1) + GRID) % GRID : e.y + d.y * (reach - 1);
+  const across = acrossEdges(s, a), x1 = across ? (e.x + d.x * (reach - 1) + GRID) % GRID : e.x + d.x * (reach - 1), y1 = across ? (e.y + d.y * (reach - 1) + GRID) % GRID : e.y + d.y * (reach - 1);
   hops.push({ x0: e.x, y0: e.y, x1, y1, dx: d.x, dy: d.y, tick: game.tick, n: reach + 1, gold: !!e.gold, h: 1, landed: false, landedAt: 0, until: game.tick + s.body.length + reach + 2, under: false, jTick: -1 });
 }
 // A golden flight, once up, keeps its arch over the way it really flies

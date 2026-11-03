@@ -77,7 +77,7 @@ for (const [w, h] of [[390, 844], [320, 640]]) {
   check(p.kind === 'note' && p.toast.startsWith('Metagamer'), `phone ${w}: watching, a tap on a tag is a banner`, p.toast);
   await fresh(['ouroboros', 'metagamer', 'gobbler']);
   await ev(fire);
-  await wait(`cardUp() && !me().alive`);
+  await wait(`cardUp() && !you().alive`);
   await b.sleep(900);
   await tap(await at('#how'));
   p = await P();

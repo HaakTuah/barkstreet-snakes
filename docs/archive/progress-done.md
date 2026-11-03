@@ -33,6 +33,14 @@ it under the workshop check's 20 KB. New ones are added here as they are done or
 
 ## The queue, done
 
+### 5 (part 5). Gold portals, unparked (the owner, 2 November 2026; an engine-rules entry, right after 2y)
+
+The golden mushroom's wrap has no cost while the edges open for its holder alone, a small refuge from the edge; part 5's
+gold portals are its counterweight (anyone may follow through for about a second), so #202 comes off the shelf right
+after 2y (the owner: "Yes, expertly to all 3!"). Its spec and A/B are as entry 5 says.
+
+*Done* (PR #202): portals open 2 s after the body passes (`PORTAL_MS` 2000). The rivals see the way through from afar (their room fill, territory split and power paths). Someone follows in 21% of rounds. Per use, a follower ends up longer but places no better, a design finding for the owner (#447). Every trademark is kept. The rule and its numbers are in `docs/design/40-powers-and-moves.md`, "Gold portals for the wrap".
+
 ### 1. Cheaper development and playable previews: one PR, no subagents
 
 The owner's words are in `docs/handoff/next-tasks-verbatim.md`, with their two additions and one correction:
@@ -728,6 +736,13 @@ on the new log is part 4's.
 
 No more islands (the owner, 31 October 2026: "Yes, I think that's it. can still be jumpable gaps, but we want to avoid the islands stuff. it becomes too much rng, and isn't very exciting."): any piece of log no longer attached to the log falls away, warned, so the log is always one piece with holes in it, and jumps and flights cross the gaps inside it. Replaces "every island stays a hop from another". Spec: `docs/handoff/queue-specs.md`, "2s. A piece cut loose falls".
 
+### 2y+. Split `ai.js` and `engine.js` by meaning (the owner, 2 November 2026; the main lane, right after 2y, before part 5) — done, PRs #406 (the tools load the game's files from `index.html`), #408 (`ai/`), #407 (`engine/`)
+
+Both have grown past the mark (148 KB and 136 KB) and every main-lane entry touches them, so the gap "between AI
+entries" never came. Each is split by meaning in a PR of its own (the rivals' shared template, each rival's override,
+planning, and so on for `ai.js`; the rules by system for `engine.js`), proven unchanged by the fingerprints and the
+suites, so it goes quickly and needs no head-to-head. Part 5's branch (#202) then merges the split in once.
+
 ## The polish lane, done (moved 31 October 2026)
 
 Word for word from "The polish lane" in `docs/PROGRESS.md`.
@@ -801,6 +816,22 @@ owner's three notes of 2 November merged as PRs #322 (the remains), #320 (the fl
   `sound.js` split into the synth, `music.js` and `weather.js`), tools/ (PR #345: `seeded()`, `ok()` and the runners'
   `check()` written once; `chatter/04` and `rules/03`'s woodpecker boards made scripted boards). `render/09-chomps.js`
   stays in the render suite: it drives the real page, which the chatter suite can't without a weaker stand-in.
+
+- **The design by topic, not by round** (#336; the owner, 2 November 2026): each topic's current rule moves from the
+  round files into its topic file in `docs/design/`, superseded versions and measurements to `docs/archive/`. A slow
+  side lane, one topic per docs-only PR, taken when a lane is free; code comments citing a section are checked.
+  Done: food (round four's "Food", round six A's food and beetles into `04-food-and-the-world.md`; PR #425). The
+  playtest's burrows and beetles (32) followed (PR #426). The woodpecker
+  followed, in a file of its own, `38-the-woodpecker.md` (PR #428). The rivals
+  followed, in `39-the-rivals.md` (PR #429). The snakes'
+  looks followed, in `03-the-snake-as-a-character.md` (PR #430). The powers and
+  moves followed, in `40-powers-and-moves.md`, and the crashes in `41-crashes.md` (PR #432). Sound followed, in
+  `21-sound.md` (PR #433). The page followed, in `31-phones.md`, `33-one-screen.md` and `42-controls.md`
+  (PR #435). Online and the start card followed, in `22-play-with-friends-online.md` and a new
+  `43-the-start-card-and-records.md` (PR #436). Teaching followed, in `30-teaching-by-showing.md` (PR #437). The food
+  and world's leftovers followed (PR #440). The rivals' leftovers followed (PR #444). The small leftovers followed
+  (PR #446). Performance followed, in `45-performance.md` (PR #449). The rivals' chatter followed, in
+  `13-lines-and-announcements.md` (PR #450). Next: the new topics (the round's arc, balance targets), then the history, as listed in `docs/handoff/design-by-topic-left.md`.
 
 ## Done specs, moved from the queue's specs (2 November 2026)
 
