@@ -4,6 +4,17 @@ The powers' and moves' sections as the round files had them, word for word, with
 measurements. The current rules are in `docs/design/40-powers-and-moves.md`, and the crash rules (crashes, head-ons, fire on snakes, your own beads) in
 `docs/design/41-crashes.md`.
 
+## From the third pass (`11-the-third-pass-what-it-settles.md`)
+
+**Every death says why.** The engine records why a crash was fatal, and the card's first line says it:
+- boxed in ("…with nowhere to turn");
+- at your smallest;
+- the shorter one in a head-on;
+- pecked;
+- blown up.
+
+The rival's quip stays as flavour. A death that ends the round says it on the round-over card too.
+
 ## From crashes, not deaths (`14-crashes-not-deaths-the-rules-reworked.md`)
 
 **Why.** Snake is one mistake and out, and the longer you are, the more there is to bump into. Over 400 simulated rounds, a snake of length 20 or more died about twice as often per minute (1.1) as one of length 3 to 5 (0.5): past a certain point, eating was a punishment. So a crash now costs length rather than everything, and length becomes your armour.

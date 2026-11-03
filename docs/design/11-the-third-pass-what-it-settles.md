@@ -13,14 +13,8 @@ words) are in `30-teaching-by-showing.md` under the same name and "Lessons", and
 **One word for each thing**: its rule is in `09-voice-and-copy.md` under the same name, and its text as it was, with
 the owner's words, in `docs/archive/design-art-weather-voice.md`.
 
-**Every death says why.** The engine records why a crash was fatal, and the card's first line says it:
-- boxed in ("…with nowhere to turn");
-- at your smallest;
-- the shorter one in a head-on;
-- pecked;
-- blown up.
-
-The rival's quip stays as flavour. A death that ends the round says it on the round-over card too.
+**Every death says why**: its rule is in `41-crashes.md` under the same name, and its text as it was in
+`docs/archive/design-powers.md`.
 
 **Small mercies at the keys**: its rules are in `42-controls.md` under the same name (and the tags in two rows of
 two in "What gives on the smallest screens" in `33-one-screen.md`), and its text as it was in

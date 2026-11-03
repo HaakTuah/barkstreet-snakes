@@ -7,7 +7,7 @@ the block's first words, and where it belongs. A census, round record or a topic
 at a time, as before; delete a line here when its block moves, and this file when none is left.
 
 **To move into a topic file:**
-- 11 15–22 "Every death says why": 41. 11 7 "Reduced motion removes movement": 02,
+- 11 7 "Reduced motion removes movement": 02,
   or a new topic, accessibility.
 - 18 7 "Sudden death closes in": 12 (the round's arc) or 38.
 - 19 5 "A crash you don't survive goes off with a bang": 41.
