@@ -33,6 +33,12 @@ it under the workshop check's 20 KB. New ones are added here as they are done or
 
 ## The queue, done
 
+### 2x. The spitter slides over its own mushroom (the owner, 2 November 2026; an engine-rules entry, after part 5)
+
+Taken out of 3b+ and moved to the front, since it still bites (the owner: "Still get the bug with swallowing a mushroom over and over again after puking it up."): the spec is 3b+'s "The spitter slides over its own mushroom" in `docs/handoff/queue-specs.md`, entry 5.
+
+*Done* (PR #456): the spitter slides over its own spat mushroom for `OWN_SPIT_TICKS` (6) moves, as a full mouth goes over food; anyone else is hit by it as before. The cue: it lies wet (a green slick, a glint), drying as the moves run out; a lesson the first time you spit one, and the Field guide row. The rivals know it through `aiView()`'s food (who spat it), and play on over their own fresh spit as if it weren't there. Protocol 24. Head to head and against the old game, everything within noise, every trademark kept. `docs/design/40-powers-and-moves.md`, "Mushrooms come back up".
+
 ### 5 (part 5). Gold portals, unparked (the owner, 2 November 2026; an engine-rules entry, right after 2y)
 
 The golden mushroom's wrap has no cost while the edges open for its holder alone, a small refuge from the edge; part 5's
