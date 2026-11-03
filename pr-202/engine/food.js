@@ -182,7 +182,7 @@ function spit(game) {
     const power = Math.min(T.SHRINK_MAX, s.cheek.power + 1), left = Math.max(T.SPIT_WILT_MIN, Math.round(s.cheek.left / 2)), h = s.body[0];
     s.cheek = null;
     let c = h;
-    for (let n = 0; n < T.SPIT_REACH; n++) c = ahead(game, s, c.x, c.y, s.dir);
+    for (let n = 0; n < T.SPIT_REACH; n++) c = wraps(game, s) ? ahead(game, s, c.x, c.y, s.dir) : { x: c.x + s.dir.x, y: c.y + s.dir.y }; // (over the edge where they wrap for it, as its ring shows; a gold portal is a way through for snakes, not for what they spit)
     game.events.push({ type: 'spit', snake: s, x: h.x, y: h.y, tx: c.x, ty: c.y, power, hit: -1, lx: null, ly: null });
     const e = game.events[game.events.length - 1];
     const k = key(c.x, c.y);

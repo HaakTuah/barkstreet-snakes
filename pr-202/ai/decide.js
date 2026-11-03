@@ -25,7 +25,6 @@ function decide(viewIn, personaIn, memoryIn = {}) {
   fire = view.fire || EMPTY, mark = view.pecks || EMPTY;
   pitAt = i => holes.has(i) && !fire.has(i) && !mark.has(i), pit = (x, y) => pitAt(y * N + x);
 
-  readPortals();
   all = others.map((_, k) => k);
 
   if (persona.driver && others.length) DRIVERS[persona.driver]();

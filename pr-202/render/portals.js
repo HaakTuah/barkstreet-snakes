@@ -6,6 +6,14 @@
 // fade over the PORTAL_MS a portal stays open once its owner has passed.
 // With reduced motion they stand still.
 
+// May s's body run across an edge (drawn partly on each side, a segment
+// moving across one)? Once the edges have wrapped for it this round, or
+// once it has been on the board with a gold portal open (anyone may follow
+// through one), for the rest of the round (a: its anim).
+const acrossEdges = (s, a) => s.wrapUntil >= 0 || (a.seenPortal ||= !!game?.portals?.length);
+// Off the board from (x, y) going d: through a gold portal open there that way?
+const portalWay = (x, y, d) => !!game?.portals?.some(p => p.x === x && p.y === y && p.dx === d.x && p.dy === d.y);
+
 // A portal's ends as drawn: the point on the edge, and the way into the board.
 function portalEnd(x, y, dx, dy, out) {
   return { cx: (x + 0.5 + (out ? -dx : dx) * 0.5) * CELL, cy: (y + 0.5 + (out ? -dy : dy) * 0.5) * CELL, ix: out ? dx : -dx, iy: out ? dy : -dy };

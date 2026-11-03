@@ -94,7 +94,8 @@ function readReach() {
     for (let n = 0; n < rides.length; n += 2) if (rides[n + 1] !== k) { ridesWas[n >> 1] = reachBlock[rides[n]]; reachBlock[rides[n]] = Math.min(reachBlock[rides[n]], 0); }
     reachFrom(framed[o.body[0].y * N + o.body[0].x], (o.stun || 0) - age);
     for (let n = rides.length - 2; n >= 0; n -= 2) if (rides[n + 1] !== k) reachBlock[rides[n]] = ridesWas[n >> 1];
-  });  reachPortals(); // (a gold portal: out at its exit a move after its entry)
+  });
+  reachPortals(); // (a gold portal: out at its exit a move after its entry)
 }
 
 // 2y, a landing taken: a flier comes down on its ring when its ring says,
