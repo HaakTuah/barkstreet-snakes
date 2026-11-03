@@ -167,18 +167,6 @@ window.SnakeAudioCues = k => {
       mallet(t, mtof(79), 0.14, 0.16);
     },
 
-    // The woodpecker lands: knock-knock-knock, quick and a little uneven like a real beak.
-    woodpecker(t) {
-      knock(t, 1400, 0.28);
-      knock(t + 0.07, 1450, 0.24);
-      knock(t + 0.135, 1380, 0.22);
-    },
-
-    // One pecked hole: a tiny tick that's more felt than heard (and rate-limited above).
-    peck(t) {
-      knock(t, 1500 + Math.random() * 200, 0.08);
-    },
-
     // Starving: a soft, low tummy gurgle, two slow wobbles under a lowpass with a little
     // air, the growl's throaty middle, and bubbles rising (what a phone hears).
     hungry(t) {
