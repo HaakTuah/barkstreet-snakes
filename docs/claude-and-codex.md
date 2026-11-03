@@ -12,18 +12,33 @@ and the orchestrator's Codex hand-over (merging Codex's work and the `codex` lab
 
 ## Who does what
 
-- **The orchestrator is Claude, always:** it writes Codex's briefs, routes the work, takes the readings, merges
-  Codex's PRs, and brings the owner his questions.
-- **The builders:** Claude's builder sessions, and, once it can build, Codex in OpenAI's cloud, started from a draft PR whose description is its brief (below).
-- **The reviewer is the other company's model.** Codex's PRs get Claude's reviewer (Opus, high effort), given
-  the brief in its row of `CLAUDE.md` ("Models, effort and helpers"): it holds the picture of the finished game and sends the work back until it meets it. Claude's PRs
-  that change the game get Codex's code review ("Codex reviews" below); when Codex does not answer in time, Claude's
-  reviewer takes them, as before Codex came.
-- **Escalation goes to the other model first,** once Codex can build (the status above; until then, straight to Claude's escalation helper): a problem that has defeated Claude twice goes to Codex as a
-  draft PR from the stuck branch whose description is the brief (the problem, what was tried, the
-  files and lines), merged into the stuck branch if it works; one that has defeated Codex goes to
-  Claude's escalation helper, and one that defeats that too goes to Fable, the last step (`CLAUDE.md`). Either way the
-  builder who was stuck checks the answer.
+Every rule names a role, never a model, so any model can fill a role when it can; this is the one place that says who
+fills each today. The models and effort Claude Code gives each of its roles: `CLAUDE.md`, "Models, effort and helpers".
+
+- **The orchestrator** (today: Claude): it writes Codex's briefs, routes the work, takes the readings, merges Codex's
+  PRs, and brings the owner his questions (`docs/orchestrating.md`).
+- **The builders:** Claude's builder sessions, and, once it can build, Codex in OpenAI's cloud, started from a draft PR
+  whose description is its brief (below). **The trusted builder,** whose lanes alone may change the protected files
+  (`SECURITY.md`, rule 3): Claude's builder sessions.
+- **The code reviewer is the other company's model.** Claude's PRs get Codex's code review ("Codex reviews" below);
+  Codex's PRs get **the fallback reviewer,** Claude's reviewer, which also takes Claude's PRs when Codex does not answer
+  in time, as before Codex came. It holds the picture of the finished game and sends the work back until it meets it.
+- **The security reviewer:** Codex's automatic security review; its fallback, the fallback reviewer ("Codex reviews",
+  point 6).
+- **The design checker** (today: Claude): the design check with a score on the engine-rules and AI entries ("Codex
+  reviews", point 5).
+- **Planning design** (today: Claude): the rivals' planning, asked directly when an entry needs a new or better plan, at
+  most once per entry, with a self-contained brief (the problem, the measurements, the files and lines). It returns a
+  design, which the builder builds and measures.
+- **The hard work:** the AI's planning, the engine's rules and online sync (a big-file split is not: its fingerprints
+  and suites check it). The builder gives it more effort inside its own session, never by waiting for another session
+  (for Claude: `CLAUDE.md`).
+- **Escalation:** a problem that has defeated a builder twice goes to a fresh solver with a self-contained brief (the
+  problem, what was tried, the files and lines); the builder who was stuck applies and checks the answer. The other
+  model comes first once Codex can build (the status above): a problem that has defeated Claude goes to Codex as a
+  draft PR from the stuck branch whose description is the brief, merged into the stuck branch if it works. Otherwise,
+  and for one that has defeated Codex, it goes to Claude's escalation step, then its last escalation (`CLAUDE.md`).
+  Whatever is still unsolved is blocked ("Don't loop" in `AGENTS.md`).
 - **Who merges is unchanged for Claude's work:** Claude's builders merge their own PRs, as "Git and GitHub" in
   `AGENTS.md` says, once the review's verdict ("Reviews" below) allows, and apply the score rules themselves. **Codex
   never merges:** the orchestrator merges its PRs. Codex never touches `main`, and never pushes to a branch it was not
@@ -53,7 +68,7 @@ Whole with Claude, since there the code is the hard part and a brief cannot hold
 sync, and the orchestrator's own work (briefs, routing, readings, reviews' verdicts, merges).
 
 Changes to the AI or the engine's rules still run one at a time, and so do changes to the online messages ("as many
-lanes as can run in parallel" in `docs/orchestrating.md`): Codex lanes are side lanes beside them. **Trial:** in the first week, one art or
+lanes as can run in parallel" in `docs/orchestrating.md`): Codex lanes are side lanes beside them. **Trial:** in the first week Codex can build, one art or
 animation task to Codex, compared against Claude's; after that, art goes where it scored better.
 
 ## Handing work to Codex
@@ -69,10 +84,7 @@ animation task to Codex, compared against Claude's; after that, art goes where i
    takes the most reasonable reading and writes it under "Readings taken". Whatever only the owner can settle is filed
    as a `question` issue, and the PR links it.
 4. **The PR is then reviewed as below,** sent back the same way (the review's list added to the description, Codex started again), marked ready, and merged by the orchestrator.
-5. **Write the Codex mention only to ask for a review:** `@codex review` or `@codex security review`, alone at the
-   start of a comment. Any other request to it fails (its tasks need an environment for the repository; tried
-   1 November 2026, and again on 3 November, when it answered "create an environment for this repo"), and its bot answers every mention it finds, even in backticks, so text that only talks
-   about it says "the Codex mention".
+5. **The Codex mention** is written only to ask for a review ("Codex reviews", point 1).
 
 ## When Codex is not there
 
@@ -94,21 +106,36 @@ Codex's usage can run out with no alert, so the orchestrator never waits on Code
 ## Codex reviews
 
 Codex reviews Claude's PRs that change the game, in OpenAI's cloud, on its own subscription, so Claude's weekly usage
-goes to building. Its usage can run out like any other, and it may then not say so, so:
+goes to building. Its usage can run out like any other, and it may then not say so.
+
+**Which PR gets which review:**
+
+- **Engine-rules and AI entries** (new moves and rules, the rivals' play): the code review and the design check, at
+  once (point 5).
+- **Every other PR that changes the game, its tests, tools or config:** the code review.
+- **Dependabot's version and security updates:** the code review (`SECURITY.md`, rules 3 and 4).
+- **Docs-only PRs and the milestone PRs:** no code review and no design check.
+- **Every PR:** its one security review when it is marked ready (point 6).
+- **A PR Codex built:** the fallback reviewer in place of Codex's code review ("Who does what").
 
 1. **Ask:** a comment `@codex review` alone. Codex reads the PR's description, so the task's text and the design
-   sections it names go there, and it follows the "Review guidelines" in `AGENTS.md` and `SECURITY.md`. Its security review is not part of this: it runs by itself once, when the PR is ready ("Security reviews" below).
+   sections it names go there, and it follows the "Review guidelines" in `AGENTS.md` and `SECURITY.md`. Its security
+   review is not part of this: it runs by itself once, when the PR is ready (point 6). **Write the Codex mention only
+   to ask for a review:** `@codex review` or `@codex security review`, alone at the start of a comment. Any other
+   request to it fails (its tasks need an environment for the repository; tried 1 November 2026, and again on
+   3 November, when it answered "create an environment for this repo"), and its bot answers every mention it finds,
+   even in backticks, so text that only talks about it says "the Codex mention".
 2. **It starts within seconds** (its 👀 reaction and a "Codex Review Summary" comment; seen in 20 seconds on
    1 November 2026) **and finishes within minutes** (seen in under two). No sign within about **5 minutes,** or an
-   answer that is not a review (no usage left, an error): Claude's reviewer takes the PR at once.
+   answer that is not a review (no usage left, an error): the fallback reviewer takes the PR at once.
 3. **Still running after about 15 minutes:** ask once more with `@codex review`. No finished review about 5 minutes
-   after that: Claude's reviewer takes it. Either way, a late Codex review is still read, but nothing waits for it.
+   after that: the fallback reviewer takes it. Either way, a late Codex review is still read, but nothing waits for it.
 4. **It gives findings, not a score:** its format is its own, whatever it is asked (seen on Snakes #289,
    1 November 2026). Each finding has a priority from P0 to P3, and **every one counts:** a Codex review passes only
    with nothing open, its 👍 or "Didn't find any major issues", or every finding fixed or moved out as "Reviews"
    says. That is Codex's 10. P0 and P1 are fixed first.
-5. **The design check, with a score:** on its engine-rules and AI entries (new moves and rules, the rivals' play), the design check (`CLAUDE.md`, "Design check": Fable at
-   medium effort, Opus at high when Fable is out) checks the work against the design: given the brief in its row of `CLAUDE.md`, it gives the score
+5. **The design check, with a score:** on the engine-rules and AI entries, once each before it is merged, the design
+   checker ("Who does what") checks the work against the design: given its brief ("Reviews", point 7), it gives the score
    from 1 to 10 and what keeps it from 10, blocking or not ("Reviews" below), on the design alone, since Codex looks for
    faults and security. Smaller PRs get Codex's review alone. **Why it is enough:** a test PR with three planted faults
    (Barkstreet Snakes #298, 1 November 2026, never merged) got all three as P1 from Codex within four minutes: a bug
@@ -118,8 +145,7 @@ goes to building. Its usage can run out like any other, and it may then not say 
    your assesment").
    **Both at once:** the design check starts in the same turn as the request to Codex, in the background, never after
    Codex's answer, so neither waits for the other, and the builder answers both lists in one round.
-6. **Docs-only PRs and the milestone PRs get no code review,** as before (the security review still runs by itself
-   once when one is opened ready). Codex reviews only when asked ("Setup").
+6. **Codex reviews only when asked** ("Setup"; which PRs: the list above).
    **Security reviews: one by itself when a PR is ready, one more only when asked** (the owner, 2 and 3 November
    2026: Codex spent as much of its week on reviews as Claude did on everything, two thirds of it on security reviews
    run with every round). Codex's settings ("Setup") run one security review by itself when a pull request is opened for review or a draft is marked ready, never while it is a draft;
@@ -131,9 +157,13 @@ goes to building. Its usage can run out like any other, and it may then not say 
    meaning, unused code removed, a rename) nor for docs or the history dossiers: moving the code that writes a save is
    not changing it. Once means once: another ask only when a fix after the last one changed the risky part again, and
    the PR names that part. **A security review ran only if Codex's review summary on the PR lists "🔒 Security Review" as completed on its
-   latest commit, or on the last commit that changed the risky part;** one with no findings posts nothing else. One
-   missing is said in the PR, reported to the owner at the next wake, and not counted as reviewed. Its findings count as a code review's do: each is fixed, or moved out as "Reviews"
-   says, before the merge. Codex does not
+   latest commit, or on the last commit that changed the risky part;** one with no findings posts nothing else. Its
+   findings count as a code review's do: each is fixed, or moved out as "Reviews" says, before the merge. **The
+   security gate:** a PR merges only once its security review has run, as just said. If no completed security review
+   appears within about 15 minutes of the ready mark, ask once (the Codex mention followed by "security review", alone
+   in a comment); if still none about 15 minutes later, the fallback reviewer ("Who does what") reviews the diff
+   against `SECURITY.md` and `docs/threat-model.md`, the PR says so, it may merge on that review, and the next wake
+   reports it to the owner. A PR with an open security finding never merges. Codex does not
    review a commit twice: an ask on an already reviewed commit runs a code review alone. (Tested 3 November 2026: a
    draft gets none, a draft marked ready gets one; an ask runs one only while Codex's "Review" setting for the
    repository is "Team PRs", and with "Follow personal preferences", or the feature off, it runs a code review
@@ -142,7 +172,7 @@ goes to building. Its usage can run out like any other, and it may then not say 
    `docs/archive/instructions.md`). The native review reads the diff but runs nothing, so it cannot check a claim such
    as "the rivals now dash 40% more". When Codex's environments work ("Setup"), a Codex task in its container also
    reruns the measurements a PR's claims rest on (its fingerprints and `tools/abtest.js` tables) and confirms or
-   corrects them, beside the native review, which stays for the diff. Until then CI and Claude's reviewer check them.
+   corrects them, beside the native review, which stays for the diff. Until then CI and the fallback reviewer check them.
 
 ## Reviews: only a 10 passes
 
@@ -155,7 +185,7 @@ The guards against both are part of the rule:
    standing rules) or **not blocking**, which says only what is fixed first. **A 10 is a list with nothing open:** the
    work does all of the task's text and the sections it names, keeps every standing rule, leaves nothing behind ("Keep it lean" in `AGENTS.md`), its tests prove it, and a
    demanding expert would hand it over as it stands. A 10 with a point open, or less than 10 with none, is no review:
-   ask again. This definition goes into every reviewer's brief word for word (the briefs: `CLAUDE.md`, "Models, effort and helpers"), and only the owner changes it; so do "What a player sees" and "One idea, for every reviewer" ("Review guidelines" in `AGENTS.md`): both go word for word into the same briefs, and only the owner changes them.
+   ask again. This definition goes into every reviewer's brief word for word (point 7), and only the owner changes it.
 2. **Every point is fixed, or moved out with a reason.** A point within the task is always fixed. A point outside it
    (code or a question the task did not touch) may become a follow-up (a `bug` issue if it is a bug, otherwise an entry in `docs/PROGRESS.md`), with the reason in the
    PR. A point the builder thinks wrong is answered in the PR with why. The next round's reviewer rules on each move
@@ -164,16 +194,16 @@ The guards against both are part of the rule:
    with the same model, effort and brief as before. It checks those points and the lines changed since. Something new
    about work it already saw is raised only if it is a fault that blocks: a bug, a broken rule, a security hole, a
    departure from the design. Taste does not grow between rounds, so the rounds come to an end.
-4. **At most three rounds, then the escalation helper, then blocked, held firmly** (a fourth round is never asked
+4. **At most three rounds, then escalation, then blocked, held firmly** (a fourth round is never asked
    for, whatever the reason). Anything still open after the third round goes
-   to the escalation helper (`CLAUDE.md`) with a self-contained brief. It fixes each point, or rules it outside the
-   task or wrong, with reasons. Whatever is still open after that, the PR is **not merged:** it stays open as a draft,
-   is marked blocked in `docs/PROGRESS.md` filed as a `question` issue and linked under "Questions for the owner", and the work goes on with the next
-   task that does not depend on it. Nothing is ever merged below 10.
+   to escalation ("Who does what") with a self-contained brief. It fixes each point, or rules it outside the task or
+   wrong, with reasons. Whatever is still open after that, the PR is **not merged:** it stays open, marked blocked in
+   `docs/PROGRESS.md`, and is filed as a `question` issue linked under "Questions for the owner", and the work goes on
+   with the next task that does not depend on it. Nothing is ever merged below 10.
 5. **The bar does not slip.** These checks, each a builder session the orchestrator starts:
    - **A blind re-review every week:** at the first milestone of each week, a PR merged at 10 in the week before
-     (each category in turn) goes to a fresh Claude reviewer (Opus, high effort) with the diff and the task's text,
-     and nothing of the earlier review. Every blocking point it finds is a **miss:** it becomes a follow-up (a `bug` issue, if a bug) and is
+     (each category in turn) goes to a fresh fallback reviewer ("Who does what") with the standard brief (point 7)
+     and nothing of the earlier rounds. Every blocking point it finds is a **miss:** it becomes a follow-up (a `bug` issue, if a bug) and is
      fixed like any other.
    - **A canary now and then:** about every two weeks, and whenever a reviewer's setup changes (model, settings or
      guidelines), a test PR with planted faults goes to each reviewer and is never merged. The faults are a bug, a
@@ -182,28 +212,27 @@ The guards against both are part of the rule:
    - **A slop check every month** (the owner, 2 November 2026): a fresh reviewer reads only the text a player reads
      that changed since the last check, scored as every review is, a 10 meaning nothing reads machine-made; what it
      finds is fixed in the polish lane. The slop audit's formula test runs on every PR.
-   - **Logged and reported:** each check is a row in "Calibration" below, and each milestone PR says in one line the
-     misses since the last one. Two misses in a row by the same reviewer: its brief or guidelines are tightened, with
+   - **Logged and reported:** each check is a row in the calibration log, `docs/calibration.md`, and each milestone
+     PR says in one line the misses since the last one. Two misses in a row by the same reviewer: its brief or guidelines are tightened, with
      the owner, and the categories it reviews go back to the other reviewer meanwhile.
 6. **One line in each PR:** `Review: <category> · <builder> · <each round's result>`, a score from the design check
-   or Claude's reviewer, or Codex's verdict (`clean`, or its findings, such as `P1×2`): `Review: interface · Codex ·
+   or the fallback reviewer, or Codex's verdict (`clean`, or its findings, such as `P1×2`): `Review: interface · Codex ·
    P1×1, P3×2, clean`, or `Review: rules · Claude · 7, 9, 10`. At each milestone the builder who opens the milestone PR sums them by
    category and builder in the milestone PR, with the rounds per PR: a category where Codex scores lower moves back
    to Claude, one where it does well gets more, and one that often needs three rounds needs better briefs.
 
-### Calibration
-
-The weekly blind re-reviews and the canaries, newest first ("Reviews", point 5).
-
-| Date | Check | PR | Reviewer checked | Misses | What changed |
-| --- | --- | --- | --- | --- | --- |
-| 2026-11-02 | Blind re-review (week 2) | Snakes #221 (interface, 2u; its reviewer found nothing blocking) | Claude's reviewer | 1 by the letter (blocking; scored 8): the README not updated, a rule made an hour after #221 merged (#237), so none against the rules of its day | Already fixed by #241; non-blocking bug filed as #376; two in a row by the letter, so asked in #378, reading taken: brief unchanged |
-| 2026-11-01 | Blind re-review (week 1) | Snakes #289 (engine rules, merged at 7, 9, 10) | Codex (its 10) and Claude's reviewer (its 9) | 3 (blocking; scored 7) | Follow-up entry 2s+, done (`docs/archive/progress-done.md`); the first miss, so no brief changed yet |
-| 2026-11-01 | Canary (before this rule) | Snakes #298 | Codex | 0 of 3 | None needed |
+7. **The briefs.** A reviewer starts cold and gets its brief and nothing more. Every guideline line that goes into a
+   brief is changed only by the owner.
+   - **The fallback reviewer's:** the diff, the task's text, the definition of a 10 word for word (point 1) and the
+     "What the rivals know", "What a player sees", "Text a player reads" and "One idea, for every reviewer" lines of
+     "Review guidelines" in `AGENTS.md`.
+   - **The design checker's:** the same brief; it sends the work back until it meets the task.
+   - **A later round's** adds the earlier rounds' lists and the builder's answers (point 3); **an escalation's** is in
+     "Who does what".
 
 ## For Codex
 
-- `AGENTS.md` applies to you in full, except Claude's helpers, models and effort.
+- `AGENTS.md` and the shared docs it names apply to you in full; `CLAUDE.md` is Claude Code's own.
 - Build only what the brief gives you (the PR's description), and read only what it names
   and what `AGENTS.md` says to read.
 - **The tests you are given are the contract:** make them pass; never change, skip or weaken them. If you think one is
@@ -223,7 +252,7 @@ The weekly blind re-reviews and the canaries, newest first ("Reviews", point 5).
 - Its security review: Auto security review on, Review "Team PRs", Trigger "On PR open", its threat model
   `docs/threat-model.md`; it reports Medium and above in the automatic review and Low and above in a requested one.
 - A Codex cloud environment made in ChatGPT's Codex settings for Barkstreet Snakes only, none yet for Amarna Letters
-  (tasks by comment fail either way: "Handing work to Codex", point 5), its setup script
+  (tasks by comment fail either way: "Codex reviews", point 1), its setup script
   `bash scripts/cloud-setup.sh` (from `/workspace/<repository>`).
   The agent may reach the internet (the repository is public and the environment holds no secrets); fonts.googleapis.com
   and fonts.gstatic.com matter most: the game's font, which the input and layout suites need to measure text.
@@ -240,4 +269,4 @@ repository itself, never `main` or `develop`, with its description as the brief.
 planted somewhere could try to steer it. Its work may never change the protected files
 (`SECURITY.md`, rule 3: the CI workflows, the setup script, the rules and the GitHub calls builders run). Such a PR is marked failed on the PR, with the files named, and the orchestrator checks it too before any merge (`gh api
 repos/<repository>/compare/develop...<branch>` lists the files): it is never merged; the owner decides. Lanes that must
-change those files are Claude's. Nothing secret is ever written to a repository.
+change those files are the trusted builder's ("Who does what"). Nothing secret is ever written to a repository.

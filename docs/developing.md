@@ -24,11 +24,13 @@ be deleted. `tools/dev/crop.js` and `tools/dev/montage.js` make them.
 
 ## GitHub: the REST calls, Dependabot and CodeQL
 
-Cloud sessions can't use GitHub's GraphQL API, so `gh pr create`, `gh pr view` and `gh pr ready` fail. Use the REST API:
+Claude's cloud sessions can't use GitHub's GraphQL API, so `gh pr create`, `gh pr view` and `gh pr ready` fail there,
+and they use the REST calls below. Where GraphQL works, `gh pr ready <n>` marks a draft ready; the `ccr/ready_for_review`
+route below is Claude's cloud proxy's, not GitHub's REST API.
 
 ```bash
 gh api repos/HaakTuah/barkstreet-snakes/pulls -f title=... -f head=<branch> -f base=develop -f body=...  # add -F draft=true for a draft
-gh api -X POST repos/HaakTuah/barkstreet-snakes/pulls/<n>/ccr/ready_for_review                          # mark a draft ready (starts Codex's security review)
+gh api -X POST repos/HaakTuah/barkstreet-snakes/pulls/<n>/ccr/ready_for_review                          # mark a draft ready, in Claude's cloud sessions (starts the security review)
 gh api -X PUT repos/HaakTuah/barkstreet-snakes/pulls/<n>/merge -f merge_method=merge                    # merge into develop
 gh api repos/HaakTuah/barkstreet-snakes/pulls/<n> --jq '{state, merged}'                                 # was it merged?
 gh api "repos/HaakTuah/barkstreet-snakes/pulls?state=open&base=main&head=HaakTuah:develop" --jq '.[0].number'  # the open milestone PR
@@ -37,7 +39,7 @@ gh api "repos/HaakTuah/barkstreet-snakes/pulls?state=all&base=main&head=HaakTuah
 
 **Dependabot's security PRs** are the one other way into `main`, under the five conditions in `SECURITY.md`, point 4.
 **Its version updates** (`.github/dependabot.yml`: weekly, grouped, each release a week old) aim at `develop` and are
-ordinary small PRs: the next free lane takes one, runs the checks, gets Codex's review, reads the release notes for
+ordinary small PRs: the next free lane takes one, runs the checks, gets its code review, reads the release notes for
 breaking changes, and merges it, or closes it with the reason.
 
 **The tools' packages** (TypeScript, Playwright) are in `tools/package.json` and its lock, at exact versions: the one
