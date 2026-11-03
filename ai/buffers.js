@@ -84,12 +84,10 @@ function ensureBuffers(N) {
 }
 
 // Where each snake's territory search starts, for up to `n` snakes.
-// (And coughs: how many of each rival's next moves eat nothing.)
-let ownersCap = 0, srcI, srcT, srcOwn, coughs, headX, headY;
+let ownersCap = 0, srcI, srcT, srcOwn, headX, headY;
 function ensureOwners(n) {
   if (n <= ownersCap) return;
   ownersCap = n;
-  coughs = new Int32Array(n);
   headX = new Int32Array(n); // (the rivals' heads where I reckon they are now, for the beetle)
   headY = new Int32Array(n);
   srcI = new Int32Array(n);
