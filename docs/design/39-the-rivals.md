@@ -7,9 +7,9 @@ in `docs/archive/design-rivals.md`). Elsewhere: what they do with food and beetl
 "Rivals see food as it is"), with the woodpecker ("The rivals tell a mark from a hole" in `38-the-woodpecker.md`),
 with fire, head-ons and their own beads (`41-crashes.md`), with each move (`40-powers-and-moves.md`); the power styles'
 measure ("Balance targets" in `29-round-six-b-the-new-moves.md`); their looks (`03-the-snake-as-a-character.md`); their
-lines (`09-voice-and-copy.md`, `13-lines-and-announcements.md`, `19-looks-and-lines.md`, and Star's voice in
-`26-round-five-star.md`); Capricious, Copycat and Wildcard (`35-capricious-copycat-and-wildcard.md`); Sovereign's
-realm and Colonist's flags, and a pecked flag (`44-realms-and-colonies.md`); the tools that time and measure them
+lines (`09-voice-and-copy.md`, and the chatter, with Star's voice, in `13-lines-and-announcements.md`); Capricious,
+Copycat and Wildcard (`35-capricious-copycat-and-wildcard.md`); Sovereign's realm and Colonist's flags, and a pecked
+flag (`44-realms-and-colonies.md`); the tools that time and measure them
 (`28-the-rivals-think-faster-round-six-as-optimization.md`); and how each round measured them ("Round four, measured"
 in `25-round-four-measured.md`, "Round five, measured" in `26-round-five-star.md`, "Round six A, measured" in
 `27-round-six-a-fairness-and-fixes.md`).
@@ -209,7 +209,7 @@ shape, so its coil is gentle and its caution and appetite low (`headRisk` 800, `
 
 The owner's idea: the rainbow body, dropped before, given to a new rival, a star with a rainbow following it, inspired
 by the stars of the original Paper Mario (its look and tell: "Star" in `03-the-snake-as-a-character.md`; its voice:
-"Its voice" in `26-round-five-star.md`). *Why it belongs:* every rival prices jumps and flashes the same way, and Star
+"Star's voice" in `13-lines-and-announcements.md`). *Why it belongs:* every rival prices jumps and flashes the same way, and Star
 is the first whose whole character is the powers, a power addict that jumps and flashes as often as it can, so it
 shows what they can do; a shooting star dragging a rainbow is the most natural home the rainbow has had.
 

@@ -281,7 +281,7 @@ The sound topic is `21-sound.md` ("Round six A's cues", "The woodpecker's drum i
   bead was never its meal, so then the next nearest head was after it; when you were the one after it, nobody speaks
   for you. Never for a mushroom or what the bird ate; a knocked beetle caught within 4 cells counts.
 - **No rival announces its fair play:** the lesson does (a chatter test keeps it so).
-- Sovereign and Colonist mind their land pecked full of holes (`19-looks-and-lines.md`, "Land lines").
+- Sovereign and Colonist mind their land pecked full of holes (`13-lines-and-announcements.md`, "Land lines").
 
 ### Online
 
