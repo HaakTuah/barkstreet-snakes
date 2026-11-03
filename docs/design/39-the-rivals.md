@@ -132,11 +132,12 @@ spit flies along the line" in `40-powers-and-moves.md`. Desperate, it takes no s
 Each power is weighed as a move in the rival's own search, from where the power leaves it and to the same horizon, plus
 what it eats on the way, less the risk where it ends and a price in apples (what an apple is worth to it now), and
 pressed only when it beats crawling (`powerPick` in `ai/powers.js`):
-- *The plain flash:* two apples, or one to win a race for food (food a rival could reach as soon as it would crawl
+- *The plain flash and jump* spend one stamina (2u), priced by what they take of it: see `ai/powers.js`.
+- *The plain flash:* its price, or half to win a race for food (food a rival could reach as soon as it would crawl
   there, but not as soon as it flashes) or to get out of a crash. Weighed the way the rival would crawl anyway (any way,
   out of a crash; the hunters and the aggressive, a cut to the side too).
-- *The plain jump:* out of a crash or a box, to another island, or to come down on food or just short of it, priced at
-  1.5 apples (`LEAP_COST` and a rest).
+- *The plain jump:* out of a crash or a box, to another island, or to come down on food or just short of it, at its
+  price.
 - *Golden jumps:* whenever one pays, at a third of an apple (0.35).
 - *Golden dashes:* 0.6 of an apple, pressed out of a trap or for a cut that puts a rival out.
 - Desperate, every power is half the price.

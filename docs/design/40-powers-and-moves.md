@@ -107,11 +107,13 @@ hop rarely reaches the next island across a hollow.
 - **It waits:** a press waits up to `LEAP_WINDOW` (5) moves for something to hop and somewhere to land within reach,
   and isn't spent on open ground ("Too early: a jump waits 5 moves, then gives up."; "Nothing to jump. Jumps clear a
   snake, a hole or fire.").
-- **It costs** the tip of your tail (`LEAP_COST` 1, so it needs more than `MIN_LENGTH`), then rests
-  `LEAP_COOLDOWN_MS` (4 s). A leap is a crash you saw coming, traded for one segment instead of three and a stun.
+- **It costs** its share of the one stamina (`JUMP_STAMINA_MS`; "One stamina for jump and dash",
+  `37-one-stamina.md`), and nothing off your tail (before 2u: the tip of it, and a 4 s rest of its own). A leap is a
+  crash you saw coming, traded for stamina instead of three segments and a stun.
 - *The cue:* the landing cell gets a ring while the jump waits; the flight is the arch, shadow and dust of "Bridges and
-  jumps you can see" (`03-the-snake-as-a-character.md`). While it rests, the left half-ring round your head (in sky)
-  fills; when it's back, one bright flick and a wooden tick.
+  jumps you can see" (`03-the-snake-as-a-character.md`). The stamina ring round your head (see "One stamina for
+  jump and dash") has a sky notch at a jump's worth; when the stamina is back up to it, one bright sky flick and a
+  wooden tick.
 - *The lessons:* your first jump, "Hup! A jump costs your tail tip, then a short rest."; the first time you're boxed in
   with a jumpable gap, "Space hops up to three cells. Hop the gap!" ("Tap to hop up to three cells. Hop the gap!" on a
   phone).
@@ -222,12 +224,14 @@ a leap now down on it, puts the flier out (it comes down on a body).
 
 ### A flash for everyone
 
-Everyone can flash: **two cells in one tick, along the ground, free, then a rest** (`FLASH_LENGTH` 2, `FLASH_COST` 0,
-`FLASH_COOLDOWN_MS` 12 s). It eats what it passes. It goes the next tick the snake moves on the ground (in the air,
-once it's down). *Why free:* a flash that cost a tail segment made rounds longer and starved snakes, in simulation.
-- *The cue:* ember speed lines either side, thinner and shorter than a golden flash's. While it rests, the right
-  half-ring round your head fills; when it's back, a small ember spark.
-- *The Field guide's Dash row:* "E, Shift or a right-click on the log: two cells in a blink, free. Then it rests 12 s."
+Everyone can flash: **two cells in one tick, along the ground, for its share of the one stamina** (`FLASH_LENGTH` 2,
+`DASH_STAMINA_MS`; before 2u it rested 12 s on its own). It eats what it passes. It goes the next tick the snake moves
+on the ground (in the air, once it's down). *Why no tail:* a flash that cost a tail segment made rounds longer and
+starved snakes, in simulation.
+- *The cue:* ember speed lines either side, thinner and shorter than a golden flash's. The stamina ring has an ember
+  notch at a flash's worth; when the stamina is back up to it, an ember flick and a small spark.
+- *The Field guide's Dash row:* "E, Shift or a right-click on the log: two cells in a blink, for two thirds of your
+  stamina." (the share is written from `tuning.js`)
   (On a phone: "A swipe the way you’re going".)
 - *The sound:* a short whoosh of air, lighter than a golden flash's zip.
 - *The rivals* flash through the same call (`memory.flash`: `flash()`), weighed in their own search
@@ -412,8 +416,8 @@ else is pushed aside by a head.
 
 Everything here crosses to a friend's screen (protocol 22; `VERSION` in `online.js` lists each bump): a power press is its own message
 (`{t:'pow', k}`: `'leap'`, `'flash'`, `'unleap'`, a jump a finger held still asked for, taken back, and `'letgo'`, a
-jump let go); each snake's row carries its golden charges (`leaps`, `dashes`), its rests (`leapReadyAt`,
-`flashReadyAt`), a waiting press (`leapArmed`, `flashArmed`), its wrap (`wrapUntil`), its stun and burn, its flight
+jump let go); each snake's row carries its golden charges (`leaps`, `dashes`), its stamina (`restedAt`, protocol
+25), a waiting press (`leapArmed`, `flashArmed`), its wrap (`wrapUntil`), its stun and burn, its flight
 (`flight`, `land`, `airLeft`, `airGold`, and the ring, `ring` and `ringIn`) and its cheek (`cheek`, `spitAt`); and the
 events carry leaps (golden, how far, a leap now), dashes (plain or golden), fizzles (a press that couldn't go), cuts,
 douses, crashes (a failed flash's, and one in the air, say so), squashes and spits (where it came down, whom it hit,
