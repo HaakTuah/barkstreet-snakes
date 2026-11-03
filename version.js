@@ -9,6 +9,7 @@
 window.SnakeVersion = {
   build: 'dev',
   news: [
+    { on: '2026-11-03', line: 'Gold portals: dive off an edge, anyone may follow.' },
     { on: '2026-11-02', line: 'Hunger warns you in time, even in the snow.' },
     { on: '2026-11-02', line: 'Golden flights fly 5; rivals take your landing!' },
     { on: '2026-11-02', line: 'Going Back no longer brings the same rivals twice.' },
