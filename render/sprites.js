@@ -106,7 +106,7 @@ const GUIDE = {
   },
   land: g => { guideCells(GUIDE_LAND); g.translate(-12 * CELL, -12 * CELL); paintLand(g, null, guideMask, guideNone, '#2563eb', 0, NO_HOLES); },
   held: g => guideSnake(g, '#2563eb', false, (x, y) => drawPips(x, y, Math.PI, CELL * 0.54, 0, 1, 1, false)),
-  rests: g => guideSnake(g, '#4ade80', true, (x, y) => { const rr = CELL * 0.84; restHalf(x, y, rr, -1, 0.6, SKY); restHalf(x, y, rr, 1, 0.3, EMBER); }),
+  rests: g => guideSnake(g, '#4ade80', true, (x, y) => restRing(x, y, CELL * 0.84, 0.5, 1)),
   squash: g => { // (round six B: your own bead squashed flat behind your head, a smear in its colour with a splat round it)
     const c = CELL;
     g.save(); g.scale(1.6, 0.55); g.translate(c * 0.55, 0); drawBead(g, '#4ade80|'); g.restore();

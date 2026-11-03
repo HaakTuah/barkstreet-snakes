@@ -39,17 +39,23 @@ function flightRing(game, s) {
 function flash(game, s) {
   if (s?.alive) s.flashArmed = Math.max(game.tick, s.stunUntil); // (stunned: when it moves again)
 }
+// One stamina for both plain powers (2u): s.restedAt, when its bar is full
+// again (game time), so how much is spent is how long till then, in ms of
+// refill. A plain power goes with its share (JUMP_STAMINA_MS or
+// DASH_STAMINA_MS) in the bar, and spending it pushes restedAt on by that.
+const spent = (game, s) => Math.max(0, s.restedAt - game.time);
+const staminaIn = (game, s, cost) => Math.max(0, spent(game, s) - (T.STAMINA_MS - cost));
+function tire(game, s, cost) { s.restedAt = Math.max(s.restedAt, game.time) + cost; }
 // How long until it can jump, or flash (ms; 0: now), golden charges included.
-const leapIn = (game, s) => s.leaps > 0 ? 0 : s.body.length <= T.MIN_LENGTH ? Infinity : Math.max(0, s.leapReadyAt - game.time);
-const flashIn = (game, s) => s.dashes > 0 ? 0 : T.FLASH_COST > 0 && s.body.length <= T.MIN_LENGTH ? Infinity : Math.max(0, s.flashReadyAt - game.time);
+const leapIn = (game, s) => s.leaps > 0 ? 0 : staminaIn(game, s, T.JUMP_STAMINA_MS);
+const flashIn = (game, s) => s.dashes > 0 ? 0 : staminaIn(game, s, T.DASH_STAMINA_MS);
 // A leap, the island hop: up over what's right in front (a body, a hole or
 // fire), and on over up to LEAP_REACH cells of it, a cell a tick, coming
 // down on the first free cell beyond (none of those) the tick after: over
 // three, it's up three ticks and lands on the fourth. Only if there's
 // somewhere to land within reach, on the board. Its body follows its
-// head's path, over what it hopped. The plain leap costs the tip of its
-// tail (it needs more than MIN_LENGTH) and needs a moment before the
-// next; golden ones are the same hop, free.
+// head's path, over what it hopped. The plain leap takes its share of the
+// stamina; golden ones are the same hop, free.
 function hop(game, s) {
   const path = hopPlan(game, s);
   if (path) return leapGo(game, s, path);
@@ -58,14 +64,14 @@ function hop(game, s) {
   const c = ahead(game, s, s.body[0].x, s.body[0].y, s.dir);
   if (!inside(c.x, c.y)) { game.events.push({ type: 'fizzle', snake: s, why: 'landing', x: c.x, y: c.y }); s.leapArmed = -1; return; } // (the edge: nothing to hop, nowhere to land)
   if (hurdle(game, c)) {
-    const why = s.leaps > 0 || game.time >= s.leapReadyAt ? (s.body.length <= T.MIN_LENGTH && !s.leaps ? 'small' : 'landing') : s.body.length <= T.MIN_LENGTH ? 'small' : 'resting';
+    const why = leapIn(game, s) === 0 ? 'landing' : 'resting';
     game.events.push({ type: 'fizzle', snake: s, why, x: c.x, y: c.y });
     s.leapArmed = -1;
   }
 }
 // Could it leap now? Golden, or the plain one if it's ready. Its way, or null.
 function hopPlan(game, s) {
-  return s.leaps > 0 || (game.time >= s.leapReadyAt && s.body.length > T.MIN_LENGTH) ? leapPath(game, s) : null;
+  return leapIn(game, s) === 0 ? leapPath(game, s) : null;
 }
 // A flash asked for with a jump (p: its plan): if it would stop at a hurdle
 // (run into it, or blow up in it: not a snake one thick a dash cuts, nor
@@ -78,7 +84,7 @@ function jumpFor(game, s, p) {
   const k = p.cells.length - 1, end = p.cells[k];
   if (!inside(end.x, end.y) || !hurdle(game, end) || !p.stop) return -1;
   if (p.cells.slice(0, k).some(c => hurdle(game, c)) || s.leapArmed < game.tick + k) return -1;
-  if (!(s.leaps > 0 || (game.time >= s.leapReadyAt && s.body.length > T.MIN_LENGTH))) return -1;
+  if (leapIn(game, s) > 0) return -1;
   for (let c = end, i = 0; i < T.LEAP_REACH; i++) {
     c = ahead(game, s, c.x, c.y, s.dir);
     if (!inside(c.x, c.y)) return -1;
@@ -160,10 +166,7 @@ function flyOn(game, s, f) {
 function leapGo(game, s, path) {
   const golden = s.leaps > 0, reach = path.length - 1;
   if (golden) s.leaps--;
-  else {
-    s.leapReadyAt = game.time + T.LEAP_COOLDOWN_MS;
-    for (let n = 0; n < T.LEAP_COST; n++) trim(s);
-  }
+  else tire(game, s, T.JUMP_STAMINA_MS);
   s.next = path[0];
   s.air = true;
   // (held: a golden one flies on while the jump's held; flown: the cells it's been in the air over; path: their keys, its lifted body's)
@@ -172,7 +175,7 @@ function leapGo(game, s, path) {
   game.events.push({ type: 'leap', snake: s, x: path[0].x, y: path[0].y, gold: golden ? 1 : 0, reach, ...(path.now ? { now: 1 } : {}) });
 }
 // A flash asked for, as it would go on the board before any power moves:
-// { s, why, x, y } if it can't go (resting, or too small), else { s, gold,
+// { s, why, x, y } if it can't go (resting), else { s, gold,
 // cells: the way it goes, ending where its head goes (or what it runs
 // into, or blows up at), solid: what it runs into in each of them (a body
 // it can't cut), boom, fail, stop, cuts, douse }.
@@ -193,10 +196,10 @@ function leapGo(game, s, path) {
 // it; a plain flash fails there.) stop: it ends in something it doesn't
 // get through (a failed one, a blown-up one, or into fire).
 function flashPlan(game, s) {
-  const gold = s.dashes > 0, small = !gold && T.FLASH_COST > 0 && s.body.length <= T.MIN_LENGTH;
-  if (small || (!gold && game.time < s.flashReadyAt)) {
+  const gold = s.dashes > 0;
+  if (flashIn(game, s) > 0) {
     const c = ahead(game, s, s.body[0].x, s.body[0].y, s.dir);
-    return { s, why: small ? 'small' : 'resting', x: c.x, y: c.y };
+    return { s, why: 'resting', x: c.x, y: c.y };
   }
   const p = { s, gold, cells: [], solid: [], boom: false, fail: false, stop: false, cuts: [], douse: [] };
   const cutFrom = new Map(); // (a snake it cuts on the way, and where: the rest of it is falling off)
@@ -289,10 +292,7 @@ function flashGo(game, p, cuts) {
   s.flashArmed = -1;
   if (p.why) { game.events.push({ type: 'fizzle', snake: s, why: p.why, x: p.x, y: p.y, flash: 1 }); return false; }
   if (p.gold) s.dashes--;
-  else {
-    s.flashReadyAt = game.time + T.FLASH_COOLDOWN_MS;
-    for (let n = 0; n < T.FLASH_COST; n++) trim(s);
-  }
+  else tire(game, s, T.DASH_STAMINA_MS);
   const from = s.body[0], last = p.cells.length - 1;
   for (let i = 0; i < last; i++) {
     advance(s, p.cells[i]);

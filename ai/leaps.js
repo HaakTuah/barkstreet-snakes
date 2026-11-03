@@ -102,7 +102,6 @@ function landOpt(d, span, golden, now) {
     if (!(past >= 0 && meal(past, down + 1)) && !(habit.jumpAny && reach[framed[land]] > down)) return null;
   }
   let L = me.body.length, g = me.grow;
-  if (!golden) for (let n = 0; n < TUNE.LEAP_COST; n++) { if (g > 0) g--; else L--; }
   for (let i = 0; i <= span; i++) { if (g > 0) g--; else L--; L++; }
   const nb = bodies[down];
   for (let j = 0; j < L; j++) {
@@ -203,17 +202,16 @@ function islandGain(land) {
 // 2r, no hop onto a doomed island: where I'd come down is another
 // piece of log (not joined to mine) with less free room than my
 // length, and I can't jump off it again (a hop from its rim to other
-// log, with my jump rested before I've filled it up). The owner (30
+// log, with a jump's worth of stamina back before I've filled it up). The owner (30
 // October 2026): "I see snakes jumping onto small islands where they
 // have no chance to survive for very long". The moves I'd live there,
 // or -1 if it isn't doomed.
 function doomed(land, span, golden) {
-  const L = me.body.length - (golden ? 0 : TUNE.LEAP_COST);
+  const L = me.body.length;
   const room = landFree(land, L), stampS = markStamp, cells = landCells;
   if (room >= L || visited[myHead.y * N + myHead.x] === stampS) return -1;
-  if (!(golden && me.leaps > (air ? 0 : 1)) && L - TUNE.LEAP_COST <= TUNE.MIN_LENGTH) return room; // (too short for the plain jump off)
   const tickMs = Math.max(TUNE.MIN_TICK, TUNE.START_TICK - (TUNE.START_TICK - TUNE.MIN_TICK) * (view.timeMs || 0) / TUNE.RAMP_MS);
-  const rest = golden ? (me.leaps > (air ? 0 : 1) ? 0 : me.leapRest || 0) : TUNE.LEAP_COOLDOWN_MS; // (from when it takes off)
+  const rest = golden ? (me.leaps > (air ? 0 : 1) ? 0 : Math.max(0, TUNE.JUMP_STAMINA_MS - me.stamina)) : Math.max(0, 2 * TUNE.JUMP_STAMINA_MS - me.stamina); // (till a jump's worth of stamina is back, from when it takes off: this one's spent, if plain)
   if (rest / tickMs - (span + 1) + 1 >= room) return room; // (its rest left once down, and a move to hop off: it fills the island first)
   for (let q = 0; q < cells; q++) for (let k = 0; k < 4; k++) { // (a hop off: from a cell of it, over 1 to LEAP_REACH cells of holes, onto other log)
     let j = nbr[4 * queue[q] + k], over = 0;

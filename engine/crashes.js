@@ -54,14 +54,11 @@ function recoil(game, s, shut) {
   }
   return best;
 }
-// Facing what it hit, with a power asked for: why it can't go ('resting',
-// 'small' or 'landing'), or null if it can. A jump needs to be ready (or
+// Facing what it hit, with a power asked for: why it can't go ('resting'
+// or 'landing'), or null if it can. A jump needs to be ready (or
 // golden), and somewhere to land.
 function leapWontGo(game, s) {
-  if (!(s.leaps > 0)) {
-    if (s.body.length <= T.MIN_LENGTH) return 'small';
-    if (game.time < s.leapReadyAt) return 'resting';
-  }
+  if (leapIn(game, s) > 0) return 'resting';
   for (let c = ahead(game, s, s.body[0].x, s.body[0].y, s.dir), i = 0; i < T.LEAP_REACH; i++) {
     c = ahead(game, s, c.x, c.y, s.dir);
     if (!inside(c.x, c.y)) break;
@@ -76,8 +73,7 @@ function leapWontGo(game, s) {
 // it goes, and meets what it meets.
 function flashWontGo(game, s, shut) {
   const golden = s.dashes > 0, first = ahead(game, s, s.body[0].x, s.body[0].y, s.dir);
-  if (!golden && T.FLASH_COST > 0 && s.body.length <= T.MIN_LENGTH) return 'small';
-  if (!golden && game.time < s.flashReadyAt) return 'resting';
+  if (flashIn(game, s) > 0) return 'resting';
   if (shut && s.bounce.x === first.x && s.bounce.y === first.y) return 'landing';
   if (golden) for (let c = first, i = 1; i <= T.DASH_LENGTH; i++, c = ahead(game, s, c.x, c.y, s.dir)) if (!inside(c.x, c.y) || game.holes.has(key(c.x, c.y))) return 'landing';
   const owner = c => leavingNow(game, c.x, c.y) ? null : game.snakes.find(o => o.alive && o.body.some(b => b.x === c.x && b.y === c.y));
