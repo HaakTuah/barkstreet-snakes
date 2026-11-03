@@ -1,6 +1,6 @@
 // What net.js and online.js see of the rest of the page, for `tsc --noEmit -p jsconfig.json`
 // (a check only: nothing here is shipped or loaded). Hand-written, and only the fields
-// online.js reads or writes: engine.js itself isn't annotated. A field online.js starts
+// online.js reads or writes: the engine itself isn't annotated. A field online.js starts
 // reading goes in here too, or the check fails.
 
 declare namespace Engine {
@@ -61,6 +61,8 @@ declare namespace Engine {
   /** A beetle underground. */
   interface Under { until: number; expires: number; from: number; gold: boolean }
   interface Burrow { x: number; y: number; at: number; used?: number; dug?: number | boolean; shutFrom?: number; shutAt?: number }
+  /** A gold portal (round six B, part 5): the entry, the way through it, the exit, whose, and when it shuts (0: its owner's body is still through it). */
+  interface Portal { x: number; y: number; dx: number; dy: number; tx: number; ty: number; owner: number; shutAt: number; followed?: number[] }
   interface Fire { from: number; until: number; strike: boolean; ember?: boolean; group: number }
   interface Weather { kind: string; since: number; until: number }
   interface Woodpecker {
@@ -72,7 +74,7 @@ declare namespace Engine {
     fall?: number[];
   }
 
-  /** The engine's events, as engine.js lists them above step(): just the fields online.js reads. */
+  /** The engine's events, as engine/step.js lists them above step(): just the fields online.js reads. */
   type Event =
     | { type: 'eat'; snake: Snake; kind: string; x: number; y: number; color?: string; cooked?: Flag; gold?: Flag }
     | { type: 'death'; snake: Snake }
@@ -87,6 +89,8 @@ declare namespace Engine {
     | { type: 'knock'; kind: string; x: number; y: number; tx?: number | null; ty?: number | null; gold?: Flag; color?: string }
     | { type: 'dig'; x: number; y: number; until: number }
     | { type: 'shut'; x: number; y: number; at: number }
+    | { type: 'portal' | 'through'; snake: Snake; x: number; y: number; tx: number; ty: number; owner?: number }
+    | { type: 'portalShut'; x: number; y: number; tx: number; ty: number }
     | { type: 'dive' | 'burrow'; x: number; y: number; dug?: Flag }
     | { type: 'weather'; kind: string }
     | { type: 'ember'; x: number; y: number; fx: number; fy: number }
@@ -107,6 +111,7 @@ declare namespace Engine {
     unders?: Under[];
     woodpecker: Woodpecker | null;
     burrows: Burrow[];
+    portals: Portal[];
     /** By cell. */
     fires: Map<number, Fire>;
     weather: Weather;

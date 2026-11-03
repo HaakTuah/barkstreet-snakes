@@ -8,7 +8,7 @@ when it is merged into `develop`; add the owner's new tasks where he places them
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
 **2 November 2026, a fresh week:** the main lane is part 4 (#198, merged as it stands so the owner can play it), then
-2y (done, PR #373; the flight’s question is #399), then 2y+ (split `ai.js` and `engine.js`), then part 5 (#202, unparked: the wrap's trade-off), then 2x, then 2z, then 2u; the polish
+2y (done, PR #373; the flight’s question is #399), then 2y+ (done: `ai/` and `engine/`, PRs #406, #408, #407), then part 5 (done, PR #202; its finding is #447), then 2x, then 2z, then 2u; the polish
 lane and the workshop lane run beside it, each claimed by a draft PR.
 
 ## For the owner
@@ -25,6 +25,33 @@ A side lane of small refinements, beside the AI and engine lane and never ahead 
 we add a polish point to each that it can spend the last credits on also?" and, to the design session's shape of it,
 "Yes, and make things as refined as possible!"). Taken when the main lane's current entry is merged or parked, and on
 the second account until its usage is spent; on the main account the brake closes it first (from about 85%).
+- **First: the slop audit** (the owner, 2 November 2026: "Are these 2 games ai sloppy?", then "Yes, please,
+  expertly!"). Everything a player reads, checked by fresh eyes for the tells of machine-written text, before the
+  writing pass at the end, which still comes:
+  1. **Scope:** every voice's chatter, impressions, moments and talk (`chatter/`), each rival's blurb, the lessons, the
+     Field guide, banners, cards, menus, the news lines and the README's player text.
+  2. **A fresh-eyes reviewer** (a helper given only the text and this brief, Opus at high effort) reads each voice or
+     screen whole and lists its worst lines, each with the tell: one sentence shape filled in again and again (as in
+     Capricious's "Sunshine! I love sunshine! Today." and its siblings), filler and hedging, clichés, every line
+     exclaimed, two voices that sound alike, the same joke twice, lines too long to read in play.
+  3. **The builder rewrites them** in each character's own voice, keeping every trademark and line count's purpose;
+     the PR shows ten lines before and after, so the owner can set the bar.
+  4. **A cheap guard after:** a test that fails when too many lines in one voice share one shape (the same opening
+     words and punctuation), so the formula cannot creep back.
+  Each kind of text is reviewed as every review is ("Reviews" in `docs/claude-and-codex.md`); here a 10 means
+  nothing reads machine-made, every voice is its own and no formula repeats. The owner's read of the ten lines before
+  and after is the final word. One PR per voice group or screen, in this lane.
+  *Done so far* (3 November 2026), one line a merge:
+  - Capricious, Metagamer and Star: the "X! I love X!" template, the colon log lines and "in my day" thinned (PR #438).
+  - Sovereign, Colonist and Desperado: "royal X", "I say", "partner" and "Yeehaw" thinned; the two posh voices apart (PR #439).
+  - Ouroboros, Joker and Sniper: "again", knock-knock and "Target X" thinned; Sniper's "whoppertunity" kept (PR #441).
+  - Creeper, Gobbler, Vulture and Mute: light touches where each repeated itself (PR #442).
+  - The banners and cards: the deflating tag ("X. For now.") and the repeated jokes gone (PR #443).
+  - The lessons and the Field guide: terse lessons and subjectless rows read straight, rules unchanged (PR #445).
+  - The guard: the chatter suite fails a voice with more than four lines of one shape (this PR).
+  *Left:* the menus, the news lines and the README's player text; the guide's Burrows, Jump, Cuts and Golden beetle rows
+  and one name for each thing (hole, pit or gap; jump, hop or leap; the rings), once part 5 (#202) merges. Wildcard's
+  and Mason's protected lines stay as they are; the Chinese is rewritten with each changed line.
 - **What belongs:** whatever makes the game feel finished without changing how it plays: things drawn wrong, out of
   place, overlapping, flickering or cut off; the same thing drawn, named or worded differently in two places (a
   rival's colours, a move's name in the lesson and the Field guide); layout at 390 px and desktop, phone held upright and
@@ -46,6 +73,15 @@ and the owner's notes of 2 November, among them).
 
 ## The workshop lane (splits by meaning, leftovers, the file-by-file review)
 
+- **After part 5 merges:** remove `coughs` from `ai/` (nobody coughs: `ai/evaluate.js`, `ai/room.js`, `ai/buffers.js`),
+  fingerprint-identical. It waits for part 5 (#202), which may change those files.
+- *Done:* the woodpecker's two unplayed cues removed (`audio/cues.js`, `audio/sound.js`; PR #434).
+- *Done:* the workshop check's point (2): `AGENTS.md` from 21.5 to 20.0 KB, every rule kept; the workshop check's marks
+  moved to `docs/orchestrating.md`, the file table's detail to `docs/developing.md` (PR #420).
+- *Done:* the render suite's virtual clock starts at a fixed time, so the woodpecker's ring check (and every staged
+  check) draws at the same phase on every run, whatever the load (#424, PR #427).
+- *Done:* the input suite's "rivals have all thought" check, counted round after round to its 100-tick floor and its
+  round started on the virtual clock, so neither a short random round nor load can flip it (#414, PR #415).
 - *Done:* the layout suite in cloud sessions (#383): it never hung, it ran about 28 minutes in one process, silent
   until its end; `scripts/test.sh` now runs its five CI jobs side by side, each part's end is printed, and the banner
   probe no longer misreads a banner on its way out (PR #396).
@@ -65,14 +101,14 @@ and the owner's notes of 2 November, among them).
   and point (5), the unused-code check (PR #331):
   `docs/archive/progress-done.md`, "The split lane, done".
 - **The file-by-file review's moves:** done, a folder a PR (#341, #342, #343, #344, #345):
-  `docs/archive/progress-done.md`, "The split lane, done". Left: `render/world.js`'s part, which waits with it below;
-  `render/food.js`, 66 KB after the moves, split by meaning (its pictures, or its burrows and the beetle's bore) in a PR
-  of its own.
-- **The design by topic, not by round** (#336; the owner, 2 November 2026): each topic's current rule moves from the
-  round files into its topic file in `docs/design/`, superseded versions and measurements to `docs/archive/`. A slow
-  side lane, one topic per docs-only PR, taken when a lane is free; code comments citing a section are checked.
-- **Waiting for the main lane:** `ai.js` and `engine.js` are now the main lane's own step, 2y+; `render/world.js` (50 KB)
-  still waits for a gap. Split each in a PR of its own once the main lane merges, proven by fingerprints and suites.
+  `docs/archive/progress-done.md`, "The split lane, done". Left: `render/world.js`'s part, which waits with it below.
+  `render/food.js` split by meaning: its burrows and the beetle's bore to `render/burrows.js` (66 to 43.5 and 22.6 KB;
+  PR #421).
+- **The design by topic, not by round** (#336): *Done:* the round files are pointers and records; topics made or widened:
+  `02`–`05`, `09`, `12` (the round's arc), `13`, `21`, `22`, `30`, `31`, `33` and `38`–`45`, their history in
+  `docs/archive/design-*.md` (PR #425 to PR #451).
+- **Waiting for a gap:** `render/world.js` (50 KB), the last big file now that `ai/` and `engine/` are split (2y+). Split
+  in a PR of its own when no open lane touches it, proven by fingerprints and suites.
 
 ## The queue, in order
 
@@ -82,13 +118,6 @@ and the owner's notes of 2 November, among them).
 trademark (distance) or a fault; in the same entry, apples by the edge rotting (#324): 80% of the apples that rot lie on
 the edge row or one in, passed up by rivals whose room and margin weights count a safe edge cell against them, so it
 tests a safe-meal exception like the one by the neck (`MEAL_DAWDLE`), measured both ways; the snake that starved 4 s after its warning (#327) was a snake of 4 in snow, warned on the hunger clock: fixed in the warning (PR #397).
-
-### 2y+. Split `ai.js` and `engine.js` by meaning (the owner, 2 November 2026; the main lane, right after 2y, before part 5)
-
-Both have grown past the mark (148 KB and 136 KB) and every main-lane entry touches them, so the gap "between AI
-entries" never came. Each is split by meaning in a PR of its own (the rivals' shared template, each rival's override,
-planning, and so on for `ai.js`; the rules by system for `engine.js`), proven unchanged by the fingerprints and the
-suites, so it goes quickly and needs no head-to-head. Part 5's branch (#202) then merges the split in once.
 
 ### 2y++. The golden flight, followed up (the owner, 2 November 2026; #399 and #401; side lanes now, the last step after part 7)
 
@@ -101,12 +130,6 @@ landing is almost never contestable. The flight stays as built for now, and no r
    contested rings, as people do, against the rivals who now take landings; per use and head to head.
 3. **Measured again after 2u and part 7,** whose stamina and pricing change what a flight costs. Only if it is still
    even then does a bigger change go to the owner as a question: a longer flight, or the ring shown before take-off.
-
-### 5 (part 5). Gold portals, unparked (the owner, 2 November 2026; an engine-rules entry, right after 2y)
-
-The golden mushroom's wrap has no cost while the edges open for its holder alone, a small refuge from the edge; part 5's
-gold portals are its counterweight (anyone may follow through for about a second), so #202 comes off the shelf right
-after 2y (the owner: "Yes, expertly to all 3!"). Its spec and A/B are as entry 5 says.
 
 ### 2z. The golden apple's worth (the owner, 2 November 2026; a measurement, then an engine-rules entry if needed)
 
@@ -125,7 +148,7 @@ Taken out of 3b+ and moved to the front, since it still bites (the owner: "Still
 
 ### 5. Round six B: the new moves (DESIGN "Round six B")
 
-The golden jump that flies, leap now, gold portals, dropped charges, the spit along the line and one pricing model for every power, each its own playable PR that the rivals use well. *Done:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195). **Next, in order:** part 4 (draft PR #198, 2r folded in; the owner answered on 1 November 2026 that the moves stay as designed and the rivals are improved until their users come out ahead: the row is in `docs/archive/progress-done.md`, "For the owner, answered"), then 2x (above), then 2q (2s done, PR #289; part 4's both-ways test runs again on its log when part 4 goes on), part 3b+ (the spit flies along the line), part 5 (#202, gold portals), part 6 (built on `round6b/dropped-charges`) and part 7 (parked on `round6b/pricing`; it also fixes the trademark measures and lifts Joker into the band, see the spec); then the teaching system (item 4). Spec: `docs/handoff/queue-specs.md`, "5. Round six B: the new moves". **When part 4 merges:** run the census on seeds 3 and 11 again (`scripts/sim.sh 200 --seed 3 --census --check`): chased beetles must still get away a third to 45% of the time (2w measured it before the flight was in; `--check` fails a census outside that band).
+The golden jump that flies, leap now, gold portals, dropped charges, the spit along the line and one pricing model for every power, each its own playable PR that the rivals use well. *Done:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195). **Next, in order:** part 4 (draft PR #198, 2r folded in; the owner answered on 1 November 2026 that the moves stay as designed and the rivals are improved until their users come out ahead: the row is in `docs/archive/progress-done.md`, "For the owner, answered"), then 2x (above), then 2q (2s done, PR #289; part 4's both-ways test runs again on its log when part 4 goes on), part 3b+ (the spit flies along the line), part 5 (done, PR #202: gold portals; its finding, that following feeds but wins no places, is #447), part 6 (built on `round6b/dropped-charges`) and part 7 (parked on `round6b/pricing`; it also fixes the trademark measures and lifts Joker into the band, see the spec); then the teaching system (item 4). Spec: `docs/handoff/queue-specs.md`, "5. Round six B: the new moves". **When part 4 merges:** run the census on seeds 3 and 11 again (`scripts/sim.sh 200 --seed 3 --census --check`): chased beetles must still get away a third to 45% of the time (2w measured it before the flight was in; `--check` fails a census outside that band).
 
 ### 2r. No hop onto a doomed island (30 October 2026; part of item 5's part 4)
 

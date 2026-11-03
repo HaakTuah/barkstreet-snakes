@@ -202,7 +202,7 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   me.body = line(23, 10, 5).map(([x, y]) => ({ x, y }));
   quiet(g);
   check('...off one side, in at the other', me.alive && me.body[0].x === 0 && me.body[0].y === 10 && !g.events.some(e => e.type === 'crash'), JSON.stringify(me.body[0]));
-  me.wrapUntil = g.time;
+  me.wrapUntil = g.time; g.portals = []; // (and no gold portal left open from the last time: see 21-gold-portals.js)
   me.body = line(23, 10, 5).map(([x, y]) => ({ x, y }));
   feed(g); quiet(g);
   check('...for a while', g.events.some(e => e.type === 'crash' && e.snake === me && e.killer === 'wall'));

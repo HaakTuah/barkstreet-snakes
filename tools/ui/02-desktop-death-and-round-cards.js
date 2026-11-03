@@ -75,10 +75,10 @@ check(!p.note && !p.noted && p.title.startsWith('Ready'), 'a new card brings its
 // link still opens the guide at it, lit and in view (focus on the book's
 // Close without scrolling it back up). A crash's row is always in view.
 // (Held at 3 segments while it burns: the pilot eats, and a snake that eats as fast as it burns lives on.)
-const fire = `(() => { const g = SnakeDebug.game(), m = me(); m.burnFrom = g.tick; m.burnUntil = g.tick + 400; const hold = setInterval(() => { if (!m.alive || SnakeDebug.game() !== g) return clearInterval(hold); m.body.length = Math.min(m.body.length, 3); m.grow = 0; }, 5); return 1; })()`;
+const fire = `(() => { const g = SnakeDebug.game(), m = you(); m.burnFrom = g.tick; m.burnUntil = g.tick + 400; const hold = setInterval(() => { if (!m.alive || SnakeDebug.game() !== g) return clearInterval(hold); m.body.length = Math.min(m.body.length, 3); m.grow = 0; }, 5); return 1; })()`;
 await fresh(['ouroboros', 'metagamer', 'gobbler']);
 await ev(fire);
-await wait(`cardUp() && !me().alive`);
+await wait(`cardUp() && !you().alive`);
 await b.sleep(900);
 p = await P();
 check(p.how === 'Field guide: Fire', 'burned up: your death’s card says Field guide: Fire', p.how);

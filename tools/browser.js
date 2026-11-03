@@ -172,7 +172,7 @@ window.waitFor = (cond, ms = 60000) => new Promise((res, rej) => {
   (function check() { let v; try { v = cond(); } catch (e) { return rej(e); } if (v) return res(v); if (performance.now() - t0 > ms) return rej(new Error('timeout: ' + cond)); setTimeout(check, 10); })();
 });
 window.cardUp = () => !document.getElementById('overlay').classList.contains('hidden');
-window.me = () => SnakeDebug.game().snakes[0];
+window.you = () => SnakeDebug.game().snakes[0];
 window.running = () => waitFor(() => SnakeDebug.state() === 'running');
 'ok'`;
 

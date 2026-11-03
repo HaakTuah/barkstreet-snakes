@@ -129,7 +129,7 @@ const pocket = await ev(`(() => {
 })()`);
 check(pocket === JSON.stringify({ coil: false, trap: true }), 'the tail-drop lesson: not for a coil whose tail frees the way in time, but for a real pocket', pocket);
 
-{ // 2s: the lesson, "Cut loose, it falls!", goes up the first time a mark cuts a piece of log loose (on the aim; with
+{ // 2s: the lesson, "The shaded piece is cut loose…", goes up the first time a mark cuts a piece of log loose (on the aim; with
   // the banner busy, on the strike).
   const r = await inTurn(async () => {
     await ev(`(() => { const t = SnakeDebug.game().told; if (t) delete t.cutLoose; return 'ok'; })()`);
@@ -137,5 +137,5 @@ check(pocket === JSON.stringify({ coil: false, trap: true }), 'the tail-drop les
     await toTick();
   }, 1500);
   const cut = await ev('SnakeDebug.flavor().cutLoose');
-  check(r.shown.some(s => s.text === cut), 'the first mark that cuts a piece loose puts up "Cut loose, it falls!"', JSON.stringify(r.log.map(l => [l.text, l.fate])));
+  check(r.shown.some(s => s.text === cut), 'the first mark that cuts a piece loose puts up "The shaded piece is cut loose…"', JSON.stringify(r.log.map(l => [l.text, l.fate])));
 }

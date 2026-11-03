@@ -3,7 +3,7 @@
 
 // ------------------------------------------------- size and motion
 
-Render.init({ canvas: canvasEl, personas: CAST, birdLayer: $('bird-layer') });
+Render.init({ canvas: canvasEl, birdLayer: $('bird-layer') });
 // Where the board is on the page (the woodpecker perches beside it, on its own layer).
 // ...and how far the free page runs round it before the tags, the speed
 // buttons, the chatter or the header (no perching on those), inside the

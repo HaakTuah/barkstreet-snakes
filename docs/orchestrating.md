@@ -15,7 +15,8 @@ to tell it. The same wake reads `docs/PROGRESS.md`'s diff since it last looked: 
 added or moved, an answer of the owner's, a lane opened or a bug put first), opening a lane where one is due, and skips
 the done-marks its own builders made (archive, 2 November 2026). **Its report on every wake counts the lanes:** the
 lanes open, and every independent entry it is not running, each with its reason ("waits on 2y's files" is one, none
-given is not), so a stall shows in one line.
+given is not), so a stall shows in one line, and the Codex security reviews asked since the last wake, each with its PR
+and why it qualified, so overuse shows the same night.
 
 - **28 October 2026: pipeline, don't wait.** "Yes, please, organize it expertly so we maximize token caching, time spent, and all other concerns." (to Claude's proposal; the words are in
   `docs/archive/instructions.md`). Waiting is lost time and, past an hour, a lost cache, so:
@@ -57,3 +58,11 @@ given is not), so a stall shows in one line.
      from about 90%, as "Usage" says, only small things in the main lane.
      Only the measured share counts (the owner, 29 October 2026, when a builder stopped at the app's weekly usage warning: "They weren't supposed to stop before 90%. We're still at only 76%"): the app's weekly usage warning is not the brake, and a session that cannot
      read the share carries on until the owner says to stop.
+
+## The workshop check
+
+At every milestone, say in one line of the milestone PR what slows the work as the game grows, and fix what passes its
+mark: (1) how long the checks take for a docs-only and a code PR, finding out why if either grew by over a fifth since the last check; (2) the files every session reads, `AGENTS.md`, `CLAUDE.md` and `docs/PROGRESS.md`,
+each kept under about 20 KB, with done entries and answered questions moved to `docs/archive/` and a line pointing to
+them; (3) files that should be split by meaning (`AGENTS.md`, "How to work"), each in a PR of its own with behaviour proven unchanged; (4)
+merged branches, deleted from GitHub; (5) leftovers nobody uses, archived or removed; (6) the README current.

@@ -20,8 +20,17 @@ could say. Short enough for the bubble on a phone, and no song lyrics or long qu
 | Round over | "You win!" / "{Name} wins" with the winner's punchline, without repeating the title. A win says "Won in 2:10 · score 14"; a draw says "You shared 1st" |
 | Control hints | Every item is a key and a verb. Start card: "Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click dashes · P naps · Enter starts · G opens the Field guide" (round six A put the arrows first and named the mouse; it was "Arrows or WASD steer · Space jumps · E or Shift flashes"; and H's Hall of Fame until the owner's playtest: a first-timer's is empty); under the board, "P or Esc naps · Enter starts over" instead, plus "H opens the Hall of Fame · G opens the Field guide · M mutes · N toggles the music"; beside YOU, "Arrow keys to steer (or WASD)"; touch: "Swipe to steer · Tap to jump · Swipe ahead to flash · Tap ⏸ to nap"; watching: "1, 2, 4 set the speed · P naps · Enter plays · …". A small card keeps the first three items (steer, jump, flash), the smallest (300 px) two. (Before round four: "Press ahead to leap · Space naps".) |
 | A rival's note, the guide's doors | A note: the rival's name, its line ("Chases its own tail, then moves as a ring. Mind the middle."), then what it holds ("Holding 2 golden jumps. The edges wrap for it.") or "Out of this round."; your own, your powers or "You’re out of this round."; its × says "Close the note". The guide's doors: "Field guide" (its button, and the napping card's link), "How to play" (the start card), "Field guide: Crashes" (or Hunger, Fire, Holes, Golden leaf: your death's card, what got you), and the guide's first section, "The basics" (Winning, Steering, Crashes, Hunger) |
-| Screen readers | A card is announced as sentences ("Flattened! You hit the edge at your smallest, 4th place, score 14. The log goes on. You don't. New best: 14!"), never "dot" |
+| Screen readers | A card is announced as sentences ("Flattened! You hit the edge at your smallest, 4th place, score 14. You ran out of log. New best: 14!"), never "dot" |
 | Hall of Fame | Empty: "No legends yet. Go make one." and "You haven't played yet. The log is waiting." (after a clear, "A clean slate. The log is waiting.": never "you haven't played" to someone who has). A browser that won't keep anything still has the session's rounds, and says "This browser isn't keeping records, so these last until you close the tab." What got you calls each thing by one name, on its bar and as your nemesis: "Edge & holes" and "the edge & holes", "Woodpecker" and "the woodpecker", "Hunger" and "hunger", "Fire" and "fire", "Yourself" and "yourself" |
+
+**One word for each thing.** On the page the two powers are the *jump* and the *dash*, each with its own press:
+"Space jumps", "E, Shift or right-click dashes", "Tap to jump", "Swipe ahead to dash"; a golden beetle's are *golden
+jumps* and a golden leaf's *golden dashes*. That holds in the key help, the lessons, the Field guide, the banners, the
+chatter (English and Chinese) and the README; it's been the dash since 1 November 2026 (the flash before that), and
+older notes keep the word they were written with. The rules and the code say *leap* and *dash*, and the plain one
+`flash` (some names and the Field guide's picture keys still say flash): "The words" in `40-powers-and-moves.md`. The
+edge of the log is the *edge*, never a wall. *Bonk!* is for a knock you survive; a death gets a word that means out
+("Death titles" above).
 
 **Rules for every string:**
 - One noun for the measure: **Score** (food eaten) and **Best**.

@@ -17,7 +17,7 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
     for (const s of g.snakes) {
       per[s.name] ||= {
         rounds: 0, wins: 0, placeSum: 0, eaten: 0, pellets: 0, beetles: 0, kills: 0, aliveMs: 0, deaths: {},
-        flashes: 0, jumps: 0, dashes: 0, leaps: 0, golden: 0, chokes: 0, crashes: 0, shrooms: 0, hits: 0, hitBy: 0, now: 0, bumps: 0, flown: 0, flights: 0, ringGo: 0, // (round six B: mushrooms eaten, spits that hit a head, and taken; (for --census: plain flashes and jumps, golden dashes and leaps, golden power food, own beads squashed (chokes before round six B), crashes survived)
+        flashes: 0, jumps: 0, dashes: 0, leaps: 0, golden: 0, chokes: 0, crashes: 0, shrooms: 0, hits: 0, hitBy: 0, now: 0, bumps: 0, flown: 0, flights: 0, ringGo: 0, follows: 0, followOut: 0, // (round six B: mushrooms eaten, spits that hit a head, and taken; (for --census: plain flashes and jumps, golden dashes and leaps, golden power food, own beads squashed (chokes before round six B), crashes survived)
         ...(signs ? { sig: Object.fromEntries(SIGNS.map(k => [k, 0])) } : {}),
       };
       per[s.name].rounds++;
@@ -65,6 +65,13 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
     for (const s of dying) if (/blew up/.test(s.cause || '')) c.failedGold++;
     for (const s of g.snakes) if (s.alive && !s.flight && g.holes.has(s.body[0].y * N + s.body[0].x)) { c.rideTicks++; if (!riding.has(s)) c.rides++; }
     for (const s of dying) if (riding.has(s)) { c.rideDeaths++; if (s.fatal === 'hole' || /hole/.test(s.cause || '')) c.rideFalls++; }
+    for (const e of g.events) { if (e.type === 'portal') c.portals++; else if (e.type === 'through') { c.throughs++; per[e.snake.name].follows++; if (!st.followed) { st.followed = true; c.followRounds++; } (st.thruAt ||= new Map()).set(e.snake, g.tick); (st.ownAt ||= new Map()).set(e.owner, g.tick); } }
+    for (const s of dying) { if (st.thruAt?.has(s) && g.tick - st.thruAt.get(s) <= 30) { c.throughOut++; per[s.name].followOut++; } if (st.ownAt?.has(s.id) && g.tick - st.ownAt.get(s.id) <= 30) c.ownerOut++; }
+    for (const p of g.portals) { // (a chance: a rival the edges don't wrap for, its head no farther from the entry than the moves it stays open)
+      if (!p.shutAt || (st.chanced ||= new Set()).has(p)) continue;
+      const left = Math.floor((p.shutAt - g.time) / E.tickMs(g));
+      if (g.snakes.some(s => s.alive && s.id !== p.owner && !(s.wrapUntil > g.time) && Math.abs(s.body[0].x - p.x) + Math.abs(s.body[0].y - p.y) < left)) { st.chanced.add(p); c.portalChances++; }
+    }
     beetleCensus(g, c, st, bugs);
     woodpeckerCensus(g, c, st, dying, N, T);
     if (mid) c.mealsMid += new Set(g.events.filter(e => e.type === 'eat' && e.kind !== 'mushroom').map(e => e.snake)).size;
