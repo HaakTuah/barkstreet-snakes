@@ -4,22 +4,19 @@
 `03-the-snake-as-a-character.md` under "Gold means power", "A power is one token, not a ring" and "Bridges and
 jumps you can see", and their text as it was in `docs/archive/design-looks.md`.
 
-**Reduced motion removes movement, never information.** Being in the air is a rule, so a leap keeps a still airborne pose. The woodpecker cuts between perches instead of swooping. Rain holds still rather than vanishing (it puts fire out), a burning leaf appears where it lands instead of flying, and a death is a still starburst that fades.
+**Reduced motion removes movement, never information**: its rule is in
+`02-art-direction-storybook-bark-on-a-mossy-log.md` under the same name, and its text as it was in
+`docs/archive/design-art-weather-voice.md`.
 
 **The narrator speaks less, and better**: its rules (the banner's levels, repeats, and the lessons' waiting and
 words) are in `30-teaching-by-showing.md` under the same name and "Lessons", and its text as it was in
 `docs/archive/design-teaching.md`.
 
-**One word for each thing.** The leap was *ahead*: "Press ahead to leap", "Swipe ahead to leap". Since round four the two powers are a *jump* and a *flash*, each with its own press: "Space jumps", "E or Shift flashes", "Tap to jump", "Swipe ahead to flash" (a golden beetle's are *golden jumps* and a golden leaf's *golden flashes*; the rules and the AI call them leaps and dashes). **Since 1 November 2026 the flash is the *dash*** (the owner: "dash is better actually", and "Yes, i think so", to calling it the dash wherever a player sees it): "E, Shift or right-click dashes", "Swipe ahead to dash", and a golden leaf's *golden dashes*, in the key help, the lessons, the Field guide, the banners, the chatter (English and Chinese) and the README; the notes below from before that day keep the word they were written with. The code already said dash (only some of its names and the Field guide's picture keys still say flash). The edge of the log is the *edge*, never a wall. *Bonk!* is for a knock you survive; a death gets a word that means out.
+**One word for each thing**: its rule is in `09-voice-and-copy.md` under the same name, and its text as it was, with
+the owner's words, in `docs/archive/design-art-weather-voice.md`.
 
-**Every death says why.** The engine records why a crash was fatal, and the card's first line says it:
-- boxed in ("…with nowhere to turn");
-- at your smallest;
-- the shorter one in a head-on;
-- pecked;
-- blown up.
-
-The rival's quip stays as flavour. A death that ends the round says it on the round-over card too.
+**Every death says why**: its rule is in `41-crashes.md` under the same name, and its text as it was in
+`docs/archive/design-powers.md`.
 
 **Small mercies at the keys**: its rules are in `42-controls.md` under the same name (and the tags in two rows of
 two in "What gives on the smallest screens" in `33-one-screen.md`), and its text as it was in

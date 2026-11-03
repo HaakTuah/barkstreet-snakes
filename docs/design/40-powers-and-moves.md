@@ -8,9 +8,9 @@ measured, is in `docs/archive/design-powers.md`). Elsewhere: how a held power, a
 "Bridges and jumps you can see"); how often golden food comes, and food and beetles (`04-food-and-the-world.md`: "More golden
 power food" in "Food on the log"); the woodpecker's holes
 (`38-the-woodpecker.md`); how a rival weighs a power, and the power styles and pricing still to build
-(`39-the-rivals.md`, "Rivals use their powers, when it pays"; "Every rival has a power style" and "Balance targets" in
-`29-round-six-b-the-new-moves.md`); the chosen numbers and what each move measured (round six B's "chosen numbers" in
-`29-round-six-b-the-new-moves.md`); the keys, swipes, taps and the mouse (`42-controls.md`); teaching
+(`39-the-rivals.md`, "Rivals use their powers, when it pays" and "Every rival has a power style"; "Balance targets" in
+`29-round-six-b-the-new-moves.md`); what each move measured, with the numbers chosen
+(round six B's "chosen numbers" in `docs/archive/design-powers.md`); the keys, swipes, taps and the mouse (`42-controls.md`); teaching
 (`30-teaching-by-showing.md`); Capricious, Copycat and Wildcard (`35-capricious-copycat-and-wildcard.md`); sound in
 general (`21-sound.md`); one stamina for both plain powers, to build (`37-one-stamina.md`); and crashes, head-ons,
 fire on snakes and your own beads squashed (`41-crashes.md`).
@@ -19,7 +19,7 @@ fire on snakes and your own beads squashed (`41-crashes.md`).
 
 The rules and the code say *leap* for a jump and *dash* for a golden flash; the plain flash is `flash`. On the page the
 two powers are the **jump** and the **dash** (since 1 November 2026: "One word for each thing" in
-`11-the-third-pass-what-it-settles.md`), and a golden leaf's are *golden dashes*. Below, "flash" is the plain one and
+`09-voice-and-copy.md`), and a golden leaf's are *golden dashes*. Below, "flash" is the plain one and
 "golden flash" or "dash" the golden one, as the code has them; every quoted line is the page's.
 
 ### Two powers, two presses
@@ -106,8 +106,8 @@ hop rarely reaches the next island across a hollow.
   when you took off. If the landing's been taken meanwhile, you come down on what you hopped: on a hole, in you go; on
   fire, you catch; on a body over a pit, see "A snake across a pit is a bridge"; on a body, see "Bumps in the air".
 - **It waits:** a press waits up to `LEAP_WINDOW` (5) moves for something to hop and somewhere to land within reach,
-  and isn't spent on open ground ("A bit early: a jump waits 5 moves, then lapses."; "Jumps hop over a snake, a hole or
-  fire.").
+  and isn't spent on open ground ("Too early: a jump waits 5 moves, then gives up."; "Nothing to jump. Jumps clear a
+  snake, a hole or fire.").
 - **It costs** the tip of your tail (`LEAP_COST` 1, so it needs more than `MIN_LENGTH`), then rests
   `LEAP_COOLDOWN_MS` (4 s). A leap is a crash you saw coming, traded for one segment instead of three and a stun.
 - *The cue:* the landing cell gets a ring while the jump waits; the flight is the arch, shadow and dust of "Bridges and
@@ -152,7 +152,7 @@ who never double-presses.
   the air").
 - *The cue:* a gold ring marks where you'll land, from the moment you commit, and moves only as you steer. A golden
   leap rises higher than a plain one, with a puff of gold.
-- *The lesson:* on your first golden jump, "Hold to fly 5. Steer to land!"
+- *The lesson:* on your first golden jump, "Hold the jump to fly 5 cells. Steer to land!"
 - *The Field guide's Golden beetle row:* "2 golden jumps: free, no rest. Tap for the plain hop; hold the jump and you
   fly 5 cells, always, steering in the air to land where it's safe. Hold up to 3."
 - *The rivals* plan a flight as they take off, straight or with one turn (left or right, after any number of cells):
@@ -160,13 +160,18 @@ who never double-presses.
   `flyTurn`), and the rival plans its turn again every move it's up. A leap now, a held flight and a turned one take
   off only toward a landing no rival's head could get to first; once up, a landing a rival could reach first is priced
   as a head-on, so it steers away where something better is left.
+- *What a landing is worth to a rival:* one that shuts a nearby rival in is worth apples (`shutIn`): the share of the
+  room that rival reaches in 10 moves that its landed body takes away (4 apples for all of it), and the moves it adds
+  to that rival's nearest food (2 apples at 12 moves or more); times (0.5 + its aggression, +0.5 for a hunter), its
+  victim twice, half for a rival holding a golden jump. A held flight with no other safe landing left at its last turn
+  costs `SPARE` (0.3 apples).
 
 ### Taking a landing
 
 A flier's ring is where it will come down, so anyone who gets there first, by crawling, a flash or dash through it, or
 a leap now down on it, puts the flier out (it comes down on a body).
-- *The lesson:* the first time a flier's ring is in your reach before it comes down, "Lie on its ring before it lands,
-  and it’s out!"
+- *The lesson:* the first time a flier's ring is in your reach before it comes down, "A flier lands on its ring. Get
+  there first and it’s out!"
 - *The rivals* go for a ring they can reach in time, planned from the ring as they saw it (a reaction late), never by
   reaction. A flier put out is worth what a neck cut that puts a rival out is (`KILL`, 6 apples, times 0.5 + its
   aggression, its target twice), times its style (`w.landing`: Sniper 1.5, Desperado 1.2, Drab 0.15, the rest 0.6),
@@ -261,7 +266,7 @@ A flash that runs into what it can't get through (the edge, a hole, a body too t
 head) gets as far as it can and has failed: it costs `FAIL_LOSS` (5) segments and a longer stun, `FAIL_STUN_TICKS` (6),
 not a crash's 3 and 4 ("Crashes, not deaths" in `41-crashes.md`). Without the risk, everyone would flash all the time and cautious play would lose.
 - *The cue:* a bigger bonk, with the stars staying longer.
-- *The lesson:* your first failed flash, "Too thick! A failed dash costs five."
+- *The lesson:* your first failed flash, "Too thick! A failed dash costs 5 off your tail."
 - *The Field guide's Failed dash row:* "Dash into a head, a body too thick, the edge or a hole and it fails: 5 off your
   tail and a longer stun."
 
@@ -269,7 +274,7 @@ not a crash's 3 and 4 ("Crashes, not deaths" in `41-crashes.md`). Without the ri
 
 A cut needs free log beyond the body, so a body lying along the edge, or against a hole or another body, can't be cut
 from that side, a neck cut included. The edge keeps that upside, with its price (fewer ways out). Measured in round six
-B's part 3: no refuge ("Part 3, the chosen numbers" in `29-round-six-b-the-new-moves.md`).
+B's part 3: no refuge ("Part 3, the chosen numbers" in `docs/archive/design-powers.md`).
 
 ### The golden flash cuts deeper
 
@@ -280,7 +285,7 @@ still crackling on its way isn't put out), and eats food on the way. **The edge,
 far as and runs into, as a failed flash. It goes when you press, before the plain flash, and leaves the plain flash's
 rest alone.
 - *The cue:* gold speed lines with an ember core, and gold and ember flecks.
-- *The lesson:* your first, "Golden dashes cut through two thick, and put out fire."
+- *The lesson:* your first, "Golden dashes cut bodies two thick and put out fire."
 - *The Field guide's Golden leaf row:* "2 golden dashes: three cells at once, cutting through a body up to 2 thick and
   putting out every fire. Never at an edge or a hole: you blow up."
 - *The sound:* a zip, rising fast, and a rush of air; a cut, a snip; blowing up, a boom.
@@ -342,7 +347,8 @@ A mushroom is a weapon you aim:
 - **Stronger each time.** A mushroom takes `SHRINK` (3) segments the first time, and one more each time it comes back
   up, to `SHRINK_MAX` (5); it darkens a shade each time. It never kills by itself: it shrinks you no further than
   `MIN_LENGTH`. A spat mushroom wilts in half the time it had left, but lies at least `SPIT_WILT_MIN` (20) ticks.
-  Golden mushrooms are a power, eaten as before.
+  Golden mushrooms are a power, eaten as before. A mushroom in a cheek still counts toward the board's mushrooms, so the
+  log holds no more poison than before.
 - **Eating one on purpose** is a real choice: a few segments for a shot at a rival, best when you're long and they're
   close.
 - *The cue:* the green bulge, the ring, the arc and a "ptoo"; a hit is a green puff on the target's head.
@@ -351,9 +357,11 @@ A mushroom is a weapon you aim:
 - *The Field guide's Mushroom row:* "Poison: 3 off your tail (never below 3). A second later it comes back up, three
   ahead of you: steer to aim it at a head. Each time it comes back up it takes one more, up to 5, a shade darker. Keep
   out of a green ring."
-- *The rivals* (`ai/spit.js`): everyone aims one in the cheek, and keeps its head out of any ring due within its search;
+- *The rivals* (`ai/spit.js`): everyone aims one in the cheek (the last moves before the spit), closes in on where it
+  could hit a head before that, and keeps its head out of any ring due within its search;
   eating one on purpose is weighed only at a mushroom within 4 of its head with a rival's head close and a line to spit
-  along, by its taste for it ("Mushrooms, to a rival" in `39-the-rivals.md`).
+  along, as a shot worth its taste for it × 0.35 (`SPIT_HIT`) × half an apple (`SPIT_SEG`) for each segment it would
+  take off ("Mushrooms, to a rival" in `39-the-rivals.md`).
 
 ### The spit flies along the line
 

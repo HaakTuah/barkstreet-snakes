@@ -103,7 +103,9 @@ and the owner's notes of 2 November, among them).
   `21-sound.md` (PR #433). The page followed, in `31-phones.md`, `33-one-screen.md` and `42-controls.md`
   (PR #435). Online and the start card followed, in `22-play-with-friends-online.md` and a new
   `43-the-start-card-and-records.md` (PR #436). Teaching followed, in `30-teaching-by-showing.md` (PR #437). The food
-  and world's leftovers followed (PR #440). Next: what's left in the round files, listed in `docs/handoff/design-by-topic-left.md`.
+  and world's leftovers followed (PR #440). The rivals' leftovers followed (PR #444). The small leftovers followed
+  (PR #446). Next: the new topics (performance, chatter and lines, the round's arc, balance targets), then the
+  history, as listed in `docs/handoff/design-by-topic-left.md`.
 - **Waiting for a gap:** `render/world.js` (50 KB), the last big file now that `ai/` and `engine/` are split (2y+). Split
   in a PR of its own when no open lane touches it, proven by fingerprints and suites.
 

@@ -33,8 +33,8 @@ than everything, and length is your armour.
   "Bonk!" pops up, and for you a "-3" and a shake; its head wobbles and stars go round it while it's stunned.
 - *The sound:* for you, a hollow wooden bonk with a spring's boing and a twinkle (a failed flash's is bigger); someone
   else's crash is a dull thud.
-- *The lessons:* your first crash, "Crashes cost tail. At 3, or boxed in, a crash ends you." (or "That crash cost
-  tail. At 3, or boxed in, you’re out."); down to 3, "Crashes cost tail. You’re at 3: the next one ends you." The death
+- *The lessons:* your first crash, "Crashes cost tail. At length 3, or boxed in, one ends you." (or "That crash cost
+  tail. At length 3, or boxed in, you’re out."); down to 3, "Crashes cost tail. You’re at 3: the next one ends you." The death
   card says why a crash was the end (the engine records it): "…at your smallest", "…with nowhere to turn", "…, and it
   was longer", "…, the same length: both out".
 - *The Field guide's Crashes row:* "An edge, a snake or your own tail costs you tail. At 3, or boxed in, a crash ends
@@ -83,7 +83,32 @@ The name stays from when your head choked on them; the choke, the cough and the 
   spray of crumbs, no gulp and no "Splat!" over your head (`drawSplats()` in `render/weather.js`).
 - *The sound:* a soft wet splat, low, with a little squelch after it (softer for a rival's).
 - *The lesson:* the first squash, "Your own beads feed nobody."
-- *The Field guide's Beads row* ends "Your own you squash flat as you pass: food for nobody, so chase them down to keep
+- *The Field guide's Beads row* ends "Your own beads you squash flat as you pass, so they feed nobody: run them over to keep
   them from the others."
 - *The rivals:* their own beads are worth nothing to them; squashing to deny is left to people and to the pricing part
   (part 7).
+
+### A crash you don't survive goes off with a bang
+
+A snake that goes out bursts at its head: a comic starburst (flat, inked, a cached sprite) and a thick shockwave ring in
+its colour with an ink edge, a spray of pieces from the head and along the body, and a little smoke (`burst()` in
+`render/blasts.js`); a rainbow (Star's, or Copycat's copy of it) goes off in its colours. Your kill shakes the board a
+touch. So it never reads as a crash you survive, which only knocks beads off. With reduced motion it's a still
+starburst and ring, fading.
+
+### Every death says why
+
+The engine records why a snake went out (`fatal`), and the death card's first line says it (`howYouDied` in
+`game/core.js`):
+- a crash with nowhere to turn ("…with nowhere to turn");
+- a crash at your smallest ("…at your smallest");
+- the shorter one in a head-on ("…, and it was longer"; a friend's "they were longer"), or the same length ("…, the
+  same length: both out");
+- pecked ("The woodpecker struck right under your head");
+- burned up ("The flames got you at your smallest");
+- cut in two ("Name’s dash cut you right behind the head");
+- starved ("You ran out of food at your smallest");
+- blown up, or a fall into a hole, in the cause itself ("…dashed into the edge and blew up", "…fell into a woodpecker
+  hole").
+
+The rival's quip stays as flavour. A death that ends the round says it on the round-over card too.
