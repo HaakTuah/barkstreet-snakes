@@ -64,6 +64,8 @@ and the owner's notes of 2 November, among them).
 
 - *Done:* the workshop check's point (2): `AGENTS.md` from 21.5 to 20.0 KB, every rule kept; the workshop check's marks
   moved to `docs/orchestrating.md`, the file table's detail to `docs/developing.md` (PR #420).
+- *Done:* the render suite's virtual clock starts at a fixed time, so the woodpecker's ring check (and every staged
+  check) draws at the same phase on every run, whatever the load (#424, PR #427).
 - *Done:* the input suite's "rivals have all thought" check, counted round after round to its 100-tick floor and its
   round started on the virtual clock, so neither a short random round nor load can flip it (#414, PR #415).
 - *Done:* the layout suite in cloud sessions (#383): it never hung, it ran about 28 minutes in one process, silent
@@ -85,12 +87,19 @@ and the owner's notes of 2 November, among them).
   and point (5), the unused-code check (PR #331):
   `docs/archive/progress-done.md`, "The split lane, done".
 - **The file-by-file review's moves:** done, a folder a PR (#341, #342, #343, #344, #345):
-  `docs/archive/progress-done.md`, "The split lane, done". Left: `render/world.js`'s part, which waits with it below;
-  `render/food.js`, 66 KB after the moves, split by meaning (its pictures, or its burrows and the beetle's bore) in a PR
-  of its own.
+  `docs/archive/progress-done.md`, "The split lane, done". Left: `render/world.js`'s part, which waits with it below.
+  `render/food.js` split by meaning: its burrows and the beetle's bore to `render/burrows.js` (66 to 43.5 and 22.6 KB;
+  PR #421).
 - **The design by topic, not by round** (#336; the owner, 2 November 2026): each topic's current rule moves from the
   round files into its topic file in `docs/design/`, superseded versions and measurements to `docs/archive/`. A slow
   side lane, one topic per docs-only PR, taken when a lane is free; code comments citing a section are checked.
+  Done: food (round four's "Food", round six A's food and beetles into `04-food-and-the-world.md`; PR #425). The
+  playtest's burrows and beetles (32) followed (PR #426). The woodpecker
+  followed, in a file of its own, `38-the-woodpecker.md` (PR #428). The rivals
+  followed, in `39-the-rivals.md` (PR #429). The snakes'
+  looks followed, in `03-the-snake-as-a-character.md` (PR #430). The powers and
+  moves followed, in `40-powers-and-moves.md`, and the crashes in `41-crashes.md` (PR #432). Next: sound, then phones
+  and the page.
 - **Waiting for a gap:** `render/world.js` (50 KB), the last big file now that `ai/` and `engine/` are split (2y+). Split
   in a PR of its own when no open lane touches it, proven by fingerprints and suites.
 

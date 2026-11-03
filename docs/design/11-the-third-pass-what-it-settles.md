@@ -1,14 +1,8 @@
 ## The third pass: what it settles
 
-**Gold means power.** The powers brought their own lemon yellows (`#fde047`, `#fef08a`, `#eab308`), greenish next to the warm Honey of the gold banner and the crown. They're folded into Honey: fills `#fde68a`, lines `#d4a017`, glints `#fffbea`. The decorative autumn leaves move to russet and brown, and Mute's proud mood leaves gold too, so on this board gold always means a power.
-
-**A power is one token, not a ring.** A golden power used to draw a ring round the head with pips, on top of the stun halo, Capricious's ring, the ready ring and YOU's ring. Now it's:
-- a thin opaque gold line round the body, with an ink line outside it so it reads on any colour, drawn outside your cream outline;
-- pips on a short arc behind the head, turned with it: since round four, sky round pips for golden jumps and ember diamonds for golden flashes; holding both, the golden jumps' pips sit on the snake's left of the arc and the golden flashes' on its right.
-
-The plain leap's cooldown was a thin arc round your own head that filled and closed into the ready flash. **Since round four** your two plain rests are two half-rings round your head, fixed to the screen: the jump's on the left in sky, the flash's on the right in ember. Each fills from the bottom over a faint track while it rests (not shown while you hold golden ones of that kind) and gives one bright flick when it's back. That's on the board, where you're looking, not only on the tag. On the tags, a power is a 6 px chip (the chip radius) with small inline icons in ink (a hop, a double chevron, a loop) instead of fallback-font glyphs; since round four, one chip per power (golden jumps sky, golden flashes ember, both on Honey with the count), and your own tag always shows your plain jump and flash, each filling in its accent as it rests. A name never gives way to it: on a narrow tag the chip drops its counts and keeps its icons (the pips on the board and the screen reader's words still give the number).
-
-**Height is scale.** The board is seen from above, so a leap rises toward you: the head and neck swell along their path at the top of the arc, and the shadow on the bark spreads and softens. It no longer lifts up the screen, which read as a lunge or a flinch depending on the heading. Drawn ahead (round four, unless you're watching alone), a jump that's sure to go starts rising before its tick.
+**Gold means power**, **A power is one token, not a ring** and **Height is scale**: their rules are in
+`03-the-snake-as-a-character.md` under "Gold means power", "A power is one token, not a ring" and "Bridges and
+jumps you can see", and their text as it was in `docs/archive/design-looks.md`.
 
 **Reduced motion removes movement, never information.** Being in the air is a rule, so a leap keeps a still airborne pose. The woodpecker cuts between perches instead of swooping. Rain holds still rather than vanishing (it puts fire out), a burning leaf appears where it lands instead of flying, and a death is a still starburst that fades.
 

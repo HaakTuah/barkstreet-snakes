@@ -7,46 +7,8 @@ The owner played the live game (6d478ed) on a desktop and sent three findings, f
 
 ### A meal isn't a pin
 
-**The cause** was the neck test's allowance for a head pinned against something (`PINNED_DAWDLE`, 8: see "The rivals look further ahead"), not Ouroboros. Every rival did it, and beside holes, fire, the woodpecker's mark and bodies as well as the edge.
-- The rivals look three moves ahead. Eating food on the edge from two away, every line that eats ends with the head still on the edge: one or two ways on, and no room before them. That's a neck right by the head, and it was a trap if any rival could get to both ways on within 8 ticks of the snake (about any rival within a dozen cells, on a 24-cell log). A trap costs 2,400–3,400; the meal was worth 150–500 to Ouroboros (850–2,500 to Gobbler).
-- So every line that ate lost to one that stayed a row in, and the snake turned off a cell or two short. A move later the food was out of its three-move window, the food's pull brought it back, and it turned off again: the circling.
-- In the AI's own terms, at the turn-aways with room to spare and no head within 6 cells: the pin decided 64% of them at the edge and 57% in corners (none in the open); Ouroboros's coiling, 3%.
-- The allowance's reason ("I don't always leave a pocket straight away") doesn't hold just after a meal: the line is there only because the food was, and it leaves on its next move.
-
-**The call:** for 3 moves after a line eats (`MEAL_PLIES`), a neck's allowance is 2 ticks (`MEAL_DAWDLE`): only a head that could get to the gap about as soon as the snake (one that could cut it off) makes it a trap. Everywhere else the neck test is as it was. A jump or a flash that eats on its way counts as a meal too. It's a dozen lines, with no wider search and nothing more to think about.
-- *Turned down:* only the pinned neck (corners stay shy: the deeper necks there are its own body); a lower `PINNED_DAWDLE` everywhere (it's the boxed-in dial, and not about food); searching on past a meal (a sixth more lines to score, and a bias toward lines that eat); leaving food cells out of the neck test (it would drop the real refusals too).
-- *The screenshot's apple:* dimmed, with something above it and no glow, it reads as a rotten green apple and its fly (a golden apple only dims in its last 3 s, its glow and sparkle with it). It changes nothing: a rotten apple is worth its full 1 to a rival, a dim golden one its 3, until it would be gone before the rival got there. A golden apple at (2, 1) by the corner isn't a pin by itself; refusing it took a body beside it (Ouroboros's own coil) or a rival within a dozen ticks, which is what this fixes.
-
-**Measured** (600 AI-only rounds a seed, seeds 3 and 11, "before → after", as `tools/simulate.js` plays them; food eaten counts every time a snake that's the nearest head, with a way there, comes within 2 cells of it):
-
-| | Seed 3 | Seed 11 |
-|---|---|---|
-| Apples and golden apples eaten: in the open | 89 → 89% | 88 → 89% |
-| ...on the edge | 50 → 79% | 50 → 79% |
-| ...in a corner | 66 → 82% | 64 → 82% |
-| ...beside a hole, fire or the woodpecker's mark | 58 → 71% | 56 → 71% |
-| ...beside another snake's body | 57 → 73% | 57 → 73% |
-| ...beside its own body | 66 → 74% | 65 → 73% |
-| Golden apples eaten on the edge | 61 → 90% | 60 → 89% |
-| Each rival on the edge (lowest–highest; Ouroboros) | 39–60 → 64–86% (47 → 78) | 40–60 → 66–87% (49 → 79) |
-| Turned off food by the edge with room to spare and no head within 6, per 100 snake-rounds | 157 → 34 | 155 → 34 |
-| Circling (3 or more turn-offs from the same food), by the edge or in a corner, per 100 snake-rounds | 45 → 10 | 47 → 11 |
-| Hanging about food (within 5 cells for 3 s), per 100 snake-rounds: all; apples; golden | 12.0 → 6.7; 4.3 → 0.8; 0.4 → 0 | 12.2 → 6.6; 4.1 → 0.4; 0.1 → 0 |
-| Median round; sudden death | 172 → 165 s; 52 → 45 s | 172 → 166 s; 52 → 46 s |
-| Deaths in holes; starved | 20 → 14%; 2 → 1% | 20 → 17%; 3 → 1% |
-| Deaths before the woodpecker, a round | 0.57 → 0.69 | 0.48 → 0.70 |
-| Win rates | 19–34 → 18–35% | 17–33 → 16–33% |
-| Ouroboros coiled (field) | 42 → 38% (14 → 13) | 42 → 39% (15 → 13) |
-
-- **The rest of it:** what's left of the hanging about is beetles, and some of that is the fix's own. The strictest count, within 3 cells for 3 s, was already mostly beetles, and beetles went up: 0.8 → 1.5 / 1.1 → 1.8 per 100 snake-rounds (0.8 → 2.2 on a fresh seed, 41), apples and golden apples 0 → 0.1 / 0 → 0. Nine in ten are a beetle on the edge or in a corner with a well-fed snake a cell or two off, shadowing it along the edge: the fix makes a line that catches a beetle there worth taking, and the beetle moves on first. About half end in a catch (beetles caught: 92 → 94%); those that don't went 9 → 15 / 17 → 22 in 600 rounds. Round six's rivals (feature/powers-2), who see food where it is now (these see it a reaction time late), hang about no beetle at all (seed 3), with the fix or without. If this ships first, the shadowing comes with it; a beetle-only exception in the neck test was turned down. The edge's share of the meals against its share of the food's time on the log: 0.44 → 0.59 / 0.45 → 0.60 (1 is "eaten as often as it lies there"). Every rival is in it: the lowest on the edge, Vulture (it lives on beads), went 39 → 70 / 40 → 66%.
-- **The cost:** rounds a little shorter, and more snakes out early, most of them into themselves. In 600 paired rounds on a fresh seed (41, each round dealt the same both ways): the median round 171 → 166 s (−5 s, between −8.6 and −1.8), sudden death 51 → 46 s. Deaths before the woodpecker (above; 0.50 → 0.66 on seed 41): self-crashes 1.5 to 2 times as many, 0.085 → 0.127 / 0.083 → 0.145 a round (0.057 → 0.115 on seed 41), and crashes into others 0.40 → 0.49 / 0.33 → 0.48 (0.36 → 0.47). It isn't the meals by the edge themselves: per meal, deaths within 15 ticks of one don't rise (seed 41: by the edge 7.0 → 5.1 a thousand meals, in a corner 15.4 → 4.7), and most of the extra self-crashes come 16 ticks or more after the snake's last meal. It's length: snakes eat more (54 / 55 → 59.5 food a snake-round) and are 10–15% longer from a minute in (seed 41: 22.8 → 25.2 cells at 60 s, 30.1 → 34.6 at 90; 27.9 → 33.3 at an early death). `MEAL_DAWDLE` isn't the dial for that: at 4 the diagnosis measured the edge at 71% and corners at 78%, still with 0.60 early deaths a round, and the pinned neck alone 0.64, against 0.48 (seed 11). If the old pace is wanted back, growth or food is what to tune, not the neck test.
-- **Mason** gained most: its walls run along the edges, and now it eats there (30 / 36%, from 22 / 27). It claims a little less territory, 1.6 from 1.8 (as in round four, when the board split started counting): 25 / 25%, its straight runs as they were (3.53 / 3.48 cells, against the field's 1.90). That moves every round Mason's in, and Copycat, who copies whoever's winning, came out at 35.2% on seed 3, one win over the band's top (43 of 122; 28% before Mason's change, and on seed 11 it went the other way, 26 → 21%): luck, not a lean. 1.7 was tried and put Gobbler at 12% on seed 11.
-- **Character:** every trademark is about where it was. Ouroboros coils a little less (above), still three times the field; Joker's luring, the thinnest lead, is 8.6 / 8.3% against the field's 8.3 / 8.1 (9.2 / 9.0 against 8.5 / 8.3 before).
-- `simulate.js 60 --seed 3` gives 829665990 with and without `--ahead`; fingerprints 574216369 / 762530038.
-
-**Tests:** `tools/rules-test.js` stages it in the game, every rival hungry enough that taste doesn't decide (4 s before it starts shrinking) and another snake about ten ticks off: every rival takes an apple on the edge, a golden apple in the corner (along either edge), the golden apple by the corner from the screenshot, and an apple beside woodpecker holes, fire or another snake's body, within a few ticks (on main every rival left the edge's and the corner's, 11 the holes' and the fire's, 7 the body's; the screenshot's own spot was taken); and every rival still refuses an apple in a pocket of holes too small for it, in a channel a cell wide with a rival's head at its far end, on the edge with a rival's head two along the edge coming at it, and a golden apple in the corner with a head coming up the other edge.
-
-**With round six A** (merged in after it shipped): round six A carried this fix onto its own AI (981842d: the same `MEAL_DAWDLE` and `MEAL_PLIES`, a jump's or a flash's meal counting too) with these tests, adapted to its rivals, and measured its rivals with it in (see "Round six A, measured"). So `ai.js` and `tools/rules-test.js` are round six A's: Mason's `territory` stays 1.8 there (its band was measured that way; the 1.6 above was this build's call, on the rivals before round six A), and the numbers and fingerprints above are this build's, before the merge. After it, `simulate.js 60 --seed 3` gives 78597151 with and without `--ahead`, as round six A does: the rest of this work is the page's, not the rules'.
+Its rules are in `39-the-rivals.md` under the same name, and its text as it was, with what it measured and how it was
+tested, in `docs/archive/design-rivals.md`.
 
 ### A rival's note
 
@@ -101,58 +63,13 @@ The owner played the live game (6d478ed) on a desktop and sent three findings, f
 
 ### Burrows grow shut
 
-**The finding** (the playtest of 20 October, queue item 3): past three burrows the stalest one closed over at once, in about a second, which looked abrupt.
-
-**The call** (27 October 2026):
-- **The rule.** A new burrow that opens while three are open (`BURROW_MAX`) starts the stalest growing shut. It takes a random time between `BURROW_SHUT_MIN_MS` and `BURROW_SHUT_MAX_MS` (6 and 14 s of game time; the engine's seeded randomness) and then closes over. The cap counts only open burrows, so there are three most of the time and briefly four. A dig nearer than `BURROW_SPACING` to a burrow also starts that one growing shut, instead of closing it at once. While it grows shut, a scared beetle can still run for it and dive in, but none comes out of it: `freeBurrow` skips it, so a beetle below comes up out of an open one, or waits.
-- **The rivals** read it by the same rule, from `view.burrows` (each one carries `shutFrom` and `shutAt`): a burrow growing shut is a home a scared beetle runs to and dives into until it closes, as in the engine. A beetle doesn't come up out of it, and the AI never predicts where one comes up anyway. (A first build dropped a burrow from the AI's homes in its last second. The review caught that the engine has no such rule, so it was removed.)
-- **The cue** (`drawShutting` in `render/food.js`), evenly over its time (it was eased out at first, which looked done by a third; see "The cue, evened out" below):
-  - the opening's area shrinks evenly to a tenth (`SHUT_HOLE`), keeping its dark rim, as sawdust fills in from the rim, lumps of it creeping over the opening's edge; its pale rim and specks round it stay;
-  - the bark's grain grows across it, along the log;
-  - four cushions of the log's moss grow in over the rim one after another, each to about a third of a cell across;
-  - its cracks fade to half.
-  At the end comes today's closing over (`drawHeals`): it starts from the look it had grown to, packs the plug in under its moss, then the big cushion and the fade. Then a faint scar (a greyed oval of sawdust with the grain across it) stays where it was, fading over `SCAR_MS` (20 s).
-- **The sound:** silent while it grows shut, then today's crumble (`heal`) as it closes over.
-- **The lesson** (once a round, once the burrow's lesson is told, the first time the banner is free for one starting to grow shut): "Old burrows grow shut: beetles go in, none come out." It replaces "Past three burrows, the stalest one closes over.", and the wording with "Past three" didn't fit on one line on a 320 px phone.
-- **The Field guide** (Beetles): "A burrow left unused grows shut (past three, the one unused longest): beetles still go in, but none come out."
-- **Online** (protocol 11): each burrow row carries `shutFrom` and `shutAt` (−1 while it's open), checked before it's drawn (a row that shuts before it started counts as open). There is a new event, `['shut', x, y, at]`, for one starting to grow shut.
-
-**Tested:**
-- `tools/rules-test.js`:
-  - the stalest starts growing shut within 6 to 14 s, and stays meanwhile;
-  - none comes out of it;
-  - a scared beetle still dives in;
-  - it closes over on time;
-  - a rival reads a beetle bound for one as going in;
-  - the cap's tests, now with growing shut.
-- `tools/online-test.js` crosses the rows and the event, and feeds the guest malformed ones.
-- `tools/render-test.js` checks the opening shrinking with sawdust and moss coming in, the closing over from there, and the scar gone after 22 s.
-- `tools/input-test.js` checks the lesson and the sound.
-
-**The cue, evened out** (27 October 2026, PR #55). The owner: "Yes, you can try that and see if it adds to the game! Review it afterwards and make an expert call." Staged frames at 0, 1/3, 2/3 and 0.95 of its time had shown it all but done by a third (the plug drawn at full width early, the opening's rim and specks covered) and two thirds and nearly shut alike, the moss only small flecks. Now it goes evenly (above), the moss in cushions that read at phone size, and the scar a little stronger (0.45, was 0.3). With reduced motion nothing changes in it: it is a slow change of look, not motion, and the closing over keeps its calm version. The Field guide keeps its longer line over the spec's "A burrow left unused grows shut.": that alone reads as a timer, and the longer line says which one (past three, the one unused longest) and what it means for play (beetles still go in, none come out). `tools/render-test.js` checks the opening's dark pixels and the sawdust and moss in it changing by like steps each third, and the moss over a good part of a cell by the end. `tools/dev/burrow-shut/frames.js` stages the frames.
-
-**Measured** (600 rounds each, seeds 3 and 11, against e55855a):
-
-| | Before (seed 3 / 11) | After (seed 3 / 11) |
-| --- | --- | --- |
-| Chased beetles escaping | 25.4 / 25.5% | 24.8 / 25.9% |
-| Burrows open, on average | 2.02 / 1.98 | 2.07 / 2.04 |
-| Round, median | 166 / 166 s | 165 / 166 s |
-| Deaths by cause | as they were, within a point or three | |
-
-Escapes stay inside the 20–35%. The simulation's check passed on both seeds.
+Its rules are in `04-food-and-the-world.md` under the same name, and its text as it was, with how it was tested and
+measured, in `docs/archive/design-food.md`.
 
 ### A body over a pit, smooth
 
-**The finding** (the playtest of 20 October, queue item 3; the owner: "The part of you that is over the hole gets a really odd outline"): over a pit, the body's round segments bulged above its line and its cream rim seemed to go.
-
-**The cause:** over a pit a span is drawn slimmer (round six A: it sags, see "Bridges and jumps you can see" in `27-round-six-a-fairness-and-fixes.md`), but its segments stay a cell apart, so they parted: round beads above a thin band between them, the outline scalloped round each bead, and the shade underneath drawn as a crescent on every bead and a narrower strip on each band. Measured, the top of your body varied 0.09 cells along a span (0.05 on the bark).
-
-**The call** (27 October 2026):
-- **The bands fill out** (`bandR` in `render/lead.js`): over a pit, a band's half-width eases from `PINCH` of its segment's radius to the narrower of its two segments' radii, by how far over the pit they are. Never past either: a head over the pit (it doesn't sag) or a gulp stays round, its band no square shoulder. What's up in the air keeps its pinch. Every shape a body is drawn with follows it: the body, its outlines and rim, the gold line, its shadows and the land's colour round a rival. So the span is still slimmer by the same sag, but its line and rim are as smooth as on the bark (the top edge now varies 0.00 cells). Its sheen dots stay, one a segment, so you can still count them.
-- **Shaded as one body** (`shadeUnder`, `shadeBands` in `render/bodies.js`): a straight run over the pit is shaded by a strip along its lower side (its right one going down), drawn after the segments so it runs on through them, each half of a band in the darker step of the segment it's nearer. A round segment (`roundAt`: an end, a turn, or one more than a unit wider than its bands, like a head or a gulp) keeps its crescent, and the strips by it and round a turn go down before the segments, which cover their ends.
-
-**Tested:** `tools/render-test.js`: you across a hollow three cells wide, its top edge level along the middle of it and the cream rim as thick as on the bark; then your head over it and your neck on the bark, no band wider than either of its segments. The bridge check's band sample moved to the wider band's lower edge, and its sag is measured on the whole body, shaded part included (32 pixels across before and after, against 36 on the bark).
+Its rules are in `03-the-snake-as-a-character.md` under the same name, and its text as it was, with the finding, its cause
+and how it was tested, in `docs/archive/design-looks.md`.
 
 ### Rainbows upright
 
@@ -166,28 +83,8 @@ Escapes stay inside the 20–35%. The simulation's check passed on both seeds.
 
 ### Hunger on the body
 
-**The finding** (the playtest of 20 October): on a wide desktop the hunger bar on your tag is far from your snake, out of sight, and the owner starved without seeing it come.
-
-**The call** (27 October 2026): every snake shows its hunger on its body, read from the clock its tag reads (`hungerLook` in `render/looks.js`), so you see it where your eyes already are, on yourself and on every rival:
-- **It slims** as its last meal runs out: its body (not its head) up to 22% thinner, by the share of the meal gone to the power 1.5, so a snake just fed looks as it always did, a hungry one is plainly thinner, and the change creeps in rather than jumps.
-- **It growls** in the warning's seconds (the toast's, `Engine.hungerWarning`: 6 s before it starts shrinking, or 9 before it would starve if that's sooner, in real time, snow or not; until #327 it read the hunger clock, so a snake of 4 in snow was warned only 4.5 s before the end): two short arcs either side of its head, cream under ink so they read on the bark and on any body, swelling out and fading on each rumble (520 ms, a beat the "Your tummy is rumbling" toast and the rumble sound go with), and its head shakes a little, both stronger toward the end. With reduced motion the arcs hold still and the head doesn't shake.
-- **It pales** while starving (shrinking a segment every 1.5 s): a parchment wash over its whole shape, full within the first segment lost. On the palest bodies (Mason's marble, Ghost) it barely shows; the slimness and the growl carry it there.
-- The Field guide's Hunger row says it: "A hungry snake grows thin, then growls; one gone pale is shrinking. At 3 it starves. Your bar is under your name."
-
-The rivals are shown nothing new (their own clock was always in `aiView()`, as a person sees their bar); online, the tag already carries `lastAte` and `mealMs` (protocol 8), so a guest sees the same. **Tested:** `tools/render-test.js`, Sniper just fed, with 2 s left and starving: slimmer in its own colour, growl lines beside its head, and starving paler.
-
-**A new player's starving rate** (`tools/dev/hunger-seen/measure.js`): there is no model of a person, so a stand-in. AI rounds with the game's own rules, seat 0 standing in for a new player (a rival plays it), with its view of its own hunger hidden until it would notice it, then a second late: never (the owner on a wide desktop), at the warning toast (before this change), once its body is visibly thinner (5%, at 37% of its meal gone: after), or always (a rival, or someone watching the bar). 
-
-*Measured*, 300 rounds a seed on fresh seeds 61 / 73:
-
-| Seat 0 notices its hunger | Rounds it starved in | Its deaths by starving | Snake-time in the warning (starving) | Wins |
-| --- | --- | --- | --- | --- |
-| never (the bar unseen) | 6.7 / 9.3% | 9.0 / 12.3% | 14.7 / 16.1% (5.0 / 5.7) | 25.7 / 24.0% |
-| at the toast (before) | 1.3 / 1.3% | 1.9 / 1.8% | 13.6 / 13.4% (3.7 / 3.5) | 29.0 / 24.7% |
-| from its body (after) | 0.3 / 2.3% | 0.4 / 3.1% | 12.4 / 14.0% (3.0 / 4.4) | 24.3 / 24.7% |
-| always | 1.3 / 1.3% | 1.8 / 1.8% | 12.2 / 12.6% (3.4 / 3.5) | 24.3 / 26.0% |
-
-So what starves a new player is not seeing hunger at all: unseen, 8.0% of rounds end in starving (48 of 600); seen in any of the three ways, 1.3% (8 of 600 each). Seeing it earlier on the body adds nothing over a toast acted on at once, by this measure; the stand-in reads 6 s as plenty, as the rivals do. The change is where it shows: the toast is easy to miss, as the owner did on a wide desktop, and your body is where you are looking. A person's real rate needs a person: the owner's next desktop rounds will say.
+Its rules are in `03-the-snake-as-a-character.md` under the same name, and its text as it was, with how a new player's
+starving rate was measured, in `docs/archive/design-looks.md`.
 
 ### The phone gap
 
@@ -234,152 +131,33 @@ perched under the board, flying and drumming on it.
 
 ### Wildcard's hair
 
-The owner: "Not a comb-over: his real swoop, a big fluffy golden-blond pompadour swept back, then forward and to one side.
-It must read at phone size."
-
-- *Before:* a flat golden patch combed across the back of the head to a small curl over one eye, the same size as the
-  head; at phone size it read as a yellow cap.
-- *Then* (PR #74, `pompadour()`): the roll swooped forward along one side to a flick past that eye. The owner (28
-  October): "It flips to the front side, you know like a blond emo/goth haircut"; heading up, it read like a turban.
-- *Then* (PR #107, `render/faces.js`, `hairBack()` and `hairRoll()`), seen from above with the head pointing +x and -y the
-  far side: two shapes, each with a dark amber outline so they read at phone size. Nothing is in front of the brow: a
-  lighter raised roll runs along the hairline just behind the eyes (its front edge at x = 0.12 of a cell, no further),
-  with a shine along its crest, fuller at the far end. Behind it, the fluffy golden mass puffs out past the head, most
-  at the back and the far side; its strands run straight back over the crown and turn to the far side at their ends, so
-  the comb reads up, back and round. The eyes, pout and squint are as they were.
-- *Then* PR #110's lacquered mop, PR #144's version F and PR #156's F at 85%. The owner (30 October): "trump looks like
-  David Lynch now. I actually think the very first or second hairstyle trump had in the game is better", and picked the
-  first, "but have the swirl point upwards instead of downwards".
-- *Now* (2n, `render/faces.js`, `hairBack()`, `pompadour()`, `wildHair()`): PR #74's pompadour exactly as it was
-  (shape, size, strands, colours and outline), with one change: its lick, the curl at the near end of the roll that came
-  forward over the brow to a flick past the eye, is turned round, curling up and back over the hair behind it, its two
-  combed strands following it. Two tries that reworked more were turned down; the owner (31 October): "it looks horrible.
-  I want the original hair, but I want the lick reversed. That's all. Keep it that simple."
-- Drawn in the head's own frame, so it is the same at every heading, and still: nothing in it moves, with reduced motion
-  or without. Capricious's Wildcard mood wears it too. Drawing only.
+Its rules are in `03-the-snake-as-a-character.md` under the same name, and its text as it was, with each hair before
+it, in `docs/archive/design-looks.md`.
 
 ### Copycat's face
 
-While copying, its head mixes the copied colour about half and half with its red; a thin red rim and the yellow star
-pin keep it Copycat. Uncopied, it stays full flag red.
-
-- *Before* (since "Copycat in the flag's red"): its head kept the flag's red whoever it copied, so only its pale body
-  told you it was copying, and whom.
-- *Now* (`render/looks.js`, `fillsOf()`; the rim in `render/bodies.js`): copying, its head (and its cat ears, with the
-  deeper red inside) is its model's own colour, full rather than the body's pale copy, mixed half and half with
-  `#de2910` (`COPY_HEAD`, 0.5, in plain RGB). Copying Star it takes the rainbow's hue at Star's head, flowing in step;
-  copying Mute, its colour of the moment (Capricious keeps its own pink in every mood, since 3b). A 1.5-unit rim of the flag's red runs round the head inside
-  its edge, and the yellow pin is as it was. Copying no one (or its model out), the head is all red and has no rim.
-- A colour opposite red mixes to a neutral: Metagamer's cyan gives a grey head, Sovereign's blue a plum one, Vulture's
-  black a dark red. The rim and pin keep these Copycat; it's the honest half and half.
-- Drawn from what both screens know (its model, synced online as `memory.modelId`, and the model's colour), so host and
-  guest show the same head. Drawing only.
+Its rules are in `03-the-snake-as-a-character.md` under the same name, and its text as it was in
+`docs/archive/design-looks.md`.
 
 ### The rival line-up
 
-Who you meet is dealt from a deck, and you may choose instead, seat by seat.
-
-- *Before:* three rivals drawn uniformly from the eighteen each round, with no memory, so a favourite could go a dozen
-  rounds unseen and another come three times running.
-- *The deck* (`records.js`, `deal()`, under the new key `snake-deck`): this browser keeps a shuffled deck of the
-  eighteen and deals from it, every rival once before any comes round again, across rounds and reloads. When it runs
-  out, a fresh shuffle goes in behind whatever it still holds. Watching (four rivals) deals the same way. The
-  simulator and tools keep the engine's own uniform pick (`pickOpponents`), so fingerprints are unchanged.
-- *Choosing* (`game/cards.js`, `openPicker()`; the seats in `game/cards.js`, `buildOpponents()`): on the start card
-  each rival is a button with a swap mark; it opens a picker of "Any" and all eighteen, each with its dot and blurb,
-  over the page like the Hall of Fame (Escape or × closes it). A chosen seat wears a ring, and on the start card a
-  small pin beside it: a tap on the pin sets the seat back to "Any" (`unpinSeat()`). The choice is kept per seat for
-  this visit (2u, 30 October 2026: "Didn't expect them to stay permanently"), round after round and across a reload in
-  the same tab, in `sessionStorage` under `snake-visit-lineup` (`seats()`, `setSeat()`); the next time the game is
-  opened every seat is "Any" again. The old lasting key `snake-lineup` is no longer read (and never renamed). "Any" seats are
-  dealt from the deck, which skips the chosen rivals (they stay in it for later). Choosing a rival already in another
-  seat swaps the two. Watching from the start card keeps its three and deals the fourth.
-- *Online* the host's choice and deck decide. A guest's own choice and deck are untouched. With more people, fewer
-  seats are dealt: the first seats' choices count.
-  - *In the lobby* (`game/friends.js`, `hostLineUp()`, `renderPlayers()`): the empty seats show the rivals who'll take
-    them, "unless a friend joins". The room opens with the start card's line-up (and what the deck dealt for it); after
-    each round the next is dealt, shown on the round's card. The host's seats are the start card's buttons, opening the
-    same picker (a chosen one wears its ring); the guests see each seat's rival, and "chosen", as it stands. A seat a
-    friend takes sends its rival back to the top of the deck, as does closing the room. Closing the page (a start
-    card's or the room's rivals never met) sends them back to a random place among the rivals not yet dealt
-    (`undeal(..., { anywhere: true })`), so opening the game gives a fresh cast and everyone is still met first.
-  - Protocol 13: the lobby message carries the line-up (`lineup`: each seat's rival and whether the host chose it),
-    sent whenever it changes; the round message carries the round's as before.
-- *The Hall of Fame:* every entry of a round with any chosen rival (yours, the rivals', a friend's) is marked "chosen"
-  after its name. Protocol 12 carries the round's `chosen` flag and a shared best round's.
+Its rules are in `39-the-rivals.md` under the same name, and its text as it was, with how dealing went before, in
+`docs/archive/design-rivals.md`.
 
 ### The woodpecker, 1.3 times
 
-The owner (29 October 2026): 1.3 times its size, on the board and under it alike (one size; entry 2c). The bird's unit
-(`BU` in `render/bird.js`) is 1.3 times what it was, so everything that sizes it (its perches, its room round the board,
-its flights, its drum poses, its rims under the board) grows with it, and it stays one size, perched and drumming,
-wherever the screen has room for it: about 101 px of drawn bird on a 390×844 phone (from 78), and one size on every
-phone held upright from 320 to 430 px wide (83 to 112 px, from 64 to 86), and 177 to 233 px on desktops from 1280×720 to 1920×1080 (from 136 to 179). Where the gutter beside the board
-is narrow it still perches a little smaller, as it always has ("with room for it a little smaller", see "The phone
-gap"): at 1440×900 it perches at 191 px and drums at 224 (it was 173 for both), and on a phone on its side 96 against
-101; a tablet held upright or a 1024×768 window still tuck it into the gutter at 32 to 39 px, as before. It is drawn
-only, so play is unchanged: the simulation's fingerprints are identical.
+Since grown again ("The woodpecker, as big as it gets"): its size now is in `38-the-woodpecker.md` under that name, and
+this section's text as it was, with what it measured, in `docs/archive/design-woodpecker.md`.
 
 ### The woodpecker, as big as it gets
 
-The owner (29 October 2026; entry 2k): "as big as you can get away with without it falling out of the screen, or being
-pushed onto the gameplay screen when not pecking, or anything." Drawing only (`BIRD_GROW` in `render/bird.js`, 1.7
-times its first size, from 1.3), so play is unchanged and no simulation was run. Found by trying 1.5 to 2.0 against
-the layout and render suites. Two things stopped it first and were fixed (below: its drum poses' room for the aim, the
-blow's depth). What stops it now: at 1.8, on an iPhone SE held upright (375×667) the room under the board is too short
-for it whole, so it would perch at 0.98 of the size it drums at, no longer one size (2c). Measured (drawn bird, CSS px,
-1.3 → 1.7): perched under the board and drumming on phones held upright, 84 to 114 → 110 to 149 (101 → 132 on a 390×844
-phone); drumming on a phone on its side 101 → 132, a tablet 192 → 251 (upright) and 190 → 248 (on its side), a
-1280×800 laptop 198 → 259. Perched beside the board it is the biggest that perch allows, as before: where a gutter was
-already as small as the room let it be, unchanged (844×390 96, a tablet's 32 to 39, a 1280×800 laptop's 148 to 178);
-where there was more, bigger (1920×1080 234-279 → 306-364, 915×412 105-128 → 130-158, 1000×480 123-150 → 142-173).
-- *A nearer side counts as at 2c.* A perch is "near enough" if it has room for 0.65 of the bird's size at 2c, not of
-  its new size, so growing never sends it to a smaller perch on the far side (without that, at 1.5 on a 1280×800
-  laptop, it perched at 46 px for some spots instead of 177).
-- *Its blow goes as deep as at 1.3* (`B_IN`), so pecking beside a snake its beak stays in the cell.
-- *Drumming, it weighs what it would hide:* of the ways it can cling, it takes the one that hides least of the rings
-  (four), the heads and the food (two each) and the tiles of its mark (two, all of them together). Bigger, it hides
-  less than it did at 1.3, over the five screens: a head near its spot 15% of the time against 21%, food 17.5% against
-  20%, its mark's tiles 3.5% against 4.2%.
-- *Its drum poses keep room for its aim beside a snake* (`AIM_REACH`): since 2e that aim moves the whole bird by up to
-  half a cell, which, bigger, carried its landing in a top corner past the screen's edge (from 1.6 on a 1024×768
-  tablet, from 1.65 on a 1000×480 laptop window). Near the board's foot on a phone on its side it lies level to drum
-  where it can't stand, as its design allows.
-- *On a phone held upright* it still stands over the row under the board and the chatter, as the owner asked in 1b++, so
-  bigger it covers more of their words (at 1.3 it already hid a speed button's label whole at some spots); taps pass
-  through it. Beside the board it never lies over any word.
-
-**Tested:** `tools/layout/14-the-bigger-woodpecker.js` (layout job 5) at the screens the entry names: perched beside the
-board, off the page's words; drumming, no more of the heads, food and mark's tiles hidden than at 1.3 (24 scenes a
-screen, a 3 by 4 mark, compared over the five screens); nothing on the page moves for it. The rest (on the screen in every pose and flight, never over a cell perched) is
-`03-devices.js` on every screen. Pictures: `tools/dev/woodpecker-size/shots.js`.
-
-- *Clear of the row's words (2k+).* The owner (29 October 2026): "Keep the bird 1.7x. And agreed with everything else."
-  On a phone held upright it perches over the row under the board as before, but clear of its words: the speed
-  buttons' and the switches' labels, and the speed's and the chatter's captions (`words` from `placeBoard` in
-  `game/screen.js`, those level with the bird). Where it would stand covers one, it takes the nearest place that
-  covers none, as it already did round the frame's moss (at 390 and 320 px wide, the gap between 4× and the switches,
-  over the chatter's empty end). It never shrinks for this: where no place at its size clears them, it
-  perches as it did. The chatter's lines are left out: they change every few seconds, and the bird would move with
-  each. At 320 px wide the gap is 79 px for its 78, so its box counts its outline and gap but nothing more round the
-  words. Tested in `tools/layout/15-the-perch-clear-of-words.js` (layout job 2) at 390×844 and 320×640; pictures from
-  `tools/dev/woodpecker-perch/shots.js`. In your own round, after you're out, the help line's words share the row too,
-  and on a 390 px phone no place at the bird's size clears them; it perches as it would, and that stays (the owner, 31
-  October 2026, of the bird covering part of the help line or the chatter: "Don't really care if it covers that a
-  bit. None essential, you still see, and you can click through. It also moves about frequently, so it doesn't cover
-  the same spot all the time.", then "yes, leave it."). No perch lower, no help line stepping aside, no smaller bird.
-- *Bigger on a phone* (the owner, 31 October 2026: "And also, I really think the woodpecker needs to be even bigger on the phone than what it is now. Look on the PC, it looks proper threatning. Phone, not so much."). PR #270: on a phone (a screen no more than 500 px on its short side, `PHONE_SHORT_PX`) it grows 1.6 times more (`PHONE_GROW`), size B of the three he was shown; the desktop is unchanged. Upright, it stands 212 px tall on a 390×844 phone, perched and striking (132 before). On its side, the owner (31 October 2026): "Sideways, the bird perches at its full B size, partly off-screen: head, beak and eye in the gap beside the board and inside the safe area, its back and tail cut off by the screen edge. Same size perched and striking, never covering the board while it perches." So on its side it perches in the gap on the side that runs to the screen's edge, its beak short of the board and its eye in the gap, inside the safe area, the rest past the edge; its size there is B or, where the gap is narrower, as big as still leaves its eye in the gap (164 px tall at 780×320, 157 px at 844×390), the same perched and striking. Held upright, it is B or as big as still stands whole on the ledge under the board (212 px at 390×844, 164 px at 320×640), again one size perched and striking. Never smaller than 2k's: where even that leaves no room (a 375×667 phone upright; a sideways screen whose gap won't hold its eye), it is 2k's bird, perched as before. Its size is worked out again only when the screen's width changes, so a phone's address bar never resizes it. At 320×640 it covers the row's words, which the owner accepted. Its depth into the bark and its smallest perch stay what they were at 1.3, whatever its size (`growBird` in `render/bird-drum.js`).
+Its rules are in `38-the-woodpecker.md` under the same name (with "Clear of the row's words (2k+)" and "Bigger on a
+phone"), and its text as it was, with how it was tested and measured, in `docs/archive/design-woodpecker.md`.
 
 ### The woodpecker pecks beside a snake
 
-The owner (29 October 2026; entry 2e): on a tile with a snake on it, the bird pecks beside the body, not on it. Its beak
-aims at the spot on the cell's rim (its corners and three points along each edge, just inside the edge) farthest from
-the edge of any body there, as drawn; of spots about as clear (half a unit), the one nearest where it clings, so a body
-straight across the cell has it peck the edge on its own side. The dent and its splits start there and run in toward
-the cell's middle, stopping short of the body, and none is drawn where no room shows (the body fills the cell); the
-chips fly from there. When a body comes or goes it shifts its grip to the new spot in half a tick. On an empty tile it
-pecks the middle, as before. Drawing only (`aimOff` in `render/bird.js`): the tiles go at the same moment, and the
-simulation does not load the renderer, so its fingerprints cannot change.
+Its rules are in `38-the-woodpecker.md` under the same name, and its text as it was in
+`docs/archive/design-woodpecker.md`.
 
 ### Flags that bend under a snake
 
@@ -420,21 +198,4 @@ hits it dead on, so that must be accounted for. And it should also react to sove
 
 ### Beetles and the woodpecker
 
-The owner (29 October 2026; entry 2m): beetles should "quickly try to escape down their burrow when woodpecker targets
-their little island"; burrows ran out as the woodpecker pecked them; and beetles under a strike teleported. The rules
-(`crawl`, `beakDepth`, `beakGap` and `knocks` in `engine/`):
-- **Burrows keep up.** A beetle due up from underground with no free burrow cracks a new one open where it's quiet,
-  by `beetleOut`'s rule (`BURROW_SPACING` apart, at most `BURROW_MAX` open). None comes up under the beak: `freeBurrow`
-  and `placer` leave the mark out.
-- **The mark is danger, as a head is.** While the woodpecker aims, a beetle within `BEETLE_FEAR` of its mark scurries
-  away from it and for a burrow in reach, and dives in. On the mark, it plans against the strike: a burrow in reach it
-  can get to in time (pulled there straight, twice as hard as a head-scared run), else off the mark by the shortest
-  way, else it digs in if the dig is done before the strike. A dig there leaves no burrow, and it comes up elsewhere. A
-  dig already under way that won't be done in time is dropped, and it runs.
-- **No teleporting.** A beetle still on the mark at the strike is the bird's: a `knock` with no landing, a puff and a
-  soft crunch, no ring through the aim. Its lesson, the first time: "The woodpecker eats beetles too!". The Field
-  guide's Beetles and Woodpecker rows say so.
-- **The rivals** move each beetle in their search by the same rule (`bugCrawl` in `ai/beetles.js`, with `E.beakDepth` and
-  `E.beakGap`). So a beetle bound down a burrow beyond the mark isn't chased, and one running off it toward a rival is.
-  One gap, not worth its code: the AI's copy lets a fleeing beetle cross a body lying on the mark (the mark's cells
-  read as holes there), where the engine stops it.
+Its rules are in `04-food-and-the-world.md` under the same name.

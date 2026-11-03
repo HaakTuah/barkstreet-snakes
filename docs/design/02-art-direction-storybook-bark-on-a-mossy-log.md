@@ -21,7 +21,7 @@ Everything in the UI uses only these. (The drawn characters bring their own colo
 
 There are also two functional tints that aren't separate colors. **Parchment-2** is a darker parchment used for rings and tracks. **Berry** `#dc2626` is used only for danger: hunger, mushrooms and the "starving" state.
 
-**The cast palette is a deliberate exception.** The 18 personalities plus you need 19 separable identities, which 8 colors can't give. Each character keeps its own color, but it's never the only identifier: every character also has a face or body pattern (crown, tricorn and cross-belts, a scope and a squint, bricks and laurel, jester two-tone, the flag and hair, a mime's face, cat ears, a mustached star, and so on). You get a cream outline.
+**The cast palette is a deliberate exception:** its rule is in `03-the-snake-as-a-character.md` under "The cast palette", and its text as it was in `docs/archive/design-looks.md`.
 
 ### Shape, line, texture, corners
 

@@ -12,11 +12,13 @@ A round has a shape, and the music follows it:
 | Watching | - | Quieter, no percussion |
 | Napping | - | Ducked to about a third |
 
-**The woodpecker comes at 2:00, not 3:00** (your call, and the numbers agree). With hunger, food is what keeps a round going, and late rounds were dragging. Over 600 simulated AI rounds the median round lasts 71 s, the middle half 46-112 s, and 21% of rounds reach the woodpecker, so it's a real event rather than a rarity. Every personality wins 15-31% of the rounds it plays. (Gobbler had slipped to 8%: it chased food straight into other snakes. It now flinches from heads a little more, so it lives longer and, true to form, eats a third more.)
+**The woodpecker comes at 2:00, not 3:00**, and **The woodpecker, rebuilt: big, telegraphed, in chunks**: its rules as
+they stand now are in `38-the-woodpecker.md`, and their text as it was, with their measurements, in
+`docs/archive/design-woodpecker.md`.
 
-**The woodpecker, rebuilt: big, telegraphed, in chunks** (since reworked again: patches anywhere, see "Crashes, not deaths"). It used to sit on the board as a small sprite, pecking a cell every other tick. Now a big great spotted woodpecker (about six cells tall) lands beside the board, on its own layer over the page, on whichever side has room on this screen (with room nowhere, as on a phone, shrunk into the gutter on the side nearer its patch, its beak never over a cell). Then, over and over: it picks the next run of up to 8 free cells along the outermost ring left (never within 3 cells of a head, never a body or food), eyes it for 13 ticks (about a second and a half; the chunk glows red and cracks, the pulse quickening, and the bird crouches), swoops in, drums it all out in a shower of chips (except any cell a body is on by then), flies back, and rests for 6 ticks. The AIs keep out of a marked chunk as they keep out of holes, with their usual reaction delay. Over 300 simulated rounds the median round is as long as before (69 s); deaths in its holes fell from 0.29 to 0.06 per woodpecker round, because every strike is announced, so the squeeze now comes from shrinking room and hunger (starving rose from 2% to 5% of deaths). Online it's protocol 3.
-
-**A cornered AI makes the sensible last move.** When every move looks fatal, a wall, a hole or its own body is certain death, but a rival's cell may already be free (it sees rivals as they were a moment ago), so it bets on the cell that frees up soonest. It used to pick at random, and those were the deaths that looked dumbest: self-bites fell from 15% to 8% of AI deaths and wall crashes from 7% to 2%. Two heads that swap cells now count as a head-on, as they look.
+**A cornered AI makes the sensible last move**: its rule is in `39-the-rivals.md` under that name, and its text as it
+was, with what it measured, in `docs/archive/design-rivals.md`. Two heads that swap cells count as a head-on, as
+they look.
 
 **Starving is decided after eating.** A snake whose head reaches food on the tick it would starve eats instead.
 
