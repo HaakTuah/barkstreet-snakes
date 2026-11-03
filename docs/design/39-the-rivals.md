@@ -7,7 +7,8 @@ round six B and the owner's playtest settled them (their text, with what was tri
 "Rivals see food as it is"), with the woodpecker ("The rivals tell a mark from a hole" in `38-the-woodpecker.md`),
 with fire and head-ons (`14-crashes-not-deaths-the-rules-reworked.md`), with their own beads ("Choking on your own tail"
 in `27-round-six-a-fairness-and-fixes.md`), with each of round six B's moves, and the power styles still to build ("Every
-rival has a power style", "Balance targets" and "Gobbler's endgame" in `29-round-six-b-the-new-moves.md`); their lines
+rival has a power style", "Balance targets" and "Gobbler's endgame" in `29-round-six-b-the-new-moves.md`); their looks
+(`03-the-snake-as-a-character.md`); their lines
 (`09-voice-and-copy.md`, `13-lines-and-announcements.md`, `19-looks-and-lines.md`); Capricious, Copycat and Wildcard
 (`35-capricious-copycat-and-wildcard.md`); Ouroboros (`17-ouroboros-and-the-golden-beetles-leap.md`); Star
 (`26-round-five-star.md`); Sovereign's realm and Colonist's flags (`04-food-and-the-world.md`, and "A pecked flag is a

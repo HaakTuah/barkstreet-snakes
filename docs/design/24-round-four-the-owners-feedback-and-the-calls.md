@@ -37,14 +37,8 @@ You can hold golden jumps and golden flashes at once, since they're different pr
 
 ### Telling powers apart
 
-Gold stays the family colour: an outline of gold means "this snake holds a power". Each kind also gets an accent of its own, plus a shape and a motion, so you can read it at a glance without relying on hue:
-- **Jumps are sky:** round pips.
-- **Flashes are ember:** diamond pips, short ember strokes running back along the gold line from the head (over its first 6 segments: clipping to a whole long body cost the GPU up to 7 ms a frame), and a streak.
-- **The wrap** is a slow glint running down the gold line, fading with it over the wrap's last 2 s.
-
-Sky against ember is the pair colour-blind eyes separate best, and the shapes carry it without colour too. This bends the third pass's "gold means power and nothing else" a little: gold is still only ever power, and the accents appear only on power marks. (So Desperado's poncho stripes went from Honey to cream.)
-
-The pips sit on a short arc behind the head, a little bigger now; holding both kinds, the golden jumps' pips sit on the snake's left of the arc and the golden flashes' on its right. Since the critique, each is ringed in a parchment keyline inside an ink line, so ember reads on Gobbler's orange and sky on Metagamer's cyan (0.14 of a cell, 0.12 with three or more, then the rings). The diamonds are slim lozenges pointing along the arc's spokes, spaced so they never touch (three that touched read as a zigzag seam). At the board's edge the whole arc moves in, so no pip is cut off, and the stun stars sit a little further out to clear them. Your two plain rests show as two half-rings round your head, fixed to the screen: jump on the left in sky, flash on the right in ember. Each fills from the bottom over a faint track as it rests (not shown while you hold golden ones of that kind) and gives one bright flick when it's ready. A stunned press shows the jump's hop or the flash's double chevron in its accent (Honey when golden), and a press that can't go an inked × in it. On the tags, one chip per power: golden jumps sky, golden flashes ember, both on Honey with the count. Your own tag always shows your plain jump and flash, filling in their accents as they rest; rivals show chips only while they hold golden powers or the wrap.
+Its rules are in `03-the-snake-as-a-character.md` under the same name, and its text as it was in
+`docs/archive/design-looks.md`.
 
 ### The woodpecker: holes under you, and holes that look like holes
 

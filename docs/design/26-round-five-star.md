@@ -7,26 +7,9 @@ The owner's idea: bring back the rainbow body we dropped and give it to a new ri
 - Mute became a mood ring, because a mime's colour should be its mood.
 - A shooting star dragging a rainbow is the most natural use the rainbow has had.
 
-**The look.** It's our own star, not a copy:
-- **The head** is a five-pointed star with softly rounded points (a sharp star, points 1.3 and valleys 0.68 head radii, grown round), its points turning with its heading, one to the back, into its trail. **Its face stays upright** at every heading, its chin tipped 18° toward the way it's going across the screen: tall oval ink eyes with a catchlight, bushy white brows outlined in ink, and a huge white walrus mustache under them, its mouth and its tongue gag (downward) beneath. Heading down, left or right, the mustache droops over its two lower points; heading up, its back point sits under its chin. (As built at first, the face turned with the heading like every other face, and heading up the mustache sat above the eyes and read as huge angry brows: the critique turned it upright.) It wobbles when it's stunned.
-- **The head's colour.** Star is sunflower yellow (`#f9c22e`), deeper than Honey, with an orange rim (`#e8890c`) and an ink outline. Gold means power, and Star's yellow must never pass for a power mark. Sovereign's crown and Wildcard's pompadour set the precedent: a yellow on a face is a look, and the gold outline round a body is the power. When Star holds golden powers, it gets that outline like anyone: its gold line, its shadow and a land's colour round it follow its points (sunflower, then ink, then Honey, then ink, so the head never reads as the gold line), its pips sit past its points, and its stun stars a quarter of a cell further out than a round head's.
-- **The body** is the old rainbow (`hsl(h, 85%, 62%)`, 28° of hue a segment, moving a degree every 15 ms), flowing down from the head toward the tail: the other way to the old one, whose hues flowed up toward Wildcard's and Mute's heads. It fades toward the bark at the tail like everyone's, holds still with reduced motion, and stops where it was when Star is out. (*Since round six A* it streams back by the distance Star travels, and drifts slowly with reduced motion: see "Star's rainbow streams".)
-- **Its tail sheds a small four-point twinkle** in one of the rainbow's six colours every 0.3 to 0.7 s, only with motion on. There's no halo: only you glow.
-- **For its tongue gag**, it flicks out a tiny spinning star on a ribbon of rainbow, with a glint at full stretch. (*Since round six A*, its mustache twirls instead: see "Star's mustache".)
-- **It looks at** the nearest golden power (a golden beetle, a golden leaf or a golden mushroom), and otherwise at the nearest head.
-- **Its beads** come out in rainbow order from its head (red, orange, yellow, green, blue, violet, and round again), and the pieces it bursts into take the same colours.
-
-**The tell: a countdown on its five points.** An addict's weakness is the comedown.
-- **Its middle is always its sunflower.**
-- **As it flashes,** its points go dim (`#b0893a`, rimmed `#8a5c24`) and its twinkles burst off them.
-- **As its rest runs down,** they light again one by one: a point every 1.2 s, from its back point round.
-- **The fifth lights when the flash is back,** and two twinkles go round its points. Holding golden flashes, all five are lit.
-- **Its brows** knit as it flashes and relax early in its rest.
-- **With reduced motion,** each point lights at once, one at a time, and nothing blinks.
-
-Count its points to see how soon it can flash again, and box it in while they're dim. This is drawing only. It shows what the rules already know, and the rivals don't use it: they assume anyone may flash, as before.
-
-*Why a countdown:* as first built, Star was bright only while its flash was ready. It flashes the tick its rest ends, so that was 5% of the time in a real round, 0 to 234 ms at a stretch. It was a mustard biscuit on 9 frames in 10, and its "ready" was a blink, and with reduced motion a flash of the whole head. Now a watched round shows it two-thirds sunflower, and never all dim.
+**The look** and **The tell: a countdown on its five points**: their rules are in `03-the-snake-as-a-character.md`
+under "Star" and "The tell: a countdown on its five points", and their text as it was, with why a countdown, in
+`docs/archive/design-looks.md`.
 
 **How it plays.** Star prices powers far below anyone else, by the same rules and the same engine calls. It's two persona weights, both off for everyone else, so rounds without Star play exactly as before (100 rounds drawn without it, seed 3, give the stub's fingerprint, 202796421):
 - **`w.powers`** `{ price: 0, risk: 350, everyWay, jumpAny, dashSpend }`. Its powers are free to it, unless one ends where its risk is over 350 (a rival could strike there: in reach of its powers, or nearer), and there it pays the full price, as anyone would. A power still has to beat crawling by a point. (The brief said a fraction of the price: at 0.05 Star flashed 8.2 times a minute and won no more, 22 / 19%.)
@@ -48,13 +31,9 @@ Round four measured that spending powers on small gains makes a rival weaker. So
 
 All told it says about eight lines a minute alive. Every line has its Chinese for Copycat: 805 lines now (717 before), 776 Chinese, 173 punchlines (142). Also since the critique, for everyone: a golden dash that cuts someone gets the dasher's snip line (a tail off) or its kill line (in two), and its dash line only when those can't be said.
 
-**The cast** is eighteen now. Star's dot on the tags is a little rainbow round a sunflower middle. Its colour in text is a darker yellow than its star: its persona colour, `#eab308`, which its name in the log and the Hall of Fame and a bubble's edge use, against the drawn sunflower `#f9c22e`.
-
-**Copycat copying Star** wears a pale copy of its rainbow (each hue 0.45 toward white), flowing in step with Star's and holding still with reduced motion, with pale rainbow beads; as a single colour (its tag dot's middle, and where one colour is all there is) it's a pale violet, `#d19df7`. (*Since round six A* its head keeps the flag's red and its tag dot is its own starred one in every state: see "Copycat in the flag's red". The pale violet stays where one colour is all there is.) It used to take Star's text yellow, lightened: a pale gold snake, as if it held a power, and its gold line all but vanished when it did. It copies Star a third of its living time when they share a round. **Star's burst** (and Copycat's while it copies Star) is a shockwave of six rainbow arcs and rainbow pieces, and its knock-out sparks are rainbow: they were the gold and cream of a golden pickup.
-
-**Along the way, for everyone.** A face's turn is settled once a frame, before its shadow and outlines, so across a wrapped edge a face no longer turns twice as fast; an eaten bead's crumbs are the bead's own colour, not its owner's.
-
-**Worth a look.** Two things the build left for the owner's eye: the rainbow's lemon segment (hue 55) can sit right behind gold pips, the closest thing on the board to Honey, though it reads as part of the rainbow; and dim Star's points are close in tone to the Honey line round it at phone size, kept apart by the ink between them (`mobile-star-gold.jpg` in the shots tour shows both).
+**The cast**, **Copycat copying Star**, **Along the way, for everyone** and **Worth a look**: their rules are in
+`03-the-snake-as-a-character.md` (under "Star", "Copycat copying Star" and "Your snake"), and their text as it was
+in `docs/archive/design-looks.md`.
 
 ### Round five, measured
 
