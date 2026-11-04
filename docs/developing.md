@@ -58,7 +58,8 @@ signature verified (`npm audit signatures` after an install with `--ignore-scrip
 Sigstore, the signature over `name@version:integrity` checked against the key of the same id at
 `https://registry.npmjs.org/-/npm/v1/keys`); the readable build in the package (`dist/peerjs.js`) diffed against the old
 one and read against the release notes, naming anything they do not explain, such as a new address it contacts or code
-it builds from text; `PEERJS_SRI` computed from the minified file inside that verified package, so browsers run only
+it builds from text (that the minified file is the same code rests on the publisher, signature and provenance checks,
+and the PR says so); `PEERJS_SRI` computed from the minified file inside that verified package, so browsers run only
 those bytes; and the PR's preview, where one online round shows cdnjs serves the same. A check that cannot be run, or
 one that fails, is said in the PR, never skipped. One is held back only for a reason: it breaks something, plays or
 loads worse (a much bigger file reaches every phone), changes its licence, or its project is abandoned or changes hands.
