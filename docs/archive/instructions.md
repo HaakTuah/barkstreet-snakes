@@ -14,3 +14,4 @@ new day (UTC) starts that day's file, `instructions/<yyyy-mm-dd>.md`, and its li
 - [1 November 2026](instructions/2026-11-01.md)
 - [2 November 2026](instructions/2026-11-02.md)
 - [3 November 2026](instructions/2026-11-03.md)
+- [4 November 2026](instructions/2026-11-04.md)
