@@ -94,13 +94,13 @@ and the owner's notes of 2 November, among them).
   check's point (2) (this file 10 KB, `AGENTS.md` 20 KB, 2 November; condensed again from 23.6 to 19.8 KB, PR #360)
   and point (5), the unused-code check (PR #331):
   `docs/archive/progress-done.md`, "The split lane, done".
-- **The file-by-file review's moves:** done, a folder a PR (#341, #342, #343, #344, #345):
-  `docs/archive/progress-done.md`, "The split lane, done". Left: `render/world.js`'s part, which waits with it below.
-  `render/food.js` split by meaning: its burrows and the beetle's bore to `render/burrows.js` (66 to 43.5 and 22.6 KB;
-  PR #421).
-- **The design by topic, not by round** (#336): *Done:* the round files are pointers and records; topics made or widened:
-  `02`–`05`, `09`, `12` (the round's arc), `13`, `21`, `22`, `30`, `31`, `33` and `38`–`45`, their history in
-  `docs/archive/design-*.md` (PR #425 to PR #451).
+- **A pointer check and a reading-size check on every PR** (archive, 4 November 2026), beside the copies check and
+  protected like it (`SECURITY.md`, rule 3): (1) every pointer in the rule files to a file, a section or a numbered
+  point must lead to one that exists, or the PR fails, saying which; forms it cannot read are listed, never guessed;
+  (2) the files every session reads, each against a mark of about 20 KB (one already past it starts at its size today,
+  a baseline that may only shrink), their total against today's, and every file past about 50 KB the PR changes
+  (Step 0); a PR that crosses a mark moves the mark in the same PR and says why. The workshop check's points 2 and 3
+  are then measured on every PR.
 - **The rule-file audit's larger moves** (the workshop check's point 6; archive, 3 November 2026): (1)
   `docs/claude-and-codex.md` (23 KB) is past the 20 KB warning: the sections that wait until Codex can build, "What goes
   to Codex" to "When Codex is not there", into a file of their own; (2) the slop bar a home of its own, since
