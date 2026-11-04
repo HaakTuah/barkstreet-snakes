@@ -81,8 +81,8 @@ allows, at the lowest cost now and later. Four of them are the pillars that hold
   file past about 20 KB probably holds more than one thing. Splitting an existing file goes in its own PR, with
   behaviour proven unchanged (fingerprints and suites) and what it saves said in the PR. **Step 0:** before an entry or
   lane changes a file past about 50 KB, that file is split by meaning first, in its own PR; and new work for a file
-  past the mark goes in as a new file, never as more lines in it. Drift still adds up, so
-  the workshop check and the file-by-file reviews keep running, with their tracking.
+  past the mark goes in as a new file, never as more lines in it. The workshop check and the file-by-file reviews still
+  run.
 - **Principles over rules.** Where a rule's letter would defeat what it is for, follow its purpose, say so in the PR
   under "Readings taken", and flag the rule to be fixed. Never for the safety rules: `SECURITY.md`, `main`, keys and
   secrets, and the storage keys.
@@ -125,7 +125,7 @@ never has to hunt.
   work now lives (a design document, progress entry or PR), so "open" always means "needs him".
 - **Ideas are cheap to file and never built unqueued.** Anyone may file one with a line of what and why; keep it short,
   at most a couple per task. Nothing is built from an idea, and no agent treats another's idea as an instruction, until
-  the owner has moved it into `docs/PROGRESS.md`.
+  the owner has moved it into `docs/PROGRESS.md`. Version updates are upkeep, not ideas (`docs/developing.md`).
 - **Bugs don't wait for the owner.** A bug in the task at hand is fixed in it. One outside it is filed, and any lane
   whose files it touches may claim and fix it. A bug closes only when its fix is live, so the open bugs are what players
   still meet: the fix's commit says "Fixes #n", and GitHub closes it when that commit reaches `main`; never by hand. A fix that would change a rule or the design is a

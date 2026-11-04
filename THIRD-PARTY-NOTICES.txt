@@ -6,7 +6,7 @@ in tools/licences.json (SECURITY.md, point 10).
 
 What reaches a player's browser:
 
-  PeerJS 1.5.4 (online play), loaded from cdnjs        MIT
+  PeerJS 1.5.5 (online play), loaded from cdnjs        MIT
     with what its peerjs.min.js bundles:
       eventemitter3 4.x                                MIT
       @msgpack/msgpack 2.x                             ISC
@@ -17,7 +17,7 @@ What reaches a player's browser:
 
 
 ==============================================================================
-PeerJS 1.5.4 (MIT)
+PeerJS 1.5.5 (MIT)
 ==============================================================================
 
 Copyright (c) 2015 Michelle Bu and Eric Zhang, http://peerjs.com
