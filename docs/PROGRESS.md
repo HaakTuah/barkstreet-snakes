@@ -137,6 +137,11 @@ landing is almost never contestable. The flight stays as built for now, and no r
 4. **Measured again after 2u and part 7,** whose stamina and pricing change what a flight costs. Only if it is still
    even then does a bigger change go to the owner as a question: a longer flight, or the ring shown before take-off.
 
+### 2aa. Dash on the key you're going (the owner, 4 November 2026; an input entry, a side lane now)
+
+The steering key of the way you're going dashes again, as a swipe ahead does, behind touch's guard: its spec is in
+`docs/handoff/queue-specs.md` under the same title.
+
 ### 2u. One stamina for jump and dash (the owner, 2 November 2026; an engine-rules entry, after 2z and before part 7)
 
 One bar for both plain powers, no tail cost, each power a third to two thirds of plain power uses and neither better in
@@ -149,8 +154,10 @@ apple's worth" in `docs/design/04-food-and-the-world.md`.
 2z found the golden apple doesn't pay (its +3 costs time alive more than it helps), and the apple of vigour wouldn't
 either, since the two rests were mostly ready when one was eaten. Right after 2u, the same fork measures, on fresh
 seeds, the golden apple as +3 and the one stamina refilled, and as +3, refilled and supercharged for a few seconds (the
-owner: "Maybe it can even superchage your stamina for a little while?"; a first guess of 4 s at a faster refill), each
-against the apple as it is. The one that pays is built, with its cue, lesson, Field guide row and protocol bump.
+owner: "Maybe it can even superchage your stamina for a little while?"; a first guess of 4 s at a faster refill), and
+every food refilling the stamina in proportion to how much it grows the snake, the golden apple at the top (the owner,
+4 November 2026: "anything you eat should give a little stamina recharge"), each against food as it is. Eating late
+must come to pay without always paying, plentiful rounds must not turn into power spam, and every trademark holds. The one that pays is built, with its cue, lesson, Field guide row and protocol bump.
 
 ### 5. Round six B: the new moves (DESIGN "Round six B")
 
