@@ -6,7 +6,7 @@
       "file": "net.js",
       "pattern": "/ajax/libs/peerjs/(\\d+\\.\\d+\\.\\d+)/",
       "days": 14,
-      "how": "PeerJS loads from cdnjs in every player's browser. Check that cdnjs serves the new version and read its release notes; then update the address and PEERJS_SRI in net.js (the hash of the file cdnjs serves), its entry and its bundled packages' in tools/licences.json, and THIRD-PARTY-NOTICES.txt; then run the online suite and play a round online."
+      "how": "PeerJS loads from cdnjs in every player's browser, so it is what ships to players: take it as \"The newest version, unless there is a reason\" in docs/developing.md says (its source checked, PEERJS_SRI computed from the verified npm package's peerjs.min.js). Update the address and PEERJS_SRI in net.js, its entry and its bundled packages' in tools/licences.json, and THIRD-PARTY-NOTICES.txt; then run the online suite."
     },
     {
       "name": "node",

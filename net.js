@@ -12,8 +12,8 @@
  * @typedef {PingMsg | PongMsg | KeepaliveMsg} NetMessage
  */
 window.SnakeNet = (() => {
-  const PEERJS = 'https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js';
-  const PEERJS_SRI = 'sha512-iFU+yF1keEaLDC9HEwPfLMSRaS0unBHE14GEgx6pQKJXjp5v0tvX8xpfp2lgJ62XEjbYp/M5C3CAmej/PWXMyA==';
+  const PEERJS = 'https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/peerjs.min.js';
+  const PEERJS_SRI = 'sha512-XEKeWX+mI3Ov+tg2evDlVQFzVOIp4T8J3cNcCEPaEUGpxJV3eZaN8rHuvnFPvQpGJBHPmrozJDMpm2xcDvtmyQ==';
   const PREFIX = 'barkbite-';   // our corner of the broker's shared namespace
   const CONNECT_MS = 15000;     // give up joining after this long
   const PING_MS = 1000;         // the host measures each friend's lag this often
