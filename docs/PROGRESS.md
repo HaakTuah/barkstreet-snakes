@@ -149,15 +149,10 @@ aggregate, the pace kept: `docs/design/37-one-stamina.md`. Part 7's pricing then
 merges, the golden apple is measured again with the stamina refilled in place of the two rests (2z, #460): "The golden
 apple's worth" in `docs/design/04-food-and-the-world.md`.
 
-### 2u+. The golden apple's worth, against one stamina (the owner, 3 November 2026; #460; a measurement right after 2u, then an engine-rules entry if it pays)
+### 2u+. The stamina economy and the golden apple's worth (the owner, 3 and 4 November 2026; #460; a measurement right after 2u, then an engine-rules entry for what pays)
 
-2z found the golden apple doesn't pay (its +3 costs time alive more than it helps), and the apple of vigour wouldn't
-either, since the two rests were mostly ready when one was eaten. Right after 2u, the same fork measures, on fresh
-seeds, the golden apple as +3 and the one stamina refilled, and as +3, refilled and supercharged for a few seconds (the
-owner: "Maybe it can even superchage your stamina for a little while?"; a first guess of 4 s at a faster refill), and
-every food refilling the stamina in proportion to how much it grows the snake, the golden apple at the top (the owner, 4
-November 2026: "anything you eat should give a little stamina recharge"), each against food as it is. Eating late must
-come to pay without always paying, plentiful rounds must not turn into power spam, and every trademark holds. The one that pays is built, with its cue, lesson, Field guide row and protocol bump.
+Where the one stamina comes from (food, its own recharge, banking to a cap) and what the golden apple gives (a full
+refill, a one-bump shield), measured for every rival: its spec is in `docs/handoff/queue-specs.md` under the same title.
 
 ### 5. Round six B: the new moves (DESIGN "Round six B")
 
