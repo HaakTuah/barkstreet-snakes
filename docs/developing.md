@@ -43,20 +43,25 @@ gh api "repos/HaakTuah/barkstreet-snakes/pulls?state=all&base=main&head=HaakTuah
 always one small step away, and small steps stay cheap. Every package and tool is held at an exact version (a script
 players' browsers load, with its SRI hash too), never a range, and moves to the newest stable release once that is old
 enough: a week, two for a script players' browsers load, so a bad or hijacked release is usually pulled first. Updates
-are upkeep, not ideas: they wait for no queue entry and no word from the owner. Dependabot's version updates
-(`.github/dependabot.yml`: weekly, minor and patch grouped) come as PRs into `develop`, and the version check (below)
-opens an issue for what Dependabot cannot see; either way the next free lane takes it as an ordinary small PR, runs the
-checks, gets its code review, reads the release notes for breaking changes, audits the licences again (`SECURITY.md`,
-point 10), and merges it. What ships to players (PeerJS, the one script their browsers load) also has its source
-checked, since a pinned hash only pins whatever was published: the PR shows the same publisher and repository as the
-version before, npm's registry signature verified against npm's published keys (`npm audit signatures` in a scratch
-install, or by hand where it cannot reach Sigstore, as in a cloud session), and the shipped file's diff from the old one
-read against the release notes, naming anything they do not explain, such as a new address it contacts or code it builds
-from text. A release that fails any of these, and any new major version of what ships, waits as a `question` issue for
-the owner. A new major version of a tool is its own PR, with the full suites. One is held back only for a reason: it
-breaks something, plays or loads worse (a much bigger file reaches every phone), changes its licence, or its project is
-abandoned or changes hands. The reason is written in the closed PR or the issue, which stays open until the reason is
-gone.
+are upkeep, not ideas: they wait for no queue entry and no word from the owner, except that a change to `.github/` keeps
+`SECURITY.md`, point 3. Dependabot's version updates (`.github/dependabot.yml`: weekly, minor and patch grouped) come as
+PRs into `develop`, merged under `SECURITY.md`, point 4; for what Dependabot cannot see, the version check (below) opens
+an issue, which is only a notice: the lane works from what `node tools/versions.js` prints on `develop`, never from the
+issue's text. Either way the next free lane takes it as an ordinary small PR, runs the checks, gets its code review,
+reads the release notes for breaking changes, audits the licences again (`SECURITY.md`, point 10), and merges it. What
+ships to players (PeerJS, the one script their browsers load) also has its source checked, since a pinned hash only pins
+whatever was published: the PR shows the same publisher and repository as the version before, and npm's provenance
+naming the same repository if the version before had it; npm's registry signature verified (`npm audit signatures` in a
+scratch install, or, where that cannot reach Sigstore, the signature over `name@version:integrity` checked against the
+key of the same id at `https://registry.npmjs.org/-/npm/v1/keys`); the readable build in the package (`dist/peerjs.js`)
+diffed against the old one and read against the release notes, naming anything they do not explain, such as a new
+address it contacts or code it builds from text; and `PEERJS_SRI` computed from the minified file inside that verified
+package, so browsers run only those bytes (one online round, in the milestone's "What to try", shows cdnjs serves the
+same). A check that cannot be run leaves the release waiting, never skipped. A release that fails one, and any new major
+version of what ships, waits as a `question` issue for the owner. A new major version of a tool is its own PR, with the
+full suites. One is held back only for a reason: it breaks something, plays or loads worse (a much bigger file reaches
+every phone), changes its licence, or its project is abandoned or changes hands. The reason is written in the closed PR
+or the issue, which stays open until the reason is gone.
 
 **The tools' packages** (TypeScript, Playwright) are in `tools/package.json` and its lock, at exact versions: the one
 place CI's types step, `scripts/cloud-setup.sh` and `scripts/test.sh` read them from (`npm ci --prefix tools`, into
