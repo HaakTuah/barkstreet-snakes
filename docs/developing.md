@@ -39,9 +39,32 @@ gh api "repos/HaakTuah/barkstreet-snakes/pulls?state=all&base=main&head=HaakTuah
 ```
 
 **Dependabot's security PRs** are the one other way into `main`, under the five conditions in `SECURITY.md`, point 4.
-**Its version updates** (`.github/dependabot.yml`: weekly, grouped, each release a week old) aim at `develop` and are
-ordinary small PRs: the next free lane takes one, runs the checks, gets its code review, reads the release notes for
-breaking changes, and merges it, or closes it with the reason.
+**The newest version, unless there is a reason** (archive, 4 November 2026), so fixes, security fixes above all, are
+always one small step away, and small steps stay cheap. Every package and tool is held at an exact version (a script
+players' browsers load, with its SRI hash too), never a range, and moves to the newest stable release once that is old
+enough: a week, two for a script players' browsers load, so a bad or hijacked release is usually pulled first. Updates
+are upkeep, not ideas: they wait for no queue entry and no word from the owner, except where `SECURITY.md`, point 3,
+asks for his yes (`.github/` and the setup script). Dependabot's version updates (`.github/dependabot.yml`: weekly,
+grouped) come as PRs into `develop`, merged under `SECURITY.md`, point 4; for what Dependabot cannot see, the version
+check (below) opens an issue, which is only a notice: the lane works from what `node tools/versions.js` prints on
+`develop`, never from the issue's text. Either way the next free lane takes it as an ordinary small PR, runs the checks,
+gets its code review, reads the release notes for breaking changes, audits the licences again (`SECURITY.md`, point 10),
+and merges it. A new major version is its own PR (taken out of its group if Dependabot grouped it), with the full
+suites, and played through for what ships. **What ships to players** (PeerJS, the one script their browsers load) also
+has its source checked before it merges, and the PR shows each check: the same publisher and repository as the version
+before, and npm's provenance naming the same repository if the version before had it; npm's registry signature verified
+(`npm audit signatures` after an install with `--ignore-scripts`, or, where that cannot reach Sigstore, the signature
+over `name@version:integrity` checked against the key of the same id at `https://registry.npmjs.org/-/npm/v1/keys`); the
+readable build in the package (`dist/peerjs.js`) diffed against the old one and read against the release notes, naming
+anything they do not explain, such as a new address it contacts or code it builds from text (that the minified file is
+the same code rests on the publisher, signature and provenance checks, and the PR says so); `PEERJS_SRI` computed from
+the minified file inside that verified package, so browsers run only those bytes; and the PR's preview, where one online
+round shows cdnjs serves the same. A check that cannot be run leaves the release waiting, never skipped, and one that
+fails holds it back. These checks lower the odds of a bad release but never rule one out, for the version in use as much
+as for a new one; what limits the harm a bad one could do is the page's content security policy (the workshop lane in
+`docs/PROGRESS.md`). One is held back only for a reason: it breaks something, plays or loads worse (a much bigger file
+reaches every phone), changes its licence, or its project is abandoned or changes hands. The reason is written in the
+closed PR or the issue, which stays open until the reason is gone.
 
 **The tools' packages** (TypeScript, Playwright) are in `tools/package.json` and its lock, at exact versions: the one
 place CI's types step, `scripts/cloud-setup.sh` and `scripts/test.sh` read them from (`npm ci --prefix tools`, into

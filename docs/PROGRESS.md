@@ -94,6 +94,11 @@ and the owner's notes of 2 November, among them).
   check's point (2) (this file 10 KB, `AGENTS.md` 20 KB, 2 November; condensed again from 23.6 to 19.8 KB, PR #360)
   and point (5), the unused-code check (PR #331):
   `docs/archive/progress-done.md`, "The split lane, done".
+- **A content security policy for the page** (archive, 4 November 2026), first among the side lanes, as security
+  hardening: a policy in `index.html` (GitHub Pages sends no headers) by which the page loads code only from itself and
+  PeerJS's pinned file, and contacts only its own files and PeerJS's servers, so no code in it, a package's included,
+  can send what it holds anywhere else or pull in more. Done when a test shows the policy in place, online play still
+  works on the PR's preview, and `SECURITY.md` and `docs/developing.md` point to it.
 - **A pointer check and a reading-size check on every PR** (archive, 4 November 2026), beside the copies check and
   protected like it (`SECURITY.md`, rule 3): (1) every pointer in the rule files to a file, a section or a numbered
   point must lead to one that exists, or the PR fails, saying which; forms it cannot read are listed, never guessed;
