@@ -64,6 +64,12 @@ allows, at the lowest cost now and later. Four of them are the pillars that hold
   or the file it sits in grows to hold other things, it moves there in one PR: every pointer that still makes sense
   updated, the rest removed, nothing left behind in the old place. A design call goes into its topic file in
   `docs/design/`.
+- **No description left untrue** (archive, 4 November 2026), so no reader, player or builder, meets a text the game no
+  longer matches. A change updates, in the same PR, every place that describes what it changes, found by searching for
+  its names: its topic file in `docs/design/` and, for what a player sees, the README, the lesson, the Field guide row
+  and the hints on screen. Each of those is the one place for its own readers, so where two design files describe one
+  thing, one becomes a pointer to the other. Dated records (the archive, old reports) stay as they were. Each milestone
+  PR says in one line whether the README is current, and fixes it if not.
 - **Keep it lean.** Every change removes what it replaces, in the same PR: no commented-out code, no "old" copies,
   nothing it made unused (code, files, settings, assets, test helpers). Look for an existing helper before writing one.
   A leftover is a finding in every review.
@@ -84,8 +90,6 @@ allows, at the lowest cost now and later. Four of them are the pillars that hold
   snakes and food it needs, for a few ticks. Full rounds only in the few tests that guard the whole (the simulation's
   fingerprint and `--check`, the online round trip); long measurements (`tools/abtest.js`, censuses) in
   `scripts/sim.sh`, never in CI.
-- **A change a player sees updates the README,** in the same PR, as it does the lesson and the Field guide row. Each
-  milestone PR says in one line whether the README is current, and fixes it if not.
 - **The owner's words are kept, in the archive.** Quote each instruction he gives word for word, dated, in the PR and
   in the archive (`docs/archive/instructions.md` says which file), leaving out personal details as `SECURITY.md`, point
   11, says. A standing rule
