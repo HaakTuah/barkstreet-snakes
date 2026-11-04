@@ -47,9 +47,15 @@ are upkeep, not ideas: they wait for no queue entry and no word from the owner. 
 (`.github/dependabot.yml`: weekly, minor and patch grouped) come as PRs into `develop`, and the version check (below)
 opens an issue for what Dependabot cannot see; either way the next free lane takes it as an ordinary small PR, runs the
 checks, gets its code review, reads the release notes for breaking changes, audits the licences again (`SECURITY.md`,
-point 10), and merges it. A new major version is its own PR, played through as well. One is held back only for a reason:
-it breaks something, plays or loads worse (a much bigger file reaches every phone), changes its licence, or its project
-is abandoned or changes hands. The reason is written in the closed PR or the issue, which stays open until the reason is
+point 10), and merges it. What ships to players (PeerJS, the one script their browsers load) also has its source
+checked, since a pinned hash only pins whatever was published: the PR shows the same publisher and repository as the
+version before, npm's registry signature verified against npm's published keys (`npm audit signatures` in a scratch
+install, or by hand where it cannot reach Sigstore, as in a cloud session), and the shipped file's diff from the old one
+read against the release notes, naming anything they do not explain, such as a new address it contacts or code it builds
+from text. A release that fails any of these, and any new major version of what ships, waits as a `question` issue for
+the owner. A new major version of a tool is its own PR, with the full suites. One is held back only for a reason: it
+breaks something, plays or loads worse (a much bigger file reaches every phone), changes its licence, or its project is
+abandoned or changes hands. The reason is written in the closed PR or the issue, which stays open until the reason is
 gone.
 
 **The tools' packages** (TypeScript, Playwright) are in `tools/package.json` and its lock, at exact versions: the one
