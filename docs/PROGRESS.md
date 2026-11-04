@@ -144,10 +144,10 @@ The steering key of the way you're going dashes again, as a swipe ahead does, be
 
 ### 2u. One stamina for jump and dash (the owner, 2 November 2026; an engine-rules entry, after 2z and before part 7)
 
-One bar for both plain powers, no tail cost, each power a third to two thirds of plain power uses and neither better in
-aggregate, the pace kept: `docs/design/37-one-stamina.md`. Part 7's pricing then prices the one stamina. Once it
-merges, the golden apple is measured again with the stamina refilled in place of the two rests (2z, #460): "The golden
-apple's worth" in `docs/design/04-food-and-the-world.md`.
+One stamina for both plain powers, shown in how each snake looks, no tail cost, each power a third to two thirds of
+plain power uses and neither better in aggregate, the pace kept: `docs/design/37-one-stamina.md`. Part 7's pricing then
+prices the one stamina. Once it merges, the golden apple is measured again with the stamina refilled in place of the
+two rests (2z, #460): "The golden apple's worth" in `docs/design/04-food-and-the-world.md`.
 
 ### 2u+. The stamina economy and the golden apple's worth (the owner, 3 and 4 November 2026; #460; a measurement right after 2u, then an engine-rules entry for what pays)
 
