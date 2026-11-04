@@ -24,11 +24,12 @@ November 2026).
 description and the sections it names; a broken rule of `AGENTS.md` (above all the rules that stand) or of
 `SECURITY.md`; a test weakened or skipped, or changed beyond what the task forces (a forced change shows in the PR that
 every check is kept and none loosened); and a protected file (`SECURITY.md`, rule 3) changed by a Codex lane. Report
-anything the change leaves behind (code, files or settings it made unused, commented-out code) as a finding. The pillars
-of "How to work" in `AGENTS.md` block too: a fact, rule or piece of logic written a second time instead of pointed to (a
-copy, or a selection of another file's lines), and an entry added to the copies check's baseline. Content put where its
-readers must read past it, such as a file holding what its readers do not need, is a finding, and so is a fact left
-where a clearly better home exists, or a pointer where no reader needs it.
+anything the change leaves behind (code, files or settings it made unused, commented-out code, and any description it
+made untrue: "No description left untrue" in `AGENTS.md`) as a finding. The pillars of "How to work" in `AGENTS.md`
+block too: a fact, rule or piece of logic written a second time instead of pointed to (a copy, or a selection of another
+file's lines), and an entry added to the copies check's baseline. Content put where its readers must read past it, such
+as a file holding what its readers do not need, is a finding, and so is a fact left where a clearly better home exists,
+or a pointer where no reader needs it.
 
 **Text a player reads,** for every reviewer of a change that adds or rewrites it: report as a finding any line that
 reads machine-made (one shape filled in again and again, filler, clichés, two voices alike); the slop audit in
