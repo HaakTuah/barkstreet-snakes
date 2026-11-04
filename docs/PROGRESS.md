@@ -137,6 +137,11 @@ landing is almost never contestable. The flight stays as built for now, and no r
 4. **Measured again after 2u and part 7,** whose stamina and pricing change what a flight costs. Only if it is still
    even then does a bigger change go to the owner as a question: a longer flight, or the ring shown before take-off.
 
+### 2aa. Dash on the key you're going (the owner, 4 November 2026; an input entry, a side lane now)
+
+The steering key of the way you're going dashes again, as a swipe ahead does, behind touch's guard: its spec is in
+`docs/handoff/queue-specs.md` under the same title.
+
 ### 2u. One stamina for jump and dash (the owner, 2 November 2026; an engine-rules entry, after 2z and before part 7)
 
 One bar for both plain powers, no tail cost, each power a third to two thirds of plain power uses and neither better in
@@ -144,13 +149,10 @@ aggregate, the pace kept: `docs/design/37-one-stamina.md`. Part 7's pricing then
 merges, the golden apple is measured again with the stamina refilled in place of the two rests (2z, #460): "The golden
 apple's worth" in `docs/design/04-food-and-the-world.md`.
 
-### 2u+. The golden apple's worth, against one stamina (the owner, 3 November 2026; #460; a measurement right after 2u, then an engine-rules entry if it pays)
+### 2u+. The stamina economy and the golden apple's worth (the owner, 3 and 4 November 2026; #460; a measurement right after 2u, then an engine-rules entry for what pays)
 
-2z found the golden apple doesn't pay (its +3 costs time alive more than it helps), and the apple of vigour wouldn't
-either, since the two rests were mostly ready when one was eaten. Right after 2u, the same fork measures, on fresh
-seeds, the golden apple as +3 and the one stamina refilled, and as +3, refilled and supercharged for a few seconds (the
-owner: "Maybe it can even superchage your stamina for a little while?"; a first guess of 4 s at a faster refill), each
-against the apple as it is. The one that pays is built, with its cue, lesson, Field guide row and protocol bump.
+Where the one stamina comes from (food, its own recharge, banking to a cap) and what the golden apple gives (a full
+refill, a one-bump shield), measured for every rival: its spec is in `docs/handoff/queue-specs.md` under the same title.
 
 ### 5. Round six B: the new moves (DESIGN "Round six B")
 
