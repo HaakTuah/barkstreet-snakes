@@ -155,9 +155,9 @@ apple's worth" in `docs/design/04-food-and-the-world.md`.
 either, since the two rests were mostly ready when one was eaten. Right after 2u, the same fork measures, on fresh
 seeds, the golden apple as +3 and the one stamina refilled, and as +3, refilled and supercharged for a few seconds (the
 owner: "Maybe it can even superchage your stamina for a little while?"; a first guess of 4 s at a faster refill), and
-every food refilling the stamina in proportion to how much it grows the snake, the golden apple at the top (the owner,
-4 November 2026: "anything you eat should give a little stamina recharge"), each against food as it is. Eating late
-must come to pay without always paying, plentiful rounds must not turn into power spam, and every trademark holds. The one that pays is built, with its cue, lesson, Field guide row and protocol bump.
+every food refilling the stamina in proportion to how much it grows the snake, the golden apple at the top (the owner, 4
+November 2026: "anything you eat should give a little stamina recharge"), each against food as it is. Eating late must
+come to pay without always paying, plentiful rounds must not turn into power spam, and every trademark holds. The one that pays is built, with its cue, lesson, Field guide row and protocol bump.
 
 ### 5. Round six B: the new moves (DESIGN "Round six B")
 
