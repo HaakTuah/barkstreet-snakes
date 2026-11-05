@@ -5,6 +5,39 @@ workshop check's 20 KB (the owner: "Yes, to all, expertly!"). Each entry in the 
 and a pointer here; this text is its spec, as the entry's own words were. When an entry is done, its section moves to
 `docs/archive/progress-done.md` with it.
 
+### The shared core (the owner, 5 November 2026; first among the side lanes, before the rule-file audit)
+
+The rules common to every project move to one public repository, `HaakTuah/agent-rules` (the name the design session
+proposed), and each project carries an exact copy of it under `core/`, pinned to one of its commits, generated and never
+edited by hand, as Amarna Letters treats its copy of its design document. What moves: the security baseline, the four
+pillars, the one inbox, keeping the owner's words, the roles and reviews, helpers, models and effort, the Git flow,
+usage, updates and "No description left untrue". What stays in each project: what it is, its rules that stand, its
+commands, its queue and whatever only it has, each rule file cut to that, with pointers into `core/`. The steps: (1) the
+owner creates the repository and adds it to Claude's and Codex's GitHub access, which only he can do; (2) a fresh
+session the owner starts in the core repository at high effort writes the core from both games' rule files (it reads
+them, as they are public, and writes only to the core), from this brief: (a) read both games' rule files whole on `main`
+(`AGENTS.md`, `CLAUDE.md`, `SECURITY.md`, `docs/threat-model.md`, `docs/claude-and-codex.md`, `docs/orchestrating.md`,
+`docs/review-guidelines.md`, `docs/developing.md`, and Amarna Letters' builder rules); (b) a rule goes into the core if
+it holds in both games and would hold in any project, and one that differs only in names, paths or examples goes in
+once, with the difference left as a slot each project fills; a rule only one game has stays in that game; (c) every rule
+keeps its reason, and the owner's words behind the common rules move word for word into the core's own archive, never
+rewritten; (d) the four pillars hold for the core itself, so it comes out shorter than the two games' copies together;
+(e) nothing personal, as both games' `SECURITY.md` say; (f) done when a table lists every rule of both games and where
+it went (the core, one game, or dropped with its reason), and a fresh reviewer given only the two games' files and the
+core finds nothing lost. The design session then checks the result against both games before any game takes a copy; (3)
+each project, in a PR of its own, adds the copy, cuts its rule files to what is its own, and adds a check on every PR
+that the copy matches the core at its pin (a workflow, so the owner's yes in that PR); (4) from then on a core change
+reaches a project only through a sync PR in it, reviewed as any other. No session writes to more than one repository:
+the core's own session writes the core, and each project's builders read it and write only their own. Then the rule-file
+audit runs once on the core and once on each project's own rules (archive, 5 November 2026). The same in Amarna Letters.
+
+### A content security policy for the page (the owner, 4 November 2026; first among the side lanes, as security hardening)
+
+A policy in `index.html` (GitHub Pages sends no headers) by which the page loads code only from itself and PeerJS's
+pinned file, and contacts only its own files and PeerJS's servers, so no code in it, a package's included, can send what
+it holds anywhere else or pull in more. Done when a test shows the policy in place, online play still works on the PR's
+preview, and `SECURITY.md` and `docs/developing.md` point to it.
+
 ### 2aa. Dash on the key you're going (the owner, 4 November 2026; an input entry, a side lane now)
 
 The owner: "I noticed you don't dash, when you press the arrow keys or wsad in the direction you are moving. I think you
@@ -365,8 +398,14 @@ late, it is probably the most uneasecary feature we have discussed here, so leav
 
 The owner (31 October 2026): "Also, many of the Snakes dialogue lines are really really bad and corny. some of it are fun pop cultural stuff or wordplays I came up with, but most of it is corny writing by Opus 5.5. I think it would be nice to have a Fable 5.1 run on it at the end, to really piff up the writing. make it more clever and culturally engrossing. Though Trump actually got some good lines! So i don't want it to remove across the lines. remove the funny gags like Mason talking bad latin, or saying vidi vici veni which is a sex joke. but i want it to look at all, and give it a make over. the chinese lines are not as important. if it can, do them too, but most can't read them regardless. concur?" Then, to the design session's take (his gags kept, at the end of the queue, a page
 to choose from): "yes, and let it be creative! i don't want it to strictly look and improve whats there. that contrains it. let it go a bit wild and add stuff to, or make it over. it needs creative control outside of what i protect."
-- **Who and when:** a Fable 5.1 session at high effort, after entry 8, so it covers every line the queue adds (the
-  Charmer, the new moves, the woodpecker's acts).
+- **Who and when:** after entry 8, so it covers every line the queue adds (the Charmer, the new moves, the woodpecker's
+  acts). Fable 5.1 holds the creative control but not the volume, since its usage drains far faster (archive, 5 November
+  2026): (1) a Fable session at high effort reads every line and writes, for each rival and for the game's own text, a
+  short voice guide (how it talks, its humour, its running jokes and callbacks to other rivals, what it never says) and
+  a sample of its lines rewritten by hand, and chooses where new lines go; (2) Opus at high effort writes the rest from
+  those guides and samples; (3) Fable spot-checks a sample of each rival's new lines against its guide and rewrites
+  those that miss, and where more than about one in five miss, it rewrites that rival's lines itself. The creative
+  control below is Fable's throughout.
 - **Creative control:** outside the protected lines, the session decides. It may rewrite, cut and add lines, remake a
   rival's way of talking, write running jokes and callbacks between rivals, and give lines to moments that have none
   (new moments use the events the game already sends; the chatter is presentation, so no rule changes). Clever and
