@@ -399,21 +399,24 @@ late, it is probably the most uneasecary feature we have discussed here, so leav
 The owner (31 October 2026): "Also, many of the Snakes dialogue lines are really really bad and corny. some of it are fun pop cultural stuff or wordplays I came up with, but most of it is corny writing by Opus 5.5. I think it would be nice to have a Fable 5.1 run on it at the end, to really piff up the writing. make it more clever and culturally engrossing. Though Trump actually got some good lines! So i don't want it to remove across the lines. remove the funny gags like Mason talking bad latin, or saying vidi vici veni which is a sex joke. but i want it to look at all, and give it a make over. the chinese lines are not as important. if it can, do them too, but most can't read them regardless. concur?" Then, to the design session's take (his gags kept, at the end of the queue, a page
 to choose from): "yes, and let it be creative! i don't want it to strictly look and improve whats there. that contrains it. let it go a bit wild and add stuff to, or make it over. it needs creative control outside of what i protect."
 - **Who and when:** after entry 8, so it covers every line the queue adds (the Charmer, the new moves, the woodpecker's
-  acts). Fable 5.1 holds the creative control but not the volume, since its usage drains far faster (archive, 5 November
-  2026): (1) a Fable session at high effort reads every line and writes, for each rival and for the game's own text, a
-  short voice guide (how it talks, its humour, its running jokes and callbacks to other rivals, what it never says) and
-  a sample of its lines rewritten by hand, and chooses where new lines go; (2) Opus at high effort writes the rest from
-  those guides and samples; (3) Fable spot-checks a sample of each rival's new lines against its guide and rewrites
-  those that miss, and where more than about one in five miss, it rewrites that rival's lines itself. The creative
-  control below is Fable's throughout.
-- **Creative control:** outside the protected lines, the session decides. It may rewrite, cut and add lines, remake a
+  acts). Fable 5.1 holds the creative control but not the volume, since its usage drains far faster, and it gets only
+  the parts that need its judgement (archive, 5 November 2026, and "A helper above you gets only what needs it" in
+  `CLAUDE.md`): (1) an Opus session at high effort runs the pass and gathers every line, for each rival and for the
+  game's own text, into one file per rival with the owner's protected lines marked; (2) from those files alone, Fable at
+  high effort writes for each a short voice guide (how it talks, its humour, its running jokes and callbacks to other
+  rivals, what it never says) and a sample of its lines rewritten by hand, and chooses where new lines go; (3) Opus
+  writes the rest from those guides and samples; (4) Fable spot-checks a sample of each rival's new lines against its
+  guide and rewrites those that miss. Where more than about one in five of a rival's lines miss, Fable sharpens that
+  rival's guide with what went wrong and Opus rewrites the rival once more; only if that misses too does Fable rewrite
+  the rival itself. The creative control below is Fable's throughout.
+- **Creative control:** outside the protected lines, Fable decides. It may rewrite, cut and add lines, remake a
   rival's way of talking, write running jokes and callbacks between rivals, and give lines to moments that have none
   (new moments use the events the game already sends; the chatter is presentation, so no rule changes). Clever and
   culturally engrossing over corny: wordplay, references that land in a moment, each rival's own humour. Each rival
   stays who it is, its name, look and play ("Every rival keeps its trademark").
 - **Protected, word for word:** the owner's own lines, found from `docs/archive/instructions.md`, `docs/handoff/` and the
   git history (lines he wrote or asked for word for word); Wildcard's lines, which he likes (Trump's, by his hair), kept
-  as they are, though the session may add to them and offer replacements beside them for him to pick; and the gags:
+  as they are, though Fable may add to them and offer replacements beside them for him to pick; and the gags:
   Mason's bad Latin and "vidi vici veni". The session lists what it protected, and why, at the top of its PR.
 - **Bounds:** every line fits its bubble on a phone (the layout suite) and fires on its moment; no song lyrics and no
   long quotes, since those belong to their owners (a short reference is fine); nothing hateful.
