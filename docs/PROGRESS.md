@@ -94,11 +94,11 @@ and the owner's notes of 2 November, among them).
   check's point (2) (this file 10 KB, `AGENTS.md` 20 KB, 2 November; condensed again from 23.6 to 19.8 KB, PR #360)
   and point (5), the unused-code check (PR #331):
   `docs/archive/progress-done.md`, "The split lane, done".
+- **The shared core** (archive, 5 November 2026), first among the side lanes and before the rule-file audit: the rules
+  common to every project move to one repository, each project carrying a checked copy; its spec is in
+  `docs/handoff/queue-specs.md` under the same title. Step 1 is the owner's.
 - **A content security policy for the page** (archive, 4 November 2026), first among the side lanes, as security
-  hardening: a policy in `index.html` (GitHub Pages sends no headers) by which the page loads code only from itself and
-  PeerJS's pinned file, and contacts only its own files and PeerJS's servers, so no code in it, a package's included,
-  can send what it holds anywhere else or pull in more. Done when a test shows the policy in place, online play still
-  works on the PR's preview, and `SECURITY.md` and `docs/developing.md` point to it.
+  hardening: its spec is in `docs/handoff/queue-specs.md` under the same title.
 - **A pointer check and a reading-size check on every PR** (archive, 4 November 2026), beside the copies check and
   protected like it (`SECURITY.md`, rule 3): (1) every pointer in the rule files to a file, a section or a numbered
   point must lead to one that exists, or the PR fails, saying which; forms it cannot read are listed, never guessed;
@@ -220,7 +220,7 @@ Two beetles that meet fight a shoving match, and a snake that gets there in time
 
 ### 9. At the very end: the writing pass (the owner, 31 October 2026; Fable 5.1, after everything else, entry 8 included)
 
-Every rival's lines given a make-over by a Fable 5.1 session with creative control, outside what the owner protects: his own lines, the lines he likes, and the gags (Mason's bad Latin, "vidi vici veni"). After everything else, so it covers every line the queue adds. Spec: `docs/handoff/queue-specs.md`, "9. At the very end: the writing pass".
+Every rival's lines given a make-over, Fable 5.1 holding the creative control (voice guides, samples, spot-checks) and Opus writing the bulk, outside what the owner protects: his own lines, the lines he likes, and the gags (Mason's bad Latin, "vidi vici veni"). After everything else, so it covers every line the queue adds. Spec: `docs/handoff/queue-specs.md`, "9. At the very end: the writing pass".
 
 ## Noted, not yet queued
 
