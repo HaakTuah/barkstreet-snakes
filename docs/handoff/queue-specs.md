@@ -5,6 +5,30 @@ workshop check's 20 KB (the owner: "Yes, to all, expertly!"). Each entry in the 
 and a pointer here; this text is its spec, as the entry's own words were. When an entry is done, its section moves to
 `docs/archive/progress-done.md` with it.
 
+### The shared core (the owner, 5 November 2026; first among the side lanes, before the rule-file audit)
+
+The rules common to every project move to one public repository, `HaakTuah/agent-rules` (the name the design session
+proposed), and each project carries an exact copy of it under `core/`, pinned to one of its commits, generated and never
+edited by hand, as Amarna Letters treats its copy of its design document. What moves: the security baseline, the four
+pillars, the one inbox, keeping the owner's words, the roles and reviews, helpers, models and effort, the Git flow,
+usage, updates and "No description left untrue". What stays in each project: what it is, its rules that stand, its
+commands, its queue and whatever only it has, each rule file cut to that, with pointers into `core/`. The steps: (1) the
+owner creates the repository and adds it to Claude's and Codex's GitHub access, which only he can do; (2) the design
+session writes the core from both games' rule files, each common rule once, with its own archive for the owner's words
+on common rules; (3) each project, in a PR of its own, adds the copy, cuts its rule files to what is its own, and adds a
+check on every PR that the copy matches the core at its pin (a workflow, so the owner's yes in that PR); (4) from then
+on a core change reaches a project only through a sync PR in it, reviewed as any other. No session writes to more than
+one repository: the design session writes the core, and each project's builders read it, as it is public, and write only
+their own. Then the rule-file audit runs once on the core and once on each project's own rules (archive, 5 November
+2026). The same in Amarna Letters.
+
+### A content security policy for the page (the owner, 4 November 2026; first among the side lanes, as security hardening)
+
+A policy in `index.html` (GitHub Pages sends no headers) by which the page loads code only from itself and PeerJS's
+pinned file, and contacts only its own files and PeerJS's servers, so no code in it, a package's included, can send what
+it holds anywhere else or pull in more. Done when a test shows the policy in place, online play still works on the PR's
+preview, and `SECURITY.md` and `docs/developing.md` point to it.
+
 ### 2aa. Dash on the key you're going (the owner, 4 November 2026; an input entry, a side lane now)
 
 The owner: "I noticed you don't dash, when you press the arrow keys or wsad in the direction you are moving. I think you
