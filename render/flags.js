@@ -558,50 +558,100 @@ function drawColonyFlags(r, now) {
 }
 // The flags, drawn over the snakes (2p): a pole and cloth stand up off
 // their tile, so whatever is on the tiles behind it (above it on screen)
-// is behind it; but not over what stands in front of it, the row below,
-// whose cells (a head's a little higher, for its face) are cut out of
-// where it's drawn. Upper flags first, so a lower one is in front. A flag
-// wrapped round a head is its cloth only, round that head (see
-// wrapCloth). Then forgotten.
+// is behind it; but not over what stands in front of it, the row below:
+// where a snake there is drawn (its outline and any gold line too), it's
+// cut out of the flag (see frontOf), and nothing beside it is. Upper flags
+// first, so a lower one is in front. A flag wrapped round a head is its
+// cloth only, round that head (see wrapCloth). Then forgotten.
 function drawBentFlags(now) {
   overSnakes = true;
   flagsLater.sort((a, b) => a.y - b.y);
   for (const f of flagsLater) {
     if (f.wrap) { wrapCloth(f, now); continue; }
-    ctx.save();
-    clipFront(f.x, f.y);
-    if (f.banner) drawBanner(f.x, f.y, f.col, now, f.sc, f.beat); // (its size, if just planted, kept)
-    else {
-      const x = f.x * CELL + CELL / 2, y = f.y * CELL + CELL / 2, bent = bendOn(f.x, f.y, now);
-      bentPole(x, y, bent);
-      if (bent) clothFrame(x, y, x + 1.5, y - CELL * 0.92);
-      drawFlag(x + 1.5, y - CELL * 0.92, now, f.beat, f.kind);
-      if (bent) ctx.restore();
-    }
-    ctx.restore();
+    const x = f.x * CELL + CELL / 2, y = f.y * CELL + CELL / 2, cut = frontOf(x, y);
+    if (cut) frontLayer(x, y);
+    try {
+      ctx.save();
+      if (f.banner) drawBanner(f.x, f.y, f.col, now, f.sc, f.beat); // (its size, if just planted, kept)
+      else {
+        const bent = bendOn(f.x, f.y, now);
+        bentPole(x, y, bent);
+        if (bent) clothFrame(x, y, x + 1.5, y - CELL * 0.92);
+        drawFlag(x + 1.5, y - CELL * 0.92, now, f.beat, f.kind);
+        if (bent) ctx.restore();
+      }
+      ctx.restore();
+    } finally { if (cut) frontCut(x, y); } // (the board's own context back, whatever happens)
   }
   overSnakes = false;
   flagsLater.length = 0;
 }
-// (The clip for a flag at x, y: the board, less every snake's cells on the
-// row in front of it, near it.)
-function clipFront(fx, fy) {
-  const row = Math.round(fy) + 1, cx = Math.round(fx);
-  frontLift.fill(0);
+// (Whether a live snake is drawn in front of the flag at x, y: a point of
+// it on the row below, near enough to reach the flag. Those snakes, in
+// fronts.)
+const fronts = [];
+const inFront = (px, py, x, y) => py >= y + CELL / 2 && py < y + CELL * 1.6 && Math.abs(px - x) < CELL * 3.5;
+function frontOf(x, y) {
+  fronts.length = 0;
   for (const s of game.snakes) {
-    if (!s.alive) continue;
-    for (let i = -1; i < s.body.length; i++) { // (-1: where its head was, as it's drawn sliding from there)
-      const c = i < 0 ? s.prev && s.prev[0] : s.body[i], j = c ? c.x - cx + 1 : -1;
-      if (c && c.y === row && j >= 0 && j < 4) frontLift[j] = Math.max(frontLift[j], i <= 0 ? 0.35 : 0.2); // (its outline, and a head its face)
+    const a = s.alive && anim.get(s);
+    if (!a || !a.pts) continue;
+    for (const [ox, oy] of a.offs || OFFS) {
+      let hit = false;
+      for (let i = 0; i < a.n && !hit; i++) hit = inFront(a.pts[2 * i] + ox, a.pts[2 * i + 1] + oy, x, y);
+      if (hit) { fronts.push(s); break; }
     }
   }
-  if (!frontLift[0] && !frontLift[1] && !frontLift[2] && !frontLift[3]) return; // (nothing in front: no clip)
-  ctx.beginPath();
-  ctx.rect(-CELL, -CELL * 2, SIZE + CELL * 2, SIZE + CELL * 4);
-  for (let j = 0; j < 4; j++) if (frontLift[j]) ctx.rect((cx - 1 + j) * CELL, (row - frontLift[j]) * CELL, CELL, CELL * (1 + frontLift[j])); // (one each: even-odd, two would cancel)
-  ctx.clip('evenodd');
+  return fronts.length > 0;
 }
-const frontLift = new Float32Array(4); // (the columns from one left of the flag to two right of it)
+// A flag with a snake in front is drawn on a layer of its own, the board's
+// pixels round it (FRONT_BOX, in cells from its tile's centre: the cloth
+// flying and leaning, a pole bent over), in the board's line caps and joins;
+// the snakes' shapes cut out of it there, then laid on the board pixel for
+// pixel.
+const FRONT_BOX = [-2, -2, 5, 3.2]; // (left, top, width, height)
+let frontG = null, frontWas = null, frontAt = [0, 0, 0, 0];
+function frontLayer(x, y) {
+  const m = ctx.getTransform(), [l, t, w, h] = FRONT_BOX;
+  const dx = Math.floor(m.a * (x + l * CELL) + m.e), dy = Math.floor(m.d * (y + t * CELL) + m.f);
+  const dw = Math.ceil(m.a * w * CELL) + 2, dh = Math.ceil(m.d * h * CELL) + 2;
+  frontG ||= makeLayer(dw, dh).getContext('2d');
+  const c = frontG.canvas;
+  if (c.width < dw || c.height < dh) { c.width = Math.max(c.width, dw); c.height = Math.max(c.height, dh); }
+  frontG.setTransform(1, 0, 0, 1, 0, 0);
+  frontG.clearRect(0, 0, dw, dh);
+  frontG.setTransform(m.a, m.b, m.c, m.d, m.e - dx, m.f - dy);
+  frontG.lineCap = ctx.lineCap; frontG.lineJoin = ctx.lineJoin;
+  frontAt = [dx, dy, dw, dh];
+  frontWas = ctx; ctx = frontG;
+}
+// Each snake in front is cut out as it's drawn (bodyFills, grown by its
+// edge), near the flag, and only from the top of what of it is on the row
+// below down: what of it is on the flag's own row stays behind the flag.
+function frontCut(x, y) {
+  ctx.save();
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.fillStyle = '#000';
+  for (const s of fronts) {
+    const a = anim.get(s), grow = edgeOf(s, a), p = a.pts;
+    for (const [ox, oy] of a.offs || OFFS) {
+      let top = Infinity;
+      for (let i = 0; i < a.n; i++) if (inFront(p[2 * i] + ox, p[2 * i + 1] + oy, x, y)) top = Math.min(top, p[2 * i + 1] + oy - a.rad[i] - grow);
+      if (top === Infinity) continue;
+      ctx.save();
+      ctx.beginPath(); ctx.rect(x - CELL * 4, top, CELL * 8, y + CELL * 2 - top); ctx.clip();
+      ctx.translate(ox, oy);
+      bodyFills(a, grow, x - ox, y + CELL - oy, CELL * 3.5);
+      ctx.restore();
+    }
+  }
+  ctx.restore();
+  ctx = frontWas;
+  const [dx, dy, dw, dh] = frontAt;
+  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.drawImage(frontG.canvas, 0, 0, dw, dh, dx, dy, dw, dh);
+  ctx.restore();
+}
 // A flag knocked flat by a head, its cloth wrapped round that head for a
 // moment: across the front of the head as it's drawn, its ends folded back
 // along its sides, and slipping off under it at the end.

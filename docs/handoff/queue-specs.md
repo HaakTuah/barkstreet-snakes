@@ -3,7 +3,7 @@
 The full text of each open entry in `docs/PROGRESS.md`, moved here on 31 October 2026 so the progress file stays under the
 workshop check's 20 KB (the owner: "Yes, to all, expertly!"). Each entry in the queue keeps its title, a line of what it is
 and a pointer here; this text is its spec, as the entry's own words were. When an entry is done, its section moves to
-`docs/archive/progress-done.md` with it.
+`docs/archive/progress-done/done-specs.md` with it.
 
 ### The shared core (the owner, 5 November 2026; first among the side lanes, before the rule-file audit)
 
@@ -36,7 +36,8 @@ audit runs once on the core and once on each project's own rules (archive, 5 Nov
 A policy in `index.html` (GitHub Pages sends no headers) by which the page loads code only from itself and PeerJS's
 pinned file, and contacts only its own files and PeerJS's servers, so no code in it, a package's included, can send what
 it holds anywhere else or pull in more. Done when a test shows the policy in place, online play still works on the PR's
-preview, and `SECURITY.md` and `docs/developing.md` point to it.
+preview or, while previews are down, a round played on a local copy in two browsers (the owner, 6 November 2026;
+#534), and `SECURITY.md` and `docs/developing.md` point to it.
 
 ### 2aa. Dash on the key you're going (the owner, 4 November 2026; an input entry, a side lane now)
 
@@ -68,7 +69,8 @@ November (a first guess of 4 s at a faster refill). What pays is built, with its
 protocol bump: eating late must come to pay without always paying, plentiful rounds must not turn into power spam, the
 shield must never make anyone safe (if shielded snakes outlive everyone, it is tightened or dropped), every trademark
 holds (Gobbler's food share, Mute's boxing and Creeper's tail-riding above all), and the rivals play it well: eating
-when low, banking before a fight. Part 7 then prices the powers against the economy that wins.
+when low, banking before a fight. The dash's worth is retuned too (#536; "No hidden prices" in
+`docs/design/37-one-stamina.md`). Part 7 then prices the powers against the economy that wins.
 
 ### 5. Round six B: the new moves (DESIGN "Round six B")
 
@@ -76,7 +78,7 @@ Moved up by the owner (29 October 2026): "It's the one I am most interested in p
 long time now. Also, the teaching system will have to account for it." It goes ahead of Wildcard's part of 3b, 2b, 2h, 2i
 and 3c. A playable draft PR as early as it can be, so the owner can try it.
 
-*Done so far:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195); their words and detail are in `docs/archive/progress-done.md`, "Item 5, its done parts".
+*Done so far:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195); their words and detail are in `docs/archive/progress-done/item-5-parts.md`, "Item 5, its done parts".
 
 *Where it stands:* the parts left and their order are in `docs/PROGRESS.md`, item 5 (part 6 is *built and reviewed*
 on `round6b/dropped-charges`: merge `develop` into it, renumber its protocol after part 4's, run its A/B; part 7 is
@@ -249,7 +251,7 @@ As `docs/design/35-capricious-copycat-and-wildcard.md` describes: Capricious doe
 a shuffled deck, each with its costume and an opening line; Copycat plays as the leader plays, copying a person by what
 they do; Wildcard draws a few strong traits a round and shows them. One PR, or one per rival if that is cleaner.
 
-Copycat's rotten apples by the edge: checked and eased in PR #142; the general edge fix is noted at the end of this file (`docs/archive/progress-done.md`, "Item 3b, done parts").
+Copycat's rotten apples by the edge: checked and eased in PR #142; the general edge fix is noted at the end of this file (`docs/archive/progress-done/item-3b-parts.md`, "Item 3b, done parts").
 
 ### 3c. A new rival: the Charmer (the owner, 29 October 2026; an AI entry, after 2b and 3b)
 

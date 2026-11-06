@@ -176,6 +176,31 @@ window.you = () => SnakeDebug.game().snakes[0];
 window.running = () => waitFor(() => SnakeDebug.state() === 'running');
 'ok'`;
 
+// The page's header, as rows, for the layout and ui suites' probes (a page-side function of their own `vis`, called
+// as \`(${HEADER_ROWS})(vis)\`): what's on each row, left to right (the title, Score, Best and each button shown, by its
+// id), grouped by where each sits (a button's margin box: one reaching past its row on negative margins, the
+// full-screen button at a phone's column corner, counts on the row it's laid out in; Score over Best, beside the
+// title, count as one); with the header and whether a door shows its word (named).
+const HEADER_ROWS = `vis => {
+  const hd = document.querySelector('header'), stats = document.querySelector('.stats');
+  const pair = stats && getComputedStyle(stats).display !== 'contents' ? stats : null;
+  const items = [['title', document.querySelector('h1')], ...[...hd.querySelectorAll('.hud .stat')].map((el, i) => [i ? 'Best' : 'Score', pair || el]), ...[...hd.querySelectorAll('.hud button')].filter(vis).map(el => [el.id, el])];
+  let rows = [];
+  for (const [n, el] of items) {
+    const r = el.getBoundingClientRect(), cs = getComputedStyle(el), top = r.top - parseFloat(cs.marginTop), bottom = r.bottom + parseFloat(cs.marginBottom);
+    let row = rows.find(q => Math.min(bottom, q.bottom) - Math.max(top, q.top) > 2);
+    if (!row) rows.push(row = { top, bottom, items: [] });
+    row.top = Math.min(row.top, top); row.bottom = Math.max(row.bottom, bottom);
+    row.items.push({ n, l: n === 'Best' && pair ? r.left + 0.5 : r.left });
+  }
+  for (let merged = true; merged;) { // (rows that grew into each other are one)
+    merged = false;
+    for (const a of rows) for (const b of rows) if (a !== b && !merged && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 2) { a.items.push(...b.items); a.top = Math.min(a.top, b.top); a.bottom = Math.max(a.bottom, b.bottom); rows = rows.filter(q => q !== b); merged = true; }
+  }
+  rows.sort((a, b) => a.top - b.top);
+  return { hd, rows: rows.map(r => r.items.sort((a, b) => a.l - b.l).map(i => i.n).join(' ')), named: id => vis(document.querySelector('#' + id + ' .trophy-text')) };
+}`;
+
 // The report of a browser suite: check(ok, what, detail) adds a line to results and counts a failure in
 // failed (which the runner adds its own to, such as the page's errors).
 function reporter() {
@@ -187,4 +212,4 @@ function reporter() {
   return report;
 }
 
-module.exports = { launch, serve, sleep, HELPERS, reporter };
+module.exports = { launch, serve, sleep, HELPERS, HEADER_ROWS, reporter };

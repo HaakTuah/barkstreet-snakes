@@ -268,34 +268,13 @@ const NO_SVH = `(async () => {
   return n;
 })()`;
 
-// The header, as rows: what's on each, left to right (the title, Score,
-// Best and each button shown, by its id), grouped by where each sits (a
-// button's margin box: one reaching past its row on negative margins, the
-// full-screen button at a phone's column corner, counts on the row it's
-// laid out in; Score over Best, beside the title, count as one); its
-// height; whether each door shows its word; and the Field guide's tooltip
-// and spoken name.
+// The header (HEADER_ROWS in tools/browser.js): its rows, its height, whether
+// each door shows its word, and the Field guide's tooltip and spoken name.
 const HEADER = `(() => {
   const vis = el => !!el && !el.hidden && getComputedStyle(el).display !== 'none' && el.getBoundingClientRect().width > 0;
-  const hd = document.querySelector('header'), stats = document.querySelector('.stats');
-  const pair = stats && getComputedStyle(stats).display !== 'contents' ? stats : null;
-  const items = [['title', document.querySelector('h1')], ...[...hd.querySelectorAll('.hud .stat')].map((el, i) => [i ? 'Best' : 'Score', pair || el]), ...[...hd.querySelectorAll('.hud button')].filter(vis).map(el => [el.id, el])];
-  let rows = [];
-  for (const [n, el] of items) {
-    const r = el.getBoundingClientRect(), cs = getComputedStyle(el), top = r.top - parseFloat(cs.marginTop), bottom = r.bottom + parseFloat(cs.marginBottom);
-    let row = rows.find(q => Math.min(bottom, q.bottom) - Math.max(top, q.top) > 2);
-    if (!row) rows.push(row = { top, bottom, items: [] });
-    row.top = Math.min(row.top, top); row.bottom = Math.max(row.bottom, bottom);
-    row.items.push({ n, l: n === 'Best' && pair ? r.left + 0.5 : r.left });
-  }
-  for (let merged = true; merged;) { // (rows that grew into each other are one)
-    merged = false;
-    for (const a of rows) for (const b of rows) if (a !== b && !merged && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 2) { a.items.push(...b.items); a.top = Math.min(a.top, b.top); a.bottom = Math.max(a.bottom, b.bottom); rows = rows.filter(q => q !== b); merged = true; }
-  }
-  rows.sort((a, b) => a.top - b.top);
-  const named = id => vis(document.querySelector('#' + id + ' .trophy-text')), g = document.getElementById('guide-open');
+  const { hd, rows, named } = (${HEADER_ROWS})(vis), g = document.getElementById('guide-open');
   const col = matchMedia('(min-aspect-ratio: 5/4) and (max-height: 1180px) and (min-width: 480px)').matches;
-  return { height: hd.getBoundingClientRect().height, rows: rows.map(r => r.items.sort((a, b) => a.l - b.l).map(i => i.n).join(' ')), guide: named('guide-open'), trophy: named('records-open'),
+  return { height: hd.getBoundingClientRect().height, rows, guide: named('guide-open'), trophy: named('records-open'),
     tip: g.title, label: g.getAttribute('aria-label'), place: innerWidth <= 440 ? 'upright' : col ? (innerHeight <= 500 ? 'side' : 'column') : 'over' };
 })()`;
 // A door shown by its word instead of its picture, 5 px wider still (its
