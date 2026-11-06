@@ -51,7 +51,7 @@
 // between rounds (update.js). A new check goes in its area's file, or a new one.
 const path = require('path');
 const runParts = require('./parts.js');
-const { launch, serve, HELPERS, reporter } = require('./browser');
+const { launch, serve, HELPERS, HEADER_ROWS, reporter } = require('./browser');
 
 const report = reporter(), { results, check } = report;
 
@@ -135,7 +135,7 @@ const KEYS = {
 
   try {
 
-    await runParts.inside(path.join(__dirname, 'ui'), { launch, serve, HELPERS, results, check, PROBE, KEYS, site, b, ev, P, wait, key, mouse, tap, at, tag, nameAt, tagAt, powers, load, fresh, die });
+    await runParts.inside(path.join(__dirname, 'ui'), { launch, serve, HELPERS, HEADER_ROWS, results, check, PROBE, KEYS, site, b, ev, P, wait, key, mouse, tap, at, tag, nameAt, tagAt, powers, load, fresh, die });
     if (b.errors.length) { results.push(`FAIL page errors: ${b.errors.join(' | ')}`); report.failed++; }
   } catch (e) {
     results.push(`FAIL ${e.message}`);

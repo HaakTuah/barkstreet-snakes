@@ -113,7 +113,7 @@
 const path = require('path');
 const fs = require('fs');
 const runParts = require('./parts.js');
-const { launch, serve, HELPERS, reporter } = require('./browser');
+const { launch, serve, HELPERS, HEADER_ROWS, reporter } = require('./browser');
 
 // CI's jobs, by the time each part took (of about 1150 s on a cloud machine): 03 every device
 // 308 s, 04 154, 05 44, 06 one screen in every state 354, 07 43, 08 87, 09 50, 10 46, 11 19, 12 45,
@@ -149,7 +149,7 @@ const report = reporter(), { results, check } = report;
   const { ev } = b;
   const board = [];
   try {
-    await runParts.inside(DIR, { HELPERS, results, check, share, site, b, ev, board },
+    await runParts.inside(DIR, { HELPERS, HEADER_ROWS, results, check, share, site, b, ev, board },
       file => !mine || [...ALWAYS, ...mine.map(e => e.split('/')[0])].includes(path.basename(file).slice(0, 2)),
       (file, ms) => console.log(`part ${path.basename(file)} done (${(ms / 1000).toFixed(0)} s)`)); // (its results come at the end)
     if (b.errors.length) { console.log('page errors:', b.errors); report.failed++; }
