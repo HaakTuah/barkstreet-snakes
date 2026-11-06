@@ -31,3 +31,5 @@ the workshop check's 20 KB. New ones are added here.
   `docs/archive/design-*.md` (PR #425 to PR #451).
 - *Done:* `docs/archive/progress-done.md` (99 KB) split by section into `docs/archive/progress-done/`, with an index,
   word for word, every pointer to it updated (the workshop/progress-done-split PR).
+- *Done:* a pointer check and a reading-size check on every PR (`tools/pointers-test.js`, `tools/sizes-test.js` and
+  `tools/sizes.json`, run by `tools/copies-test.js` in the copies check's CI step; PR #525).

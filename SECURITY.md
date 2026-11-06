@@ -25,7 +25,8 @@ Codex's terms (archive, 1 November 2026).
    - **the rule files:** `AGENTS.md`, `CLAUDE.md`, `docs/claude-and-codex.md`, `docs/orchestrating.md`,
      `docs/review-guidelines.md`, `docs/threat-model.md` and this file;
    - **the checks on the work:** the copies check (`tools/copies-test.js` and `tools/copies-baseline.json`), the
-     pointer and reading-size checks (`tools/pointers-test.js`, `tools/sizes-test.js` and `tools/sizes.json`) and the
+     pointer and reading-size checks (`tools/pointers-test.js`, `tools/sizes-test.js`, `tools/sizes.json` and
+     `tools/rule-files.js`) and the
      calibration log (`docs/calibration.md`).
 
    A change to `.github/` or the setup script needs the owner's yes in its PR. One exception, narrow: Dependabot's

@@ -7,15 +7,15 @@
 //     mark at least its size. The archive (dated records, added to by every merge) and binary files are not counted.
 // A PR that crosses a mark moves the mark in tools/sizes.json and says why in its description. The PR's changes are
 // those against SIZES_BASE, else COPIES_BASE (set by the copies check's workflow), else where HEAD left origin/develop.
+// (In CI that is the base's tip against the PR's merge commit, so a run after the base moves on counts its new changes too.)
 // Run by tools/copies-test.js, in the copies check's CI step. Node's own modules only.
 //
 //   node tools/sizes-test.js
 const fs = require('fs');
-const { execFileSync } = require('child_process');
+const { git } = require('./rule-files.js');
 process.chdir(require('path').join(__dirname, '..'));
 const MARKS = 'tools/sizes.json';
 const marks = JSON.parse(fs.readFileSync(MARKS, 'utf8'));
-const git = args => execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
 const kb = n => (n / 1024).toFixed(1);
 const size = f => fs.existsSync(f) ? fs.statSync(f).size : 0;
 const fail = [], notes = [];
@@ -23,6 +23,7 @@ const fail = [], notes = [];
 // the files every session reads
 let total = 0;
 for (const [f, mark] of Object.entries(marks.read)) {
+  if (!fs.existsSync(f)) { fail.push(`${f} is listed under "read" in ${MARKS} but is gone: update ${MARKS}`); continue; }
   const n = size(f);
   total += n;
   if (n > mark) fail.push(`${f} is ${n} bytes, past its mark of ${mark}: make it smaller, or raise its mark in ${MARKS} and say why in the PR`);

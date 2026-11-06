@@ -11,13 +11,13 @@
 const fs = require('fs');
 const crypto = require('crypto');
 const { execFileSync, spawnSync } = require('child_process');
+const { git, ruleFiles } = require('./rule-files.js');
 process.chdir(require('path').join(__dirname, '..'));
 // The pointer and reading-size checks run here too, so they share the copies check's CI step and its COPIES_BASE.
 for (const t of ['tools/pointers-test.js', 'tools/sizes-test.js']) if (spawnSync(process.execPath, [t], { stdio: 'inherit' }).status !== 0) process.exitCode = 1;
 const BASELINE = 'tools/copies-baseline.json';
 const CODE = () => ls(['*.js']).filter(f => !f.startsWith('tools/dev/') && !f.startsWith('docs/'));
-const PROSE = ['AGENTS.md', 'CLAUDE.md', 'SECURITY.md', 'docs/claude-and-codex.md', 'docs/orchestrating.md',
-  'docs/review-guidelines.md', 'docs/threat-model.md', 'docs/developing.md', 'docs/calibration.md'];
+const PROSE = [...ruleFiles(), 'docs/developing.md', 'docs/calibration.md'];
 const LINES = 8, MIN_CHARS = 240, WORDS = 12;
 const hash = s => crypto.createHash('sha1').update(s).digest('hex').slice(0, 12);
 
@@ -112,7 +112,6 @@ counted(base.windows, BASELINE);
 // count it raises there fails, whoever wrote it.
 const from = process.env.COPIES_BASE;
 if (from) {
-  const git = args => execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
   try { git(['rev-parse', '--verify', `${from}^{commit}`]); } catch { console.error(`FAIL: COPIES_BASE ${from} is not a commit here: fetch it`); process.exit(1); }
   let there = true;
   try { git(['cat-file', '-e', `${from}:${BASELINE}`]); } catch { there = false; } // no baseline on that branch yet

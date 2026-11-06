@@ -14,12 +14,11 @@
 //
 //   node tools/pointers-test.js
 const fs = require('fs');
-const { execFileSync } = require('child_process');
 const { posix } = require('path');
 process.chdir(require('path').join(__dirname, '..'));
-const RULES = ['AGENTS.md', 'CLAUDE.md', 'SECURITY.md', 'docs/claude-and-codex.md', 'docs/orchestrating.md',
-  'docs/review-guidelines.md', 'docs/threat-model.md']; // SECURITY.md, rule 3
-const tracked = execFileSync('git', ['ls-files', '-z'], { encoding: 'utf8' }).split('\0').filter(Boolean);
+const { git, ruleFiles } = require('./rule-files.js');
+const RULES = ruleFiles();
+const tracked = git(['ls-files', '-z']).split('\0').filter(Boolean);
 const files = new Set(tracked), dirs = new Set(tracked.flatMap(f => f.split('/').slice(0, -1).map((_, i, p) => p.slice(0, i + 1).join('/') + '/')));
 const plain = s => s.toLowerCase().replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/\s+/g, ' ').trim();
 
@@ -91,8 +90,12 @@ for (const rf of RULES) {
     // join atoms into pointers
     const groups = [];
     list.forEach((a, k) => {
-      const prev = list[k - 1];
-      if (prev && GLUE.test(b.text.slice(prev.end, a.start)) && !(a.file && groups[groups.length - 1].some(x => x.file))) groups[groups.length - 1].push(a);
+      const prev = list[k - 1], next = list[k + 1];
+      // "A" in `x` and "B" in `y`: a title followed by its own file starts a pointer of its own once the one before
+      // has a file ("A", point 4, and "B" in `x` names both in `x`)
+      const ownFile = a.title && next && next.file && /^,?\s+in\s+$/.test(b.text.slice(a.end, next.start))
+        && groups.length && groups[groups.length - 1].some(x => x.file);
+      if (prev && !ownFile && GLUE.test(b.text.slice(prev.end, a.start)) && !(a.file && groups[groups.length - 1].some(x => x.file))) groups[groups.length - 1].push(a);
       else groups.push([a]);
     });
     for (const g of groups) {
