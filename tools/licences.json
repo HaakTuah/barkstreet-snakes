@@ -8,7 +8,8 @@
     { "name": "peerjs-js-binarypack", "kind": "npm", "version": "2.x", "licence": "MIT", "used": "bundled in peerjs.min.js", "ships": true },
     { "name": "webrtc-adapter", "kind": "npm", "version": "9.x", "licence": "BSD-3-Clause", "used": "bundled in peerjs.min.js", "ships": true },
     { "name": "sdp", "kind": "npm", "version": "3.x", "licence": "MIT", "used": "bundled in peerjs.min.js, through webrtc-adapter", "ships": true },
-    { "name": "Fredoka", "kind": "font", "version": "Google Fonts", "licence": "OFL-1.1", "used": "the lettering, loaded by index.html", "ships": true, "loads": ["https://fonts.googleapis.com/css2?family=Fredoka:"] },
+    { "name": "fonts/fredoka-latin.woff2", "kind": "font", "version": "Fredoka, Google Fonts v17", "licence": "OFL-1.1", "used": "the lettering (Latin), served from this site by style/font.css", "ships": true },
+    { "name": "fonts/fredoka-latin-ext.woff2", "kind": "font", "version": "Fredoka, Google Fonts v17", "licence": "OFL-1.1", "used": "the lettering (more Latin letters), served from this site by style/font.css", "ships": true },
 
     { "name": "typescript", "kind": "npm", "version": "7.0.2", "licence": "Apache-2.0", "used": "the types suite (tsc), in tools/package.json; its compiler is native, one package per platform (below)" },
     { "name": "@typescript/typescript-aix-ppc64", "kind": "npm", "version": "7.0.2", "licence": "Apache-2.0", "used": "through typescript: its compiler for one platform, installed only there" },
