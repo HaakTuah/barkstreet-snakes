@@ -81,8 +81,8 @@ allows, at the lowest cost now and later. Four of them are the pillars that hold
   file past about 20 KB probably holds more than one thing. Splitting an existing file goes in its own PR, with
   behaviour proven unchanged (fingerprints and suites) and what it saves said in the PR. **Step 0:** before an entry or
   lane changes a file past about 50 KB, that file is split by meaning first, in its own PR; and new work for a file
-  past the mark goes in as a new file, never as more lines in it. The workshop check and the file-by-file reviews still
-  run.
+  past the mark goes in as a new file, never as more lines in it (the reading-size check, `tools/sizes-test.js`, holds
+  every PR to it). The workshop check and the file-by-file reviews still run.
 - **Principles over rules.** Where a rule's letter would defeat what it is for, follow its purpose, say so in the PR
   under "Readings taken", and flag the rule to be fixed. Never for the safety rules: `SECURITY.md`, `main`, keys and
   secrets, and the storage keys.
