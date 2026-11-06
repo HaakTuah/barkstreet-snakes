@@ -7,6 +7,11 @@ when it is merged into `develop`; add the owner's new tasks where he places them
 
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
+**On resume, a canary for Codex's code review** ("Reviews", point 5, in `docs/claude-and-codex.md`): the review
+guidelines moved to `docs/review-guidelines.md` (archive, 3 November 2026), so a test PR with planted faults, one breaking
+a line only that file holds (such as "Text a player reads"), proves Codex follows the pointer from `AGENTS.md`. Never
+merged.
+
 **2 November 2026, a fresh week:** the main lane is part 4 (#198, merged as it stands so the owner can play it), then
 2y (done, PR #373; the flight’s question is #399), then 2y+ (done: `ai/` and `engine/`, PRs #406, #408, #407), then part 5 (done, PR #202; its finding is #447), then 2x (done, PR #456), then 2z (done, PR #459: no rule changed; its question is #460), then 2u; the polish
 lane and the workshop lane run beside it, each claimed by a draft PR.
@@ -48,7 +53,8 @@ the second account until its usage is spent; on the main account the brake close
   - Creeper, Gobbler, Vulture and Mute: light touches where each repeated itself (PR #442).
   - The banners and cards: the deflating tag ("X. For now.") and the repeated jokes gone (PR #443).
   - The lessons and the Field guide: terse lessons and subjectless rows read straight, rules unchanged (PR #445).
-  - The guard: the chatter suite fails a voice with more than four lines of one shape (this PR).
+  - The guard: the chatter suite fails a voice with more than four lines of one shape (PR #448).
+  *Next on resume:* the menus (the start card, the room card and the nap card's words), then the news lines.
   *Left:* the menus, the news lines and the README's player text; the guide's Burrows, Jump, Cuts and Golden beetle rows
   and one name for each thing (hole, pit or gap; jump, hop or leap; the rings), once part 5 (#202) merges. Wildcard's
   and Mason's protected lines stay as they are; the Chinese is rewritten with each changed line.
@@ -75,25 +81,11 @@ and the owner's notes of 2 November, among them).
 
 ## The workshop lane (splits by meaning, leftovers, the file-by-file review)
 
-- *Done:* `coughs` removed from `ai/` (nobody coughs: `ai/evaluate.js`, `ai/room.js`, `ai/buffers.js`, `ai/food.js`),
-  fingerprint-identical (the workshop/remove-coughs PR).
-- *Done:* the woodpecker's two unplayed cues removed (`audio/cues.js`, `audio/sound.js`; PR #434).
-- *Done:* the workshop check's point (2): `AGENTS.md` from 21.5 to 20.0 KB, every rule kept; the workshop check's marks
-  moved to `docs/orchestrating.md`, the file table's detail to `docs/developing.md` (PR #420).
-- *Done:* the render suite's virtual clock starts at a fixed time, so the woodpecker's ring check (and every staged
-  check) draws at the same phase on every run, whatever the load (#424, PR #427).
-- *Done:* the input suite's "rivals have all thought" check, counted round after round to its 100-tick floor and its
-  round started on the virtual clock, so neither a short random round nor load can flip it (#414, PR #415).
-- *Done:* the layout suite in cloud sessions (#383): it never hung, it ran about 28 minutes in one process, silent
-  until its end; `scripts/test.sh` now runs its five CI jobs side by side, each part's end is printed, and the banner
-  probe no longer misreads a banner on its way out (PR #396).
-- *Done:* the workflows' actions, `actions/checkout` and `actions/setup-node` 4 to 7 (Dependabot, PR #361).
-- *Done:* TypeScript 6.0.2 to 7.0.2, the native compiler, its 20 platform packages audited (Dependabot, PR #390).
-- *Done:* CI and the cloud setup on Node 26 (from 22; suites green, fingerprints unchanged; PR #369).
-- *Done:* licences audited (`tools/licences.json`), gated on every PR (`.github/workflows/licences.yml`) and their notices
-  shipped (`THIRD-PARTY-NOTICES.txt`); two lists, what ships and tools that only run (PR #377).
-- *Done:* every version where Dependabot sees it: the tools' packages in `tools/package.json` (Playwright 1.49.1 to
-  1.64.1), Dependabot's npm updates, and a monthly check of the rest, PeerJS and Node (`tools/versions.json`; PR #385).
+- **The old copy, removed** (archive, 3 November 2026): `tools/copies-baseline.json` lists one, the same probe of the
+  page's header in `tools/layout/01-probes.js` and `tools/ui/03-header-over-the-board.js`; one shared helper, and the
+  entry dropped.
+
+*Done in the lane:* each line is in `docs/archive/workshop-lane-done.md`.
 
 - **The file-by-file review** (the owner, 2 November 2026; part 1, the docs every session reads, done in PR #334;
   part 2, `docs/design/`, PR #335; part 3, the code, draft PR #337): its spec is in
@@ -102,15 +94,28 @@ and the owner's notes of 2 November, among them).
   check's point (2) (this file 10 KB, `AGENTS.md` 20 KB, 2 November; condensed again from 23.6 to 19.8 KB, PR #360)
   and point (5), the unused-code check (PR #331):
   `docs/archive/progress-done.md`, "The split lane, done".
-- **The file-by-file review's moves:** done, a folder a PR (#341, #342, #343, #344, #345):
-  `docs/archive/progress-done.md`, "The split lane, done". Left: `render/world.js`'s part, which waits with it below.
-  `render/food.js` split by meaning: its burrows and the beetle's bore to `render/burrows.js` (66 to 43.5 and 22.6 KB;
-  PR #421).
-- **The design by topic, not by round** (#336): *Done:* the round files are pointers and records; topics made or widened:
-  `02`–`05`, `09`, `12` (the round's arc), `13`, `21`, `22`, `30`, `31`, `33` and `38`–`45`, their history in
-  `docs/archive/design-*.md` (PR #425 to PR #451).
-- **Waiting for a gap:** `render/world.js` (50 KB), the last big file now that `ai/` and `engine/` are split (2y+). Split
-  in a PR of its own when no open lane touches it, proven by fingerprints and suites.
+- **The shared core** (archive, 5 November 2026), first among the side lanes and before the rule-file audit: the rules
+  common to every project move to one repository, each project carrying a checked copy; its spec is in
+  `docs/handoff/queue-specs.md` under the same title. Step 1 is the owner's.
+- **A content security policy for the page** (archive, 4 November 2026), first among the side lanes, as security
+  hardening: its spec is in `docs/handoff/queue-specs.md` under the same title.
+- **A pointer check and a reading-size check on every PR** (archive, 4 November 2026), beside the copies check and
+  protected like it (`SECURITY.md`, rule 3): (1) every pointer in the rule files to a file, a section or a numbered
+  point must lead to one that exists, or the PR fails, saying which; forms it cannot read are listed, never guessed;
+  (2) the files every session reads, each against a mark of about 20 KB (one already past it starts at its size today,
+  a baseline that may only shrink), their total against today's, and every file past about 50 KB the PR changes
+  (Step 0); a PR that crosses a mark moves the mark in the same PR and says why. The workshop check's points 2 and 3
+  are then measured on every PR.
+- **The rule-file audit's larger moves** (the workshop check's point 6; archive, 3 November 2026): (1)
+  `docs/claude-and-codex.md` (23 KB) is past the 20 KB warning: the sections that wait until Codex can build, "What goes
+  to Codex" to "When Codex is not there", into a file of their own; (2) the slop bar a home of its own, since
+  `docs/review-guidelines.md` points to the slop audit's entry in this file, which moves to the archive when done.
+- **Waiting for a gap, splits by meaning:** `style/screens.css` (52 KB) and `render/looks.js` (51 KB), past the 50 KB
+  mark, so an entry that must change one splits it first (Step 0, "Split by meaning" in `AGENTS.md`); and
+  `render/world.js` (40 KB), the file-by-file review's last part. Each in a PR of its own when no open lane touches it,
+  proven by fingerprints and suites.
+- **`docs/archive/progress-done.md` (99 KB), split by section** into a folder with an index, word for word and proven
+  unchanged, every pointer to one of its sections still finding it.
 
 ## The queue, in order
 
@@ -137,20 +142,22 @@ landing is almost never contestable. The flight stays as built for now, and no r
 4. **Measured again after 2u and part 7,** whose stamina and pricing change what a flight costs. Only if it is still
    even then does a bigger change go to the owner as a question: a longer flight, or the ring shown before take-off.
 
+### 2aa. Dash on the key you're going (the owner, 4 November 2026; an input entry, a side lane now)
+
+The steering key of the way you're going dashes again, as a swipe ahead does, behind touch's guard: its spec is in
+`docs/handoff/queue-specs.md` under the same title.
+
 ### 2u. One stamina for jump and dash (the owner, 2 November 2026; an engine-rules entry, after 2z and before part 7)
 
-One bar for both plain powers, no tail cost, each power a third to two thirds of plain power uses and neither better in
-aggregate, the pace kept: `docs/design/37-one-stamina.md`. Part 7's pricing then prices the one stamina. Once it
-merges, the golden apple is measured again with the stamina refilled in place of the two rests (2z, #460): "The golden
-apple's worth" in `docs/design/04-food-and-the-world.md`.
+One stamina for both plain powers, shown in how each snake looks, no tail cost, each power a third to two thirds of
+plain power uses and neither better in aggregate, the pace kept: `docs/design/37-one-stamina.md`. Part 7's pricing then
+prices the one stamina. Once it merges, the golden apple is measured again with the stamina refilled in place of the
+two rests (2z, #460): "The golden apple's worth" in `docs/design/04-food-and-the-world.md`.
 
-### 2u+. The golden apple's worth, against one stamina (the owner, 3 November 2026; #460; a measurement right after 2u, then an engine-rules entry if it pays)
+### 2u+. The stamina economy and the golden apple's worth (the owner, 3 and 4 November 2026; #460; a measurement right after 2u, then an engine-rules entry for what pays)
 
-2z found the golden apple doesn't pay (its +3 costs time alive more than it helps), and the apple of vigour wouldn't
-either, since the two rests were mostly ready when one was eaten. Right after 2u, the same fork measures, on fresh
-seeds, the golden apple as +3 and the one stamina refilled, and as +3, refilled and supercharged for a few seconds (the
-owner: "Maybe it can even superchage your stamina for a little while?"; a first guess of 4 s at a faster refill), each
-against the apple as it is. The one that pays is built, with its cue, lesson, Field guide row and protocol bump.
+Where the one stamina comes from (food, its own recharge, banking to a cap) and what the golden apple gives (a full
+refill, a one-bump shield), measured for every rival: its spec is in `docs/handoff/queue-specs.md` under the same title.
 
 ### 5. Round six B: the new moves (DESIGN "Round six B")
 
@@ -213,7 +220,7 @@ Two beetles that meet fight a shoving match, and a snake that gets there in time
 
 ### 9. At the very end: the writing pass (the owner, 31 October 2026; Fable 5.1, after everything else, entry 8 included)
 
-Every rival's lines given a make-over by a Fable 5.1 session with creative control, outside what the owner protects: his own lines, the lines he likes, and the gags (Mason's bad Latin, "vidi vici veni"). After everything else, so it covers every line the queue adds. Spec: `docs/handoff/queue-specs.md`, "9. At the very end: the writing pass".
+Every rival's lines given a make-over, Fable 5.1 holding the creative control (voice guides, samples, spot-checks) and Opus writing the bulk, outside what the owner protects: his own lines, the lines he likes, and the gags (Mason's bad Latin, "vidi vici veni"). After everything else, so it covers every line the queue adds. Spec: `docs/handoff/queue-specs.md`, "9. At the very end: the writing pass".
 
 ## Noted, not yet queued
 

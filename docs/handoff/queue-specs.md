@@ -5,6 +5,71 @@ workshop check's 20 KB (the owner: "Yes, to all, expertly!"). Each entry in the 
 and a pointer here; this text is its spec, as the entry's own words were. When an entry is done, its section moves to
 `docs/archive/progress-done.md` with it.
 
+### The shared core (the owner, 5 November 2026; first among the side lanes, before the rule-file audit)
+
+The rules common to every project move to one public repository, `HaakTuah/agent-rules` (the name the design session
+proposed), and each project carries an exact copy of it under `core/`, pinned to one of its commits, generated and never
+edited by hand, as Amarna Letters treats its copy of its design document. What moves: the security baseline, the four
+pillars, the one inbox, keeping the owner's words, the roles and reviews, helpers, models and effort, the Git flow,
+usage, updates and "No description left untrue". What stays in each project: what it is, its rules that stand, its
+commands, its queue and whatever only it has, each rule file cut to that, with pointers into `core/`. The steps: (1) the
+owner creates the repository and adds it to Claude's and Codex's GitHub access, which only he can do; (2) a fresh
+session the owner starts in the core repository at high effort writes the core from both games' rule files (it reads
+them, as they are public, and writes only to the core), from this brief: (a) read both games' rule files whole on `main`
+(`AGENTS.md`, `CLAUDE.md`, `SECURITY.md`, `docs/threat-model.md`, `docs/claude-and-codex.md`, `docs/orchestrating.md`,
+`docs/review-guidelines.md`, `docs/developing.md`, and Amarna Letters' builder rules); (b) a rule goes into the core if
+it holds in both games and would hold in any project, and one that differs only in names, paths or examples goes in
+once, with the difference left as a slot each project fills; a rule only one game has stays in that game; (c) every rule
+keeps its reason, and the owner's words behind the common rules move word for word into the core's own archive, never
+rewritten; (d) the four pillars hold for the core itself, so it comes out shorter than the two games' copies together;
+(e) nothing personal, as both games' `SECURITY.md` say; (f) done when a table lists every rule of both games and where
+it went (the core, one game, or dropped with its reason), and a fresh reviewer given only the two games' files and the
+core finds nothing lost. The design session then checks the result against both games before any game takes a copy; (3)
+each project, in a PR of its own, adds the copy, cuts its rule files to what is its own, and adds a check on every PR
+that the copy matches the core at its pin (a workflow, so the owner's yes in that PR); (4) from then on a core change
+reaches a project only through a sync PR in it, reviewed as any other. No session writes to more than one repository:
+the core's own session writes the core, and each project's builders read it and write only their own. Then the rule-file
+audit runs once on the core and once on each project's own rules (archive, 5 November 2026). The same in Amarna Letters.
+
+### A content security policy for the page (the owner, 4 November 2026; first among the side lanes, as security hardening)
+
+A policy in `index.html` (GitHub Pages sends no headers) by which the page loads code only from itself and PeerJS's
+pinned file, and contacts only its own files and PeerJS's servers, so no code in it, a package's included, can send what
+it holds anywhere else or pull in more. Done when a test shows the policy in place, online play still works on the PR's
+preview, and `SECURITY.md` and `docs/developing.md` point to it.
+
+### 2aa. Dash on the key you're going (the owner, 4 November 2026; an input entry, a side lane now)
+
+The owner: "I noticed you don't dash, when you press the arrow keys or wsad in the direction you are moving. I think you
+oughta." Pressing the steering key (arrow or WASD) of the way the snake is already going dashes, as a swipe ahead
+already does on a phone; E, Shift and a right-click stay. It was the old power press, dropped because held keys and
+auto-repeat fired it by accident ("Steering keys only steer" in `docs/archive/design-powers.md`), so it comes back with
+touch's guard, `POWER_AFTER_TURN_MS`: only a fresh keydown dashes, never a held key or auto-repeat (`e.repeat`), and a
+press within 300 ms of the press that turned the snake that way is that turn pressed twice, not a dash. The dash itself
+is unchanged: the same engine call and online message (no protocol change), and the rivals, who already dash, are
+untouched. Updated in the same PR: the hints under the board and on the start card, the dash lesson, the Field guide
+row, the README and `docs/design/40-powers-and-moves.md`. Done when a rules test shows a fresh press ahead dashing, a
+held key and auto-repeat never dashing, and a double-tapped turn turning once.
+
+### 2u+. The stamina economy and the golden apple's worth (the owner, 3 and 4 November 2026; #460; a measurement right after 2u, then an engine-rules entry for what pays)
+
+Right after 2u, on fresh seeds and for every rival, in two steps, each against the game as 2u leaves it. **Where stamina
+comes from** (the owner, 4 November 2026: "anything you eat should give a little stamina recharge"; "stamina maybe
+becomes something that don't recharge by itself, or at least very slowly. But maybe food gives it, and you can reach
+over baseline, save up?"): every food refills it in proportion to how much it grows the snake; on its own it still comes
+back ("It will still slowly recharge"), as built or only slowly, either up to a floor (a first guess of half a bar, so a
+snake far from food is never powerless) or all the way to the full bar; and it banks above the full bar up to a cap
+("Maybe the cap should start at 3x baseline, and be figured out in testing"), shown as the charged look in
+`docs/design/37-one-stamina.md`, never as a bar ("should not show a bar above you"). **The golden apple** (2z, PR #459:
+its +3 costs more time alive than it helps): a full baseline's refill ("Golden apples gives full 1x baseline"), against
+that plus a shield that absorbs one bump ("I only imagined it as absorbing 1 bump. If you have no space to move, it does
+you no good"), kept until used or fading after a while (a first guess of 10 s), and against the supercharge of 3
+November (a first guess of 4 s at a faster refill). What pays is built, with its cue, lesson, Field guide row and
+protocol bump: eating late must come to pay without always paying, plentiful rounds must not turn into power spam, the
+shield must never make anyone safe (if shielded snakes outlive everyone, it is tightened or dropped), every trademark
+holds (Gobbler's food share, Mute's boxing and Creeper's tail-riding above all), and the rivals play it well: eating
+when low, banking before a fight. Part 7 then prices the powers against the economy that wins.
+
 ### 5. Round six B: the new moves (DESIGN "Round six B")
 
 Moved up by the owner (29 October 2026): "It's the one I am most interested in playing, and it has been pushed back for a
@@ -333,16 +398,25 @@ late, it is probably the most uneasecary feature we have discussed here, so leav
 
 The owner (31 October 2026): "Also, many of the Snakes dialogue lines are really really bad and corny. some of it are fun pop cultural stuff or wordplays I came up with, but most of it is corny writing by Opus 5.5. I think it would be nice to have a Fable 5.1 run on it at the end, to really piff up the writing. make it more clever and culturally engrossing. Though Trump actually got some good lines! So i don't want it to remove across the lines. remove the funny gags like Mason talking bad latin, or saying vidi vici veni which is a sex joke. but i want it to look at all, and give it a make over. the chinese lines are not as important. if it can, do them too, but most can't read them regardless. concur?" Then, to the design session's take (his gags kept, at the end of the queue, a page
 to choose from): "yes, and let it be creative! i don't want it to strictly look and improve whats there. that contrains it. let it go a bit wild and add stuff to, or make it over. it needs creative control outside of what i protect."
-- **Who and when:** a Fable 5.1 session at high effort, after entry 8, so it covers every line the queue adds (the
-  Charmer, the new moves, the woodpecker's acts).
-- **Creative control:** outside the protected lines, the session decides. It may rewrite, cut and add lines, remake a
+- **Who and when:** after entry 8, so it covers every line the queue adds (the Charmer, the new moves, the woodpecker's
+  acts). Fable 5.1 holds the creative control but not the volume, since its usage drains far faster, and it gets only
+  the parts that need its judgement (archive, 5 November 2026, and "A helper above you gets only what needs it" in
+  `CLAUDE.md`): (1) an Opus session at high effort runs the pass and gathers every line, for each rival and for the
+  game's own text, into one file per rival with the owner's protected lines marked; (2) from those files alone, Fable at
+  high effort writes for each a short voice guide (how it talks, its humour, its running jokes and callbacks to other
+  rivals, what it never says) and a sample of its lines rewritten by hand, and chooses where new lines go; (3) Opus
+  writes the rest from those guides and samples; (4) Fable spot-checks a sample of each rival's new lines against its
+  guide and rewrites those that miss. Where more than about one in five of a rival's lines miss, Fable sharpens that
+  rival's guide with what went wrong and Opus rewrites the rival once more; only if that misses too does Fable rewrite
+  the rival itself. The creative control below is Fable's throughout.
+- **Creative control:** outside the protected lines, Fable decides. It may rewrite, cut and add lines, remake a
   rival's way of talking, write running jokes and callbacks between rivals, and give lines to moments that have none
   (new moments use the events the game already sends; the chatter is presentation, so no rule changes). Clever and
   culturally engrossing over corny: wordplay, references that land in a moment, each rival's own humour. Each rival
   stays who it is, its name, look and play ("Every rival keeps its trademark").
 - **Protected, word for word:** the owner's own lines, found from `docs/archive/instructions.md`, `docs/handoff/` and the
   git history (lines he wrote or asked for word for word); Wildcard's lines, which he likes (Trump's, by his hair), kept
-  as they are, though the session may add to them and offer replacements beside them for him to pick; and the gags:
+  as they are, though Fable may add to them and offer replacements beside them for him to pick; and the gags:
   Mason's bad Latin and "vidi vici veni". The session lists what it protected, and why, at the top of its PR.
 - **Bounds:** every line fits its bubble on a phone (the layout suite) and fires on its moment; no song lyrics and no
   long quotes, since those belong to their owners (a short reference is fine); nothing hateful.
@@ -359,8 +433,8 @@ state that it does, and does it do it? If something in it doesn't then it needs 
 all." Every file, docs first: what does it say it is for, and does it do that? What doesn't belong moves to where it
 does, or goes; code is checked against "Split by meaning" and "Keep it lean" in `AGENTS.md`. The files every session
 reads first, then `docs/`, then the code, in a few PRs, each with a table of every file it covered and what happened to
-it, behaviour proven unchanged (suites, fingerprints). Helpers by "Helpers: when they pay" in `CLAUDE.md` (a Haiku
-search helper per folder).
+it, behaviour proven unchanged (suites, fingerprints). Helpers by "Helpers: when they pay" in
+`docs/claude-and-codex.md` (a Haiku search helper per folder).
 
 ### The file-by-file review's moves (the workshop lane; found in part 3 of the file-by-file review, PR #337, 2 November 2026)
 
