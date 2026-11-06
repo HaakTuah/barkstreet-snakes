@@ -28,9 +28,9 @@ function readRisk() {
     }
     // (Its powers reach further straight on: a dash three cells; anyone's
     // flash two, and anyone's leap LEAP_REACH + 1 if there's something in
-    // front to hop (a golden one, whatever's in front). It may be resting
-    // them: I can't tell.
-    // But a plain flash costs its rest, so a snake spends one racing for
+    // front to hop (a golden one, whatever's in front). Tired (2u: it
+    // looks it), it can't afford either: none of that.
+    // But a plain flash costs stamina, so a snake spends one racing for
     // food straight ahead of it, not to cross a cell it can't crawl to:
     // its flash I fear only with food on that line within its reach.)
     // (Straight on, cell by cell, as the engine goes: over the edge where
@@ -47,7 +47,7 @@ function readRisk() {
     if (o.air - age >= 1 && o.land >= 0) rings.push(o.air - age, o.land, strike);
     else if (o.air > 0 && o.land >= 0) strikes[o.land] += strike; // (down on its ring since I saw it: its head is there now)
     const on = f => { for (let n = 1; n <= far + 1; n++) if (line[n].x === f.x && line[n].y === f.y) return true; return false; };
-    if (gold || hop || food.some(f => f.kind !== 'mushroom' && on(f))) for (let i = 2; i <= far; i++) {
+    if ((o.step !== 0 || gold) && (gold || hop || food.some(f => f.kind !== 'mushroom' && on(f)))) for (let i = 2; i <= far; i++) {
       const { x: nx, y: ny } = line[i];
       if (inGrid(nx, ny)) strikes[ny * N + nx] += strike * 0.5;
     }

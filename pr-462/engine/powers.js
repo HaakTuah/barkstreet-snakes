@@ -49,6 +49,14 @@ function tire(game, s, cost) { s.restedAt = Math.max(s.restedAt, game.time) + co
 // How long until it can jump, or flash (ms; 0: now), golden charges included.
 const leapIn = (game, s) => s.leaps > 0 ? 0 : staminaIn(game, s, T.JUMP_STAMINA_MS);
 const flashIn = (game, s) => s.dashes > 0 ? 0 : staminaIn(game, s, T.DASH_STAMINA_MS);
+// How its stamina shows on it (37-one-stamina), as anyone on the log sees
+// it, at time t: 0 tired (it can afford neither power), 1 awake (one, or
+// golden ones), 2 game on (a full bar). Never more than the step.
+function staminaStep(game, s, t = game.time) {
+  const left = T.STAMINA_MS - Math.max(0, s.restedAt - t);
+  if (left >= T.STAMINA_MS) return 2;
+  return s.leaps > 0 || s.dashes > 0 || left >= Math.min(T.JUMP_STAMINA_MS, T.DASH_STAMINA_MS) ? 1 : 0;
+}
 // A leap, the island hop: up over what's right in front (a body, a hole or
 // fire), and on over up to LEAP_REACH cells of it, a cell a tick, coming
 // down on the first free cell beyond (none of those) the tick after: over
