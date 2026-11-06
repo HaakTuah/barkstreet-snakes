@@ -63,6 +63,14 @@ Codex's terms (archive, 1 November 2026).
 7. **What runs in players' browsers:**
    - **The third-party script:** PeerJS loads from cdnjs only with its pinned version and SRI hash (`PEERJS_SRI` in
      `net.js`); a new external script needs the same, or it does not go in.
+   - **The content security policy** (the meta at the top of `index.html`; GitHub Pages sends no headers): the page
+     runs code only from this site, its own inline scripts by their hashes and PeerJS's pinned file, and loads from
+     or connects over the web only to this site and PeerJS's broker, so no code in it, PeerJS's included, can pull in
+     more code or send what it holds to any other server that way. What a policy cannot govern stays with the reviews
+     (point 8): WebRTC (the STUN servers `net.js` names, and any server a script could name for a connection of its
+     own) and leaving the page (a link or `window.open`). A new version of PeerJS changes its address there too;
+     anything new the page must load or reach goes into the policy by name, never by a wildcard, and into
+     `tools/csp-test.js`, which pins the policy whole.
    - **The service worker** (`sw.js`): caches only this site's own files, never another origin's responses.
    - **Storage keys** (`snake-*`, `barkbite-muted`, `barkbite-music`) and `net.js`'s `PREFIX` are never renamed (players'
      records and online play depend on them), and hold no secret.

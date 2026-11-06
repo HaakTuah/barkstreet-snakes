@@ -33,3 +33,5 @@ the workshop check's 20 KB. New ones are added here.
   word for word, every pointer to it updated (the workshop/progress-done-split PR).
 - *Done:* a pointer check and a reading-size check on every PR (`tools/pointers-test.js`, `tools/sizes-test.js` and
   `tools/sizes.json`, run by `tools/copies-test.js` in the copies check's CI step; PR #525).
+- *Done:* a content security policy for the page (the meta in `index.html`, pinned by `tools/csp-test.js`; the
+  lettering served with the game; PR #526; its CI step, PR #527, waits for the owner's yes).
