@@ -165,7 +165,7 @@ Every snake's territory is the cells it reaches first. A rival's `territory` is 
 The trappers want their own body beside their head (`thick`, dropped when desperate), so their walls run two thick:
 nobody can hop them, and no plain flash can cut them. Mason, who lives by straight walls ("Keep watch!"), lays them two
 thick where it can, running back alongside (`thick` 60); Mute and Sniper less (15). The owner kept the double walls over
-Mason's longer straight runs (29 October 2026: `docs/archive/progress-done.md`).
+Mason's longer straight runs (29 October 2026: `docs/archive/progress-done/owner-answered.md`).
 
 ### The cast and their trademarks
 
