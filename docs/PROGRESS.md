@@ -52,8 +52,6 @@ the second account until its usage is spent; on the main account the brake close
   *Left:* the menus, the news lines and the README's player text; the guide's Burrows, Jump, Cuts and Golden beetle rows
   and one name for each thing (hole, pit or gap; jump, hop or leap; the rings), once part 5 (#202) merges. Wildcard's
   and Mason's protected lines stay as they are; the Chinese is rewritten with each changed line.
-- **Mason's vein, marble not gold** (#431; the owner, 3 November 2026): his marble's vein turns a marble colour, slate
-  or rose, so gold stays for powers alone; a picture on its PR.
 - **What belongs:** whatever makes the game feel finished without changing how it plays: things drawn wrong, out of
   place, overlapping, flickering or cut off; the same thing drawn, named or worded differently in two places (a
   rival's colours, a move's name in the lesson and the Field guide); layout at 390 px and desktop, phone held upright and
