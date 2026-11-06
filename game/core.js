@@ -148,7 +148,7 @@ const FLAVOR = {
   goldBeetleWatch: ['A golden beetle! Whoever catches it jumps far.', 'A golden beetle is scuttling about.'],
   youGoldBeetle: n => `Golden: ${n} long jump${n === 1 ? '' : 's'}, free. ${touchFirst ? 'Tap' : 'Space or a click'} to jump.`,
   bridgeFirst: 'A snake across a pit is a bridge, until its tail passes.', // (the first time a snake lies across a pit near you: round six B's bridges)
-  youStamina: 'One stamina for both: jump or dash, your call.', // (2u: your first plain jump or dash; the ring round your head is the bar)
+  youStamina: 'One stamina: jump or dash, your choice.', // (2u: your first plain jump or dash, the spec's words; the ring round your head is the bar, and the looks are on every snake: see render/stamina.js)
   youDashFirst: 'Golden dashes cut bodies two thick and put out fire.',
   youCutFirst: 'A dash cuts through a thin body.', // (round six B: your first cut)
   youFlashFailed: 'Too thick! A failed dash costs 5 off your tail.', // (your first failed flash)

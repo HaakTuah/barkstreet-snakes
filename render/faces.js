@@ -52,7 +52,7 @@ function cross(x, y, d) {
 // r: the pupil's radius (the white is a size up).
 function lookingEyes(r, x = 0.15, y = 0.2, wide = 1.55) {
   if (blinkNow) return lids(r * 1.3, x, y);
-  const c = CELL, w = r * wide, reach = (w - r) * 0.85;
+  const c = CELL, w = r * wide * wideOf(), reach = (w - r) * 0.85; // (game on, a little wider: see render/stamina.js)
   ctx.fillStyle = '#fffbea';
   circle(c * x, -c * y, c * w);
   circle(c * x, c * y, c * w);
@@ -61,6 +61,7 @@ function lookingEyes(r, x = 0.15, y = 0.2, wide = 1.55) {
   circle(c * x + ox, -c * y + oy, c * r);
   circle(c * x + ox, c * y + oy, c * r);
   if (r >= 0.045) catchlights(c * x + ox, c * y, oy, c * r);
+  heavyLids(x, -y, y, w);
 }
 
 // A small mouth at the front of the head, open by `open` (0..1).
@@ -106,14 +107,16 @@ function drawPlayerFace(s, a, now, blinking) {
   mouth(open, 0.44);
 
   if (blinking) return lids(0.11);
+  const w = 0.13 * wideOf(); // (game on, a little wider: see render/stamina.js)
   ctx.fillStyle = '#fffbea';
-  circle(c * 0.16, -c * 0.2, c * 0.13);
-  circle(c * 0.16, c * 0.2, c * 0.13);
+  circle(c * 0.16, -c * 0.2, c * w);
+  circle(c * 0.16, c * 0.2, c * w);
   ctx.fillStyle = INK;
   const ox = gazeX * c * 0.05, oy = gazeY * c * 0.05;
   circle(c * 0.16 + ox, -c * 0.2 + oy, c * 0.07);
   circle(c * 0.16 + ox, c * 0.2 + oy, c * 0.07);
   catchlights(c * 0.16 + ox, c * 0.2, oy, c * 0.07);
+  heavyLids(0.16, -0.2, 0.2, w);
 }
 
 // A speck of light in each pupil (at x, ±y + oy, pupils of radius pr), so eyes look alive.
@@ -125,7 +128,7 @@ function catchlights(x, y, oy, pr) {
 function catchlight(x, y, pr) {
   const dx = -pr * 0.35, dy = -pr * 0.35;
   ctx.fillStyle = '#ffffff';
-  circle(x + headCos * dx + headSin * dy, y - headSin * dx + headCos * dy, pr * 0.38);
+  circle(x + headCos * dx + headSin * dy, y - headSin * dx + headCos * dy, lightOf(pr)); // (game on, bigger: see render/stamina.js)
 }
 
 function drawFace(s, look, color, blinking, a) {
@@ -209,9 +212,10 @@ function drawFace(s, look, color, blinking, a) {
       ctx.ellipse(c * 0.12 + ox, -c * 0.2 + oy, c * 0.1, c * 0.14, 0, 0, TAU);
       ctx.ellipse(c * 0.12 + ox, c * 0.2 + oy, c * 0.1, c * 0.14, 0, 0, TAU);
       ctx.fill();
-      ctx.fillStyle = '#cbd5e1'; // a pale glint in each hollow, turned to what it's watching
-      circle(c * 0.12 + ox * 2.2, -c * 0.2 + oy * 2.2, c * 0.03);
-      circle(c * 0.12 + ox * 2.2, c * 0.2 + oy * 2.2, c * 0.03);
+      ctx.fillStyle = '#cbd5e1'; // a pale glint in each hollow, turned to what it's watching (game on, bigger)
+      circle(c * 0.12 + ox * 2.2, -c * 0.2 + oy * 2.2, lightOf(c * 0.08));
+      circle(c * 0.12 + ox * 2.2, c * 0.2 + oy * 2.2, lightOf(c * 0.08));
+      heavyLids(0.12 + ox / c, -0.2 + oy / c, 0.2 + oy / c, 0.1, 0.14);
       break;
     }
     case 'sovereign': // a golden crown, spikes pointing back
@@ -266,6 +270,8 @@ function drawFace(s, look, color, blinking, a) {
       ctx.moveTo(c * 0.15, -c * 0.3); ctx.lineTo(c * 0.15, -c * 0.1);
       ctx.moveTo(c * 0.15, c * 0.1); ctx.lineTo(c * 0.15, c * 0.3);
       ctx.stroke();
+      brightSpecks(c * 0.17 + ox, -c * 0.2 + oy, c * 0.2 + oy, c * 0.045);
+      heavyLids(0.15, -0.2, 0.2, 0.09);
       break;
     }
     case 'vulture': { // beady eyes under a scowl, and a big hooked beak that gapes at a meal
@@ -347,6 +353,8 @@ function drawFace(s, look, color, blinking, a) {
       ctx.ellipse(c * 0.15 + ox, -c * 0.2 + oy, c * 0.035, c * 0.12, 0, 0, TAU);
       ctx.ellipse(c * 0.15 + ox, c * 0.2 + oy, c * 0.035, c * 0.12, 0, 0, TAU);
       ctx.fill();
+      brightSpecks(c * 0.15 + ox, -c * 0.2 + oy, c * 0.2 + oy, c * 0.05);
+      heavyLids(0.15 + ox / c, -0.2 + oy / c, 0.2 + oy / c, 0.035, 0.12);
       break;
     }
     case 'metagamer': { // 3D glasses (red and cyan, card frame), eyes on whoever it's studying through them
@@ -391,8 +399,9 @@ function drawFace(s, look, color, blinking, a) {
       circle(c * 0.21 + ox, -c * 0.06 + oy, c * 0.04);
       circle(c * 0.21 + ox, c * 0.22 + oy, c * 0.04);
       ctx.fillStyle = '#ffffff';
-      circle(c * 0.2 + ox, -c * 0.075 + oy, c * 0.015);
-      circle(c * 0.2 + ox, c * 0.205 + oy, c * 0.015);
+      circle(c * 0.2 + ox, -c * 0.075 + oy, lightOf(c * 0.04));
+      circle(c * 0.2 + ox, c * 0.205 + oy, lightOf(c * 0.04));
+      heavyLids(0.2, -0.06, 0.22, 0.065, 0.08);
       ctx.strokeStyle = INK; // the squint: heavy lids across the back of each eye
       ctx.lineWidth = c * 0.03;
       ctx.beginPath();
@@ -421,6 +430,8 @@ function drawFace(s, look, color, blinking, a) {
         ctx.ellipse(c * 0.15 + ox, -c * 0.2 + oy, c * 0.025, c * 0.08, 0, 0, TAU);
         ctx.ellipse(c * 0.15 + ox, c * 0.2 + oy, c * 0.025, c * 0.08, 0, 0, TAU);
         ctx.fill();
+        brightSpecks(c * 0.15 + ox, -c * 0.2 + oy, c * 0.2 + oy, c * 0.05);
+        heavyLids(0.15, -0.2, 0.2, 0.08, 0.1);
       }
       ctx.strokeStyle = 'rgba(15,23,42,0.75)';
       ctx.lineWidth = 1.2;
@@ -490,6 +501,8 @@ function drawFace(s, look, color, blinking, a) {
         ctx.fillStyle = INK;
         ctx.beginPath(); ctx.ellipse(c * 0.14 + gazeX * c * 0.035, sg * c * 0.22 + gazeY * c * 0.035, c * 0.025, c * 0.085, 0, 0, TAU); ctx.fill();
       }
+      brightSpecks(c * 0.14 + gazeX * c * 0.035, -c * 0.22 + gazeY * c * 0.035, c * 0.22 + gazeY * c * 0.035, c * 0.05);
+      heavyLids(0.14, -0.22, 0.22, 0.1);
       break;
     }
     case 'mute': { // a mime: white greasepaint, a black beret, high arched brows, a painted tear, small dark lips
@@ -579,6 +592,7 @@ function drawFace(s, look, color, blinking, a) {
         ctx.fillStyle = INK;
         for (const sg of SIDES2) { ctx.beginPath(); ctx.ellipse(-c * 0.02 + ox, sg * c * 0.105 + oy, c * 0.135, c * 0.072, 0, 0, TAU); ctx.fill(); }
         catchlights(-c * 0.05 + ox, c * 0.105, oy, c * 0.1);
+        heavyLids(-0.02 + ox / c, -0.105 + oy / c, 0.105 + oy / c, 0.135, 0.072);
       }
       if (!a.star) blitAbout(stacheSprite(stacheStep(s, a, lastNow)), 0, 0, 0, 0, a.rad[0] / STAR_R / 1.1, a.rad[0] / STAR_R / 1.1, 0); // (Capricious doing Star: the mustache, on its own round head)
       // Bushy white brows, a puffy tuft over each eye: knitted (grumpy) as
@@ -703,4 +717,5 @@ function oddEye(y, w, r) {
   ctx.fillStyle = INK;
   circle(c * 0.15 + ox, c * y + oy, c * r);
   catchlight(c * 0.15 + ox, c * y + oy, c * r);
+  heavyLids(0.15, y, y, w);
 }
