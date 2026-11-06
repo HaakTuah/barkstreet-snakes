@@ -430,14 +430,15 @@ function starTrace(g, x, y, t0, r, grow) {
 // Its tell: a countdown on its five points. Its middle is always its
 // sunflower. As it flashes, its points go dim (in a moment, and its
 // twinkles burst off them: see onTick's dash), and they light again one
-// by one as its rest runs down, a point for each fifth of it (1.2 s),
+// by one as its stamina comes back to a flash's worth, a point for each
+// fifth of a flash's share (1.7 s),
 // going round from its back point, each lighting over the last STAR_FADE
 // of its step; the fifth lights as the flash is back, and while it's
 // ready two twinkles go round its points. (Lit only while its flash was
 // ready, it was dim nearly all the time: it flashes the moment it can, so
 // lit lasted a tick, a blink with reduced motion.) Holding golden flashes,
 // all five are lit. With reduced motion a point lights at once. Its brows
-// knit as it flashes, and relax through the first part of its rest (see
+// knit as it flashes, and relax through the first part of its wait (see
 // its face).
 const STAR_FADE = 0.2;
 // Its head: the star (a sprite for each count of its points lit, heading
@@ -670,7 +671,7 @@ function drawSnakes(alpha, now) {
   syncStays();
   for (const s of live) predict(s, animOf(s, now));
   meetings();
-  for (const s of live) prepare(s, alpha, now, false);
+  for (const s of live) staminaLook(s, prepare(s, alpha, now, false), false); // (tired, it shrivels a little: see render/stamina.js)
   let up = live.length;
   if (leaping) while (up > 0 && overOf(live[up - 1])) up--;
   drawShadows(up);
@@ -702,9 +703,10 @@ function drawPasses(from, to, now, halos) {
         if (pass === 0) { if (i >= to) drawHalo(s, a); else drawOutline(s, a, !!halos); }
         else if (pass === 1) drawBody(s, a, now, false);
         else if (pass === 2) { if (s.burnUntil > game.tick) drawBurning(s, a, now); }
-        else { // queasy after a mushroom: a sickly green wash, fading; starving, a pale one
+        else { // queasy after a mushroom: a sickly green wash, fading; tired, a gray one; starving, a pale one
           const q = a.queasyAt ? 1 - (now - a.queasyAt) / 1400 : 0;
           if (q > 0 && q <= 1) { ctx.fillStyle = rgba('#65a30d', 0.38 * q); silhouette(a, 0.5); }
+          staminaWash(a); // (tired: a little grayer, see render/stamina.js)
           drawPale(a); // (starving: it pales, see hungerLook; its colour floods back as a meal goes down, see mealSwell)
         }
         if (ox || oy) ctx.translate(-ox, -oy);

@@ -469,7 +469,7 @@ function drawCorpses(alpha, now) {
     const opacity = c.fade ? Math.max(0, 1 - (now - c.until) / FADE_MS) : 1;
     const hit = !c.fade && c.s.killer !== 'hunger';
     ctx.globalAlpha = opacity;
-    const a = prepare(c.s, c.s.prev ? alpha : 1, now, true, hit ? 0.2 : 0);
+    const a = staminaLook(c.s, prepare(c.s, c.s.prev ? alpha : 1, now, true, hit ? 0.2 : 0), true); // (out: no stamina look)
     for (const [ox, oy] of a.offs || OFFS) { // (across a wrapped edge: each place it shows)
       if (ox || oy) ctx.translate(ox, oy);
       drawShadow(a);
@@ -633,7 +633,7 @@ function setGame(g) {
 
 window.SnakeRender = {
   showYou,
-  // (your jump's back, or with 'flash' your flash: its half-ring's flick; the renderer sees both itself, so this only makes sure)
+  // (your jump's back, or with 'flash' your flash: the ring's flick in its colour; the renderer sees both itself, so this only makes sure)
   ready: (s, kind) => { const a = animOf(s, lastNow || performance.now()), now = lastNow || performance.now(); if (kind === 'flash') { if (!(now - a.flashFx < 600)) a.flashFx = now; } else if (!(now - a.readyAt < 600)) a.readyAt = now; },
   init, setGame, resize, frame, onTick, shake, hold: holdFor, headPx, colorOf, markOf, celebrate, setQuality, setBoardRect, pressed,
   get quality() { return quality; },
