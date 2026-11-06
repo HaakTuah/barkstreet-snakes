@@ -94,13 +94,6 @@ and the owner's notes of 2 November, among them).
   `docs/handoff/queue-specs.md` under the same title. Step 1 is the owner's.
 - **A content security policy for the page** (archive, 4 November 2026), first among the side lanes, as security
   hardening: its spec is in `docs/handoff/queue-specs.md` under the same title.
-- **A pointer check and a reading-size check on every PR** (archive, 4 November 2026), beside the copies check and
-  protected like it (`SECURITY.md`, rule 3): (1) every pointer in the rule files to a file, a section or a numbered
-  point must lead to one that exists, or the PR fails, saying which; forms it cannot read are listed, never guessed;
-  (2) the files every session reads, each against a mark of about 20 KB (one already past it starts at its size today,
-  a baseline that may only shrink), their total against today's, and every file past about 50 KB the PR changes
-  (Step 0); a PR that crosses a mark moves the mark in the same PR and says why. The workshop check's points 2 and 3
-  are then measured on every PR.
 - **The rule-file audit's larger moves** (the workshop check's point 6; archive, 3 November 2026): (1)
   `docs/claude-and-codex.md` (23 KB) is past the 20 KB warning: the sections that wait until Codex can build, "What goes
   to Codex" to "When Codex is not there", into a file of their own; (2) the slop bar a home of its own, since
