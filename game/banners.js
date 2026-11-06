@@ -206,7 +206,7 @@ const landingOf = o => o.flight.ring || o.flight.land;
 // The fliers whose rings s's head could crawl onto before they're down (2y: a body there takes the landing).
 function ringsInReach(s) {
   const h = s.body[0];
-  return theGame.snakes.filter(o => o !== s && o.alive && o.flight?.ring && o.flight.ring.n >= 2 && Math.abs(o.flight.ring.x - h.x) + Math.abs(o.flight.ring.y - h.y) <= o.flight.ring.n - 1);
+  return theGame.snakes.filter(o => o !== s && o.alive && o.flight?.ring && inRingReach(h, o.flight.ring)); // (see render/jumps.js)
 }
 function tailToDrop(s) {
   const G = GRID_SIZE, h = s.body[0], taken = new Set();
