@@ -218,13 +218,15 @@ shows what they can do; a shooting star dragging a rainbow is the most natural h
 
 It prices powers far below anyone else, by the same rules and the same engine calls, through two persona weights that
 are off for everyone else, so rounds without Star play exactly as if it didn't exist:
-- **`w.powers`** `{ price: 0, risk: 350, everyWay, jumpAny, dashSpend }`. Its powers are free to it, unless one ends
+- **`w.powers`** `{ price: 0, risk: 350, everyWay, jumpAny, dashSpend, keepFlash: 0.01 }`. Its powers are free to it, unless one ends
   where its risk is over 350 (a rival could strike there: in reach of its powers, or nearer), and there it pays the
   full price, as anyone would. A power still has to beat crawling by a point.
-  - **Flashes:** whenever it's rested and the flash doesn't run into anything, weighed every way, not just the way it
-    would crawl: about four times as often as anyone else.
+  - **Flashes:** whenever it has a flash's worth of stamina and the flash doesn't run into anything, weighed every
+    way, not just the way it would crawl: about three times as often as the median rival.
   - **Jumps:** any hurdle with somewhere free to land beyond it that no rival could get to before it's down, not just
-    out of a crash or onto food.
+    out of a crash or onto food: over twice as often as the median rival. What it keeps is a flash's worth of stamina
+    (`keepFlash`): a jump that leaves less costs it a hundredth of the wait it costs anyone, so its jumps don't eat
+    its flashes, and both stay in the band (2u).
   - **Golden dashes:** spent on speed too, not only on cuts and golden things, but at anyone's price for one (0.6 of
     an apple), so only for a real gain, such as beating a rival to an apple.
 - **`w.golden`** `{ power: 6, apple: 1.5, contested: 0.5 }`. It craves golden things above everything, to feed the

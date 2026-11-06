@@ -43,8 +43,10 @@ function flash(game, s) {
 // again (game time), so how much is spent is how long till then, in ms of
 // refill. A plain power goes with its share (JUMP_STAMINA_MS or
 // DASH_STAMINA_MS) in the bar, and spending it pushes restedAt on by that.
-const spent = (game, s) => Math.max(0, s.restedAt - game.time);
-const staminaIn = (game, s, cost) => Math.max(0, spent(game, s) - (T.STAMINA_MS - cost));
+// (At time t: the renderer asks on the clock as drawn, and ahead of it.)
+const spent = (game, s, t = game.time) => Math.max(0, s.restedAt - t);
+// How long until it has `cost` in the bar (ms; 0: now), at time t.
+const staminaIn = (game, s, cost, t = game.time) => Math.max(0, spent(game, s, t) - (T.STAMINA_MS - cost));
 function tire(game, s, cost) { s.restedAt = Math.max(s.restedAt, game.time) + cost; }
 // How long until it can jump, or flash (ms; 0: now), golden charges included.
 const leapIn = (game, s) => s.leaps > 0 ? 0 : staminaIn(game, s, T.JUMP_STAMINA_MS);
@@ -53,7 +55,7 @@ const flashIn = (game, s) => s.dashes > 0 ? 0 : staminaIn(game, s, T.DASH_STAMIN
 // it, at time t: 0 tired (it can afford neither power), 1 awake (one, or
 // golden ones), 2 game on (a full bar). Never more than the step.
 function staminaStep(game, s, t = game.time) {
-  const left = T.STAMINA_MS - Math.max(0, s.restedAt - t);
+  const left = T.STAMINA_MS - spent(game, s, t);
   if (left >= T.STAMINA_MS) return 2;
   return s.leaps > 0 || s.dashes > 0 || left >= Math.min(T.JUMP_STAMINA_MS, T.DASH_STAMINA_MS) ? 1 : 0;
 }

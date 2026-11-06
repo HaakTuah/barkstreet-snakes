@@ -118,7 +118,7 @@ function news(dying) {
     if (e.type === 'eat' && e.kind === 'golden') flashFrame('gold', true);
     if (e.type === 'spit' && e.lx != null && once('spitWet')) return toast(FLAVOR.youSpitWet, 2400, 'warn', 'lesson'); // (2x: your first spit that lies: wet, you slide over it)
     if (e.type === 'eat' && e.kind === 'mushroom' && once('mushroom')) return toast(FLAVOR.youMushroomSpit, 2600, 'warn', 'lesson'); // (round six B: it comes back up, aimed by steering)
-    if ((e.type === 'leap' && !e.gold || e.type === 'dash' && e.plain) && once('stamina')) return toast(FLAVOR.youStamina, 3000, 'you', 'lesson');
+    if ((e.type === 'leap' && !e.gold || e.type === 'dash' && e.plain) && Engine.staminaStep(theGame, e.snake) === 0 && once('stamina')) return toast(FLAVOR.youStamina, 3000, 'you', 'lesson'); // (the first plain power that leaves you tired: the look shows while you read, and wakes as the bar comes back)
     if (e.type === 'dash' && e.snake === me) flashedEver = true; // (you know the key: no more telling)
     if (e.type === 'dash' && !e.plain && once('dash')) return toast(FLAVOR.youDashFirst, 2800, 'gold', 'lesson');
     const refused = e.type === 'fizzle' && (e.flash ? FLAVOR.fizzleFlash : FLAVOR.fizzle)[e.why];

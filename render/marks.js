@@ -85,7 +85,7 @@ function drawPip(x, y, a2, pr, leap) {
 function drawRests(s, a, now) {
   const x = a.pts[0], y = a.pts[1], rr = a.rad[0] + CELL * 0.3;
   const used = Math.max(0, s.restedAt - shownTime);
-  const jumpOk = s.leaps > 0 || used <= T.STAMINA_MS - T.JUMP_STAMINA_MS, flashOk = s.dashes > 0 || used <= T.STAMINA_MS - T.DASH_STAMINA_MS;
+  const jumpOk = s.leaps > 0 || SnakeEngine.staminaIn(game, s, T.JUMP_STAMINA_MS, shownTime) === 0, flashOk = s.dashes > 0 || SnakeEngine.staminaIn(game, s, T.DASH_STAMINA_MS, shownTime) === 0;
   if (a.jc && jumpOk && !s.leaps && !(now - a.readyAt < 600)) a.readyAt = now; // (back: the flick)
   if (a.fc && flashOk && !s.dashes && !(now - a.flashFx < 600)) a.flashFx = now;
   a.jc = !jumpOk; a.fc = !flashOk;
@@ -398,7 +398,7 @@ const STAR_INK = 1.3, STAR_RIM = 2; // (its ink outline and its orange rim, in u
 const STAR_SUN = '#f9c22e', STAR_SUN_RIM = '#e8890c', STAR_DIM = '#b0893a', STAR_DIM_RIM = '#8a5c24';
 const RAINBOW_STEP = 28; // (degrees of hue from one segment to the next)
 // As the engine's flashIn sees it (golden flashes go anyway), on the clock as drawn.
-const flashLeft = s => s.dashes > 0 ? 0 : Math.max(0, s.restedAt - shownTime - (T.STAMINA_MS - T.DASH_STAMINA_MS));
+const flashLeft = s => s.dashes > 0 ? 0 : SnakeEngine.staminaIn(game, s, T.DASH_STAMINA_MS, shownTime);
 const flashReady = s => flashLeft(s) === 0;
 // How far its stamina is back to a flash's worth, on the clock as drawn: 0
 // with none left for one, 1 once the flash is back (holding golden flashes, 1).

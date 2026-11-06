@@ -27,9 +27,25 @@ function cutScene(personas, bodies, { holes = [], food = [] } = {}) {
     let cut = false, ev = [];
     for (let n = 0; n < 6 && s.alive && !cut; n++) { quiet(g); ev.push(...g.events.map(e => e.type)); cut = g.events.some(e => e.type === 'cut' && e.snake === s && e.by === s.id); }
     for (let n = 0; n < 6 && s.alive; n++) quiet(g);
-    drops[key] = cut && s.alive ? 'dropped' : ev.includes('leap') && s.alive ? 'hopped' : s.alive ? 'alive' : 'out'; // (a jump is free of tail now, stamina only, and a snake with a flash has one too: hopping its own body is as good a way out)
+    drops[key] = cut && s.alive ? 'dropped' : ev.includes('leap') && s.alive ? 'hopped' : s.alive ? 'alive' : 'out'; // (one stamina: a snake that can flash can jump, and hopping its own body is as good a way out; the next check rules the hop out)
   }
   check('boxed in a pocket of its own body, every rival gets out (drops its tail, or hops it, a jump being as free as a flash now)', Object.values(drops).every(v => v === 'dropped' || v === 'hopped'), JSON.stringify(drops));
+}
+{ // The same pocket in the log's corner, where no hop can land (off the log north and west; holes south; east, a cell
+  // shut in on three sides): one stamina pays for a jump whenever it pays for a flash, so it's the hop that's ruled out.
+  // (It circles its pocket a few moves before it cuts: the way on is a turn into what falls, not straight ahead.)
+  const ring = [[2, 2], [1, 2], [0, 2], [0, 1], [0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [4, 1], [4, 2], [4, 3], [4, 4], [3, 4], [2, 4], [1, 4], [0, 4], [0, 5], [0, 6]];
+  const long = [...ring, ...Array.from({ length: 16 }, (_, i) => [1 + i, 6])];
+  const holes = [K(0, 3), K(6, 2), ...[5, 6, 7].flatMap(x => [K(x, 1), K(x, 3)]), ...[1, 2, 3].flatMap(x => [K(x, 5), K(x, 7)])]; // (east: (5, 2) shut in, and every landing within reach beyond it)
+  const drops = {};
+  for (const key of ['drab', 'gobbler', 'ouroboros', 'ghost']) {
+    const g = cutScene([key, 'drab'], [[long, 'right'], [line(20, 12, 3), 'right']], { holes }), s = g.snakes[0];
+    let cut = false, hop = false;
+    for (let n = 0; n < 12 && s.alive && !cut; n++) { quiet(g); hop ||= g.events.some(e => e.type === 'leap' && e.snake === s); cut = g.events.some(e => e.type === 'cut' && e.snake === s && e.by === s.id); }
+    for (let n = 0; n < 6 && s.alive; n++) quiet(g);
+    drops[key] = cut && s.alive ? 'dropped' : hop ? 'hopped' : s.alive ? 'alive' : 'out';
+  }
+  check('boxed in a pocket of its own body with nowhere to hop, every rival drops its tail and gets out', Object.values(drops).every(v => v === 'dropped'), JSON.stringify(drops));
 }
 
 { // A rival lying one thick across the way, a long tail behind the cut and open log beyond: the hunters cut their target.

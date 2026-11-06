@@ -59,7 +59,7 @@ into it.
 A power you ask for while stunned goes the way you pressed when the stun's over (it counts as steering, if it can go,
 so the snake isn't turned aside first). A power that can't get anywhere says so, with an inked × and, the first time
 in a round, a line ("Nowhere to land.", "Nowhere to dash."; resting, "Your jump needs a moment." or "Your dash needs a
-moment."; too short to pay a jump's tip, "Too small to jump: it costs tail."), and the auto-turn takes you clear. For a
+moment."), and the auto-turn takes you clear. For a
 flash, that's a plain one into what you hit, or a golden one that would blow up at the edge or a hole on its way, or
 crash straight back in; a golden flash at a body one thick still goes, since that's its cut. A power that could go but
 then can't (a jump whose landing another head takes as it goes) gets the auto-turn too.
@@ -72,9 +72,10 @@ Golden powers add up:
 - each golden mushroom adds `WRAP_MS` (12 s) of wrap, up to `WRAP_MAX_MS` (20 s).
 
 You can hold golden jumps and golden flashes at once, since they're different presses. Golden charges are spent before
-the plain power and leave its rest alone. Nobody holds a power the others can't see: a snake holding one wears gold
+the plain power and leave the stamina alone. Nobody holds a power the others can't see: a snake holding one wears gold
 ("Telling powers apart" in `03-the-snake-as-a-character.md`), and the rivals see everyone's golden powers in their view
-(`leaps`, `dashes`, `wrap`), and their own rests (`leapIn`, `flashIn`).
+(`leaps`, `dashes`, `wrap`), their own stamina exactly (`stamina`, `leapIn`, `flashIn`), and each other snake's only
+as its look shows it (`step`: "Stamina on the body" in `03-the-snake-as-a-character.md`).
 
 ### Where golden powers come from
 
@@ -114,12 +115,12 @@ hop rarely reaches the next island across a hollow.
   jumps you can see" (`03-the-snake-as-a-character.md`). The stamina ring round your head (see "One stamina for
   jump and dash") has a sky notch at a jump's worth; when the stamina is back up to it, one bright sky flick and a
   wooden tick.
-- *The lessons:* your first jump, "Hup! A jump costs your tail tip, then a short rest."; the first time you're boxed in
+- *The lessons:* the first plain jump or dash that leaves you tired, "One stamina: jump or dash, your choice."; the first time you're boxed in
   with a jumpable gap, "Space hops up to three cells. Hop the gap!" ("Tap to hop up to three cells. Hop the gap!" on a
   phone).
 - *The Field guide's Jump row:* "Space or a click on the log: hop snakes, holes or fire, up to 3 cells, to the first
-  free cell: across a gap too. Press twice to leap now, open ground too. A ring shows where you’ll land. It costs your
-  tail’s tip, then rests 4 s. Bump into a flier in the air and you drop: onto a body or into a hole, you’re out. Lie on a
+  free cell: across a gap too. Press twice to leap now, open ground too. A ring shows where you’ll land. It takes two
+  fifths of your stamina. Bump into a flier in the air and you drop: onto a body or into a hole, you’re out. Lie on a
   flier’s ring before it lands and it’s out: rivals will try it on you." (On a phone: "A tap", "Tap twice".)
 - *The sound:* a springy boing up and a whoosh of air.
 - *The rivals* ask for it through the same call (`memory.power` from `decide()`: `leap()` in `engine/powers.js`), with
@@ -230,8 +231,8 @@ on the ground (in the air, once it's down). *Why no tail:* a flash that cost a t
 starved snakes, in simulation.
 - *The cue:* ember speed lines either side, thinner and shorter than a golden flash's. The stamina ring has an ember
   notch at a flash's worth; when the stamina is back up to it, an ember flick and a small spark.
-- *The Field guide's Dash row:* "E, Shift or a right-click on the log: two cells in a blink, for two thirds of your
-  stamina." (the share is written from `tuning.js`)
+- *The Field guide's Dash row:* "E, Shift or a right-click on the log: two cells in a blink, for three quarters of
+  your stamina." (each share is written from `tuning.js`)
   (On a phone: "A swipe the way you’re going".)
 - *The sound:* a short whoosh of air, lighter than a golden flash's zip.
 - *The rivals* flash through the same call (`memory.flash`: `flash()`), weighed in their own search

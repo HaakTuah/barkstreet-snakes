@@ -23,7 +23,8 @@
 // - Golden leaps: whenever one pays (they're free, and held they're wasted).
 // - The plain jump: out of a crash, or to come down on food (jumping for
 //   position, or just in case, lost when it cost a segment and a rest).
-// Desperate, every power is half the price. (Nobody's told anyone's rests.)
+// Desperate, every power is half the price. (Of the others' stamina, I see
+// only how tired each looks: see ai/risk.js.)
 // A power habit (w.powers: Star's) prices them all far lower, and may
 // weigh the flash every way, jump any hurdle there's somewhere to land
 // beyond that no rival could get to first, and spend golden dashes on
@@ -31,9 +32,9 @@
 // same tests of where each goes (it never takes one into a crash) and the
 // same risk where it ends. One that ends where a rival could strike costs
 // it the full price.
-const STAMINA_PRICE = 2; // (apples, a full bar of stamina: a flash's 8500 of 11500 1.48, a jump's 5000 0.87)
-const RESERVE_PRICE = 2.4; // (apples, a full bar's worth of waiting below my reserve: at margin 8, either power from a full bar costs 0.42 more, a flash 1.9 in all, a jump 1.29)
-const RESERVE_MARGIN = 8;  // (the margin, spare room wanted, of a snake that keeps all the other power needs: the default, in ai/rivals.js; at 3, under half that; at 10, more)
+const STAMINA_PRICE = 2; // (apples, a full bar of stamina: each power costs its share of that)
+const RESERVE_PRICE = 2.4; // (apples, a full bar's worth of waiting below my reserve)
+const RESERVE_MARGIN = DRAB.margin; // (the margin, spare room wanted, of a snake that keeps all the other power needs: the default's; less cautious, less; more, more)
 // (powerPick() sets these for each call:)
 let crawlScore, crawlDir, air, jump, U, habit, safe, cheap, keep, stampM, trapped, boxed, roomsHere, foodHere, hereFree,
   hereFood, landFood, landCells, pecks, cellAt, freeSoon, inTheWay, path, straight, leapNow, leapFly, leapTurn, ate, ateV,

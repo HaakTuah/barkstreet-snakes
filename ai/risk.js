@@ -47,7 +47,7 @@ function readRisk() {
     if (o.air - age >= 1 && o.land >= 0) rings.push(o.air - age, o.land, strike);
     else if (o.air > 0 && o.land >= 0) strikes[o.land] += strike; // (down on its ring since I saw it: its head is there now)
     const on = f => { for (let n = 1; n <= far + 1; n++) if (line[n].x === f.x && line[n].y === f.y) return true; return false; };
-    if ((o.step !== 0 || gold) && (gold || hop || food.some(f => f.kind !== 'mushroom' && on(f)))) for (let i = 2; i <= far; i++) {
+    if (o.step !== 0 && (gold || hop || food.some(f => f.kind !== 'mushroom' && on(f)))) for (let i = 2; i <= far; i++) {
       const { x: nx, y: ny } = line[i];
       if (inGrid(nx, ny)) strikes[ny * N + nx] += strike * 0.5;
     }

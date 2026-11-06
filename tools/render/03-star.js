@@ -22,7 +22,7 @@ const stars = await ev(`(() => {
   const seg = (s, i) => { const [cx, cy] = at(s); return rgb(cx - i + 0.04, cy + 0.04); }; // (segment i's middle, below its sheen)
   const SEGS = [2, 3, 4, 7], out = {};
   const g = stage(['star', 'star', 'mason']), [you, rest, ready] = g.snakes;
-  setBody(rest, Array.from({ length: 16 }, (_, i) => [16 - i, 8]), 'right'); rest.restedAt = (g.time + TUNING.STAMINA_MS - TUNING.DASH_STAMINA_MS + 1e6);
+  setBody(rest, Array.from({ length: 16 }, (_, i) => [16 - i, 8]), 'right'); rest.restedAt = g.time + TUNING.STAMINA_MS; // (its bar empty)
   setBody(ready, Array.from({ length: 16 }, (_, i) => [16 - i, 14]), 'right'); ready.restedAt = 0;
   R.setReducedMotion(true); // (its rainbow drifting slowly where it is: its neck isn't yellow, nor its points twinkling)
   __t = 7e6; show(g); drawN(20);

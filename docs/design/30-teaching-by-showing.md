@@ -186,10 +186,10 @@ and every lesson where your eyes already are.
 - A jump is offered only over a hurdle that will still be there when you arrive (a tail that will have passed doesn't count).
 - The flash isn't taught at "6 s in" any more, but at its first calm moment.
 - Steering gets taught too ("[↓], and I'll turn!"), with a dashed turn arrow. For someone who doesn't know WASD, that's the most useful line of all.
-- powersFirst, flashKey, leapNothing, leapEarly and youLeapFirst stop being banners. They become the coach and short lines: "Nothing to hop!", "Too soon!", "Hup! That cost my tail tip."
+- powersFirst, flashKey, leapNothing, leapEarly and youStamina stop being banners. They become the coach and short lines: "Nothing to hop!", "Too soon!", "One stamina: jump or dash, your choice."
 
 **4. Pictures on the log,** for the moves you're learning, drawn in two passes (under the snakes and over them), so the pips and faces stay clear.
-- *The jump:* a dotted arc to the landing ring. It's faint from 5 cells away, then bright with a breathing ring once a press would go. An × marks where there's nowhere to land, and dots run out for a press with nothing in reach. A -1 shows at your tail tip on your first jumps.
+- *The jump:* a dotted arc to the landing ring. It's faint from 5 cells away, then bright with a breathing ring once a press would go. An × marks where there's nowhere to land, and dots run out for a press with nothing in reach. Your stamina ring's notches show what each power takes.
 - *The flash:* two ember chevrons and a ghost head two cells on, and an × where it would bump.
 - *The golden flash:* Honey chevrons along its path, the cut line with "Snip!", and a starburst with "Boom!" at an edge or hole. A picture says "never at an edge" better than words.
 - *How long:* these predictive pictures show only while you're learning (until you've used the move 3 times). After that, only the cues drawn for every snake's moves stay, such as PR B's ring once a jump is pressed, so you read the rivals' moves as they read yours. Danger predictions left on for good were rejected: they'd be an aid only you have, and they'd trim the timing skill the moves are meant to need.

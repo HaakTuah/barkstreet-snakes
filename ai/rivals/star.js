@@ -12,7 +12,7 @@ PERSONAS.star = {
     // Its powers are free to it, unless one ends where a rival could
     // strike (half a head's risk: in reach of its powers, or nearer), or
     // it's a golden dash just for speed: it flashes over four times as
-    // often as anyone, and jumps ten times as often. What it keeps is a
+    // often as anyone, and jumps over twice as often. What it keeps is a
     // flash's worth of stamina: a jump that leaves less costs it the wait,
     // at keepFlash times what it costs anyone, so its jumps don't eat its
     // flashes. (At a tenth, they did the other way round: its jumps fell
