@@ -29,7 +29,8 @@ made untrue: "No description left untrue" in `AGENTS.md`) as a finding. The pill
 block too: a fact, rule or piece of logic written a second time instead of pointed to (a copy, or a selection of another
 file's lines), and an entry added to the copies check's baseline, or a mark in `tools/sizes.json` raised without its reason in the PR. Content put where its readers must read past it, such
 as a file holding what its readers do not need, is a finding, and so is a fact left where a clearly better home exists,
-or a pointer where no reader needs it.
+or a pointer where no reader needs it. Check each changed comparison or bound against the rule it guards, and each
+write to the page against `SECURITY.md`, rule 6: a one-character change there is a whole bug (#528).
 
 **Text a player reads,** for every reviewer of a change that adds or rewrites it: report as a finding any line that
 reads machine-made (one shape filled in again and again, filler, clichés, two voices alike); the slop audit in
