@@ -97,10 +97,8 @@ and the owner's notes of 2 November, among them).
   `docs/claude-and-codex.md` (23 KB) is past the 20 KB warning: the sections that wait until Codex can build, "What goes
   to Codex" to "When Codex is not there", into a file of their own; (2) the slop bar a home of its own, since
   `docs/review-guidelines.md` points to the slop audit's entry in this file, which moves to the archive when done.
-- **Waiting for a gap, splits by meaning:** `style/screens.css` (52 KB), past the 50 KB
-  mark, so an entry that must change it splits it first (Step 0, "Split by meaning" in `AGENTS.md`); and
-  `render/world.js` (40 KB), the file-by-file review's last part. Each in a PR of its own when no open lane touches it,
-  proven by fingerprints and suites.
+- **Waiting for a gap, a split by meaning:** `render/world.js` (40 KB), the file-by-file review's last part, in a PR
+  of its own when no open lane touches it, proven by fingerprints and suites.
 
 ## The queue, in order
 

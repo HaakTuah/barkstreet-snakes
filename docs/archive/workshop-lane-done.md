@@ -35,3 +35,5 @@ the workshop check's 20 KB. New ones are added here.
   `tools/sizes.json`, run by `tools/copies-test.js` in the copies check's CI step; PR #525).
 - *Done:* a content security policy for the page (the meta in `index.html`, pinned by `tools/csp-test.js`; the
   lettering served with the game; PR #526; its CI step, PR #527, waits for the owner's yes).
+- *Done:* `style/screens.css` (52 KB) split by meaning into `style/small-boards.css`, `phones.css`, `beside.css`,
+  `header.css` and `access.css`, linked in the same order (the workshop/split-screens PR).
