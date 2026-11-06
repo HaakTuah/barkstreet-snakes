@@ -91,8 +91,8 @@ and the owner's notes of 2 November, among them).
 - **The shared core** (archive, 5 November 2026), first among the side lanes and before the rule-file audit: the rules
   common to every project move to one repository, each project carrying a checked copy; its spec is in
   `docs/handoff/queue-specs.md` under the same title. Step 1 is the owner's.
-- **A content security policy for the page** (archive, 4 November 2026), first among the side lanes, as security
-  hardening: its spec is in `docs/handoff/queue-specs.md` under the same title.
+- **The browser suites' one ending** (#526): `tools/render-test.js` and `tools/input-test.js` end with `report.end(b)`
+  like the others, once entry 2u, which holds them, merges.
 - **The rule-file audit's larger moves** (the workshop check's point 6; archive, 3 November 2026): (1)
   `docs/claude-and-codex.md` (23 KB) is past the 20 KB warning: the sections that wait until Codex can build, "What goes
   to Codex" to "When Codex is not there", into a file of their own; (2) the slop bar a home of its own, since

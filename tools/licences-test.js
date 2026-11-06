@@ -28,6 +28,7 @@ ok(gate(() => {}).passes, 'the repository as it is passes');
 ok(gate(append('scripts/cloud-setup.sh', '# npm install mossgrip-widgets, a comment, fetches nothing\n')).passes, 'a comment naming an install passes');
 ok(gate(entry({ name: 'mossgrip-cli', licence: 'GPL-3.0-only' })).passes, 'a tool that only runs under GPL passes');
 ok(gate(edit('index.html', '<body>', '<body><link rel="preconnect" href="https://cdn.mossgrip.example">')).passes, 'a preconnect to a bare origin, loading nothing, passes');
+ok(gate(edit('index.html', "connect-src 'self'", "connect-src 'self' https://cdn.mossgrip.example")).passes, 'a bare origin the content security policy allows, loading nothing, passes');
 const fails = [
   ['a tool under a licence that is not open source', entry({ name: 'mossgrip-widgets', licence: 'LicenseRef-Mossgrip-Proprietary' })],
   ['a shipped package under a licence only tools may use', entry({ name: 'mossgrip-widgets', licence: 'MPL-2.0', ships: true })],
@@ -64,8 +65,9 @@ const fails = [
   ['npx in a tool written as a module', dir => fs.writeFileSync(path.join(dir, 'tools/dev/moss.mjs'), "import { execSync } from 'child_process';\nexecSync('npx -y mossgrip-cli');\n")],
   ['a bare origin loaded from, not warmed up', edit('index.html', '<body>', '<body><script src="https://cdn.mossgrip.example"></script>')],
   ['an address the game loads that is not in the audit', edit('index.html', '<body>', '<body><img src="https://cdn.mossgrip.example/bark.png">')],
+  ['an address in the content security policy that is not in the audit', edit('index.html', "connect-src 'self'", "connect-src 'self' https://cdn.mossgrip.example/bark.js")],
   ['a scheme-relative address', edit('index.html', '<body>', '<body><img src="//cdn.mossgrip.example/bark.png">')],
-  ['a second Google Fonts family', edit('index.html', 'family=Fredoka:', 'family=Fredoka:wght@400&family=Mossface:')],
+  ['a second Google Fonts family', dir => { entry({ name: 'Fredoka', kind: 'font', licence: 'OFL-1.1', ships: true, loads: ['https://fonts.googleapis.com/css2?family=Fredoka:'] })(dir); edit('index.html', '<body>', '<body><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400&family=Mossface:wght@400">')(dir); }],
   ['an asset file not in the audit', dir => fs.writeFileSync(path.join(dir, 'bark.png'), '')],
   ['a font kept with a tool', dir => fs.writeFileSync(path.join(dir, 'tools/dev/mossface.ttf'), '')],
   ['a shipped entry without its notice', entry({ name: 'mossgrip-widgets', licence: 'MIT', ships: true })],

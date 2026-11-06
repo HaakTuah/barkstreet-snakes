@@ -568,7 +568,7 @@ function drawBentFlags(now) {
   flagsLater.sort((a, b) => a.y - b.y);
   for (const f of flagsLater) {
     if (f.wrap) { wrapCloth(f, now); continue; }
-    const x = f.x * CELL + CELL / 2, y = f.y * CELL + CELL / 2, cut = frontOf(x, y);
+    const x = f.x * CELL + CELL / 2, y = f.y * CELL + CELL / 2, cut = frontOf(x, y, now);
     if (cut) frontLayer(x, y);
     try {
       ctx.save();
@@ -586,23 +586,25 @@ function drawBentFlags(now) {
   overSnakes = false;
   flagsLater.length = 0;
 }
-// (Whether a live snake is drawn in front of the flag at x, y: a point of
-// it on the row below, near enough to reach the flag. Those snakes, in
-// fronts.)
-const fronts = [];
+// (Whether a snake is drawn in front of the flag at x, y: a point of it on
+// the row below, near enough to reach the flag. A live one, or a dead one
+// held where it died, or fading there (see updateCorpses and corpseAlpha):
+// drawn under the flags too. Those snakes, in fronts, and how solid each
+// is drawn, in frontAlpha: a fading one is cut out as faintly as it shows.)
+const fronts = [], frontAlpha = [];
 const inFront = (px, py, x, y) => py >= y + CELL / 2 && py < y + CELL * 1.6 && Math.abs(px - x) < CELL * 3.5;
-function frontOf(x, y) {
-  fronts.length = 0;
-  for (const s of game.snakes) {
-    const a = s.alive && anim.get(s);
-    if (!a || !a.pts) continue;
-    for (const [ox, oy] of a.offs || OFFS) {
-      let hit = false;
-      for (let i = 0; i < a.n && !hit; i++) hit = inFront(a.pts[2 * i] + ox, a.pts[2 * i + 1] + oy, x, y);
-      if (hit) { fronts.push(s); break; }
-    }
-  }
+function frontOf(x, y, now) {
+  fronts.length = frontAlpha.length = 0;
+  for (const s of game.snakes) if (s.alive) frontTry(s, x, y, 1);
+  for (const c of corpses) frontTry(c.s, x, y, corpseAlpha(c, now));
   return fronts.length > 0;
+}
+function frontTry(s, x, y, alpha) {
+  const a = anim.get(s);
+  if (!a || !a.pts || alpha <= 0) return;
+  for (const [ox, oy] of a.offs || OFFS) {
+    for (let i = 0; i < a.n; i++) if (inFront(a.pts[2 * i] + ox, a.pts[2 * i + 1] + oy, x, y)) { fronts.push(s); frontAlpha.push(alpha); return; }
+  }
 }
 // A flag with a snake in front is drawn on a layer of its own, the board's
 // pixels round it (FRONT_BOX, in cells from its tile's centre: the cloth
@@ -632,8 +634,9 @@ function frontCut(x, y) {
   ctx.save();
   ctx.globalCompositeOperation = 'destination-out';
   ctx.fillStyle = '#000';
-  for (const s of fronts) {
-    const a = anim.get(s), grow = edgeOf(s, a), p = a.pts;
+  for (let k = 0; k < fronts.length; k++) {
+    const s = fronts[k], a = anim.get(s), grow = edgeOf(s, a), p = a.pts;
+    ctx.globalAlpha = frontAlpha[k];
     for (const [ox, oy] of a.offs || OFFS) {
       let top = Infinity;
       for (let i = 0; i < a.n; i++) if (inFront(p[2 * i] + ox, p[2 * i + 1] + oy, x, y)) top = Math.min(top, p[2 * i + 1] + oy - a.rad[i] - grow);
@@ -641,7 +644,8 @@ function frontCut(x, y) {
       ctx.save();
       ctx.beginPath(); ctx.rect(x - CELL * 4, top, CELL * 8, y + CELL * 2 - top); ctx.clip();
       ctx.translate(ox, oy);
-      bodyFills(a, grow, x - ox, y + CELL - oy, CELL * 3.5);
+      if (frontAlpha[k] < 1) silhouette(a, grow); // (faint: one shape, so where its pieces overlap it isn't cut twice)
+      else bodyFills(a, grow, x - ox, y + CELL - oy, CELL * 3.5);
       ctx.restore();
     }
   }
