@@ -1,0 +1,123 @@
+/* The page's styles (see style/base.css): the board with the column beside it (laptops, desktops, short windows),
+   and phones on their side. */
+
+/* Wide screens up to 1180 px tall (laptops, a 1080p or 1200p desktop's
+   browser, short windows, phones on their side): the header and tags sit
+   beside the board, which takes the full height (up to 900 px), and the
+   column beside it is as tall as the board: the header, the tags, the help
+   on a row of its own, then the speed buttons and the chatter's switch, and
+   the chatter in what's left (its whole lines, its caption first to go).
+   (It went up to 900 px tall: a 1080p desktop's browser, 945 or 969 px,
+   had the board over the chatter, 665 px, and with the chatter full the
+   page ran 78 to 116 px past the screen.) */
+@media (min-aspect-ratio: 5/4) and (max-height: 1180px) and (min-width: 480px) {
+  main {
+    container-type: normal; /* (sized by its content here: a size container would collapse it) */
+    --board: min(900px, calc(100vh - 32px), calc(100vw - 260px));
+    width: auto;
+    max-width: none;
+    height: var(--board);
+    display: grid;
+    grid-template-columns: minmax(180px, 300px) var(--board);
+    grid-template-rows: auto auto auto minmax(0, 1fr);
+    gap: 0 20px;
+    align-items: start;
+  }
+  header, .scoreboard, .foot, .chatter { grid-column: 1; }
+  .frame { grid-column: 2; grid-row: 1 / -1; }
+  .foot { grid-row: 3; margin-top: 0; flex-wrap: wrap; }
+  .foot .help { order: -1; flex: 1 1 100%; } /* (a row of its own, the column's width; under it the speed buttons and the switch, which is then just over the chatter it switches) */
+  .chatter { grid-row: 4; align-self: stretch; }
+  .scoreboard { grid-template-columns: 1fr; }
+  header { flex-wrap: wrap; align-items: center; justify-content: flex-start; }
+  .brand { flex-basis: 100%; }
+  .hud, .stats { display: contents; }
+  .stats .stat { font-size: 1rem; }
+  .stats .stat strong { min-width: 2ch; }
+  .hud .stat { order: 0; }
+  header::after { content: ''; order: 1; flex-basis: 100%; }
+  .hud button { order: 2; }
+  .trophy { min-width: 34px; padding: 0 8px; justify-content: center; }
+  .trophy svg { display: block; }
+  .trophy .trophy-text { display: none; }
+  /* (dvh in a test of its own: a custom property takes any value, so a
+     browser without dvh wouldn't drop a second declaration, it would lose
+     the board's size) */
+  @supports (height: 1dvh) {
+    main { --board: min(900px, calc(100dvh - 32px), calc(100vw - 260px)); }
+  }
+}
+/* Beside the board on a desktop (not a phone on its side, whose column is
+   too short for it), the chatter reads like a chat: newest at the bottom,
+   the panel growing with its lines down to the board's bottom edge, then
+   scrolling, older lines fading at its top and a scroll (the wheel, or the
+   bar) reading back. game/screen.js fitChatter sees the scroll and fades
+   them (fadeChatter). The log keeps the round's last 50 lines
+   (chatter/talk.js LOG_SIZE). (It stopped at 5 lines, with about 290 px
+   empty under it at 1920×945.) */
+@media (min-aspect-ratio: 5/4) and (max-height: 1180px) and (min-width: 480px) and (min-height: 501px) {
+  .chatlog {
+    flex: 0 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column-reverse;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(246, 236, 210, 0.25) transparent;
+  }
+  .chatlog li { flex: none; }
+}
+@media (pointer: coarse) and (min-aspect-ratio: 5/4) and (max-height: 1180px) and (min-width: 480px) {
+  header { column-gap: 6px; } /* (five buttons in a row, 44 px each on a touch screen, in a 244 px column; with a mouse they're 34 px, and keep their 10 px) */
+}
+
+/* Phones on their side: the board takes the full height less a thin rim
+   (268 → 310 px with a phone's browser bars showing, about 380 in full
+   screen), and the column beside it gets compact enough to fit the height
+   too: no tagline, smaller words, the tags two by two, and the chatter
+   taking what's left (its newest lines; the oldest are cut, and never
+   into its padding). Nothing scrolls; the column keeps a hair off the
+   screen's top and bottom. The woodpecker perches beside the board, in the
+   gap or the margin. The frame's rim meets the screen's top and bottom,
+   with no room for moss hanging off it, so the moss stays on the log, and
+   the leaves rest beside its corners in the gap, on the column's side. */
+@media (min-aspect-ratio: 5/4) and (max-height: 500px) and (min-width: 480px) {
+  :root { --pad-t: var(--safe-t); --pad-b: var(--safe-b); }
+  main {
+    /* (--tall: the screen's height inside its safe area. The column takes
+       all of it, though the board, on a screen under about 600 px wide,
+       takes less: squeezed into the board's height, a full chatter had no
+       room for a row of words) */
+    --tall: calc(100vh - var(--safe-t) - var(--safe-b));
+    --board: min(var(--tall), calc(100vw - 268px - max(12px, var(--safe-l)) - max(12px, var(--safe-r))));
+    height: var(--tall);
+    overflow: hidden; /* (before Safari 16) */
+    overflow: visible clip; /* (clipped top and bottom only: a focus ring at the column's left edge stays whole) */
+    gap: 0 24px; /* (the woodpecker's room, where the screen has no margin to spare: 24 px, and the column at least 244) */
+  }
+  header { grid-row: 1; margin-top: 6px; margin-bottom: 6px; row-gap: 4px; }
+  .scoreboard { grid-row: 2; margin-bottom: 6px; gap: 4px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* (the column's short: the help beside the switch, in smaller words;
+     watching, the speed buttons have the row over them) */
+  .foot { gap: 4px 8px; }
+  .foot .help { order: 0; flex: 1 1 140px; font-size: 0.74rem; }
+  main.help-yields .speed > span { display: none; } /* (where the help gives way, the switch has room beside the buttons without the word: the group's name says it) */
+  .chatter { margin-bottom: 4px; } /* (4 px off the screen's bottom) */
+  .chatter-head { margin-top: 4px; padding: 3px 10px 0; font-size: 0.8rem; }
+  .chatlog { padding: 2px 10px 5px; font-size: 0.82rem; }
+  .chatter[data-fit="strip"] .chatlog { margin-top: 4px; padding-top: 3px; }
+  .frame { grid-row: 1 / -1; padding: 5px; border-radius: 12px; }
+  h1 { font-size: 1.4rem; white-space: nowrap; }
+  .tagline { display: none; }
+  .hud .stat { font-size: 0.9rem; }
+  .scoreboard li { padding: 3px 7px 6px; gap: 4px; font-size: 0.84rem; }
+  .scoreboard .hunger { left: 7px; right: 7px; bottom: 2px; }
+  .moss.top, .moss.bottom, .leaves.tr, .leaves.br { display: none; }
+  .leaves { width: 24px; height: 24px; scale: -1 1; } /* (turned round: growing from the rim out into the gap) */
+  .leaves.tl { left: -21px; top: 3px; }
+  .leaves.bl { left: -21px; bottom: 3px; }
+  @supports (height: 1dvh) {
+    main { --tall: calc(100dvh - var(--safe-t) - var(--safe-b)); }
+  }
+}
