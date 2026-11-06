@@ -9,6 +9,7 @@
 window.SnakeVersion = {
   build: 'dev',
   news: [
+    { on: '2026-11-06', line: 'A fallen snake no longer hides a flag’s pole.' },
     { on: '2026-11-06', line: 'Snakes in front of a flag no longer hide its pole.' },
     { on: '2026-11-03', line: 'Spat a mushroom? You slide over it while wet.' },
     { on: '2026-11-03', line: 'Gold portals: dive off an edge, anyone may follow.' },
