@@ -4,6 +4,7 @@
 // the forms below; a form it cannot read is listed, never guessed. Node's own modules only.
 //
 //   `path`                     a tracked file or folder (a bare name, such as `net.js`, if exactly one file has it)
+//   [text](path)               a tracked file or folder, relative to the file it is in (a web address is not checked)
 //   `path`, "Section"          a heading, or a bold lead-in, in that file ("Section" in `path` and `path` ("Section") too)
 //   `path`, rule 3             a numbered point in that file (point, points 4 and 9, rules 1 to 4)
 //   "Section", point 6         a numbered point in that section (point 6 of "Section" too)
@@ -14,6 +15,7 @@
 //   node tools/pointers-test.js
 const fs = require('fs');
 const { execFileSync } = require('child_process');
+const { posix } = require('path');
 process.chdir(require('path').join(__dirname, '..'));
 const RULES = ['AGENTS.md', 'CLAUDE.md', 'SECURITY.md', 'docs/claude-and-codex.md', 'docs/orchestrating.md',
   'docs/review-guidelines.md', 'docs/threat-model.md']; // SECURITY.md, rule 3
@@ -78,6 +80,13 @@ for (const rf of RULES) {
   });
   for (const b of blocks) {
     const own = parse(rf).heads.filter(h => h.i <= b.i).pop();
+    // a link's destination, when it is in this repository, must be a tracked file or folder too
+    for (const m of b.text.matchAll(/\]\(([^)\s]+)\)/g)) {
+      if (/^([a-z]+:|#)/i.test(m[1])) continue;
+      count++;
+      const p = posix.normalize(posix.join(posix.dirname(rf), m[1].split('#')[0])).replace(/\/$/, '');
+      if (!files.has(p) && !dirs.has(p + '/')) broken.push(`${rf}:${b.i + 1}: the link to ${m[1]} leads to no tracked file or folder`);
+    }
     const list = atoms(b.text);
     // join atoms into pointers
     const groups = [];
