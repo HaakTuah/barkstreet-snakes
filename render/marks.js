@@ -702,9 +702,10 @@ function drawPasses(from, to, now, halos) {
         if (pass === 0) { if (i >= to) drawHalo(s, a); else drawOutline(s, a, !!halos); }
         else if (pass === 1) drawBody(s, a, now, false);
         else if (pass === 2) { if (s.burnUntil > game.tick) drawBurning(s, a, now); }
-        else { // queasy after a mushroom: a sickly green wash, fading; starving, a pale one
+        else { // queasy after a mushroom: a sickly green wash, fading; tired, a gray one; starving, a pale one
           const q = a.queasyAt ? 1 - (now - a.queasyAt) / 1400 : 0;
           if (q > 0 && q <= 1) { ctx.fillStyle = rgba('#65a30d', 0.38 * q); silhouette(a, 0.5); }
+          staminaWash(a); // (tired: a little grayer, see render/stamina.js)
           drawPale(a); // (starving: it pales, see hungerLook; its colour floods back as a meal goes down, see mealSwell)
         }
         if (ox || oy) ctx.translate(-ox, -oy);

@@ -248,6 +248,7 @@ function drawBody(s, a, now, dead) {
   const faceScale = 1.1 * (1 + a.bump) * (1 + a.swell);
   ctx.scale(faceScale * (1 - 0.22 * a.squash), faceScale * (1 + 0.12 * a.squash)); // (come down from a jump: squashed along the way it's going, a moment)
   const change = dead ? -1 : costumeChange(s, a, now); // (how far through a costume change, or -1)
+  staminaFace(a, color); // (its stamina's step, for its eyes: see render/stamina.js)
   if (a.isPlayer) drawPlayerFace(s, a, now, blinking);
   else if (change < 0) drawFace(s, look, color, blinking, a);
   else drawChange(s, a, look, color, blinking, change);

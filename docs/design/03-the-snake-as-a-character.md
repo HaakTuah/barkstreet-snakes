@@ -373,3 +373,20 @@ see it where your eyes already are, on yourself and on every rival:
 
 The rivals are shown nothing new (their own clock is in `aiView()`, as a person sees their bar); online, the tag
 carries `lastAte` and `mealMs`, so a guest sees the same.
+
+### Stamina on the body
+
+Every snake wears the step its stamina is at (`render/stamina.js`; the steps are `SnakeEngine.staminaStep`, read on the
+clock as drawn, and the rule is `37-one-stamina.md`), on yourself and on every rival, never as a bar over it:
+- **Tired**, while it can afford neither power: a low gray wash over its shape (`staminaWash`, in the last pass with
+  hunger's pale one) and its body 7% thinner (`TIRED_SHRIVEL`, its head as it was), and heavy lids, its head's colour a
+  shade darker with an ink edge, down over most of each eye from the back (`heavyLids`), sagging slowly (1.7 s) unless
+  motion is reduced.
+- **Awake**, once it can afford one: as it always looked.
+- **Game on**, at a full bar: bright eyes, the shared eyes' whites a little wider and their catchlights bigger
+  (`lightOf`, `wideOf`); eyes with no catchlight of their own (Drab, Creeper, Copycat, Ouroboros) get one
+  (`brightSpecks`), and Ghost's and Wildcard's glints grow.
+- A step eases in over 250 ms (`STAMINA_FADE`), at once with reduced motion; a dead snake wears none. The face helpers
+  in `render/faces.js` read the step from `staminaFace`, set before each face is drawn, so every look gets it; Sniper's
+  one eye is behind its scope, so it shows tired by its body alone.
+- The Field guide's Stamina row shows a tired snake above an awake one wearing your ring (`guideStamina`).

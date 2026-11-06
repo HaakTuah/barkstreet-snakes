@@ -33,7 +33,7 @@ Everyone has two powers, each with its own press, and one stamina they both spen
 
 Press both and the jump goes first if there's something to hop; the dash follows once you're down and your stamina has a dash's worth again (from a full bar, the two together take more than you have). A dash pressed in the air goes once you land. Pressed while you're stunned, a power that can't get anywhere just says so, and you turn clear.
 
-**Stamina:** one ring round your head, filling from the bottom like water in a glass; a full bar comes back in about 11 seconds from empty. A sky notch marks a jump's worth and an ember notch a dash's, so you see the price before you press, and whatever you spend on one isn't there for the other: hop now, or keep it for the dash. Your tag's chips fill as each comes back. Golden food makes them stronger, and it adds up:
+**Stamina:** one ring round your head, filling from the bottom like water in a glass; a full bar comes back in about 11 seconds from empty. A sky notch marks a jump's worth and an ember notch a dash's, so you see the price before you press, and whatever you spend on one isn't there for the other: hop now, or keep it for the dash. Your tag's chips fill as each comes back. Every snake wears its stamina too, rivals included: grayer, a little thinner and heavy-eyed when it can afford neither power, bright-eyed at a full bar. Golden food makes them stronger, and it adds up:
 - golden beetles give golden jumps (up to 3 held): the same hop, free, with no stamina;
 - golden leaves give golden dashes (up to 3): three cells in one tick, cutting through a body up to two thick and putting out every fire (into the edge or a hole, you blow up);
 - golden mushrooms make the edges wrap (12 seconds each, up to 20).
