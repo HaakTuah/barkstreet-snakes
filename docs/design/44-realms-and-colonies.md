@@ -107,9 +107,10 @@ hits it dead on, so that must be accounted for. And it should also react to sove
 Drawing only, from the snakes each screen has: no simulation, no protocol change.
 - **In depth.** Every flag and banner is drawn over the snakes (`drawBentFlags` in `render/flags.js`), upper rows
   first, so anything on the tiles behind it goes under its pole and cloth. Over the row in front of it, a snake's drawn
-  shape (its body, outline and any gold line; a dead one's too, while it is held where it died) is cut out of it (`frontOf` and `frontCut`: the flag drawn on a small
-  layer of its own, then laid on the board), so whatever stands in front hides the pole's foot, and only what its body
-  covers: the pole stands to the outline's edge (#512).
+  shape (its body, outline and any gold line; a dead one's too, held where it died, and as faintly as it shows while it
+  fades) is cut out of it (`frontOf` and `frontCut`: the flag drawn on a small layer of its own, then laid on the
+  board), so whatever stands in front hides the pole's foot, and only what its body covers: the pole stands to the
+  outline's edge (#512).
 - **Head-on.** A head that comes onto the tile from the north or the south has no side to push the pole to: it is
   knocked flat ahead of the head (`look[4]`, how flat: laid towards you, the pole turns right round and lies down the
   screen; laid away, it lies up it), and for `WRAP_MS` (260 ms) its cloth is wrapped round the head, over it, its ends
