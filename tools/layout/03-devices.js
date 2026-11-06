@@ -151,7 +151,7 @@ for (const d of share('03', DEVICES)) {
   }
 
   await chatterFull(tag, false, d.insets, side, upright);
-  await chatterScroll(tag, d.w / d.h >= 1.25 && d.h > 500 && d.h <= 1180 && d.w >= 480); // (style/screens.css: beside the board, not on a phone on its side)
+  await chatterScroll(tag, d.w / d.h >= 1.25 && d.h > 500 && d.h <= 1180 && d.w >= 480); // (style/beside.css: beside the board, not on a phone on its side)
 
   // A nap: its card fits, and its buttons take a tap.
   await ev(`window.__autoRaf = true; document.getElementById('pause').click(); 'ok'`);
