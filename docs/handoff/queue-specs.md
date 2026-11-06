@@ -3,7 +3,7 @@
 The full text of each open entry in `docs/PROGRESS.md`, moved here on 31 October 2026 so the progress file stays under the
 workshop check's 20 KB (the owner: "Yes, to all, expertly!"). Each entry in the queue keeps its title, a line of what it is
 and a pointer here; this text is its spec, as the entry's own words were. When an entry is done, its section moves to
-`docs/archive/progress-done.md` with it.
+`docs/archive/progress-done/done-specs.md` with it.
 
 ### The shared core (the owner, 5 November 2026; first among the side lanes, before the rule-file audit)
 
@@ -76,7 +76,7 @@ Moved up by the owner (29 October 2026): "It's the one I am most interested in p
 long time now. Also, the teaching system will have to account for it." It goes ahead of Wildcard's part of 3b, 2b, 2h, 2i
 and 3c. A playable draft PR as early as it can be, so the owner can try it.
 
-*Done so far:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195); their words and detail are in `docs/archive/progress-done.md`, "Item 5, its done parts".
+*Done so far:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195); their words and detail are in `docs/archive/progress-done/item-5-parts.md`, "Item 5, its done parts".
 
 *Where it stands:* the parts left and their order are in `docs/PROGRESS.md`, item 5 (part 6 is *built and reviewed*
 on `round6b/dropped-charges`: merge `develop` into it, renumber its protocol after part 4's, run its A/B; part 7 is
@@ -249,7 +249,7 @@ As `docs/design/35-capricious-copycat-and-wildcard.md` describes: Capricious doe
 a shuffled deck, each with its costume and an opening line; Copycat plays as the leader plays, copying a person by what
 they do; Wildcard draws a few strong traits a round and shows them. One PR, or one per rival if that is cleaner.
 
-Copycat's rotten apples by the edge: checked and eased in PR #142; the general edge fix is noted at the end of this file (`docs/archive/progress-done.md`, "Item 3b, done parts").
+Copycat's rotten apples by the edge: checked and eased in PR #142; the general edge fix is noted at the end of this file (`docs/archive/progress-done/item-3b-parts.md`, "Item 3b, done parts").
 
 ### 3c. A new rival: the Charmer (the owner, 29 October 2026; an AI entry, after 2b and 3b)
 
