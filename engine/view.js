@@ -5,6 +5,7 @@ function snapshot(game) {
       id: s.id, body: s.body.map(c => ({ x: c.x, y: c.y })), dir: s.dir,
       stun: Math.max(0, s.stunUntil - game.tick), leaps: s.leaps, // (all of it shows: stars, pips, a gold outline, cough puffs...)
       dashes: s.dashes, wrap: Math.max(0, s.wrapUntil - game.time), air: s.flight ? s.flight.ring.n : 0, land: s.flight ? key(s.flight.ring.x, s.flight.ring.y) : -1, // (in the air: how many ticks till it's down, and where: its ring)
+      step: staminaStep(game, s), // (its stamina, as its look shows it: tired, awake or game on, never the amount)
       spitIn: s.cheek ? s.cheek.spitAt - game.tick : 0, spitPower: s.cheek ? Math.min(T.SHRINK_MAX, s.cheek.power + 1) : 0, // (a green bulge, and its ring: it's spat after this many more moves, this strong)
     })),
     holes: game.holes.size,

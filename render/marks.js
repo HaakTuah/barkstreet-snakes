@@ -76,8 +76,10 @@ function drawPip(x, y, a2, pr, leap) {
 // water in a glass, and spending drains it from the top. A notch in sky
 // marks what a jump takes, one in ember what a flash takes, so you see the
 // price before you press; the water is ember with a flash's worth in it,
-// sky with a jump's, else dark. Full, it shows faintly; each power coming
-// back gives one bright flick, sky or ember. Where you're looking, not only
+// sky with a jump's, else dark. It's faint and thin, yours alone (your
+// snake's look, as everyone's, shows the step: see stamina-looks), fainter
+// still when full; each power coming back gives one bright flick, sky or
+// ember. Where you're looking, not only
 // on your tag. (Holding golden leaps and dashes both, every press is ready
 // anyway: no ring.)
 function drawRests(s, a, now) {
@@ -87,7 +89,7 @@ function drawRests(s, a, now) {
   if (a.jc && jumpOk && !s.leaps && !(now - a.readyAt < 600)) a.readyAt = now; // (back: the flick)
   if (a.fc && flashOk && !s.dashes && !(now - a.flashFx < 600)) a.flashFx = now;
   a.jc = !jumpOk; a.fc = !flashOk;
-  if (!(s.leaps > 0 && s.dashes > 0)) restRing(x, y, rr, 1 - used / T.STAMINA_MS, used > 0 ? 1 : 0.45);
+  if (!(s.leaps > 0 && s.dashes > 0)) restRing(x, y, rr, 1 - used / T.STAMINA_MS, used > 0 ? 0.7 : 0.35);
   if (a.readyAt && now - a.readyAt < 450) restFlick(x, y, rr, (now - a.readyAt) / 450, SKY);
   if (now - a.flashFx < 450) restFlick(x, y, rr, (now - a.flashFx) / 450, EMBER);
 }
@@ -104,17 +106,17 @@ function restRing(x, y, r, k, alpha) {
   ctx.lineCap = 'round';
   ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); // (the track)
   ctx.strokeStyle = 'rgba(58,38,20,0.45)';
-  ctx.lineWidth = 4.4;
+  ctx.lineWidth = 2.6;
   ctx.stroke();
   if (k > 0) {
     const col = k >= T.DASH_STAMINA_MS / T.STAMINA_MS ? EMBER : k >= T.JUMP_STAMINA_MS / T.STAMINA_MS ? SKY : 'rgba(58,38,20,0.6)';
     for (const side of [-1, 1]) {
       levelArc(x, y, r, side, k);
       ctx.strokeStyle = 'rgba(58,38,20,0.85)';
-      ctx.lineWidth = 5.6;
+      ctx.lineWidth = 3.4;
       ctx.stroke();
       ctx.strokeStyle = col;
-      ctx.lineWidth = 3.2;
+      ctx.lineWidth = 1.8;
       ctx.stroke();
     }
   }
@@ -123,8 +125,8 @@ function restRing(x, y, r, k, alpha) {
     for (const side of [-1, 1]) {
       const ang = Math.PI / 2 + side * Math.PI * cost / T.STAMINA_MS, cx = Math.cos(ang), cy = Math.sin(ang);
       ctx.beginPath(); ctx.moveTo(x + cx * (r - 4), y + cy * (r - 4)); ctx.lineTo(x + cx * (r + 4), y + cy * (r + 4));
-      ctx.strokeStyle = INK; ctx.lineWidth = 3.4; ctx.stroke();
-      ctx.strokeStyle = col; ctx.lineWidth = 1.6; ctx.stroke();
+      ctx.strokeStyle = INK; ctx.lineWidth = 2.6; ctx.stroke();
+      ctx.strokeStyle = col; ctx.lineWidth = 1.2; ctx.stroke();
     }
   }
   ctx.globalAlpha = was;

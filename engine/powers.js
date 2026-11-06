@@ -49,6 +49,10 @@ function tire(game, s, cost) { s.restedAt = Math.max(s.restedAt, game.time) + co
 // How long until it can jump, or flash (ms; 0: now), golden charges included.
 const leapIn = (game, s) => s.leaps > 0 ? 0 : staminaIn(game, s, T.JUMP_STAMINA_MS);
 const flashIn = (game, s) => s.dashes > 0 ? 0 : staminaIn(game, s, T.DASH_STAMINA_MS);
+// Its stamina as it shows on it (37-one-stamina, "Shown on the snake"): 0
+// tired, neither power to hand (golden ones count); 1 awake, one or both;
+// 2 game on, a full bar.
+const staminaStep = (game, s) => spent(game, s) === 0 ? 2 : leapIn(game, s) === 0 || flashIn(game, s) === 0 ? 1 : 0;
 // A leap, the island hop: up over what's right in front (a body, a hole or
 // fire), and on over up to LEAP_REACH cells of it, a cell a tick, coming
 // down on the first free cell beyond (none of those) the tick after: over

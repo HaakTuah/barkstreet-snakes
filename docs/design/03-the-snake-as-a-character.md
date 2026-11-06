@@ -304,10 +304,11 @@ appear only on power marks.
   Gobbler's orange and sky on Metagamer's cyan (0.14 of a cell, 0.12 with three or more, then the rings). The diamonds
   are slim lozenges pointing along the arc's spokes, spaced so they never touch. At the board's edge the whole arc
   moves in, so no pip is cut off, and the stun stars sit a little further out to clear them.
-- **Your stamina** (2u: one for jump and flash): a ring round your head, fixed to the screen. It fills from the bottom
+- **Your stamina** (2u: one for jump and flash; every snake's shows in its look, `37-one-stamina.md`): yours alone also
+  has a faint, thin ring round your head, fixed to the screen. It fills from the bottom
   up both sides at once, like water in a glass, over a faint track, and spending drains it from the top. A sky notch
   marks a jump's worth, an ember notch a flash's; the water is ember with a flash's worth in it, sky with a jump's,
-  else dark. Full, it shows faintly; each power coming back gives one bright flick in its colour. Holding golden jumps
+  else dark. Full, it shows fainter still; each power coming back gives one bright flick in its colour. Holding golden jumps
   and flashes both, no ring. A stunned press shows the jump's hop or the
   flash's double chevron in its accent (Honey when golden), and a press that can't go an inked × in it.
 - **Tags:** one 6 px chip per power, with small inline icons in ink (a hop, a double chevron, a loop): golden jumps sky,
