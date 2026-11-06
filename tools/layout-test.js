@@ -152,11 +152,9 @@ const report = reporter(), { results, check } = report;
     await runParts.inside(DIR, { HELPERS, HEADER_ROWS, results, check, share, site, b, ev, board },
       file => !mine || [...ALWAYS, ...mine.map(e => e.split('/')[0])].includes(path.basename(file).slice(0, 2)),
       (file, ms) => console.log(`part ${path.basename(file)} done (${(ms / 1000).toFixed(0)} s)`)); // (its results come at the end)
-    if (b.errors.length) { console.log('page errors:', b.errors); report.failed++; }
   } finally {
     await b.close();
     site.close();
   }
-  if (report.failed) { console.error(`\n${report.failed} failed`); process.exit(1); }
-  console.log(`\nall passed (${results.length} checks${job ? `, job ${job} of ${Object.keys(JOBS).length}` : ''})`);
+  report.end(b, { printed: true, note: job ? `, job ${job} of ${Object.keys(JOBS).length}` : '' }); // (99-summary.js printed its lines)
 })().catch(e => { console.error(e); process.exit(1); });

@@ -2,16 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <!-- The content security policy (SECURITY.md, point 7): code only from this site, the inline scripts below (by
-       their hashes) and PeerJS's pinned file; contact only this site and PeerJS's broker; Google's font. It comes
-       before anything it governs; tools/csp-test.js checks it, and prints the hashes when an inline script changes. -->
+  <!-- The content security policy: SECURITY.md, point 7. It comes before anything it governs; tools/csp-test.js
+       checks it, and prints the hashes to put here when an inline script changes. -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'none';
-    script-src 'self' https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/peerjs.min.js 'sha256-CXCqh5r5xKt7fv19sku/7AzhW0QdCzmIR9F/M7kk8WA=' 'sha256-buXsW4VMfK3WKn9z+WYIkVWK2rmsSo5pOt10flk588w=' 'sha256-OYMWjdUzf1KiFWCCOhnuHftAECCRR1ABYpfeVRwDKlQ=' 'sha256-EpAbkYMYKrYDLpYrX2qCCCDv6psUccVN5tphgy8ac6E=';
+    script-src 'self' https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/peerjs.min.js 'sha256-buXsW4VMfK3WKn9z+WYIkVWK2rmsSo5pOt10flk588w=' 'sha256-OYMWjdUzf1KiFWCCOhnuHftAECCRR1ABYpfeVRwDKlQ=' 'sha256-EpAbkYMYKrYDLpYrX2qCCCDv6psUccVN5tphgy8ac6E=';
     connect-src 'self' https://0.peerjs.com wss://0.peerjs.com;
-    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-    font-src https://fonts.gstatic.com;
+    style-src 'self' 'unsafe-inline';
+    font-src 'self';
     img-src 'self' data:;
     child-src 'self' blob:;
+    frame-src 'none';
     base-uri 'none';
     form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -23,11 +23,7 @@
   <title>Barkstreet Snakes</title>
   <!-- The icon: your green snake on the dark wood, inline (no request, no 404). -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2315201a'/%3E%3Cpath d='M6 25c0-6 4-7 8-7s6-3 6-8' fill='none' stroke='%234ade80' stroke-width='5' stroke-linecap='round'/%3E%3Ccircle cx='21' cy='9' r='5.5' fill='%234ade80'/%3E%3Ccircle cx='22.6' cy='7.6' r='1.5' fill='%2315201a'/%3E%3C/svg%3E">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- The font loads without blocking; until (or unless) it arrives, a system rounded font stands in. -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" media="print">
-  <script>{ const font = document.currentScript.previousElementSibling; if (font.sheet) font.media = 'all'; else font.addEventListener('load', () => font.media = 'all'); }</script>
+  <link rel="stylesheet" href="style/font.css">
   <link rel="stylesheet" href="style/base.css">
   <link rel="stylesheet" href="style/panels.css">
   <link rel="stylesheet" href="style/screens.css">

@@ -202,19 +202,20 @@ const HEADER_ROWS = `vis => {
 }`;
 
 // The report of a browser suite: check(ok, what, detail) adds a line to results and counts a failure in
-// failed (which the runner adds its own to, such as the page's errors); end(b) prints it and exits.
+// failed (which the runner adds its own to); end(b) prints it, with the page's errors, and exits.
 function reporter() {
   const report = { results: [], failed: 0 };
   report.check = (ok, what, detail = '') => {
     report.results.push(`${ok ? 'ok  ' : 'FAIL'} ${what}${detail ? ` (${detail})` : ''}`);
     if (!ok) report.failed++;
   };
-  // The suite's end: its lines and the page's errors (b, the browser, if any), then the verdict and the exit code.
-  report.end = b => {
-    console.log(report.results.join('\n'));
+  // The suite's end: its lines (unless a part printed them already) and the page's errors (b, the browser, if any),
+  // then the verdict, with a note if given, and the exit code.
+  report.end = (b, { printed = false, note = '' } = {}) => {
+    if (!printed) console.log(report.results.join('\n'));
     if (b?.errors.length) { console.log('page errors:', b.errors); report.failed++; }
     if (report.failed) { console.error(`\n${report.failed} failed`); process.exit(1); }
-    console.log(`\nall passed (${report.results.length} checks)`);
+    console.log(`\nall passed (${report.results.length} checks${note})`);
   };
   return report;
 }

@@ -136,7 +136,6 @@ const KEYS = {
   try {
 
     await runParts.inside(path.join(__dirname, 'ui'), { launch, serve, HELPERS, HEADER_ROWS, results, check, PROBE, KEYS, site, b, ev, P, wait, key, mouse, tap, at, tag, nameAt, tagAt, powers, load, fresh, die });
-    if (b.errors.length) { results.push(`FAIL page errors: ${b.errors.join(' | ')}`); report.failed++; }
   } catch (e) {
     results.push(`FAIL ${e.message}`);
     report.failed++;
@@ -144,7 +143,5 @@ const KEYS = {
     await b.close();
     site.close();
   }
-  console.log(results.join('\n'));
-  if (report.failed) { console.error(`\n${report.failed} failed`); process.exit(1); }
-  console.log(`\nall passed (${results.length} checks)`);
+  report.end(b);
 })().catch(e => { console.error(e); process.exit(1); });

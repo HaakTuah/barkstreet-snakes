@@ -280,8 +280,8 @@ guards: the rounds come to an end, and what a 10 means never slips (archive, 1 N
   Amarna Letters
   (tasks by comment fail either way: "Codex reviews", point 1), its setup script
   `bash scripts/cloud-setup.sh` (from `/workspace/<repository>`).
-  The agent may reach the internet (the repository is public and the environment holds no secrets); fonts.googleapis.com
-  and fonts.gstatic.com matter most: the game's font, which the input and layout suites need to measure text.
+  The agent may reach the internet (the repository is public and the environment holds no secrets); the suites need
+  none of it (the game's font, which the input and layout suites measure text in, is served with the game).
 - Codex runs on its own default model for cloud tasks, since none can be chosen there. The review scores per category
   show whether that is good enough.
 
