@@ -1,0 +1,228 @@
+/* The page's styles (see style/base.css): phones held upright: the header, the board edge to edge, the row under it
+   and the chatter. */
+
+@media (max-width: 440px) {
+  h1 { font-size: 1.7rem; }
+  /* The header in two rows: the title with Score and Best, then the buttons. */
+  header { align-items: center; }
+  .brand { flex: 1; }
+  .hud, .stats { display: contents; }
+  .stats .stat { font-size: 1rem; }
+  .stats .stat strong { min-width: 2ch; }
+  .hud .stat { order: 0; }
+  header::after { content: ''; order: 1; flex-basis: 100%; }
+  .hud button { order: 2; }
+  /* Best at the end of the buttons' row, under Score: beside the title the
+     two ran out of room at 100 or 1000, and the header grew a row in the
+     middle of a round, the board shrinking under it. Its room is kept for
+     four digits, its words to the right, so the buttons never move as it
+     grows. (The narrowest phones keep it on the title's row.) */
+  .hud .stat + .stat { order: 3; min-width: 4.5em; text-align: right; }
+  .hud .stat + .stat strong { text-align: left; } /* (its digits under Score's) */
+  h1 { white-space: nowrap; }
+  /* The Hall of Fame as a trophy, so the header stays one row high. */
+  .trophy { min-width: 34px; padding: 0 8px; justify-content: center; }
+  .scoreboard li { padding-inline: 7px; gap: 4px; } /* (two tags a row: every letter of a name counts) */
+  .trophy svg { display: block; }
+  .trophy .trophy-text { display: none; }
+  .scoreboard { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* Three tabs and the close on one row: the Hall of Fame's tab is its trophy too. */
+  .records-head .tab { white-space: nowrap; }
+  .records-head .tab-icon { display: inline-block; }
+  .records-head .tab-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .card h2 { font-size: 1.5rem; } /* (the phone's card is by the board's size, above; held upright its title stays 1.5rem on the small boards too) */
+  .scores-table .date { display: none; }
+  .scores-table { table-layout: fixed; } /* long names get an ellipsis instead of pushing the table wide */
+  /* The room goes to the names: Result fits "Won" or "4th" ("Shared 1st" takes two lines),
+     and a tag ("this round", "friend") goes under its name, so a long name can't cut it off. */
+  .scores-table th:nth-child(1) { width: 22px; }
+  .scores-table th:nth-child(3) { width: 50px; }
+  .scores-table th:nth-child(4), .scores-table th:nth-child(5) { width: 42px; }
+  .hud { gap: 6px; }
+  .scores-table td, .scores-table th { padding-inline: 5px; }
+  .scores-table .name .who { display: block; margin: 1px 0 0 19px; line-height: 1.1; }
+  .bar-row { grid-template-columns: 100px 1fr 28px; } /* ("Edge & holes" on one line) */
+}
+
+/* The smallest phones. The Hall of Fame takes more of the screen, so the
+   names have room (they were cut to three letters) and each tab is one line. */
+@media (max-width: 360px) {
+  h1 { font-size: 1.45rem; }
+  .hud .stat { font-size: 0.9rem; }
+  .records { padding: 8px; }
+  .records-card { padding: 12px; }
+  .records-head { top: -9px; margin: -9px -9px 4px; padding: 9px 9px 8px; }
+  .records-head .tab { padding-inline: 8px; white-space: nowrap; }
+  .scores-table td, .scores-table th { padding-inline: 4px; }
+}
+
+/* The narrowest phones: the title, Score and Best still on one row ("Barkstreet Snakes" is longer than the old name). */
+@media (max-width: 340px) {
+  h1 { font-size: 1.25rem; }
+  .hud .stat { font-size: 0.8rem; }
+  header { column-gap: 6px; }
+  .hud .stat + .stat { order: 0; min-width: 0; } /* (Best: four digits fit beside the title here) */
+}
+/* Touch, held upright: the buttons' row keeps room for Best's four digits
+   at 341 px (five 44 px buttons, 6 px apart at least, as on its side). */
+@media (pointer: coarse) and (max-width: 440px) {
+  header { column-gap: 6px; }
+}
+/* Six buttons held upright (full screen, where the browser allows it, and
+   the Field guide's door): six 44 px buttons take 294 px of the row, and
+   Best keeps 72 for four digits, so under a 396 px phone Best wrapped onto
+   a row of its own. With six, Best sits beside Score on the title's row, as
+   on the narrowest phones, and the buttons have a row to themselves. The
+   title is as big as leaves the two their room for four digits each (all
+   1.7rem from a 400 px phone, 1.4rem at 360), and its line keeps its
+   height, so the header's rows and the board stay where they were. */
+@media (max-width: 440px) {
+  header:has(#fullscreen:not([hidden])) .hud .stat + .stat { order: 0; min-width: 0; }
+}
+@media (min-width: 341px) and (max-width: 440px) {
+  header:has(#fullscreen:not([hidden])) h1 { font-size: min(1.7rem, calc((100cqw - 183px) / 8.25)); line-height: 1.7rem; }
+  header:has(#fullscreen:not([hidden])) .tagline { font-size: min(0.85rem, calc((100cqw - 183px) / 13.17)); } /* (on a phone taller than 720 px, where it shows: no wider than the title, so four digits fit beside it too; under 354 px it was wider, and at 1000 Score and Best went onto a row of their own) */
+  header:has(#fullscreen:not([hidden])) .hud .stat { font-size: 0.9rem; }
+}
+@media (pointer: coarse) and (min-width: 341px) and (max-width: 440px) {
+  header:has(#fullscreen:not([hidden])) h1 { font-size: min(1.7rem, calc((100cqw - 175px) / 8.25)); } /* (the gaps 6 px, not 10) */
+  header:has(#fullscreen:not([hidden])) .tagline { font-size: min(0.85rem, calc((100cqw - 175px) / 13.17)); }
+}
+@media (min-width: 341px) and (max-width: 360px) {
+  header:has(#fullscreen:not([hidden])) h1 { line-height: 1.45rem; }
+}
+/* Where the buttons' row has room, the Field guide is named: its word
+   beside the trophy (from a 371 px phone with six buttons; with five, Best
+   at the row's end, from 399, an iPhone Plus or Pro Max), and from 428 with
+   six the Hall of Fame too. Narrower, each is its picture. */
+@media (min-width: 371px) and (max-width: 440px) {
+  header:has(#fullscreen:not([hidden])) #guide-open { padding: 5px 12px; }
+  header:has(#fullscreen:not([hidden])) #guide-open svg { display: none; }
+  header:has(#fullscreen:not([hidden])) #guide-open .trophy-text { display: inline; }
+}
+@media (min-width: 399px) and (max-width: 440px) {
+  #guide-open { padding: 5px 12px; }
+  #guide-open svg { display: none; }
+  #guide-open .trophy-text { display: inline; }
+}
+@media (min-width: 428px) and (max-width: 440px) {
+  header:has(#fullscreen:not([hidden])) #records-open { padding: 5px 12px; }
+  header:has(#fullscreen:not([hidden])) #records-open svg { display: none; }
+  header:has(#fullscreen:not([hidden])) #records-open .trophy-text { display: inline; }
+}
+
+/* Phones held upright under 800 px tall: no tagline (the chatter has its
+   room; 390×844 and taller keep it). */
+@media (max-width: 440px) and (max-height: 800px) {
+  .tagline { display: none; }
+}
+
+/* Phones held upright: the board runs edge to edge (346 → 382 px on a
+   390 px phone), its frame a thin rim, the moss and the corner leaves
+   running off the screen's edges (clipped there, so nothing scrolls
+   sideways); everything else keeps its 12 px margin from the screen's
+   edge. The page is one screen tall: right under the board come the row
+   under the board (the help, or the speed buttons, and the chatter's
+   switch) and the chatter, folded to a strip of one row until a tap opens
+   it to what's left, down to none (the owner's playtest: "The phone gap").
+   The woodpecker perches at full size over that row (game/screen.js
+   placeBoard): no ledge of its own. Where the screen is too short for the
+   board edge to edge with that row (an iPhone SE with Safari's bars
+   showing), the board is as big as fits over the row, centred. All of it
+   is laid out for the screen with the browser's bars showing (svh), so the
+   board doesn't change as they come and go (the chatter does: it's what's
+   left). */
+@media (max-width: 440px) {
+  :root { --pad-t: max(8px, var(--safe-t)); --pad-b: max(8px, var(--safe-b)); }
+  body { padding-left: var(--safe-l); padding-right: var(--safe-r); }
+  main {
+    --head: 160px; /* (what's above the board, until the page has measured it: the page's top, the header in two rows, the tags in two, and their margins) */
+    /* (--above: what's above the frame, measured, whatever the header's
+       rows and font: game/screen.js measureAbove. --room: the height for
+       the board and the chatter, under that and over the row under the
+       board. The board: as big as fits it, up to edge to edge) */
+    --over-foot: 6px; /* (the gap over the row under the board) */
+    --wide: calc(100vw - var(--safe-l) - var(--safe-r));
+    --room: calc(100vh - var(--above, calc(var(--head) + max(0px, var(--safe-t) - 8px))) - var(--over-foot) - var(--foot) - var(--pad-b));
+    --board: min(760px, max(240px, min(var(--wide), var(--room))));
+    max-width: none;
+    overflow-x: hidden; /* (before Safari 16) */
+    overflow-x: clip;
+  }
+  /* (svh in a test of its own: a value with var() in it is only checked as
+     it's used, so a browser without svh wouldn't drop a second declaration,
+     it would lose the property) */
+  @supports (height: 1svh) {
+    main { --room: calc(100svh - var(--above, calc(var(--head) + max(0px, var(--safe-t) - 8px))) - var(--over-foot) - var(--foot) - var(--pad-b)); }
+  }
+  .frame { width: var(--board); margin-inline: auto; }
+  header, .scoreboard, .foot, .chatter { margin-inline: 12px; }
+  /* (slimmer than on a desktop: the header's two rows 4 px apart, 6 px
+     under it and under the tags, the tags 25 px a row, as on its side) */
+  header { row-gap: 0; margin-bottom: 6px; }
+  header::after { height: 6px; } /* (the break between the rows is a row of its own: the gap, once) */
+  .scoreboard { margin-bottom: 6px; gap: 4px; position: relative; z-index: 5; } /* (over the frame's top moss and corner leaves, which reach 12 px up into its 6 px gap: they hung over the second row's rims and hunger bars) */
+  .scoreboard li { padding: 3px 7px 6px; font-size: 0.86rem; }
+  .scoreboard .hunger { left: 7px; right: 7px; bottom: 2px; }
+  .frame { padding: 4px; border-radius: 9px; }
+  .moss.top { top: -12px; }
+  .moss.bottom { bottom: -12px; }
+  .leaves { width: 28px; height: 28px; } /* (their blades along the rim, never over a cell) */
+  .leaves.tl { left: -10px; top: -10px; }
+  .leaves.tr { right: -10px; top: -10px; }
+  .leaves.bl { left: -10px; bottom: -10px; }
+  .leaves.br { right: -10px; bottom: -10px; }
+  /* (the ledge, laid out but 0 px tall: it says the page is held upright,
+     and the bird stands over the row and the chatter, at full size) */
+  .perch-ledge { display: block; height: 0; }
+  .foot { margin-top: var(--over-foot); }
+  /* Watching, the speed buttons take the help's place (it only says what
+     they do, and how to nap: the nap button's in the header). */
+  .speed:not([hidden]) + .help { display: none; }
+  .chatter-head { margin-top: var(--over-foot); }
+  .chatter[data-fit="strip"] .chatlog { margin-top: var(--over-foot); } /* (open or folded, the chatter keeps the row's own gap under the row: the buttons' rims never meet its panel) */
+  /* (folded, a tap opens it: a caret at the strip's end says so; open, at
+     its caption's) */
+  .chatter[aria-expanded] { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .chatter[aria-expanded] .chatlog { position: relative; padding-right: 26px; }
+  .chatter.folded .chatlog::after, .chatter[aria-expanded="true"] .chatter-head::after, .chatter[aria-expanded="true"][data-fit="strip"] .chatlog::after {
+    content: ''; position: absolute; right: 10px; top: 50%; width: 7px; height: 7px; margin-top: -6px;
+    border: solid var(--muted); border-width: 0 2px 2px 0; transform: rotate(45deg);
+  }
+  .chatter[aria-expanded="true"] .chatter-head { position: relative; }
+  .chatter[aria-expanded="true"] .chatter-head::after, .chatter[aria-expanded="true"][data-fit="strip"] .chatlog::after { margin-top: -2px; transform: rotate(-135deg); } /* (open: up, at its caption, or at the strip's end where it has no room for the caption) */
+}
+@media (max-width: 340px) {
+  main { --head: 150px; } /* (the narrowest phones: the header in two rows, its title smaller) */
+}
+@media (max-width: 300px) {
+  .speed > span { display: none; } /* (a Galaxy Fold folded, 280 px: the word, three buttons and the switch don't fit the row; the group's name, "Watching speed", says it) */
+}
+/* Phones less than 1.7 times as tall as wide (an iPhone SE or mini with
+   Safari's bars showing, 375×548 to 635; a small Android with its browser's
+   bars, 320×460; 390 and 414 px wide under about 660 and 700 tall): the
+   row under the board is slimmer, its buttons 30 px tall (a fingertip's
+   44 elsewhere) and the help's two lines closer, 2 px under the board and
+   2 off the screen's bottom, and the page 4 px off its top, so the board is
+   as big as the phones work made it on the shortest (280 at 320×460, 341
+   at 375×548), and never smaller than it was before that (where the old
+   page ran the row and the chatter off the screen: 320×460 by 254 px while
+   you watched, 375×553 by 347), and an iPhone in Safari has a strip of
+   chatter (375×635). */
+@media (max-width: 440px) and (min-aspect-ratio: 10/17) {
+  :root { --pad-t: max(4px, var(--safe-t)); --pad-b: max(2px, var(--safe-b)); }
+  main { --over-foot: 2px; }
+  header::after { height: 4px; }
+  .foot .help { line-height: 1.15; }
+}
+@media (max-width: 440px) and (min-aspect-ratio: 10/17) and (pointer: coarse) {
+  html main { --foot: 30px; } /* (over the touch screens' 44, below) */
+  .foot button { min-height: 30px; }
+}
+/* (where the row under the board is closer than the moss and the corner
+   leaves hang off the frame's bottom, any phone held upright ("The phone
+   gap": the row right under the board), they're left off, as on its side:
+   over the help and the switch they were clutter. game/screen.js
+   placeBoard: .snug) */
+.frame.snug .moss.bottom, .frame.snug .leaves.bl, .frame.snug .leaves.br { display: none; }
