@@ -1,25 +1,9 @@
 // ------------------------------------------ the header over the board
-// Its rows (what's on each, left to right, grouped by where each sits;
-// Score over Best beside the title count as one), whether each door
-// shows its word, and whether the page scrolls sideways.
+// Its rows (HEADER_ROWS in tools/browser.js), whether each door shows its
+// word, and whether the page scrolls sideways.
 const headerRows = `(() => {
-  const hd = document.querySelector('header'), stats = document.querySelector('.stats'), pair = getComputedStyle(stats).display !== 'contents' ? stats : null;
-  const items = [['title', document.querySelector('h1')], ...[...hd.querySelectorAll('.hud .stat')].map((el, i) => [i ? 'Best' : 'Score', pair || el]), ...[...hd.querySelectorAll('.hud button')].filter(vis).map(el => [el.id, el])];
-  let rows = [];
-  for (const [n, el] of items) {
-    const r = el.getBoundingClientRect(), cs = getComputedStyle(el), top = r.top - parseFloat(cs.marginTop), bottom = r.bottom + parseFloat(cs.marginBottom);
-    let row = rows.find(q => Math.min(bottom, q.bottom) - Math.max(top, q.top) > 2);
-    if (!row) rows.push(row = { top, bottom, items: [] });
-    row.top = Math.min(row.top, top); row.bottom = Math.max(row.bottom, bottom);
-    row.items.push({ n, l: n === 'Best' && pair ? r.left + 0.5 : r.left });
-  }
-  for (let merged = true; merged;) {
-    merged = false;
-    for (const a of rows) for (const c of rows) if (a !== c && !merged && Math.min(a.bottom, c.bottom) - Math.max(a.top, c.top) > 2) { a.items.push(...c.items); a.top = Math.min(a.top, c.top); a.bottom = Math.max(a.bottom, c.bottom); rows = rows.filter(q => q !== c); merged = true; }
-  }
-  rows.sort((a, c) => a.top - c.top);
-  const named = id => vis(document.querySelector('#' + id + ' .trophy-text'));
-  return { page: Math.round(document.querySelector('main').getBoundingClientRect().width * 100) / 100, height: Math.round(hd.getBoundingClientRect().height * 10) / 10, rows: rows.map(r => r.items.sort((a, c) => a.l - c.l).map(i => i.n).join(' ')),
+  const { hd, rows, named } = (${HEADER_ROWS})(vis);
+  return { page: Math.round(document.querySelector('main').getBoundingClientRect().width * 100) / 100, height: Math.round(hd.getBoundingClientRect().height * 10) / 10, rows,
     guide: named('guide-open'), trophy: named('records-open'), sideways: document.documentElement.scrollWidth > innerWidth,
     titleLines: (() => { const h1 = document.querySelector('h1'), cs = getComputedStyle(h1); return Math.round(h1.getBoundingClientRect().height / (parseFloat(cs.lineHeight) || parseFloat(cs.fontSize))); })() };
 })()`;
