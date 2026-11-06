@@ -170,7 +170,7 @@ function drawBody(s, a, now, dead) {
     drawTie(a);
   }
   const coat = coatOf(s); // (Capricious's mood is a costume on its head, not its body)
-  if (coat === 'mason') { // Caesar in marble: grey veins wandering across every segment, now and then a gold one
+  if (coat === 'mason') { // Caesar in marble: grey veins wandering across every segment, now and then a rose one
     ctx.lineCap = 'round'; // (as the veins always left it, for the wreath)
     for (let i = 1; i < n; i++) {
       // (each segment's own sprite, drawn at the segment's size before any gulp, and scaled)

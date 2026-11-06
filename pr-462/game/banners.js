@@ -118,7 +118,7 @@ function news(dying) {
     if (e.type === 'eat' && e.kind === 'golden') flashFrame('gold', true);
     if (e.type === 'spit' && e.lx != null && once('spitWet')) return toast(FLAVOR.youSpitWet, 2400, 'warn', 'lesson'); // (2x: your first spit that lies: wet, you slide over it)
     if (e.type === 'eat' && e.kind === 'mushroom' && once('mushroom')) return toast(FLAVOR.youMushroomSpit, 2600, 'warn', 'lesson'); // (round six B: it comes back up, aimed by steering)
-    if ((e.type === 'leap' && !e.gold || e.type === 'dash' && e.plain) && once('stamina')) return toast(FLAVOR.youStamina, 3000, 'you', 'lesson');
+    if ((e.type === 'leap' && !e.gold || e.type === 'dash' && e.plain) && Engine.staminaStep(theGame, e.snake) === 0 && once('stamina')) return toast(FLAVOR.youStamina, 3000, 'you', 'lesson'); // (the first plain power that leaves you tired: the look shows while you read, and wakes as the bar comes back)
     if (e.type === 'dash' && e.snake === me) flashedEver = true; // (you know the key: no more telling)
     if (e.type === 'dash' && !e.plain && once('dash')) return toast(FLAVOR.youDashFirst, 2800, 'gold', 'lesson');
     const refused = e.type === 'fizzle' && (e.flash ? FLAVOR.fizzleFlash : FLAVOR.fizzle)[e.why];
@@ -206,7 +206,7 @@ const landingOf = o => o.flight.ring || o.flight.land;
 // The fliers whose rings s's head could crawl onto before they're down (2y: a body there takes the landing).
 function ringsInReach(s) {
   const h = s.body[0];
-  return theGame.snakes.filter(o => o !== s && o.alive && o.flight?.ring && o.flight.ring.n >= 2 && Math.abs(o.flight.ring.x - h.x) + Math.abs(o.flight.ring.y - h.y) <= o.flight.ring.n - 1);
+  return theGame.snakes.filter(o => o !== s && o.alive && o.flight?.ring && inRingReach(h, o.flight.ring)); // (see render/jumps.js)
 }
 function tailToDrop(s) {
   const G = GRID_SIZE, h = s.body[0], taken = new Set();

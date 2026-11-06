@@ -5,9 +5,14 @@
 
    Once style.css, split into the files of style/, linked in this order by
    index.html (sw.js keeps them), so the cascade is the same:
-     base.css     the colours, type, buttons, the header, the tags, the board
-     panels.css   the cards, the friends' lobby, below the board, the Hall of Fame
-     screens.css  small screens, and every other size and shape of screen */
+     font.css         the lettering, Fredoka, served from fonts/
+     base.css         the colours, type, buttons, the header, the tags, the board
+     panels.css       the cards, the friends' lobby, below the board, the Hall of Fame
+     small-boards.css the cards on a small board
+     phones.css       phones held upright
+     beside.css       the column beside the board, and phones on their side
+     header.css       the header's buttons, over the board and beside it
+     access.css       touch, reduced motion, high contrast */
 :root {
   --night-moss: #131d15;
   --night-moss-2: #1f3022;

@@ -462,11 +462,14 @@ function updateCorpses(now) {
   }
 }
 
+// How solid a corpse is drawn: held, wholly; fading, less and less (and so
+// how faintly it hides a flag behind it: see frontOf).
+const corpseAlpha = (c, now) => c.fade ? Math.max(0, 1 - (now - c.until) / FADE_MS) : 1;
 // Held corpses are drawn at the frame's own point in the tick (a snake that
 // starved moved before it died), the head pressed into what it hit, with a spark.
 function drawCorpses(alpha, now) {
   for (const c of corpses) {
-    const opacity = c.fade ? Math.max(0, 1 - (now - c.until) / FADE_MS) : 1;
+    const opacity = corpseAlpha(c, now);
     const hit = !c.fade && c.s.killer !== 'hunger';
     ctx.globalAlpha = opacity;
     const a = staminaLook(c.s, prepare(c.s, c.s.prev ? alpha : 1, now, true, hit ? 0.2 : 0), true); // (out: no stamina look)

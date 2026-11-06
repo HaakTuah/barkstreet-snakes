@@ -39,7 +39,10 @@
 //
 //   core.js       setup, colours, the bark (the static layer, snow, embers, leaves)
 //   sprites.js    cached sprites, the Field guide's pictures, beetles, particles
-//   looks.js      each snake's animation state, its looks, its costume change, its gaze, its jumps and their landing rings
+//   looks.js      each snake's animation state, its looks, its costume change, its mouth and colours
+//   gaze.js       each snake's gaze
+//   hunger.js     hunger on each body: slimming, the pale wash, the growl, a meal going down
+//   jumps.js      jumps and their landing rings, and bodies over holes
 //   lead.js       drawing half a tick ahead: where bodies go, and their shape
 //   shadows.js    the veil, shadows on the bark and the light in a pit
 //   bodies.js     outlines, the gold line of a power, and the body itself
