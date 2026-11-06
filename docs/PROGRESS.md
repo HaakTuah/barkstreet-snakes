@@ -140,6 +140,10 @@ plain power uses and neither better in aggregate, the pace kept: `docs/design/37
 prices the one stamina. Once it merges, the golden apple is measured again with the stamina refilled in place of the
 two rests (2z, #460): "The golden apple's worth" in `docs/design/04-food-and-the-world.md`.
 
+**Who builds it** (the owner, 6 November 2026; #530): the earlier builder session is stopped, so the builder on the
+second account takes 2u back: it merges `entry/2u-stamina-looks` (its parked looks, lesson, Field guide row and README
+text) into `entry/2u-one-stamina`, finishes 2u on that branch and its PR #462, and deletes the parked branch.
+
 ### 2u+. The stamina economy and the golden apple's worth (the owner, 3 and 4 November 2026; #460; a measurement right after 2u, then an engine-rules entry for what pays)
 
 Where the one stamina comes from (food, its own recharge, banking to a cap) and what the golden apple gives (a full
