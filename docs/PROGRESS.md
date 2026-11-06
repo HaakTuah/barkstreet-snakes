@@ -7,9 +7,8 @@ when it is merged into `develop`; add the owner's new tasks where he places them
 
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
-**2 November 2026, a fresh week:** the main lane is part 4 (#198, merged as it stands so the owner can play it), then
-2y (done, PR #373; the flight’s question is #399), then 2y+ (done: `ai/` and `engine/`, PRs #406, #408, #407), then part 5 (done, PR #202; its finding is #447), then 2x (done, PR #456), then 2z (done, PR #459: no rule changed; its question is #460), then 2u; the polish
-lane and the workshop lane run beside it, each claimed by a draft PR.
+**The main lane is 2u;** part 4 (#198, merged as it stands), 2y, 2y+, part 5, 2x and 2z before it are done. The
+polish lane and the workshop lane run beside it, each claimed by a draft PR.
 
 ## For the owner
 
@@ -140,9 +139,8 @@ plain power uses and neither better in aggregate, the pace kept: `docs/design/37
 prices the one stamina. Once it merges, the golden apple is measured again with the stamina refilled in place of the
 two rests (2z, #460): "The golden apple's worth" in `docs/design/04-food-and-the-world.md`.
 
-**Who builds it** (the owner, 6 November 2026; #530): the earlier builder session is stopped, so the builder on the
-second account takes 2u back: it merges `entry/2u-stamina-looks` (its parked looks, lesson, Field guide row and README
-text) into `entry/2u-one-stamina`, finishes 2u on that branch and its PR #462, and deletes the parked branch.
+**Who builds it** (the owner, 6 November 2026; #530): the second account's builder, which merges its parked
+`entry/2u-stamina-looks` into `entry/2u-one-stamina` and finishes 2u in PR #462.
 
 ### 2u+. The stamina economy and the golden apple's worth (the owner, 3 and 4 November 2026; #460; a measurement right after 2u, then an engine-rules entry for what pays)
 
