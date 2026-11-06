@@ -115,7 +115,10 @@ const deep = await ev(`(() => {
   out.footDead = foot(); out.stemDead = stem();
   you.alive = true; show(g); R.setReducedMotion(true); drawN(4, 0.5, 60); // (again, with reduced motion and no hold: it fades where it died)
   you.alive = false; R.onTick([{ type: 'death', snake: you }]); drawN(1, 0.5, 16);
-  out.footFading = foot(); R.setReducedMotion(false);
+  out.footFading = foot();
+  drawN(1, 0.5, Math.round(TUNING.CORPSE_FADE_MS / 2) - 16); // (half faded: cut out as faintly as it's drawn)
+  frontOf(12 * CELL + CELL / 2, 7 * CELL + CELL / 2, __t); out.cutMid = frontAlpha.slice(); out.drawnMid = corpses.map(c => corpseAlpha(c, __t));
+  R.setReducedMotion(false);
   SnakeDebug.pinQuality(2);
   return out;
 })()`);
@@ -123,9 +126,9 @@ const d = deep;
 check(d.alone[0] > 20 && d.behind[0] >= d.alone[0] * 0.9 && d.footAlone[0] > 0 && d.footFront[0] === 0 && d.front[0] >= d.alone[0] * 0.9 && d.stemAlone === 4 && d.stemFront === 4 && d.stemRival === 4,
   'a flag stands in depth: a snake on the row behind goes under its cloth, one on the row in front hides its foot and nothing above its outline',
   `its ensign’s navy ${d.alone[0]} alone, ${d.behind[0]} with a snake behind, ${d.front[0]} with one in front; its pole’s foot ${d.footAlone[0]} alone, ${d.footFront[0]} with one in front; the pole just above the body seen in ${d.stemAlone} of 4 slices alone, ${d.stemFront} with you in front, ${d.stemRival} with a rival`);
-check(d.footDead[0] === 0 && d.stemDead === 4 && d.footFading[0] === 0,
-  'a snake that died on the row in front, held where it died or fading there, hides the pole’s foot as it did alive, and nothing above it',
-  `its pole’s foot ${d.footAlone[0]} alone, ${d.footDead[0]} with the dead snake in front, ${d.footFading[0]} as it starts to fade; the pole just above it seen in ${d.stemDead} of 4 slices`);
+check(d.footDead[0] === 0 && d.stemDead === 4 && d.footFading[0] === 0 && d.cutMid.length === 1 && d.drawnMid.length === 1 && d.drawnMid[0] > 0.2 && d.drawnMid[0] < 0.8 && Math.abs(d.cutMid[0] - d.drawnMid[0]) < 1e-9,
+  'a snake that died on the row in front, held where it died or fading there, hides the pole’s foot as it did alive (fading, as faintly as it’s drawn), and nothing above it',
+  `its pole’s foot ${d.footAlone[0]} alone, ${d.footDead[0]} with the dead snake in front, ${d.footFading[0]} as it starts to fade; half faded, cut at ${d.cutMid.map(v => v.toFixed(2))} where it’s drawn at ${d.drawnMid.map(v => v.toFixed(2))}; the pole just above it seen in ${d.stemDead} of 4 slices`);
 check(['south', 'north'].every(k => d[k][0] > 5 && d[k][1] < d.alone[1] - 0.25 && Math.abs(d[k][1] - 12.5) < 0.4 && d[k + 'Under'][0] < d.alone[0] * 0.5),
   'hit head-on (from the north or the south), its cloth wraps round the head, then lies under the body',
   `its navy at ${xy(d.alone)} standing; wrapped ${xy(d.south)} (going south), ${xy(d.north)} (going north); then ${d.southUnder[0]} and ${d.northUnder[0]} pixels showing`);

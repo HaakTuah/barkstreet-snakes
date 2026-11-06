@@ -588,7 +588,7 @@ function drawBentFlags(now) {
 }
 // (Whether a snake is drawn in front of the flag at x, y: a point of it on
 // the row below, near enough to reach the flag. A live one, or a dead one
-// held where it died, or fading there (see updateCorpses and drawCorpses):
+// held where it died, or fading there (see updateCorpses and corpseAlpha):
 // drawn under the flags too. Those snakes, in fronts, and how solid each
 // is drawn, in frontAlpha: a fading one is cut out as faintly as it shows.)
 const fronts = [], frontAlpha = [];
@@ -596,7 +596,7 @@ const inFront = (px, py, x, y) => py >= y + CELL / 2 && py < y + CELL * 1.6 && M
 function frontOf(x, y, now) {
   fronts.length = frontAlpha.length = 0;
   for (const s of game.snakes) if (s.alive) frontTry(s, x, y, 1);
-  for (const c of corpses) frontTry(c.s, x, y, c.fade ? Math.max(0, 1 - (now - c.until) / FADE_MS) : 1);
+  for (const c of corpses) frontTry(c.s, x, y, corpseAlpha(c, now));
   return fronts.length > 0;
 }
 function frontTry(s, x, y, alpha) {
