@@ -66,18 +66,19 @@ check(Math.abs(fb.still[2] - fb.upright[2]) > 0.1 && Math.abs(fb.stillAfter[1] -
 // stands up off its tile: a snake passing the row behind it goes under its
 // cloth (the cloth as much in sight as with nobody there), and one passing
 // the row in front of it hides the pole's foot, and only what its body
-// covers: the pole just above its outline is as much in sight as alone.
-// A head coming straight at the pole from the north or the south knocks it
-// flat: for a moment its
-// cloth is wrapped round the head (over it, at the head, not out to the
-// pole's side), then it lies under the body (mostly hidden). Colonist
-// bends its own colony's flag, and Sovereign its own banner, as anyone does.
+// covers: the pole just above it shows on every slice, as alone, whether
+// it's you (a halo and outline round you) or a rival. A head coming
+// straight at the pole from the north or the south knocks it flat: for a
+// moment its cloth is wrapped round the head (over it, at the head, not out
+// to the pole's side), then it lies under the body (mostly hidden).
+// Colonist bends its own colony's flag, and Sovereign its own banner, as
+// anyone does.
 const deep = await ev(`(() => {
   seeds(201);
   SnakeDebug.pinQuality(0);
   const centre = (x, y, w, h, is) => { const p = pixels(x, y, w, h); let n = 0, sx = 0, sy = 0; for (let i = 0; i < p.data.length; i += 4) if (is(p.data[i], p.data[i + 1], p.data[i + 2])) { n++; sx += (i / 4) % p.width; sy += Math.floor(i / 4 / p.width); } return n ? [n, +(x + sx / n / p.width * w).toFixed(2), +(y + sy / n / p.height * h).toFixed(2)] : [0]; };
   const navy = (r, g, b) => b > 80 && r < 40 && g < 60, cream = (r, g, b) => r > 225 && g > 215 && b > 180, pole = (r, g, b) => r > 205 && g > 190 && b > 150 && b < 205 && r - b > 25;
-  const flag = () => centre(10, 5, 5, 4, navy), foot = () => centre(12.42, 8.02, 0.16, 0.08, pole), stem = () => centre(12.42, 7.8, 0.16, 0.16, pole), banner = () => centre(15, 12.5, 5, 3, cream);
+  const flag = () => centre(10, 5, 5, 4, navy), foot = () => centre(12.42, 8.02, 0.16, 0.08, pole), stem = () => [0, 1, 2, 3].filter(k => centre(12.42, 7.8 + k * 0.04, 0.16, 0.07, pole)[0] > 0).length, banner = () => centre(15, 12.5, 5, 3, cream);
   const g = stage(['colonist', 'sovereign', 'mason']), [you, col, sov, ma] = g.snakes, away = () => setBody(you, [[2, 22], [1, 22], [0, 22]], 'right');
   setBody(col, Array.from({ length: 6 }, (_, i) => [2 + i, 2]), 'left');
   setBody(sov, Array.from({ length: 6 }, (_, i) => [22 - i, 21]), 'right');
@@ -91,6 +92,8 @@ const deep = await ev(`(() => {
   out.behind = flag();
   setBody(you, Array.from({ length: 6 }, (_, i) => [15 - i, 8]), 'right'); drawN(4, 0.5, 60); // (the row in front)
   out.footFront = foot(); out.stemFront = stem(); out.front = flag();
+  away(); setBody(ma, Array.from({ length: 6 }, (_, i) => [15 - i, 8]), 'right'); drawN(4, 0.5, 60); // (a rival there: no halo or outline)
+  out.stemRival = stem(); setBody(ma, [[2, 18], [1, 18], [0, 18]], 'right');
   away(); drawN(30, 0.5, 60);
   for (const [k, dy] of [['south', 1], ['north', -1]]) { // (straight at the pole: from the north going south, and from the south going north)
     const at = n => Array.from({ length: 5 }, (_, i) => [12, 7 - dy * (n + i)]);
@@ -110,9 +113,9 @@ const deep = await ev(`(() => {
   return out;
 })()`);
 const d = deep;
-check(d.alone[0] > 20 && d.behind[0] >= d.alone[0] * 0.9 && d.footAlone[0] > 0 && d.footFront[0] === 0 && d.front[0] >= d.alone[0] * 0.9 && d.stemAlone[0] > 0 && d.stemFront[0] >= d.stemAlone[0] * 0.9,
+check(d.alone[0] > 20 && d.behind[0] >= d.alone[0] * 0.9 && d.footAlone[0] > 0 && d.footFront[0] === 0 && d.front[0] >= d.alone[0] * 0.9 && d.stemAlone === 4 && d.stemFront === 4 && d.stemRival === 4,
   'a flag stands in depth: a snake on the row behind goes under its cloth, one on the row in front hides its foot and nothing above its outline',
-  `its ensign’s navy ${d.alone[0]} alone, ${d.behind[0]} with a snake behind, ${d.front[0]} with one in front; its pole’s foot ${d.footAlone[0]} alone, ${d.footFront[0]} with one in front; the pole just above the outline ${d.stemAlone[0]} alone, ${d.stemFront[0]} with one in front`);
+  `its ensign’s navy ${d.alone[0]} alone, ${d.behind[0]} with a snake behind, ${d.front[0]} with one in front; its pole’s foot ${d.footAlone[0]} alone, ${d.footFront[0]} with one in front; the pole just above the body seen in ${d.stemAlone} of 4 slices alone, ${d.stemFront} with you in front, ${d.stemRival} with a rival`);
 check(['south', 'north'].every(k => d[k][0] > 5 && d[k][1] < d.alone[1] - 0.25 && Math.abs(d[k][1] - 12.5) < 0.4 && d[k + 'Under'][0] < d.alone[0] * 0.5),
   'hit head-on (from the north or the south), its cloth wraps round the head, then lies under the body',
   `its navy at ${xy(d.alone)} standing; wrapped ${xy(d.south)} (going south), ${xy(d.north)} (going north); then ${d.southUnder[0]} and ${d.northUnder[0]} pixels showing`);

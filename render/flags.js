@@ -570,17 +570,18 @@ function drawBentFlags(now) {
     if (f.wrap) { wrapCloth(f, now); continue; }
     const x = f.x * CELL + CELL / 2, y = f.y * CELL + CELL / 2, cut = frontOf(x, y);
     if (cut) frontLayer(x, y);
-    ctx.save();
-    if (f.banner) drawBanner(f.x, f.y, f.col, now, f.sc, f.beat); // (its size, if just planted, kept)
-    else {
-      const bent = bendOn(f.x, f.y, now);
-      bentPole(x, y, bent);
-      if (bent) clothFrame(x, y, x + 1.5, y - CELL * 0.92);
-      drawFlag(x + 1.5, y - CELL * 0.92, now, f.beat, f.kind);
-      if (bent) ctx.restore();
-    }
-    ctx.restore();
-    if (cut) frontCut(x, y);
+    try {
+      ctx.save();
+      if (f.banner) drawBanner(f.x, f.y, f.col, now, f.sc, f.beat); // (its size, if just planted, kept)
+      else {
+        const bent = bendOn(f.x, f.y, now);
+        bentPole(x, y, bent);
+        if (bent) clothFrame(x, y, x + 1.5, y - CELL * 0.92);
+        drawFlag(x + 1.5, y - CELL * 0.92, now, f.beat, f.kind);
+        if (bent) ctx.restore();
+      }
+      ctx.restore();
+    } finally { if (cut) frontCut(x, y); } // (the board's own context back, whatever happens)
   }
   overSnakes = false;
   flagsLater.length = 0;
@@ -605,8 +606,9 @@ function frontOf(x, y) {
 }
 // A flag with a snake in front is drawn on a layer of its own, the board's
 // pixels round it (FRONT_BOX, in cells from its tile's centre: the cloth
-// flying and leaning, a pole bent over), the snakes' shapes cut out of it
-// there, then laid on the board pixel for pixel.
+// flying and leaning, a pole bent over), in the board's line caps and joins;
+// the snakes' shapes cut out of it there, then laid on the board pixel for
+// pixel.
 const FRONT_BOX = [-2, -2, 5, 3.2]; // (left, top, width, height)
 let frontG = null, frontWas = null, frontAt = [0, 0, 0, 0];
 function frontLayer(x, y) {
@@ -619,19 +621,28 @@ function frontLayer(x, y) {
   frontG.setTransform(1, 0, 0, 1, 0, 0);
   frontG.clearRect(0, 0, dw, dh);
   frontG.setTransform(m.a, m.b, m.c, m.d, m.e - dx, m.f - dy);
+  frontG.lineCap = ctx.lineCap; frontG.lineJoin = ctx.lineJoin;
   frontAt = [dx, dy, dw, dh];
   frontWas = ctx; ctx = frontG;
 }
+// Each snake in front is cut out as it's drawn (bodyFills, grown by its
+// edge), near the flag, and only from the top of what of it is on the row
+// below down: what of it is on the flag's own row stays behind the flag.
 function frontCut(x, y) {
   ctx.save();
   ctx.globalCompositeOperation = 'destination-out';
   ctx.fillStyle = '#000';
   for (const s of fronts) {
-    const a = anim.get(s), grow = edgeOf(s, a);
+    const a = anim.get(s), grow = edgeOf(s, a), p = a.pts;
     for (const [ox, oy] of a.offs || OFFS) {
+      let top = Infinity;
+      for (let i = 0; i < a.n; i++) if (inFront(p[2 * i] + ox, p[2 * i + 1] + oy, x, y)) top = Math.min(top, p[2 * i + 1] + oy - a.rad[i] - grow);
+      if (top === Infinity) continue;
+      ctx.save();
+      ctx.beginPath(); ctx.rect(x - CELL * 4, top, CELL * 8, y + CELL * 2 - top); ctx.clip();
       ctx.translate(ox, oy);
-      frontShape(a, grow, x - ox, y - oy);
-      ctx.translate(-ox, -oy);
+      bodyFills(a, grow, x - ox, y + CELL - oy, CELL * 3.5);
+      ctx.restore();
     }
   }
   ctx.restore();
@@ -640,26 +651,6 @@ function frontCut(x, y) {
   ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.drawImage(frontG.canvas, 0, 0, dw, dh, dx, dy, dw, dh);
   ctx.restore();
-}
-// (A snake's drawn shape, grow bigger all round, as bodyFills fills it,
-// but only what's in front of the flag at x, y: its segments on the row
-// below, near it, and of a band from there up to a segment behind, the
-// part from the row's edge down.)
-function frontShape(a, grow, x, y) {
-  const p = a.pts, c = a.cor, edge = y + CELL / 2, low = v => Math.max(v, edge);
-  for (let i = 0; i < a.n - 1; i++) {
-    const x1 = p[2 * i], y1 = p[2 * i + 1], qx = c[2 * i], qy = c[2 * i + 1], x2 = p[2 * i + 2], y2 = p[2 * i + 3];
-    if (!inFront(x1, y1, x, y) && !inFront(x2, y2, x, y)) continue;
-    const h = bandR(a, i) + grow;
-    if (Math.max(y1, qy) >= edge) rectPiece(x1, low(y1), qx, low(qy), h);
-    if (Math.max(qy, y2) >= edge) rectPiece(qx, low(qy), x2, low(y2), h);
-    if (bends(a, i) && qy >= edge) circle(qx, qy, h);
-  }
-  for (let i = 0; i < a.n; i++) {
-    if (!inFront(p[2 * i], p[2 * i + 1], x, y)) continue;
-    if (i === 0 && a.star) { ctx.beginPath(); starPath(a, grow); ctx.fill(); }
-    else circle(p[2 * i], p[2 * i + 1], a.rad[i] + grow);
-  }
 }
 // A flag knocked flat by a head, its cloth wrapped round that head for a
 // moment: across the front of the head as it's drawn, its ends folded back
