@@ -257,8 +257,8 @@ fs.mkdirSync(out, { recursive: true });
     // Powers on the board, staged on the live round: golden leaps and dashes
     // held at once (yours: sky round pips one side, ember diamonds the other,
     // ember dashes running along the gold; and a rival's golden leaps: a
-    // rival given dashes uses them at once), then both your plain rests
-    // cooling (the half-rings round your head), then a plain flash a moment
+    // rival given dashes uses them at once), then your stamina
+    // coming back (the ring round your head), then a plain flash a moment
     // after it went (its ember streak).
     await b.eval(`(() => { const r = SnakeDebug.game().snakes.find(s => s.alive && s.persona); you().leaps = 2; you().dashes = 2; if (r) r.leaps = 3; return 1; })()`);
     await b.sleep(400);

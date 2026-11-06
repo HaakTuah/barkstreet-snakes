@@ -108,7 +108,7 @@ check(new Set(stars.body).size >= 5 && stars.beads.every((h, i) => dh(h, stars.b
 
 // Star's tell is a countdown on its points: its middle always its
 // sunflower; just flashed, its five points dim; they light one by one as
-// its rest runs down (a point each fifth of it: 2.2 s at 11 s), and never go out until it
+// its stamina comes back to a flash's worth (a point each fifth of a flash's share: 1.7 s at 8.5 s), and never go out until it
 // flashes again, with reduced motion too (it flashes the moment it can,
 // so a star lit only while its flash was ready was dim nearly all the
 // time, and with reduced motion blinked). Its twinkles burst off its

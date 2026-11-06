@@ -430,14 +430,15 @@ function starTrace(g, x, y, t0, r, grow) {
 // Its tell: a countdown on its five points. Its middle is always its
 // sunflower. As it flashes, its points go dim (in a moment, and its
 // twinkles burst off them: see onTick's dash), and they light again one
-// by one as its rest runs down, a point for each fifth of it (1.2 s),
+// by one as its stamina comes back to a flash's worth, a point for each
+// fifth of a flash's share (1.7 s),
 // going round from its back point, each lighting over the last STAR_FADE
 // of its step; the fifth lights as the flash is back, and while it's
 // ready two twinkles go round its points. (Lit only while its flash was
 // ready, it was dim nearly all the time: it flashes the moment it can, so
 // lit lasted a tick, a blink with reduced motion.) Holding golden flashes,
 // all five are lit. With reduced motion a point lights at once. Its brows
-// knit as it flashes, and relax through the first part of its rest (see
+// knit as it flashes, and relax through the first part of its wait (see
 // its face).
 const STAR_FADE = 0.2;
 // Its head: the star (a sprite for each count of its points lit, heading

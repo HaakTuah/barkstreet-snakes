@@ -68,10 +68,12 @@ too. Everywhere else the neck test is as above.
 ### Rivals read heads better
 
 Every persona fears the cells a rival could strike next (`headRisk`) and where it may be by now (`zoneRisk`), read so:
-- **A rival's flash I fear only when it has a reason to flash.** A plain flash costs its rest: a snake spends one racing
+- **A rival's flash I fear only when it has a reason to flash.** A plain flash costs stamina: a snake spends one racing
   for food on its line, not to cross a cell it can't crawl to. So its flash cells count (half a head's risk) only with
   food straight ahead of it within the flash's reach and one cell more, or when it holds a golden leap or dash, or faces
   something it could hop.
+- **A tired rival can't reach further** (2u): while it looks tired (its stamina step, `step` in `aiView()`'s others,
+  nothing more exact), it can afford neither plain power, so only its golden ones reach past the next cell.
 - **Only cells it can step into:** not back into its neck, a hole or a body still there.
 - **Fear by when I'd get there.** A cell beside a rival's head is a head-on on my first move, and, for the next `age`
   moves, its body if it went there (I can't see that yet). After that, I'd see where it went in time to turn, so it

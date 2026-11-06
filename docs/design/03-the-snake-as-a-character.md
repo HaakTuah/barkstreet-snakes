@@ -390,3 +390,6 @@ clock as drawn, and the rule is `37-one-stamina.md`), on yourself and on every r
   in `render/faces.js` read the step from `staminaFace`, set before each face is drawn, so every look gets it; Sniper's
   one eye is behind its scope, so it shows tired by its body alone.
 - The Field guide's Stamina row shows a tired snake above an awake one wearing your ring (`guideStamina`).
+
+The rivals see each snake's step as people do, and never more (`step` in `aiView()`'s others; what they make of it is in
+`39-the-rivals.md`); online, the look follows the synced `restedAt`, so a guest sees the same.
