@@ -186,7 +186,7 @@ and every lesson where your eyes already are.
 - A jump is offered only over a hurdle that will still be there when you arrive (a tail that will have passed doesn't count).
 - The flash isn't taught at "6 s in" any more, but at its first calm moment.
 - Steering gets taught too ("[↓], and I'll turn!"), with a dashed turn arrow. For someone who doesn't know WASD, that's the most useful line of all.
-- powersFirst, flashKey, leapNothing, leapEarly and youStamina stop being banners. They become the coach and short lines: "Nothing to hop!", "Too soon!", "One stamina: jump or dash, your choice."
+- powersFirst, flashKey, leapNothing and leapEarly stop being banners. They become the coach and short lines: "Nothing to hop!", "Too soon!".
 
 **4. Pictures on the log,** for the moves you're learning, drawn in two passes (under the snakes and over them), so the pips and faces stay clear.
 - *The jump:* a dotted arc to the landing ring. It's faint from 5 cells away, then bright with a breathing ring once a press would go. An × marks where there's nowhere to land, and dots run out for a press with nothing in reach. Your stamina ring's notches show what each power takes.

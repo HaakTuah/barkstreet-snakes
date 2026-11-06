@@ -472,7 +472,7 @@ function drawCorpses(alpha, now) {
     const opacity = corpseAlpha(c, now);
     const hit = !c.fade && c.s.killer !== 'hunger';
     ctx.globalAlpha = opacity;
-    const a = staminaLook(c.s, prepare(c.s, c.s.prev ? alpha : 1, now, true, hit ? 0.2 : 0), true); // (out: no stamina look)
+    const a = prepare(c.s, c.s.prev ? alpha : 1, now, true, hit ? 0.2 : 0);
     for (const [ox, oy] of a.offs || OFFS) { // (across a wrapped edge: each place it shows)
       if (ox || oy) ctx.translate(ox, oy);
       drawShadow(a);

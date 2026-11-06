@@ -77,7 +77,7 @@ function drawPip(x, y, a2, pr, leap) {
 // marks what a jump takes, one in ember what a flash takes, so you see the
 // price before you press; the water is ember with a flash's worth in it,
 // sky with a jump's, else dark. It's faint and thin, yours alone (your
-// snake's look, as everyone's, shows the step: see stamina-looks), fainter
+// snake's look, as everyone's, shows the step: see render/stamina.js), fainter
 // still when full; each power coming back gives one bright flick, sky or
 // ember. Where you're looking, not only
 // on your tag. (Holding golden leaps and dashes both, every press is ready
@@ -671,7 +671,7 @@ function drawSnakes(alpha, now) {
   syncStays();
   for (const s of live) predict(s, animOf(s, now));
   meetings();
-  for (const s of live) staminaLook(s, prepare(s, alpha, now, false), false); // (tired, it shrivels a little: see render/stamina.js)
+  for (const s of live) prepare(s, alpha, now, false);
   let up = live.length;
   if (leaping) while (up > 0 && overOf(live[up - 1])) up--;
   drawShadows(up);
