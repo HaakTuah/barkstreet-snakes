@@ -121,16 +121,21 @@ for (const f of [...served, ...tools]) {
 }
 for (const f of served) {
   if (!/\.(html|js|css|json|webmanifest)$/.test(f)) continue;
-  for (const line of read(f).split('\n')) for (const m of line.matchAll(/(https?:)?\/\/[a-z0-9-]+(\.[a-z0-9-]+)+(:\d+)?(\/[^\s'"`)<>]*)?/gi)) {
-    if (!m[1] && /[\w:]$/.test(line.slice(0, m.index))) continue; // (a comment's // after a word, not an address)
-    const url = m[1] ? m[0] : 'https:' + m[0]; // (a scheme-relative address loads over the page's https)
-    if (own.test(url) || (/rel=["']?(preconnect|dns-prefetch)/.test(line) && /^https?:\/\/[^/]+\/?$/.test(url))) continue; // (a bare origin to warm up: nothing is loaded from it)
-    if (!loads.some(([u]) => url.startsWith(u))) fail(`${f} loads ${url}, which no entry of tools/licences.json covers`);
-    // (one Google Fonts address can ask for several families: each must be a font of its own in the audit)
-    if (/^https:\/\/fonts\.googleapis\.com\//.test(url)) for (const fam of url.matchAll(/[?&]family=([^:&]+)/g)) {
-      const name = decodeURIComponent(fam[1].replace(/\+/g, ' '));
-      if (byName.get(name)?.kind !== 'font' || !byName.get(name).ships) fail(`${f} loads the font ${name}, which is not a font in tools/licences.json`);
+  let policy = false; // (inside the content security policy's meta, whose lines only allow what others load)
+  for (const line of read(f).split('\n')) {
+    policy ||= /http-equiv="Content-Security-Policy"/i.test(line);
+    for (const m of line.matchAll(/(https?:)?\/\/[a-z0-9-]+(\.[a-z0-9-]+)+(:\d+)?(\/[^\s'"`)<>]*)?/gi)) {
+      if (!m[1] && /[\w:]$/.test(line.slice(0, m.index))) continue; // (a comment's // after a word, not an address)
+      const url = m[1] ? m[0] : 'https:' + m[0]; // (a scheme-relative address loads over the page's https)
+      if (own.test(url) || ((policy || /rel=["']?(preconnect|dns-prefetch)/.test(line)) && /^https?:\/\/[^/]+\/?$/.test(url))) continue; // (a bare origin to warm up or to allow: nothing is loaded from it)
+      if (!loads.some(([u]) => url.startsWith(u))) fail(`${f} loads ${url}, which no entry of tools/licences.json covers`);
+      // (one Google Fonts address can ask for several families: each must be a font of its own in the audit)
+      if (/^https:\/\/fonts\.googleapis\.com\//.test(url)) for (const fam of url.matchAll(/[?&]family=([^:&]+)/g)) {
+        const name = decodeURIComponent(fam[1].replace(/\+/g, ' '));
+        if (byName.get(name)?.kind !== 'font' || !byName.get(name).ships) fail(`${f} loads the font ${name}, which is not a font in tools/licences.json`);
+      }
     }
+    if (policy && />\s*$/.test(line)) policy = false;
   }
 }
 

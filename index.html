@@ -2,6 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <!-- The content security policy (SECURITY.md, point 7): code only from this site, the inline scripts below (by
+       their hashes) and PeerJS's pinned file; contact only this site and PeerJS's broker; Google's font. It comes
+       before anything it governs; tools/csp-test.js checks it, and prints the hashes when an inline script changes. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none';
+    script-src 'self' https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/peerjs.min.js 'sha256-CXCqh5r5xKt7fv19sku/7AzhW0QdCzmIR9F/M7kk8WA=' 'sha256-buXsW4VMfK3WKn9z+WYIkVWK2rmsSo5pOt10flk588w=' 'sha256-OYMWjdUzf1KiFWCCOhnuHftAECCRR1ABYpfeVRwDKlQ=' 'sha256-EpAbkYMYKrYDLpYrX2qCCCDv6psUccVN5tphgy8ac6E=';
+    connect-src 'self' https://0.peerjs.com wss://0.peerjs.com;
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+    font-src https://fonts.gstatic.com;
+    img-src 'self' data:;
+    child-src 'self' blob:;
+    base-uri 'none';
+    form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#15201a">
   <!-- Added to a home screen, the game opens on its own, without the browser's bars (on an iPhone, under a see-through status bar). -->
@@ -14,7 +26,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <!-- The font loads without blocking; until (or unless) it arrives, a system rounded font stands in. -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" media="print">
+  <script>{ const font = document.currentScript.previousElementSibling; if (font.sheet) font.media = 'all'; else font.addEventListener('load', () => font.media = 'all'); }</script>
   <link rel="stylesheet" href="style/base.css">
   <link rel="stylesheet" href="style/panels.css">
   <link rel="stylesheet" href="style/screens.css">
@@ -219,8 +232,12 @@
   </svg>
 
   <script>
+    // Only a browser new enough for the game's code (2020 on) can read this script, so only there does it run.
+    { const a = {}; a.b ??= a?.c ?? 1; window.snakeBrowserOk = true; }
+  </script>
+  <script>
     // Browsers too old for the game's code (before 2020) get a word instead of a Play button that does nothing.
-    try { new Function('let a = {}; a.b ??= a?.c ?? 1;'); } catch {
+    if (!window.snakeBrowserOk) {
       document.getElementById('overlay-title').textContent = 'This log needs a newer browser';
       document.getElementById('overlay-text').textContent = 'Barkstreet Snakes runs in any recent Chrome, Edge, Firefox or Safari.';
       document.querySelector('.buttons').style.display = 'none';

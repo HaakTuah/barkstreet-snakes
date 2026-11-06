@@ -109,6 +109,8 @@ jobs:
           node-version: 26
       - name: The page's shared scope
         run: node tools/scope-test.js
+      - name: The content security policy
+        run: node tools/csp-test.js
       - name: Render
         run: node tools/render-test.js
       - name: Controls
