@@ -10,8 +10,10 @@
 //   node tools/copies-test.js --write    lower the baseline to what still stands (it never adds a copy)
 const fs = require('fs');
 const crypto = require('crypto');
-const { execFileSync } = require('child_process');
+const { execFileSync, spawnSync } = require('child_process');
 process.chdir(require('path').join(__dirname, '..'));
+// The pointer and reading-size checks run here too, so they share the copies check's CI step and its COPIES_BASE.
+for (const t of ['tools/pointers-test.js', 'tools/sizes-test.js']) if (spawnSync(process.execPath, [t], { stdio: 'inherit' }).status !== 0) process.exitCode = 1;
 const BASELINE = 'tools/copies-baseline.json';
 const CODE = () => ls(['*.js']).filter(f => !f.startsWith('tools/dev/') && !f.startsWith('docs/'));
 const PROSE = ['AGENTS.md', 'CLAUDE.md', 'SECURITY.md', 'docs/claude-and-codex.md', 'docs/orchestrating.md',
