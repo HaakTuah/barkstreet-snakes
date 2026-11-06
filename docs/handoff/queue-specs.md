@@ -36,7 +36,8 @@ audit runs once on the core and once on each project's own rules (archive, 5 Nov
 A policy in `index.html` (GitHub Pages sends no headers) by which the page loads code only from itself and PeerJS's
 pinned file, and contacts only its own files and PeerJS's servers, so no code in it, a package's included, can send what
 it holds anywhere else or pull in more. Done when a test shows the policy in place, online play still works on the PR's
-preview, and `SECURITY.md` and `docs/developing.md` point to it.
+preview or, while previews are down, a round played on a local copy in two browsers (the owner, 6 November 2026;
+#534), and `SECURITY.md` and `docs/developing.md` point to it.
 
 ### 2aa. Dash on the key you're going (the owner, 4 November 2026; an input entry, a side lane now)
 
