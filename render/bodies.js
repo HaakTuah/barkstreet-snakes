@@ -45,6 +45,7 @@ function drawHalo(s, a) {
 // (halo: false for a snake up in the air, whose halo went down with the
 // ground's outlines: see drawSnakes)
 function drawOutline(s, a, halo = true) {
+  staminaLook(s, a, !s.alive); // (its stamina's look, and tired, its size: see stamina-looks.js)
   if (halo) drawHalo(s, a); // (your soft halo, so you find yourself at a glance)
   const own = edgeOf(s, a, false); // (the outline it has anyway)
   if (powered(s)) { // a golden power: a thin, opaque gold line round its own outline, inked outside so it reads on any colour
@@ -120,6 +121,7 @@ function edgeOf(s, a, gold = true) {
 // Pass 3: the body (bands, then circles tail to head, so the head ends up on
 // top), its pattern and its face.
 function drawBody(s, a, now, dead) {
+  staminaLook(s, a, dead);
   const { n, pts, rad, fills, look, color } = a;
   // Segments: narrower bands joining them, then a round one per cell.
   // (Bands as rectangles, fillRect's fast path; folding them into each
@@ -137,10 +139,10 @@ function drawBody(s, a, now, dead) {
   // A little roundness on every segment (light from the top left): separate
   // circles, which never touch (a tail that's just grown sits on the segment
   // before it for a moment: that one's lit once).
-  ctx.fillStyle = 'rgba(255,255,255,0.18)';
+  ctx.fillStyle = sheenOf(a);
   let lx = -1e9, ly = -1e9, lr = 0;
   for (let i = a.star ? 1 : 0; i < n; i++) {
-    const hr = rad[i] * 0.35, hx = pts[2 * i] - rad[i] * 0.3, hy = pts[2 * i + 1] - rad[i] * 0.35;
+    const hr = rad[i] * sheenSize(a), hx = pts[2 * i] - rad[i] * 0.3, hy = pts[2 * i + 1] - rad[i] * 0.35;
     if (Math.abs(hx - lx) + Math.abs(hy - ly) < hr + lr) continue;
     circle(hx, hy, hr);
     lx = hx; ly = hy; lr = hr;
@@ -229,8 +231,8 @@ function drawBody(s, a, now, dead) {
   // Head features, drawn in a frame where +x points the way the snake faces.
   const blinking = dead || now < a.blinkUntil;
   if (!dead && now > a.nextBlink) {
-    a.blinkUntil = now + T.BLINK_MS;
-    a.nextBlink = now + T.BLINK_MIN + Math.random() * (T.BLINK_MAX - T.BLINK_MIN);
+    a.blinkUntil = now + blinkLength(a);
+    a.nextBlink = now + (T.BLINK_MIN + Math.random() * (T.BLINK_MAX - T.BLINK_MIN)) * blinkGap(a);
   }
   if (!dead) updateGaze(s, look, a, now); // (it's turned in prepare: see steer)
   const dizzy = !dead && s.stunUntil >= game.tick; // (stunned: its head wobbles, and stars go round it, until the tick it moves again)
@@ -245,7 +247,7 @@ function drawBody(s, a, now, dead) {
   ctx.save();
   ctx.translate(pts[0], pts[1]);
   ctx.rotate((a.star ? a.face : a.turn) + lean); // (and stunned, its wobble: see prepare)
-  const faceScale = 1.1 * (1 + a.bump) * (1 + a.swell);
+  const faceScale = 1.1 * (1 + a.bump) * (1 + a.swell) * staminaFace(a, dead);
   ctx.scale(faceScale * (1 - 0.22 * a.squash), faceScale * (1 + 0.12 * a.squash)); // (come down from a jump: squashed along the way it's going, a moment)
   const change = dead ? -1 : costumeChange(s, a, now); // (how far through a costume change, or -1)
   if (a.isPlayer) drawPlayerFace(s, a, now, blinking);
@@ -253,6 +255,7 @@ function drawBody(s, a, now, dead) {
   else drawChange(s, a, look, color, blinking, change);
   if (!dead && a.growl) drawGrowl(a, now); // (hungry, in the warning's seconds: its growl)
   ctx.restore();
+  if (!dead) tiredWash(a);
 
   // Golden powers held: a pip for each on a short arc behind the head,
   // turned with it: round, in sky, for a golden leap; a diamond, in ember,

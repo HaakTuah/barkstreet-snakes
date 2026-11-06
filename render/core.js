@@ -43,6 +43,7 @@
 //   lead.js       drawing half a tick ahead: where bodies go, and their shape
 //   shadows.js    the veil, shadows on the bark and the light in a pit
 //   bodies.js     outlines, the gold line of a power, and the body itself
+//   stamina-looks.js stamina in how a snake looks: tired, awake, game on
 //   marks.js      pips, rests, your pressed turn, Mason's veins, the tie, Star's head;
 //                 and every snake drawn in turn, its passes and trails
 //   tongues.js    every look's tongue (or gag)

@@ -58,8 +58,8 @@ function shadowAt(x, y, scale) {
 // once a kind and size. Kinds: apple, golden, mushroom, goldcap, leaf,
 // beetle, goldbeetle, pellet, roast (a roasted bead), baked (a baked
 // apple), jump, flash, wrap, hole, fire, land, held (a snake holding
-// golden powers: its gold line and a pip of each kind), rests (you, your
-// jump and flash resting: your two half-rings), squash (your own bead
+// golden powers: its gold line and a pip of each kind), rests (you tired,
+// grey with heavy lids, above you on your game, a glint in your eyes), squash (your own bead
 // squashed flat behind you), cut (a body cut through), failflash (a
 // failed flash's burst and stars),
 // lostflag (a colony's flag falling into its pit), dig (a beetle half
@@ -106,7 +106,7 @@ const GUIDE = {
   },
   land: g => { guideCells(GUIDE_LAND); g.translate(-12 * CELL, -12 * CELL); paintLand(g, null, guideMask, guideNone, '#2563eb', 0, NO_HOLES); },
   held: g => guideSnake(g, '#2563eb', false, (x, y) => drawPips(x, y, Math.PI, CELL * 0.54, 0, 1, 1, false)),
-  rests: g => guideSnake(g, '#4ade80', true, (x, y) => restRing(x, y, CELL * 0.84, 0.5, 1)),
+  rests: g => guideStamina(g),
   squash: g => { // (round six B: your own bead squashed flat behind your head, a smear in its colour with a splat round it)
     const c = CELL;
     g.save(); g.scale(1.6, 0.55); g.translate(c * 0.55, 0); drawBead(g, '#4ade80|'); g.restore();
@@ -242,7 +242,7 @@ const GUIDE = {
 // A guide's snake: its head and neck heading right on the tile, in the
 // board's own shapes (drawn on the guide's canvas for the moment): a
 // rival's in its colour (gold round it: it holds golden powers), or yours
-// in your cream outline; then marks(x, y) round its head.
+// in your cream outline; then marks(x, y, a) round its head (a: its shape).
 function guideSnake(g, color, you, marks) {
   const was = ctx;
   ctx = g;
@@ -258,7 +258,7 @@ function guideSnake(g, color, you, marks) {
       g.fillStyle = '#fffbea'; circle(hx + CELL * 0.16, sg * CELL * 0.2, CELL * 0.13);
       g.fillStyle = INK; circle(hx + CELL * 0.2, sg * CELL * 0.2, CELL * 0.07);
     }
-    marks(hx, 0);
+    marks(hx, 0, a);
   } finally { ctx = was; }
 }
 const guideGlow = g => { g.save(); g.scale(0.72, 0.72); drawGlow(g); g.restore(); }; // (a power's glow, all of it inside the picture)

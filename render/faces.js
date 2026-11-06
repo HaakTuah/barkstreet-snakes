@@ -61,6 +61,7 @@ function lookingEyes(r, x = 0.15, y = 0.2, wide = 1.55) {
   circle(c * x + ox, -c * y + oy, c * r);
   circle(c * x + ox, c * y + oy, c * r);
   if (r >= 0.045) catchlights(c * x + ox, c * y, oy, c * r);
+  heavyLids(c * x, c * y, c * w); // (tired: see staminaFace)
 }
 
 // A small mouth at the front of the head, open by `open` (0..1).
@@ -114,18 +115,21 @@ function drawPlayerFace(s, a, now, blinking) {
   circle(c * 0.16 + ox, -c * 0.2 + oy, c * 0.07);
   circle(c * 0.16 + ox, c * 0.2 + oy, c * 0.07);
   catchlights(c * 0.16 + ox, c * 0.2, oy, c * 0.07);
+  heavyLids(c * 0.16, c * 0.2, c * 0.13);
 }
 
-// A speck of light in each pupil (at x, ±y + oy, pupils of radius pr), so eyes look alive.
+// A speck of light in each pupil (at x, ±y + oy, pupils of radius pr), so eyes look alive:
+// none tired, bigger on its game (eyeSpark: see staminaFace).
 // (The face is drawn turned to the heading, so the light's offset is turned back.)
 function catchlights(x, y, oy, pr) {
   catchlight(x, -y + oy, pr);
   catchlight(x, y + oy, pr);
 }
 function catchlight(x, y, pr) {
+  if (eyeSpark < 0.05) return;
   const dx = -pr * 0.35, dy = -pr * 0.35;
   ctx.fillStyle = '#ffffff';
-  circle(x + headCos * dx + headSin * dy, y - headSin * dx + headCos * dy, pr * 0.38);
+  circle(x + headCos * dx + headSin * dy, y - headSin * dx + headCos * dy, Math.min(pr * 0.38 * eyeSpark, pr * 0.7));
 }
 
 function drawFace(s, look, color, blinking, a) {
