@@ -111,7 +111,7 @@ Everything that comes out is drawn with a dark outline or a bright colour so it 
 - **Vulture:** black, with a bald pink head and a white neck ruff. It glares from under slanting brows over a big hooked
   beak, pale horn with a dark tip, outlined so it reads at phone size, that gapes at a meal.
 - **Mason is Caesar in marble:** a warm white body with grey veins wandering across every segment (every fourth
-  segment's vein is gold), so with his laurel wreath his head reads as a marble bust.
+  segment's vein is rose: gold is for powers alone, #431), so with his laurel wreath his head reads as a marble bust.
 - **Metagamer:** red-and-cyan 3D glasses in a card frame, outlined so it reads on its cyan head.
 - **Wildcard** wears the Stars and Stripes behind an orange tan and a white collar: two segments of navy with white
   stars, then red and white stripes. Under a big fluffy golden pompadour ("Wildcard's hair"), it squints, pouts, wears
