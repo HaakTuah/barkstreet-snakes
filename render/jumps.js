@@ -107,13 +107,16 @@ function flying(s, now) {
 // in the air shows it (anyone can see where a jump will land); your own
 // jump, asked for, shows it while the press waits for its hurdle (up
 // to LEAP_WINDOW moves), so you see where you'd land. Just where: never whether it's a trap.
+// A flier's ring a snake is going for is tinted in that snake's colour
+// (see takerOf), so the flier can read the threat and steer away.
 function drawLandings(now) {
   if (!game) return;
   const t = reduced ? 0 : now / 1000;
   for (const s of game.snakes) {
+    if (!s.flight) ringTints.delete(s); // (down: its next flight's ring starts untinted)
     if (!s.alive) continue;
-    let x, y, gold = s.leaps > 0;
-    if (s.flight?.land) { const c = s.flight.ring || s.flight.land; x = c.x; y = c.y; gold = !!s.flight.gold; } // (its ring: a committed golden flight's, GOLD_FLY cells out)
+    let x, y, gold = s.leaps > 0, taker = null;
+    if (s.flight?.land) { const c = s.flight.ring || s.flight.land; x = c.x; y = c.y; gold = !!s.flight.gold; taker = takerOf(s, c); } // (its ring: a committed golden flight's, GOLD_FLY cells out)
     else if (s.id === viewerId) {
       const a = anim.get(s);
       if (!a || !a.lr) continue;
@@ -123,8 +126,39 @@ function drawLandings(now) {
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.strokeStyle = INK; ctx.lineWidth = CELL * 0.22; ctx.stroke();
-    ctx.strokeStyle = gold ? HONEY : SKY; ctx.lineWidth = CELL * 0.12; ctx.stroke();
+    ctx.strokeStyle = s.flight ? ringTint(s, gold ? HONEY : SKY, taker) : gold ? HONEY : SKY; ctx.lineWidth = CELL * 0.12; ctx.stroke();
   }
+}
+// A flier's ring a head could crawl onto before the flier's down, so its
+// body lies there when it lands ("Taking a landing"): read from heads and
+// rings anyone sees, the same on every screen. (The lesson's ringsInReach
+// asks it too.)
+const ringDist = (h, ring) => Math.abs(h.x - ring.x) + Math.abs(h.y - ring.y);
+const inRingReach = (h, ring) => ring.n >= 2 && ringDist(h, ring) <= ring.n - 1;
+// Who's going for a flier's ring: the nearest other snake on the ground
+// with it in reach whose head came closer to it on its last move. It says
+// who could, never that it will.
+function takerOf(flier, ring) {
+  let best = null, bestD = Infinity;
+  for (const o of game.snakes) {
+    if (o === flier || !o.alive || o.flight || o.body.length < 2 || !inRingReach(o.body[0], ring)) continue;
+    const d = ringDist(o.body[0], ring);
+    if (d < ringDist(o.body[1], ring) && d < bestD) { best = o; bestD = d; }
+  }
+  return best;
+}
+// A flier's ring's own colour eased toward its taker's over RING_TINT_MS,
+// and back once no one is going for it (at once with reduced motion), in
+// tenths so mix's cache stays small. Forgotten once it's down, so a fade
+// a short last tick cut off never shows on its next ring.
+const RING_TINT_MS = 150, ringTints = new WeakMap(); // flier -> { k, by: the taker's colour }
+function ringTint(s, base, taker) {
+  let r = ringTints.get(s);
+  if (!r) ringTints.set(s, r = { k: 0, by: base });
+  if (taker) r.by = colorOf(taker);
+  const step = reduced ? 1 : frameDt / RING_TINT_MS;
+  r.k = taker ? Math.min(1, r.k + step) : Math.max(0, r.k - step);
+  return r.k > 0 ? mix(base, r.by, Math.round(r.k * 10) / 10) : base;
 }
 
 // A body over a hole, seen from above: nothing under it, so it's shaded

@@ -57,3 +57,5 @@ owner's three notes of 2 November merged as PRs #322 (the remains), #320 (the fl
 - The room card's seats two by two on a phone (PR #347): at 390 and 360 px upright and 844x390 on its side they wrapped
   three and one, the last rival alone on its row; a 16-letter name ran past their box at 320 px, now ending in "…".
 
+- Mason's vein, marble not gold (#431, PR #551): his every fourth vein, his beads' vein and his tag's fleck turn rose
+  marble, so gold stays for powers alone.
