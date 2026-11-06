@@ -671,7 +671,7 @@ function drawSnakes(alpha, now) {
   syncStays();
   for (const s of live) predict(s, animOf(s, now));
   meetings();
-  for (const s of live) prepare(s, alpha, now, false);
+  for (const s of live) staminaLook(s, prepare(s, alpha, now, false), false); // (tired, it shrivels a little: see render/stamina.js)
   let up = live.length;
   if (leaping) while (up > 0 && overOf(live[up - 1])) up--;
   drawShadows(up);

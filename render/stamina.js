@@ -12,15 +12,18 @@ const STAMINA_FADE = 250, TIRED_SHRIVEL = 0.07, TIRED_GRAY = '#6b6f6c', TIRED_WA
 // faces.js): how tired, how bright, and its lids' colour.
 let tiredNow = 0, brightNow = 0, lidNow = INK;
 
-// Once a frame, in prepare, after its radii: eases it toward its step, and
+// Once a frame, on what prepare made of it (every later change to its radii
+// scales them, so the order doesn't matter): eases it toward its step, and
 // tired, shrivels its body (its head keeps its size, as hunger's slim does).
-function staminaLook(s, a, m, dead) {
+// Gives back a.
+function staminaLook(s, a, dead) {
   if (a.tired === undefined) { a.tired = 0; a.bright = 0; a.lidFor = ''; a.lid = INK; }
   const step = dead || !game || !s.alive ? 1 : SnakeEngine.staminaStep(game, s, shownTime);
   const k = reduced || dead ? 1 : Math.min(1, frameDt / STAMINA_FADE);
   a.tired += Math.max(-k, Math.min(k, (step === 0 ? 1 : 0) - a.tired));
   a.bright += Math.max(-k, Math.min(k, (step === 2 ? 1 : 0) - a.bright));
-  if (a.tired) for (let i = 1; i < m; i++) a.rad[i] *= 1 - TIRED_SHRIVEL * a.tired;
+  if (a.tired) for (let i = 1; i < a.n; i++) a.rad[i] *= 1 - TIRED_SHRIVEL * a.tired;
+  return a;
 }
 
 // Its gray wash, tired (in the last pass, with hunger's pale one: see
@@ -83,7 +86,7 @@ function brightSpecks(x, y1, y2, pr) {
 }
 
 // The Field guide's picture for stamina: a tired snake above (grayer, its
-// lids heavy) and an awake one below, wearing your ring.
+// lids heavy) and an awake one below, wearing your ring with a dash's worth in it.
 function guideStamina(g) {
   const c = CELL, was = [tiredNow, deadNow, lidNow];
   g.save(); g.translate(c * 0.35, -c * 0.5); g.scale(0.55, 0.55);
@@ -94,6 +97,6 @@ function guideStamina(g) {
   });
   g.restore();
   g.save(); g.translate(c * 0.35, c * 0.48); g.scale(0.55, 0.55);
-  guideSnake(g, '#4ade80', true, (x, y) => restRing(x, y, c * 0.84, 0.5, 1));
+  guideSnake(g, '#4ade80', true, (x, y) => restRing(x, y, c * 0.84, 0.8, 1));
   g.restore();
 }

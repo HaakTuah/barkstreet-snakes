@@ -117,7 +117,7 @@ const guide = await ev(`(() => {
 })()`);
 check(Object.values(guide).every(g => g.ink > 200), 'every Field guide picture draws', Object.entries(guide).filter(([, g]) => g.ink <= 200).map(([k]) => k).join(', ') || 'all');
 check(guide.mushroom.edge > 200, 'the guide’s mushroom is on bark');
-check(guide.held.sky > 0 && guide.held.ember > 0 && guide.rests.sky > 0 && guide.rests.ember > 0, 'the guide shows golden pips and your rests', `held ${guide.held.sky}/${guide.held.ember}, rests ${guide.rests.sky}/${guide.rests.ember} sky/ember pixels`);
+check(guide.held.sky > 0 && guide.held.ember > 0 && guide.rests.sky + guide.rests.ember > 0, 'the guide shows golden pips and your stamina ring', `held ${guide.held.sky}/${guide.held.ember} sky/ember pixels, the ring ${guide.rests.sky + guide.rests.ember}`);
 
 // The next round's stretch of log, made ahead: once nothing has been
 // drawn for a moment, the renderer asks to build its bark and leaf

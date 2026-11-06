@@ -684,7 +684,6 @@ function prepare(s, alpha, now, dead, impact = 0) {
   for (let i = 0; i < m; i++) a.rad[i] = radius(i, m, a, a.tickPos);
   mealSwell(a, m, now);
   for (let i = 1; i < m; i++) if (a.slimSeg[i]) a.rad[i] *= 1 - a.slimSeg[i]; // (hungry: its body slims, its head as it was, and fills out again as a meal goes down: see hungerLook, mealSwell)
-  staminaLook(s, a, m, dead); // (tired, it shrivels a little: see render/stamina.js)
   // Seen from above, up is toward you: what's in the air swells (its head
   // the most at the top of a jump, its neck after it, in an arch), and
   // what hangs into a pit is smaller (see sinkOf). (A lift up the screen
