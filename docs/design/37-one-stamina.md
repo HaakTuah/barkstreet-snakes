@@ -29,7 +29,13 @@ bar could just recover a bit quicker."
   exactly). A failed dash keeps its penalty (segments and a stun): that is a consequence of a bad dash, seen coming,
   not a price.
 - **What each costs, and how fast it comes back,** are set by simulation, not by hand:
-  - across all play, each power's share of plain power uses stays between a third and two thirds;
+  - each power is the more useful one in at least about 30% of the moments where either could be used, in the best
+    play the rivals can manage, and the aim is about half (the owner, 6 November 2026, #536: usefulness, not uses,
+    and 30% a floor, not a target); it is measured as moves too rare to move whole rounds are, each such moment forked
+    and played on once with the jump and once with the dash. 2u ships held to the earlier band (each power a third to
+    two thirds of plain power uses); 2u+ retunes to this one. The dash plays well as it is, so what 2u+ tunes is its
+    stamina cost and, if need be, how much a full bar holds (the rivals flash more than pays, and one stamina makes
+    every wasted flash cost a jump too);
   - neither is better or worse in aggregate: snakes that lean on the jump and snakes that lean on the dash come out
     even (the seat-split A/B), while each rival keeps its own lean and its trademark;
   - the pace stays: round length, deaths by cause and power uses a minute within noise of today; if the game slows,
