@@ -21,7 +21,7 @@ lane and the workshop lane run beside it, each claimed by a draft PR.
 Everything for the owner is an issue: [questions and readings](https://github.com/HaakTuah/barkstreet-snakes/issues?q=is%3Aopen+label%3Aquestion)
 (`question`), [ideas](https://github.com/HaakTuah/barkstreet-snakes/issues?q=is%3Aopen+label%3Aenhancement) (`enhancement`) and
 [bugs](https://github.com/HaakTuah/barkstreet-snakes/issues?q=is%3Aopen+label%3Abug) (`bug`), by
-"Questions, readings and ideas" in `AGENTS.md`. Answered rows from before 2 November 2026: `docs/archive/progress-done.md`,
+"Questions, readings and ideas" in `AGENTS.md`. Answered rows from before 2 November 2026: `docs/archive/progress-done/owner-answered.md`,
 "For the owner, answered".
 
 ## The polish lane
@@ -75,7 +75,7 @@ the second account until its usage is spent; on the main account the brake close
 
 *Next find:* the rivals' speech bubbles overlap (#326; the owner, 2 November 2026).
 
-*Done in the lane:* each fix's line is in `docs/archive/progress-done.md`, "The polish lane, done" (the README for
+*Done in the lane:* each fix's line is in `docs/archive/progress-done/polish-lane.md`, "The polish lane, done" (the README for
 players, any key wakes, the woodpecker bigger on a phone, the flash become the dash, the room card and Join on a phone,
 and the owner's notes of 2 November, among them).
 
@@ -93,7 +93,7 @@ and the owner's notes of 2 November, among them).
 - *Done:* `audio.js` and `chatter/zh.js` split (PRs #225, #226), the chatter split by meaning (PR #318), the workshop
   check's point (2) (this file 10 KB, `AGENTS.md` 20 KB, 2 November; condensed again from 23.6 to 19.8 KB, PR #360)
   and point (5), the unused-code check (PR #331):
-  `docs/archive/progress-done.md`, "The split lane, done".
+  `docs/archive/progress-done/split-lane.md`, "The split lane, done".
 - **The shared core** (archive, 5 November 2026), first among the side lanes and before the rule-file audit: the rules
   common to every project move to one repository, each project carrying a checked copy; its spec is in
   `docs/handoff/queue-specs.md` under the same title. Step 1 is the owner's.
@@ -114,12 +114,10 @@ and the owner's notes of 2 November, among them).
   mark, so an entry that must change one splits it first (Step 0, "Split by meaning" in `AGENTS.md`); and
   `render/world.js` (40 KB), the file-by-file review's last part. Each in a PR of its own when no open lane touches it,
   proven by fingerprints and suites.
-- **`docs/archive/progress-done.md` (99 KB), split by section** into a folder with an index, word for word and proven
-  unchanged, every pointer to one of its sections still finding it.
 
 ## The queue, in order
 
-**Done:** every finished entry, 1 to 2w, with its PR, is in `docs/archive/progress-done.md`, "The queue, done".
+**Done:** every finished entry, 1 to 2w, with its PR, is in `docs/archive/progress-done/queue-done.md`, "The queue, done".
 
 **From the issues** (the owner, 2 November 2026): Ghost starving most (#325) is measured in the next AI entry, as its
 trademark (distance) or a fault; in the same entry, apples by the edge rotting (#324): 80% of the apples that rot lie on
@@ -161,7 +159,7 @@ refill, a one-bump shield), measured for every rival: its spec is in `docs/hando
 
 ### 5. Round six B: the new moves (DESIGN "Round six B")
 
-The golden jump that flies, leap now, gold portals, dropped charges, the spit along the line and one pricing model for every power, each its own playable PR that the rivals use well. *Done:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195). **Next, in order:** part 4 (draft PR #198, 2r folded in; the owner answered on 1 November 2026 that the moves stay as designed and the rivals are improved until their users come out ahead: the row is in `docs/archive/progress-done.md`, "For the owner, answered"), then 2x (done, PR #456), then 2q (2s done, PR #289; part 4's both-ways test runs again on its log when part 4 goes on), part 3b+ (the spit flies along the line), part 5 (done, PR #202: gold portals; its finding, that following feeds but wins no places, is #447), part 6 (built on `round6b/dropped-charges`) and part 7 (parked on `round6b/pricing`; it also fixes the trademark measures and lifts Joker into the band, see the spec); then the teaching system (item 4). Spec: `docs/handoff/queue-specs.md`, "5. Round six B: the new moves". **When part 4 merges:** run the census on seeds 3 and 11 again (`scripts/sim.sh 200 --seed 3 --census --check`): chased beetles must still get away a third to 45% of the time (2w measured it before the flight was in; `--check` fails a census outside that band).
+The golden jump that flies, leap now, gold portals, dropped charges, the spit along the line and one pricing model for every power, each its own playable PR that the rivals use well. *Done:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195). **Next, in order:** part 4 (draft PR #198, 2r folded in; the owner answered on 1 November 2026 that the moves stay as designed and the rivals are improved until their users come out ahead: the row is in `docs/archive/progress-done/owner-answered.md`, "For the owner, answered"), then 2x (done, PR #456), then 2q (2s done, PR #289; part 4's both-ways test runs again on its log when part 4 goes on), part 3b+ (the spit flies along the line), part 5 (done, PR #202: gold portals; its finding, that following feeds but wins no places, is #447), part 6 (built on `round6b/dropped-charges`) and part 7 (parked on `round6b/pricing`; it also fixes the trademark measures and lifts Joker into the band, see the spec); then the teaching system (item 4). Spec: `docs/handoff/queue-specs.md`, "5. Round six B: the new moves". **When part 4 merges:** run the census on seeds 3 and 11 again (`scripts/sim.sh 200 --seed 3 --census --check`): chased beetles must still get away a third to 45% of the time (2w measured it before the flight was in; `--check` fails a census outside that band).
 
 ### 2r. No hop onto a doomed island (30 October 2026; part of item 5's part 4)
 

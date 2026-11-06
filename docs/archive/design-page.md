@@ -187,7 +187,7 @@ consistent. And it it purches on and interact with us elements down there, then 
 - *The woodpecker, one size.* Measured before the change: perched under the board it was already the size it is on the
   board (scale 1 in every phase, 78 to 80 px of drawn bird on a 390×844 phone, drumming 78 to 85), at all four phones;
   only on a phone under about 600 px tall did it shrink (to 0.51 at 375×560), which is outside this entry. So its size
-  is unchanged, and what looked small is its slim perched profile beside the 44 px buttons (its question and answer: `docs/archive/progress-done.md`, "For the owner, answered").
+  is unchanged, and what looked small is its slim perched profile beside the 44 px buttons (its question and answer: `docs/archive/progress-done/owner-answered.md`, "For the owner, answered").
 - *It plays with the controls.* Under the board it clings to a button's rim where one is near (2.5 of its units, about
   34 px on a 390 px phone): its toes on the side of a speed button or the chatter's switch, facing the button and its
   spot, as it clings to the log; resting there, every 3 to 7 s it pecks at the button, two quick taps (render/bird-perch.js
