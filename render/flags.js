@@ -586,23 +586,24 @@ function drawBentFlags(now) {
   overSnakes = false;
   flagsLater.length = 0;
 }
-// (Whether a live snake is drawn in front of the flag at x, y: a point of
-// it on the row below, near enough to reach the flag. Those snakes, in
-// fronts.)
+// (Whether a snake is drawn in front of the flag at x, y: a point of it on
+// the row below, near enough to reach the flag. A live one, or a dead one
+// held where it died, still solid (see updateCorpses): drawn under the
+// flags too. Those snakes, in fronts.)
 const fronts = [];
 const inFront = (px, py, x, y) => py >= y + CELL / 2 && py < y + CELL * 1.6 && Math.abs(px - x) < CELL * 3.5;
 function frontOf(x, y) {
   fronts.length = 0;
-  for (const s of game.snakes) {
-    const a = s.alive && anim.get(s);
-    if (!a || !a.pts) continue;
-    for (const [ox, oy] of a.offs || OFFS) {
-      let hit = false;
-      for (let i = 0; i < a.n && !hit; i++) hit = inFront(a.pts[2 * i] + ox, a.pts[2 * i + 1] + oy, x, y);
-      if (hit) { fronts.push(s); break; }
-    }
-  }
+  for (const s of game.snakes) if (s.alive) frontTry(s, x, y);
+  for (const c of corpses) if (!c.fade) frontTry(c.s, x, y);
   return fronts.length > 0;
+}
+function frontTry(s, x, y) {
+  const a = anim.get(s);
+  if (!a || !a.pts) return;
+  for (const [ox, oy] of a.offs || OFFS) {
+    for (let i = 0; i < a.n; i++) if (inFront(a.pts[2 * i] + ox, a.pts[2 * i + 1] + oy, x, y)) { fronts.push(s); return; }
+  }
 }
 // A flag with a snake in front is drawn on a layer of its own, the board's
 // pixels round it (FRONT_BOX, in cells from its tile's centre: the cloth

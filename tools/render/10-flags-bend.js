@@ -72,7 +72,8 @@ check(Math.abs(fb.still[2] - fb.upright[2]) > 0.1 && Math.abs(fb.stillAfter[1] -
 // moment its cloth is wrapped round the head (over it, at the head, not out
 // to the pole's side), then it lies under the body (mostly hidden).
 // Colonist bends its own colony's flag, and Sovereign its own banner, as
-// anyone does.
+// anyone does. A snake that dies on the row in front, held where it died,
+// stands in front of the flag as it did alive.
 const deep = await ev(`(() => {
   seeds(201);
   SnakeDebug.pinQuality(0);
@@ -109,6 +110,9 @@ const deep = await ev(`(() => {
   setBody(col, Array.from({ length: 6 }, (_, i) => [2 + i, 2]), 'left');
   setBody(sov, Array.from({ length: 7 }, (_, i) => [22 - i, 15]), 'right'); drawN(10, 0.5, 60); // (Sovereign over its own banner)
   out.ownBanner = banner();
+  setBody(you, Array.from({ length: 6 }, (_, i) => [15 - i, 8]), 'right'); drawN(4, 0.5, 60); // (you die on the row in front, the moment held: last)
+  you.alive = false; R.onTick([{ type: 'death', snake: you }]); R.hold(__t + 1e6); drawN(4, 0.5, 60);
+  out.footDead = foot(); out.stemDead = stem();
   SnakeDebug.pinQuality(2);
   return out;
 })()`);
@@ -116,6 +120,9 @@ const d = deep;
 check(d.alone[0] > 20 && d.behind[0] >= d.alone[0] * 0.9 && d.footAlone[0] > 0 && d.footFront[0] === 0 && d.front[0] >= d.alone[0] * 0.9 && d.stemAlone === 4 && d.stemFront === 4 && d.stemRival === 4,
   'a flag stands in depth: a snake on the row behind goes under its cloth, one on the row in front hides its foot and nothing above its outline',
   `its ensign’s navy ${d.alone[0]} alone, ${d.behind[0]} with a snake behind, ${d.front[0]} with one in front; its pole’s foot ${d.footAlone[0]} alone, ${d.footFront[0]} with one in front; the pole just above the body seen in ${d.stemAlone} of 4 slices alone, ${d.stemFront} with you in front, ${d.stemRival} with a rival`);
+check(d.footDead[0] === 0 && d.stemDead === 4,
+  'a snake that died on the row in front, held where it died, hides the pole’s foot as it did alive, and nothing above it',
+  `its pole’s foot ${d.footAlone[0]} alone, ${d.footDead[0]} with the dead snake in front; the pole just above it seen in ${d.stemDead} of 4 slices`);
 check(['south', 'north'].every(k => d[k][0] > 5 && d[k][1] < d.alone[1] - 0.25 && Math.abs(d[k][1] - 12.5) < 0.4 && d[k + 'Under'][0] < d.alone[0] * 0.5),
   'hit head-on (from the north or the south), its cloth wraps round the head, then lies under the body',
   `its navy at ${xy(d.alone)} standing; wrapped ${xy(d.south)} (going south), ${xy(d.north)} (going north); then ${d.southUnder[0]} and ${d.northUnder[0]} pixels showing`);
