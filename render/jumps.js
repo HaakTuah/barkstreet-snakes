@@ -113,6 +113,7 @@ function drawLandings(now) {
   if (!game) return;
   const t = reduced ? 0 : now / 1000;
   for (const s of game.snakes) {
+    if (!s.flight) ringTints.delete(s); // (down: its next flight's ring starts untinted)
     if (!s.alive) continue;
     let x, y, gold = s.leaps > 0, taker = null;
     if (s.flight?.land) { const c = s.flight.ring || s.flight.land; x = c.x; y = c.y; gold = !!s.flight.gold; taker = takerOf(s, c); } // (its ring: a committed golden flight's, GOLD_FLY cells out)
@@ -125,7 +126,7 @@ function drawLandings(now) {
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.strokeStyle = INK; ctx.lineWidth = CELL * 0.22; ctx.stroke();
-    ctx.strokeStyle = ringTint(s, gold ? HONEY : SKY, taker); ctx.lineWidth = CELL * 0.12; ctx.stroke();
+    ctx.strokeStyle = s.flight ? ringTint(s, gold ? HONEY : SKY, taker) : gold ? HONEY : SKY; ctx.lineWidth = CELL * 0.12; ctx.stroke();
   }
 }
 // A flier's ring a head could crawl onto before the flier's down, so its
@@ -146,9 +147,10 @@ function takerOf(flier, ring) {
   }
   return best;
 }
-// The ring's own colour eased toward its taker's over RING_TINT_MS, and
-// back once no one is going for it (at once with reduced motion), in tenths
-// so mix's cache stays small.
+// A flier's ring's own colour eased toward its taker's over RING_TINT_MS,
+// and back once no one is going for it (at once with reduced motion), in
+// tenths so mix's cache stays small. Forgotten once it's down, so a fade
+// a short last tick cut off never shows on its next ring.
 const RING_TINT_MS = 150, ringTints = new WeakMap(); // flier -> { k, by: the taker's colour }
 function ringTint(s, base, taker) {
   let r = ringTints.get(s);
