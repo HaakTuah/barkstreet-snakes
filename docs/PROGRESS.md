@@ -113,9 +113,7 @@ tests a safe-meal exception like the one by the neck (`MEAL_DAWDLE`), measured b
 
 2y left the flight even both ways (24.9% against 25.1% head to head; +0.10 ± 0.15 place a use): between rivals a
 landing is almost never contestable. The flight stays as built for now, and no rule changes yet:
-1. **The ring tinted by its taker** (#401; a side lane now, drawing only): when a snake's head is closing on another's
-   ring and could get there in time, the ring is tinted briefly in that snake's colour, for everyone. The rings are
-   drawn in `render/jumps.js` (`drawLandings`).
+1. **The ring tinted by its taker** (#401): done, PR #550 (the cue: "Taking a landing" in design 40).
 2. **The flight measured against fliers who fly like people** (a measurement, a side lane now): fliers who take off into
    contested rings, as people do, against the rivals who now take landings; per use and head to head.
 3. **Portals with a real cost** (#447; the owner, 3 November 2026): portals stay as built, followed one round in five
