@@ -491,15 +491,15 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   check('...and in the second', out2.length === 1 && out2[0] === g2.snakes[0] && out2[0].fatal === 'shorter', out2.map(s => s.fatal).join());
 }
 
-{ // A leap asked for in a stun that can't go (too small, resting, or at the edge) says so, and the auto-turn still takes you clear.
-  for (const [what, setup] of [['resting', s => { s.restedAt = 1e9; }], ['at the edge', () => {}]]) {
+{ // A leap asked for in a stun that can't go (resting, or at the edge) says so, and the auto-turn still takes you clear.
+  for (const [what, setup, why = what] of [['resting', s => { s.restedAt = 1e9; }], ['at the edge', () => {}, 'landing']]) {
     const g = board([[line(23, 5, 8), 'right'], [line(5, 20, 3), 'right']]);
     const me = g.snakes[0];
     setup(me);
     E.step(g); // (into the edge: a crash, a stun)
     E.leap(g, me); // (pressed ahead while the stars go round)
     let fizzled = false;
-    for (let i = 0; i < T.STUN_TICKS + 2; i++) { feed(g); quiet(g); if (g.events.some(e => e.type === 'fizzle' && e.snake === me)) fizzled = true; }
+    for (let i = 0; i < T.STUN_TICKS + 2; i++) { feed(g); quiet(g); if (g.events.some(e => e.type === 'fizzle' && e.snake === me && e.why === why)) fizzled = true; }
     check(`a leap asked for in a stun that can't go (${what}) doesn't send you back into the edge`, me.alive && me.body[0].x < 23 || me.body[0].y !== 5, JSON.stringify(me.body[0]));
     check(`...and says why (${what})`, fizzled);
   }

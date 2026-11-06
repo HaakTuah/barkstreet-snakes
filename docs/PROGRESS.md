@@ -52,8 +52,6 @@ the second account until its usage is spent; on the main account the brake close
   *Left:* the menus, the news lines and the README's player text; the guide's Burrows, Jump, Cuts and Golden beetle rows
   and one name for each thing (hole, pit or gap; jump, hop or leap; the rings), once part 5 (#202) merges. Wildcard's
   and Mason's protected lines stay as they are; the Chinese is rewritten with each changed line.
-- **Mason's vein, marble not gold** (#431; the owner, 3 November 2026): his marble's vein turns a marble colour, slate
-  or rose, so gold stays for powers alone; a picture on its PR.
 - **What belongs:** whatever makes the game feel finished without changing how it plays: things drawn wrong, out of
   place, overlapping, flickering or cut off; the same thing drawn, named or worded differently in two places (a
   rival's colours, a move's name in the lesson and the Field guide); layout at 390 px and desktop, phone held upright and
@@ -91,16 +89,14 @@ and the owner's notes of 2 November, among them).
 - **The shared core** (archive, 5 November 2026), first among the side lanes and before the rule-file audit: the rules
   common to every project move to one repository, each project carrying a checked copy; its spec is in
   `docs/handoff/queue-specs.md` under the same title. Step 1 is the owner's.
-- **A content security policy for the page** (archive, 4 November 2026), first among the side lanes, as security
-  hardening: its spec is in `docs/handoff/queue-specs.md` under the same title.
+- **The browser suites' one ending** (#526): `tools/render-test.js` and `tools/input-test.js` end with `report.end(b)`
+  like the others, once entry 2u, which holds them, merges.
 - **The rule-file audit's larger moves** (the workshop check's point 6; archive, 3 November 2026): (1)
   `docs/claude-and-codex.md` (23 KB) is past the 20 KB warning: the sections that wait until Codex can build, "What goes
   to Codex" to "When Codex is not there", into a file of their own; (2) the slop bar a home of its own, since
   `docs/review-guidelines.md` points to the slop audit's entry in this file, which moves to the archive when done.
-- **Waiting for a gap, splits by meaning:** `style/screens.css` (52 KB) and `render/looks.js` (51 KB), past the 50 KB
-  mark, so an entry that must change one splits it first (Step 0, "Split by meaning" in `AGENTS.md`); and
-  `render/world.js` (40 KB), the file-by-file review's last part. Each in a PR of its own when no open lane touches it,
-  proven by fingerprints and suites.
+- **Waiting for a gap, a split by meaning:** `render/world.js` (40 KB), the file-by-file review's last part, in a PR
+  of its own when no open lane touches it, proven by fingerprints and suites.
 
 ## The queue, in order
 
@@ -115,9 +111,7 @@ tests a safe-meal exception like the one by the neck (`MEAL_DAWDLE`), measured b
 
 2y left the flight even both ways (24.9% against 25.1% head to head; +0.10 ± 0.15 place a use): between rivals a
 landing is almost never contestable. The flight stays as built for now, and no rule changes yet:
-1. **The ring tinted by its taker** (#401; a side lane now, drawing only): when a snake's head is closing on another's
-   ring and could get there in time, the ring is tinted briefly in that snake's colour, for everyone. `render/looks.js`
-   is at the 50 KB mark, so its step 0 split comes first.
+1. **The ring tinted by its taker** (#401): done, PR #550 (the cue: "Taking a landing" in design 40).
 2. **The flight measured against fliers who fly like people** (a measurement, a side lane now): fliers who take off into
    contested rings, as people do, against the rivals who now take landings; per use and head to head.
 3. **Portals with a real cost** (#447; the owner, 3 November 2026): portals stay as built, followed one round in five

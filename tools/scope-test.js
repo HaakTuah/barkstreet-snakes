@@ -19,6 +19,8 @@ const acorn = require('internal/deps/acorn/acorn/dist/acorn');
 const { launch } = require('./browser');
 const root = path.join(__dirname, '..');
 const ok = require('./ok.js');
+// The markup check (SECURITY.md, rule 6) runs here too, so it shares the scope check's CI step.
+if (spawnSync(process.execPath, [path.join(__dirname, 'markup-test.js')], { stdio: 'inherit' }).status !== 0) process.exit(1);
 
 // The names a script declares at its top: functions, classes, and every name
 // in a var, let or const there (destructured ones too).

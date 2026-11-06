@@ -5,7 +5,7 @@
 #   scripts/test.sh rules render
 cd "$(dirname "$0")/.." || exit 2
 [ "$(id -u)" = 0 ] && export CI="${CI:-1}"   # Chrome refuses to run as root with its sandbox
-suites=("$@"); [ ${#suites[@]} -eq 0 ] && suites=(types rules online chatter records sw licences versions scope copies render input layout ui)
+suites=("$@"); [ ${#suites[@]} -eq 0 ] && suites=(types rules online chatter records sw licences versions scope csp copies render input layout ui)
 dir="${TMPDIR:-/tmp}/barkbite-tests"; mkdir -p "$dir"; fail=0
 for s in "${suites[@]}"; do
   log="$dir/$s.log"; start=$(date +%s)

@@ -4,7 +4,7 @@
 // until it would notice it, then shown as the rivals see theirs:
 //   blind   never (the owner on a wide desktop, the tag's bar unseen)
 //   warn    at the warning toast and rumble (6 s left, 9 at your smallest), a second late
-//   body    once its body is visibly slimmer (render/looks.js, hungerLook: 5% thinner), a second late
+//   body    once its body is visibly slimmer (render/hunger.js, hungerLook: 5% thinner), a second late
 //   all     always (a rival, or a player who watches the bar)
 // Per round: did seat 0 starve, its snake-time starving, and how it died.
 //   node measure.js <root> <blind|warn|body|all> [rounds] [--seed N]

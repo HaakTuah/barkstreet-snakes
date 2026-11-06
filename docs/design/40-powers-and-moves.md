@@ -172,6 +172,10 @@ who never double-presses.
 
 A flier's ring is where it will come down, so anyone who gets there first, by crawling, a flash or dash through it, or
 a leap now down on it, puts the flier out (it comes down on a body).
+- *The cue:* a ring someone is going for takes that snake's colour (#401), for everyone: the nearest snake on the
+  ground whose head came closer to it on its last move and could crawl onto it before the flier is down, by the
+  lesson's own reach (`inRingReach` in `render/jumps.js`). It eases in and out over 150 ms, so it shows only while the
+  race is on. It says who could get there, never who will, and the flier can read it and steer away.
 - *The lesson:* the first time a flier's ring is in your reach before it comes down, "A flier lands on its ring. Get
   there first and it’s out!"
 - *The rivals* go for a ring they can reach in time, planned from the ring as they saw it (a reaction late), never by

@@ -111,7 +111,7 @@ Everything that comes out is drawn with a dark outline or a bright colour so it 
 - **Vulture:** black, with a bald pink head and a white neck ruff. It glares from under slanting brows over a big hooked
   beak, pale horn with a dark tip, outlined so it reads at phone size, that gapes at a meal.
 - **Mason is Caesar in marble:** a warm white body with grey veins wandering across every segment (every fourth
-  segment's vein is gold), so with his laurel wreath his head reads as a marble bust.
+  segment's vein is rose: gold is for powers alone, #431), so with his laurel wreath his head reads as a marble bust.
 - **Metagamer:** red-and-cyan 3D glasses in a card frame, outlined so it reads on its cyan head.
 - **Wildcard** wears the Stars and Stripes behind an orange tan and a white collar: two segments of navy with white
   stars, then red and white stripes. Under a big fluffy golden pompadour ("Wildcard's hair"), it squints, pouts, wears
@@ -331,7 +331,7 @@ appear only on power marks.
   the pit floor, 0.2 and 0.28 cells further off, a little bigger, and leaves the bark once half way over. The floor
   round where the shadow falls catches a little light (four faint steps), and the shadow lies dark in it. A span between
   rims sags, up to 22.5% smaller in its middle; a tail end past the rim droops, up to 30% smaller and darker, until it
-  leaves the cell, smoothly between (`sinkOf()` in `render/looks.js`). What's up in the air doesn't sag.
+  leaves the cell, smoothly between (`sinkOf()` in `render/jumps.js`). What's up in the air doesn't sag.
 
 Both read at phone size. Nothing new is clipped or veiled: shadows over a pit go in the bark's veil, and what's near a
 hole is worked out once a tick.
@@ -352,7 +352,7 @@ A span over a pit is slimmer but as smooth as on the bark, and shaded as one bod
 
 ### Hunger on the body
 
-Every snake shows its hunger on its body, read from the clock its tag reads (`hungerLook` in `render/looks.js`), so you
+Every snake shows its hunger on its body, read from the clock its tag reads (`hungerLook` in `render/hunger.js`), so you
 see it where your eyes already are, on yourself and on every rival:
 - **It slims** as its last meal runs out: its body (not its head) up to 22% thinner (`HUNGER_SLIM`), by the share of the
   meal gone to the power 1.5, so a snake just fed looks as it always did, a hungry one is plainly thinner, and the

@@ -212,7 +212,7 @@ function beadOf(s, i, j = i + 1) {
       : look === 'colonist' ? (k % 2 ? 'strap' : 'strap2')
       : look === 'ouroboros' ? 'diamond'
       : s.personaKey === 'copycat' ? 'copy' : '';
-    if (!mark || m === 'marble2') mark = m || mark; // (a gold vein shows)
+    if (!mark || m === 'marble2') mark = m || mark; // (a rose vein shows)
     else if (m && m !== mark && look === 'colonist') mark = 'cross'; // (both straps: its cross-belts)
   }
   const a = fill(i), b = fill(j - 1);
@@ -724,7 +724,7 @@ const drawMushroom = (g, v = '') => {
 // colours and markings (Star's rainbow, Mason's marble, Colonist's
 // strap, a friend's spots), so no two snakes leave the same remains. A light
 // rim and a dark edge keep every bead readable on the bark.
-// variant: 'fill|mark' or two-tone 'fill|mark|fill2' (see beadOf), mark one of '', marble, marble2 (a gold vein), strap, strap2, cross (both straps), stars, spots, rings, dots, copy, ghost.
+// variant: 'fill|mark' or two-tone 'fill|mark|fill2' (see beadOf), mark one of '', marble, marble2 (a rose vein), strap, strap2, cross (both straps), stars, spots, rings, dots, copy, ghost.
 // (Star's rainbow runs through every hue, so bead sprites are kept for the
 // beads in use: as many as the board has cells, one bead to a cell, so every
 // bead on it stays drawn from its own, whatever a peer sends; past that the
@@ -749,7 +749,7 @@ const drawBead = (g, v) => {
   g.stroke();
   g.fillStyle = 'rgba(30,41,59,0.6)';
   if (mark === 'marble' || mark === 'marble2') {
-    g.strokeStyle = mark === 'marble2' ? 'rgba(201,162,39,0.85)' : 'rgba(100,116,139,0.6)';
+    g.strokeStyle = mark === 'marble2' ? 'rgba(176,92,104,0.85)' : 'rgba(100,116,139,0.6)';
     g.lineWidth = c * 0.03;
     g.lineCap = 'round';
     g.beginPath();

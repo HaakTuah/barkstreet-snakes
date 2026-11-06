@@ -326,7 +326,7 @@ function veinSprite(i, r) {
   const half = r + 2, px = Math.max(2, Math.ceil(2 * half * k)), g = (s = makeLayer(px, px)).getContext('2d');
   g.setTransform(px / (2 * half), 0, 0, px / (2 * half), px / 2, px / 2);
   g.lineCap = 'round';
-  g.strokeStyle = i % 4 === 3 ? 'rgba(201,162,39,0.75)' : 'rgba(100,116,139,0.55)';
+  g.strokeStyle = i % 4 === 3 ? 'rgba(176,92,104,0.75)' : 'rgba(100,116,139,0.55)';
   g.lineWidth = i % 4 === 3 ? 1.1 : 1.4;
   g.beginPath();
   marbleVein(g, 0, 0, r, i);

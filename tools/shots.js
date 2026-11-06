@@ -70,7 +70,8 @@ fs.mkdirSync(out, { recursive: true });
   // tail hanging into one (bridge), Star half way through its mustache gag
   // beside Copycat's stick-on one (star-gag), your own bead squashed (squash), a
   // pecked colony's flag falling into its pit and Sovereign's banner carried
-  // to its new capital (flag). (The board only: the tags round it are the
+  // to its new capital (flag), a flier's ring tinted by the snake going for it
+  // (ring-taker). (The board only: the tags round it are the
   // page's own round's.)
   const stagedShots = async prefix => {
     await b.go(URL);
@@ -113,6 +114,20 @@ fs.mkdirSync(out, { recursive: true });
         for (const al of [0.25, 0.5, 0.75]) drawN(1, al, 30);
         doStep(g);
         for (const al of [0, 0.25, 0.5]) drawN(1, al, 30);
+      })()`,
+      // A golden flight's ring with Sniper's head closing on it, tinted in Sniper's colour.
+      'ring-taker': `(() => {
+        const g = stage(['sniper', 'ghost', 'mason']), [you, sn, gh, ma] = g.snakes;
+        setBody(you, Array.from({ length: 7 }, (_, i) => [7 - i, 12]), 'right'); you.leaps = 1;
+        setBody(sn, Array.from({ length: 9 }, (_, i) => [20, 3 + i]), 'up');
+        setBody(gh, Array.from({ length: 6 }, (_, i) => [4 + i, 20]), 'left');
+        setBody(ma, Array.from({ length: 8 }, (_, i) => [3, 4 + i]), 'up');
+        show(g); drawN(10, 1);
+        E.leap(g, you); E.leap(g, you); doStep(g);
+        const r = you.flight.ring;
+        setBody(sn, Array.from({ length: 9 }, (_, i) => [r.x, r.y + 2 + i]), 'up');
+        drawN(10, 0.5);
+        return JSON.stringify(r);
       })()`,
       bridge: `(() => {
         const g = stage(['sniper', 'ghost', 'mason']), [you, sn, gh, ma] = g.snakes;
