@@ -27,7 +27,7 @@ every check is kept and none loosened); and a protected file (`SECURITY.md`, rul
 anything the change leaves behind (code, files or settings it made unused, commented-out code, and any description it
 made untrue: "No description left untrue" in `AGENTS.md`) as a finding. The pillars of "How to work" in `AGENTS.md`
 block too: a fact, rule or piece of logic written a second time instead of pointed to (a copy, or a selection of another
-file's lines), and an entry added to the copies check's baseline. Content put where its readers must read past it, such
+file's lines), and an entry added to the copies check's baseline, or a mark in `tools/sizes.json` raised without its reason in the PR. Content put where its readers must read past it, such
 as a file holding what its readers do not need, is a finding, and so is a fact left where a clearly better home exists,
 or a pointer where no reader needs it.
 

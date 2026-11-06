@@ -7,11 +7,6 @@ when it is merged into `develop`; add the owner's new tasks where he places them
 
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
-**On resume, a canary for Codex's code review** ("Reviews", point 5, in `docs/claude-and-codex.md`): the review
-guidelines moved to `docs/review-guidelines.md` (archive, 3 November 2026), so a test PR with planted faults, one breaking
-a line only that file holds (such as "Text a player reads"), proves Codex follows the pointer from `AGENTS.md`. Never
-merged.
-
 **2 November 2026, a fresh week:** the main lane is part 4 (#198, merged as it stands so the owner can play it), then
 2y (done, PR #373; the flight’s question is #399), then 2y+ (done: `ai/` and `engine/`, PRs #406, #408, #407), then part 5 (done, PR #202; its finding is #447), then 2x (done, PR #456), then 2z (done, PR #459: no rule changed; its question is #460), then 2u; the polish
 lane and the workshop lane run beside it, each claimed by a draft PR.
@@ -97,18 +92,8 @@ and the owner's notes of 2 November, among them).
 - **The shared core** (archive, 5 November 2026), first among the side lanes and before the rule-file audit: the rules
   common to every project move to one repository, each project carrying a checked copy; its spec is in
   `docs/handoff/queue-specs.md` under the same title. Step 1 is the owner's.
-- **A content security policy for the page** (archive, 4 November 2026), first among the side lanes, as security
-  hardening: its spec is in `docs/handoff/queue-specs.md` under the same title.
-- **The browser suites' one ending** (from #526's review): `tools/render-test.js` and `tools/input-test.js` end with
-  `report.end(b)` (`tools/browser.js`), as the ui, layout and csp suites do, once entry 2u's lane, which holds those
-  files, has merged.
-- **A pointer check and a reading-size check on every PR** (archive, 4 November 2026), beside the copies check and
-  protected like it (`SECURITY.md`, rule 3): (1) every pointer in the rule files to a file, a section or a numbered
-  point must lead to one that exists, or the PR fails, saying which; forms it cannot read are listed, never guessed;
-  (2) the files every session reads, each against a mark of about 20 KB (one already past it starts at its size today,
-  a baseline that may only shrink), their total against today's, and every file past about 50 KB the PR changes
-  (Step 0); a PR that crosses a mark moves the mark in the same PR and says why. The workshop check's points 2 and 3
-  are then measured on every PR.
+- **The browser suites' one ending** (#526): `tools/render-test.js` and `tools/input-test.js` end with `report.end(b)`
+  (`tools/browser.js`) like the others, once entry 2u, which holds them, merges.
 - **The rule-file audit's larger moves** (the workshop check's point 6; archive, 3 November 2026): (1)
   `docs/claude-and-codex.md` (23 KB) is past the 20 KB warning: the sections that wait until Codex can build, "What goes
   to Codex" to "When Codex is not there", into a file of their own; (2) the slop bar a home of its own, since
