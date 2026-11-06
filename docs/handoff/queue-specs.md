@@ -69,7 +69,8 @@ November (a first guess of 4 s at a faster refill). What pays is built, with its
 protocol bump: eating late must come to pay without always paying, plentiful rounds must not turn into power spam, the
 shield must never make anyone safe (if shielded snakes outlive everyone, it is tightened or dropped), every trademark
 holds (Gobbler's food share, Mute's boxing and Creeper's tail-riding above all), and the rivals play it well: eating
-when low, banking before a fight. Part 7 then prices the powers against the economy that wins.
+when low, banking before a fight. The dash's worth is retuned too (#536; "No hidden prices" in
+`docs/design/37-one-stamina.md`). Part 7 then prices the powers against the economy that wins.
 
 ### 5. Round six B: the new moves (DESIGN "Round six B")
 
