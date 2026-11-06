@@ -7,7 +7,7 @@
 // update, so no longer than the intro). A milestone without its line just shows the last one to whoever has
 // not seen it yet.
 window.SnakeVersion = {
-  build: 'ddc1c82',
+  build: 'db13cfb',
   news: [
     { on: '2026-11-03', line: 'Spat a mushroom? You slide over it while wet.' },
     { on: '2026-11-03', line: 'Gold portals: dive off an edge, anyone may follow.' },
