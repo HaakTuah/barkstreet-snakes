@@ -7,11 +7,6 @@ when it is merged into `develop`; add the owner's new tasks where he places them
 
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
-**On resume, a canary for Codex's code review** ("Reviews", point 5, in `docs/claude-and-codex.md`): the review
-guidelines moved to `docs/review-guidelines.md` (archive, 3 November 2026), so a test PR with planted faults, one breaking
-a line only that file holds (such as "Text a player reads"), proves Codex follows the pointer from `AGENTS.md`. Never
-merged.
-
 **2 November 2026, a fresh week:** the main lane is part 4 (#198, merged as it stands so the owner can play it), then
 2y (done, PR #373; the flight’s question is #399), then 2y+ (done: `ai/` and `engine/`, PRs #406, #408, #407), then part 5 (done, PR #202; its finding is #447), then 2x (done, PR #456), then 2z (done, PR #459: no rule changed; its question is #460), then 2u; the polish
 lane and the workshop lane run beside it, each claimed by a draft PR.
