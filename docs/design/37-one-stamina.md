@@ -43,6 +43,6 @@ bar could just recover a bit quicker."
 - **Golden ones stay apart.** Golden jumps and dashes are still free charges from golden food, spent before stamina,
   with their pips as now.
 - **With it, as with any rule:** the rivals use it well and see it used (part 7's pricing then prices the one stamina);
-  the looks and your ring as its cue, drawn in a file of their own (`render/looks.js` is past the 50 KB mark: Step 0 in
+  the looks and your ring as its cue, drawn in a file of their own (new work goes in its own file: "Split by meaning" in
   `AGENTS.md`); a one-time lesson ("One stamina: jump or dash, your choice") that shows the tired and awake looks; the
   Field guide row; online in step, with a protocol bump; tested both ways.

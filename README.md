@@ -1,6 +1,6 @@
 # Barkstreet Snakes
 
-A snake game on a mossy log: you against three AI rivals on a fallen log in the woods, drawn at random each round from a cast of eighteen. Plays in the browser, on desktop and phone. Plain HTML, CSS and JavaScript, with no build step, no dependencies and no asset files: every picture is drawn and every sound is synthesised in the page. (Working on it? See [docs/developing.md](docs/developing.md).)
+A snake game on a mossy log: you against three AI rivals on a fallen log in the woods, drawn at random each round from a cast of eighteen. Plays in the browser, on desktop and phone. Plain HTML, CSS and JavaScript, with no build step, no dependencies and no asset files but its lettering: every picture is drawn and every sound is synthesised in the page. (Working on it? See [docs/developing.md](docs/developing.md).)
 
 **Play:** https://haaktuah.github.io/barkstreet-snakes/
 
