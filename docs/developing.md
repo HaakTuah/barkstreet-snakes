@@ -156,6 +156,6 @@ Every seeded round is cached by the files that played it, round by round, so ask
 | `online.js` | Play with friends: the messages between host and friends. |
 | `net.js` | Play with friends: the connections (PeerJS, loaded only when used). |
 | `game/` | Ties it together: the game loop, input, the cards, the controls and the lobby: a file for each thing it does (the list is at the top of `game/core.js`). |
-| `index.html`, `style/`, `sw.js` | The page; its styles, a file for each part of the page (listed in `style/base.css`); the service worker that keeps it playable offline. |
+| `index.html`, `style/`, `fonts/`, `sw.js` | The page; its styles, a file for each part of the page (listed in `style/base.css`); the lettering's files (Fredoka, linked by `style/font.css`); the service worker that keeps it playable offline. |
 | `tools/` | The suites (`*-test.js`, each running its folder of parts, such as `tools/rules/`, through `tools/parts.js`), the simulation (`simulate.js`, its parts in `tools/sim/`), `abtest.js`, `bench-ai.js`, the headless-Chrome driver `browser.js`, and `protocol-shapes.json`, the online messages' pinned shapes. |
 | `jsconfig.json`, `types/globals.d.ts` | The online messages' types, with the JSDoc in `net.js` and `online.js`: checked by `tsc` (the types suite), never shipped. |
