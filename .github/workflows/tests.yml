@@ -1,13 +1,14 @@
 # The game's own checks, on every push and pull request: the rules, online
 # play and the types of its messages, the rivals' chatter, the records and
 # the service worker in Node, the same seeded rounds with and without
-# thinking ahead, and the renderer's, controls' and page's
-# promises in headless Chrome (the runner has it): the page on phones,
+# thinking ahead, and the page's shared scope, its content security policy,
+# and the renderer's and controls' promises in headless Chrome (the runner
+# has it): the page on phones,
 # tablets and desktops too. The jobs run side by side.
 # Each job runs only where it can be affected (the owner, 28 October 2026: "tests
 # should only run where they impact something"): nothing for notes alone
 # (docs/, tools/dev/, .claude/, any .md), the Node checks and the browser's
-# three for any change to the game or its tools, and the page on every screen
+# four for any change to the game or its tools, and the page on every screen
 # for a change to what the page shows (index.html, style/, render/, game/,
 # chatter/, audio/, online.js, net.js, records.js, lineup.js, scores-screen.js, sw.js, the layout test
 # and its parts, the parts' loader, the browser driver or this file). A
