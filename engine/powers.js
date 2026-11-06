@@ -65,7 +65,7 @@ function hop(game, s) {
 }
 // Could it leap now? Golden, or the plain one if it's ready. Its way, or null.
 function hopPlan(game, s) {
-  return s.leaps > 0 || (game.time >= s.leapReadyAt && s.body.length > T.MIN_LENGTH) ? leapPath(game, s) : null;
+  return s.leaps > 0 || (game.time >= s.leapReadyAt - (s.isPlayer ? 250 : 0) && s.body.length > T.MIN_LENGTH) ? leapPath(game, s) : null; // (a press a hair early still counts, so it isn't lost)
 }
 // A flash asked for with a jump (p: its plan): if it would stop at a hurdle
 // (run into it, or blow up in it: not a snake one thick a dash cuts, nor

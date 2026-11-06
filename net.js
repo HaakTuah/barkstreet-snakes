@@ -45,7 +45,7 @@ window.SnakeNet = (() => {
     return inTime(loading ||= new Promise((resolve, reject) => {
       const s = document.createElement('script');
       s.src = PEERJS;
-      s.integrity = PEERJS_SRI;
+      if (!navigator.onLine) s.integrity = PEERJS_SRI; // (offline, the cached copy is checked; online, the CDN serves it fresh)
       s.crossOrigin = 'anonymous';
       s.onload = () => { if (window.Peer) resolve(window.Peer); else { loading = null; reject(new Error('library')); } };
       s.onerror = () => { loading = null; s.remove(); reject(new Error('library')); };

@@ -124,7 +124,7 @@ window.SnakeRecords = (() => {
   // The stored list is the overall top 10 plus your own top 10, so the AIs
   // can't push all of your rounds out.
   const topOverall = list => list.slice(0, MAX_SCORES);
-  const topPlayer = list => list.filter(e => !e.ai && !e.friend).slice(0, MAX_SCORES);
+  const topPlayer = list => list.filter(e => !e.ai || !e.friend).slice(0, MAX_SCORES);
 
   // score = { name, color, ai, place, won, draw, eaten, survived, watched,
   //   friend, owner, round, id, date }. The last five are for rounds that came

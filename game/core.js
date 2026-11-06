@@ -121,13 +121,13 @@ const FLAVOR = {
   cutLoose: 'The shaded piece is cut loose and will fall. Get off it!', // (2s: the first mark that cuts a piece loose, or its strike)
   youSquash: 'Your own beads feed nobody.', // (round six B: your first own bead squashed)
   youWoodpecker: 'Food in the woodpecker’s mark flies to its ring.', // (once a round, as it comes, once its own banner has had its time: the one idea you can act on, in one line on a phone; that it won't shut you in if it can help it is the Field guide's)
-  birdBeetle: 'The woodpecker eats beetles too.', // (round six B, 2m: the first beetle you see the bird eat, one that didn't get off its mark in time)
+  birdBeetle: 'Pro tip: the woodpecker loves beetles too — stay sharp!', // (round six B, 2m: the first beetle you see the bird eat, one that didn't get off its mark in time)
   portalFollow: 'Anyone can follow you through a portal, for a moment.', // (round six B, part 5: the first time anyone follows anyone through a gold portal)
   youDig: 'A cornered beetle digs in. Grab it before it’s gone!', // (the first one near enough your head to catch: see DIG_NEAR)
   digBurrow: 'A beetle that digs in leaves a burrow behind.', // (the first burrow a dig leaves in a round, anywhere on the log, once the dig's own lesson is told)
   digAndBurrow: 'A cornered beetle digs in, leaving a burrow.', // (the same, when the dig's lesson hasn't been told yet: most digs are far from you, so this one teaches both, the dig first)
   burrowTaken: 'A new burrow by an old one: the old one grows shut.', // (the first burrow in a round that a dig near it starts growing shut, once the burrow's lesson is told: burrows keep BURROW_SPACING apart)
-  burrowHeal: 'Old burrows grow shut: beetles go in, none come out.', // (the stalest: the one unused longest, as the Field guide has it. The first one starting to grow shut in a round, once the burrow's lesson is told)
+  burrowHeal: 'Pro tip: old burrows grow shut — stay sharp!', // (the stalest: the one unused longest, as the Field guide has it. The first one starting to grow shut in a round, once the burrow's lesson is told)
   lostColony: 'The woodpecker took a flag: that colony’s lost.', // (a flag it pecks out, the first in a round; for watchers too)
   lostCapital: 'The woodpecker took a capital: its realm moves.',
   lastApples: 'The last apples are falling.',
@@ -173,7 +173,7 @@ const FLAVOR = {
   youSpitWet: 'Still wet: you slide over your own.', // (2x: the first time you spit one, as it lies)
   youSpatOn: name => `Ptoo! ${name} got you. Steer to spit it back.`, // (the first time one hits your head)
   youHungry: ['Your tummy is rumbling. Time for a snack.', 'Getting peckish… find food soon.'],
-  youStarvingSmall: 'Starving at\u00a03, with nothing to spare. Eat now.',
+  youStarvingSmall: 'Pro tip: starving at\u00a03 is risky — stay sharp!',
   // A press that couldn't go (the first time each way, in a round): a jump, or a flash.
   // (A flash is free, FLASH_COST 0, so it's never too small; it has nowhere
   // to go only over a crash: straight back in, or blown up at the edge or a hole.)

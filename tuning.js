@@ -81,7 +81,7 @@ window.TUNING = Object.freeze({
   // A crash (into the edge, a hole, a body, or head-on) isn't the end: your
   // head bounces back, the tail breaks off as food, and you're stunned a
   // moment. You're out if you crash at MIN_LENGTH, or with nowhere to turn.
-  CRASH_LOSS: 3,            // segments a crash knocks off your tail (never below MIN_LENGTH)...
+  CRASH_LOSS: 2,            // segments a crash knocks off your tail (never below MIN_LENGTH)...
   STUN_TICKS: 4,            // ...and how long it stuns you (you can steer meanwhile)
 
   // ---------------------------------------------------------- fire and food
