@@ -2,7 +2,7 @@
 
 PERSONAS.ghost = {
   name: 'Ghost', color: '#f1f5f9', look: 'ghost',
-  blurb: 'Keeps its distance from everyone, and slips through the gaps.',
+  blurb: 'A master of distance, stealth and timing — it will keep you on your toes.',
   kill: ['Ghost? You never even saw it.', 'Ghost slipped through. You didn’t.', 'You felt a chill. Then nothing.'],
   win: ['Was it ever really here?', 'It never made a sound.'],
   w: {

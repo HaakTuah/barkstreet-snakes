@@ -2,7 +2,7 @@
 
 PERSONAS.gobbler = {
   name: 'Gobbler', color: '#fb923c', look: 'gobbler',
-  blurb: 'Eats everything, even a rival’s apple. Hates mushrooms.',
+  blurb: 'A master of appetite, speed and greed — it will keep you on your toes.',
   kill: ['Gobbler didn’t even stop chewing.', 'It burped. That was the eulogy.', 'Gobbler was thinking about apples. It always is.'],
   win: ['And it’s still hungry.', 'Not a crumb left.', 'Now, about pudding.'],
   w: {

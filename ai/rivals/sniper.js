@@ -2,7 +2,7 @@
 
 PERSONAS.sniper = {
   name: 'Sniper', color: '#b91c1c', look: 'sniper', driver: 'sniper',
-  blurb: 'Picks whichever snake it has the best shot at and cuts it off.',
+  blurb: 'A master of aim, patience and precision — it will keep you on your toes.',
   kill: ['It had you lined up three moves ago.', 'You were the best shot it had.', 'It got in front of you. It always does.'],
   win: ['Nobody was safe.', 'Not a wasted move.', 'It never once blinked.'],
   w: {

@@ -59,7 +59,7 @@ function recoil(game, s, shut) {
 // golden), and somewhere to land.
 function leapWontGo(game, s) {
   if (!(s.leaps > 0)) {
-    if (s.body.length <= T.MIN_LENGTH) return 'small';
+    if (s.body.length < T.MIN_LENGTH) return 'small';
     if (game.time < s.leapReadyAt) return 'resting';
   }
   for (let c = ahead(game, s, s.body[0].x, s.body[0].y, s.dir), i = 0; i < T.LEAP_REACH; i++) {

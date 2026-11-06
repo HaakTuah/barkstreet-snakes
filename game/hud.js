@@ -64,7 +64,7 @@ function openNote(s) {
   noted = s;
   noteEl.style.setProperty('--edge', isMe(s) ? Render.colorOf(s) : s.persona.ink || s.color);
   noteDot.style.background = dotColor(s);
-  noteWho.textContent = isMe(s) ? 'You' : s.name;
+  noteWho.innerHTML = isMe(s) ? 'You' : `<b>${s.name}</b>`;
   noteHow.textContent = isMe(s) ? youWords(s) : s.persona.blurb;
   noteNowFor(s);
   noteEl.hidden = false;

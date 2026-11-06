@@ -67,6 +67,7 @@ function aiView(game, snake) {
       spitIn: snake.cheek ? Math.max(0, snake.cheek.spitAt - game.tick) : 0, spitPower: snake.cheek ? Math.min(T.SHRINK_MAX, snake.cheek.power + 1) : 0,
     },
     others: snap.snakes.filter(o => o.id !== snake.id),
+    person: game.snakes.find(o => o.isPlayer && !o.autopilot)?.id ?? -1, // (who's at the keys, so a rival can give a newcomer room)
     food: game.food, // (as it is: it only changes on a tick, so thinking ahead sees what the tick would)
     holes: blockedSeen(game, snap),
     fire: fireCellsSeen(snap), // (among the holes: the cells that are only fire, which it can go through, at a price)
