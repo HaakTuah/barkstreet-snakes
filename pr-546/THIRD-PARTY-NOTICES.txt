@@ -13,8 +13,7 @@ What reaches a player's browser:
       peerjs-js-binarypack 2.x                         MIT
       webrtc-adapter 9.x                               BSD-3-Clause
       sdp 3.x                                          MIT
-  Fredoka (the lettering), served with the game        OFL-1.1
-    fonts/fredoka-latin.woff2, fonts/fredoka-latin-ext.woff2
+  Fredoka (the lettering), loaded from Google Fonts    OFL-1.1
 
 
 ==============================================================================

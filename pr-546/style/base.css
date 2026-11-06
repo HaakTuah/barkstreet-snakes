@@ -5,7 +5,6 @@
 
    Once style.css, split into the files of style/, linked in this order by
    index.html (sw.js keeps them), so the cascade is the same:
-     font.css     the lettering, Fredoka, served from fonts/
      base.css     the colours, type, buttons, the header, the tags, the board
      panels.css   the cards, the friends' lobby, below the board, the Hall of Fame
      screens.css  small screens, and every other size and shape of screen */
