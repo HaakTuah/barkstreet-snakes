@@ -70,7 +70,7 @@
       const view = {
         grid: N, food: [{ kind: 'food', expires: 999, ...scene.food }], age: 2, tick: 10, timeMs: 30000, weather: 'clear',
         holes: new Set((scene.holes || []).map(c => at(c.x, c.y))), fire: new Set(), pecks: new Set(),
-        me: { id: 0, body: scene.me, dir: dirOf(scene.me), grow: 0, hungerLeft: HUNGRY, starveIn: HUNGRY, leaps: 0, dashes: 0, wrap: 0, leapIn: 9999, flashIn: 9999, bumped: -1 },
+        me: { id: 0, body: scene.me, dir: dirOf(scene.me), grow: 0, hungerLeft: HUNGRY, starveIn: HUNGRY, leaps: 0, dashes: 0, wrap: 0, leapIn: 9999, flashIn: 9999, stamina: 0, bumped: -1 },
         others: scene.others.map((o, k) => ({ id: k + 1, body: o, dir: dirOf(o), stun: 0, leaps: 0, dashes: 0, wrap: 0, air: 0 })),
       };
       const h = scene.me[0], f = scene.food, away = Math.abs(h.x - f.x) + Math.abs(h.y - f.y);

@@ -40,27 +40,27 @@ function flash(game, s) {
   if (s?.alive) s.flashArmed = Math.max(game.tick, s.stunUntil); // (stunned: when it moves again)
 }
 // One stamina for both plain powers (2u): s.restedAt, when its bar is full
-// again (game time) at its own refill, STAMINA_RATE of a ms a ms, so how
-// much is spent is how long till then times that rate. A plain power goes
-// with its share (JUMP_STAMINA_MS or DASH_STAMINA_MS) in the bar. Food puts
+// again (game time), so how much is spent is how long till then, in ms of
+// refill. A plain power goes with its share (JUMP_STAMINA_MS or
+// DASH_STAMINA_MS) in the bar. Food puts
 // some back (STAMINA_FOOD_MS a segment it grows you), and what's put back
 // past the full bar banks in s.bank, up to STAMINA_BANK bars in all (2u+);
 // a power is paid from the bank first, so a snake with any banked is full.
 // (At time t: the renderer asks on the clock as drawn, and ahead of it.)
-const spent = (game, s, t = game.time) => Math.max(0, s.restedAt - t) * T.STAMINA_RATE;
+const spent = (game, s, t = game.time) => Math.max(0, s.restedAt - t);
 // What's in the bar and the bank (ms of stamina), at time t.
 const stamina = (game, s, t = game.time) => T.STAMINA_MS - spent(game, s, t) + s.bank;
 // How long until it has `cost` in the bar (ms; 0: now), at time t.
-const staminaIn = (game, s, cost, t = game.time) => Math.max(0, spent(game, s, t) - (T.STAMINA_MS - cost)) / T.STAMINA_RATE;
+const staminaIn = (game, s, cost, t = game.time) => Math.max(0, spent(game, s, t) - (T.STAMINA_MS - cost));
 function tire(game, s, cost) {
   const b = Math.min(s.bank, cost);
   s.bank -= b;
-  if (cost > b) s.restedAt = Math.max(s.restedAt, game.time) + (cost - b) / T.STAMINA_RATE;
+  if (cost > b) s.restedAt = Math.max(s.restedAt, game.time) + cost - b;
 }
 // ms of stamina put back (a meal): the bar first, the rest banked.
 function refill(game, s, ms) {
   const gap = spent(game, s);
-  if (ms <= gap) { s.restedAt -= ms / T.STAMINA_RATE; return; }
+  if (ms <= gap) { s.restedAt -= ms; return; }
   s.restedAt = Math.min(s.restedAt, game.time);
   s.bank = Math.min((T.STAMINA_BANK - 1) * T.STAMINA_MS, s.bank + ms - gap);
 }
