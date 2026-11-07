@@ -207,7 +207,8 @@ function spitScene(key, rival, person, { back = 3, food = [] } = {}) {
       const g = spitScene(key, [line(8, 12, 6), 'right'], [Array.from({ length: 5 }, (_, i) => [17 + i, 22]), 'left'], { food: shroom ? [[10, 12, 'mushroom'], [13, 12]] : [[13, 12]] });
       const r = g.snakes[1], path = [];
       if (shroom === 'own') Object.assign(g.food[0], { power: T.SHRINK + 1, spitBy: r.id, slideUntil: g.tick + T.OWN_SPIT_TICKS });
-      for (let n = 0; n < 6; n++) { calm(g); path.push(`${r.body[0].x},${r.body[0].y}${r.cheek ? ' swallowed' : ''}`); }
+      // (Over the mushroom and onto the apple: after it, the planner sees the spit turn a mushroom like any, and may rightly turn.)
+      for (let n = 0; n < 5; n++) { calm(g); path.push(`${r.body[0].x},${r.body[0].y}${r.cheek ? ' swallowed' : ''}`); }
       out[key] = path.join(' ');
     }
     return out;

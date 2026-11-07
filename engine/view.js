@@ -73,8 +73,15 @@ function aiView(game, snake) {
   const others = [];
   for (const o of snap.snakes) {
     if (o.id === snake.id) continue;
-    const late = game.history[Math.max(0, last - noticeDelay(game, snake, o, delay, tickMs))];
-    others.push(late.snakes.find(l => l.id === o.id) || o); // (as it was then; a snake alive in my reaction time's view was alive before it)
+    const at = Math.max(0, last - noticeDelay(game, snake, o, delay, tickMs)), d = idx - at;
+    const seen = d > 0 && game.history[at].snakes.find(l => l.id === o.id); // (alive in my reaction time's view, it was alive before it)
+    // (Seen d ticks before the rest, its timers are counted on by those d ticks, so every one reads as of `age` ago, as
+    // the rest of the view does, and a rival reckons where it's got to as for any snake: a stun under 0 is how long
+    // it's been moving before then. Its turns since, it doesn't see.)
+    others.push(!seen ? o : {
+      ...seen, stun: seen.stun - d, spitIn: seen.spitIn && seen.spitIn - d,
+      air: seen.air > d ? seen.air - d : 0, wrap: Math.max(0, seen.wrap - d * tickMs),
+    });
   }
   return {
     grid: GRID,
