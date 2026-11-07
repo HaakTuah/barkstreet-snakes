@@ -7,7 +7,7 @@ when it is merged into `develop`; add the owner's new tasks where he places them
 
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
-**The main lane is 2ab;** part 4 (#198, merged as it stands), 2y, 2y+, part 5, 2x, 2z, 2u and 2u+ before it are
+**The main lane is 2q** (2ab is blocked on #574); part 4 (#198, merged as it stands), 2y, 2y+, part 5, 2x, 2z, 2u and 2u+ before it are
 done. The polish lane and the workshop lane run beside it, each claimed by a draft PR.
 
 ## For the owner
@@ -130,6 +130,11 @@ Rivals pushed to dash more live about 3 s less than rivals pushed to jump more (
 useful in about half the moments (design 37): the extra dashes are poor picks. Each rival learns to pass up a dash that
 does not pay, in its own style, the rules unchanged; done when that gap closes within noise, trademarks kept. Before
 part 7, whose pricing needs rivals that judge a dash well.
+
+**Blocked, waiting on the owner (#574).** On fresh seeds (631, 632; 1200 pairs) the gap is −1.3 s [−3.5, +1.0], under
+half of #560's. Two fixes did not move it: no plain dash when boxed (−1.1 s, and 0.4 fewer flashes a minute) and three
+times the reserve when boxed (−1.7 s). Neither price change alone differs from develop (cheaper dash −0.2 s, dearer jump
++0.3 s), and no rival stands out. The brief and the `pdash` fork mode are on draft PR #572.
 
 ### 5. Round six B: the new moves (DESIGN "Round six B")
 
