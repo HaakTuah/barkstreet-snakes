@@ -46,6 +46,7 @@ function step(game) {
   const moving = [], fallback = new Map(), held = new Map(); // (fallback: the auto-turn, for a power asked for over a crash that may not go after all; held: a flash there that can't go, and why)
   for (const s of alive) {
     s.tailMoves = false; s.air = false; s.landing = false; s.boom = false; s.failed = false; s.passed = null; s.bumped = false;
+    s.shielded = s.shieldUntil > game.time; // (2u+: a crash this tick costs it nothing: see lossOf)
     if (s.stunUntil > game.tick) { s.next = null; continue; }
     let land = null;
     const f = s.flight;
@@ -315,11 +316,11 @@ function step(game) {
       continue;
     }
     s.queue.length = 0; // (a crash: whatever was pressed before it was for a board that's gone)
-    const shield = s.shieldUntil > game.time; // (2u+: a golden apple's shield takes this crash, and is gone)
+    const shield = s.shielded; // (2u+: a golden apple's shield takes this crash, and is gone)
     if (shield) s.shieldUntil = -1;
-    const lost = shield ? 0 : Math.min(lossOf(s), s.body.length - T.MIN_LENGTH);
+    const lost = Math.min(lossOf(s), s.body.length - T.MIN_LENGTH);
     for (let n = 0; n < lost; n++) { const t = s.body.pop(); drops.push({ x: t.x, y: t.y, color: s.color, owner: s.id }); }
-    s.stunUntil = game.tick + 1 + (shield ? 0 : stunOf(s));
+    s.stunUntil = game.tick + 1 + stunOf(s);
     if (s.flashArmed > game.tick) s.flashArmed = s.stunUntil; // (a flash waiting on a jump, or on its landing: it goes when it moves again, as one pressed in a stun does)
     if ((s.landing || s.bumped) && burning(game, key(s.body[0].x, s.body[0].y))) { // (come down on fire: alight)
       if (!(s.burnUntil > game.tick)) { s.burnFrom = game.tick; game.events.push({ type: 'alight', snake: s }); }
