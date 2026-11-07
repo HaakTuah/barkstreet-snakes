@@ -69,8 +69,10 @@ const leapIn = (game, s) => s.leaps > 0 ? 0 : staminaIn(game, s, T.JUMP_STAMINA_
 const flashIn = (game, s) => s.dashes > 0 ? 0 : staminaIn(game, s, T.DASH_STAMINA_MS);
 // How its stamina shows on it (37-one-stamina), as anyone on the log sees
 // it, at time t: 0 tired (it can afford neither power), 1 awake (one, or
-// golden ones), 2 game on (a full bar). Never more than the step.
+// golden ones), 2 game on (a full bar), 3 charged (some banked above it:
+// 2u+). Never more than the step.
 function staminaStep(game, s, t = game.time) {
+  if (s.bank > 0) return 3;
   const left = T.STAMINA_MS - spent(game, s, t);
   if (left >= T.STAMINA_MS) return 2;
   return s.leaps > 0 || s.dashes > 0 || left >= Math.min(T.JUMP_STAMINA_MS, T.DASH_STAMINA_MS) ? 1 : 0;
