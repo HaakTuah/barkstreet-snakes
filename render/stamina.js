@@ -3,11 +3,15 @@
 // at, as anyone on the log sees it (SnakeEngine.staminaStep, on the clock
 // as drawn): tired while it can afford neither power, a little grayer and
 // shriveled, its eyes heavy, the lids sagging slowly; awake, as it always
-// looked; game on, at a full bar, its eyes bright (bigger catchlights). Each
-// reads by brightness and its eyes, not by colour alone, and none of it
-// glows. A step eases in over STAMINA_FADE ms (at once with reduced
-// motion); a dead snake wears none.
+// looked; game on, at a full bar, its eyes bright (bigger catchlights);
+// charged, with stamina banked above the full bar (2u+), its eyes bright
+// and, the more it has banked, a warm glow over its body and a swell that
+// runs down it, livelier (still with reduced motion: the glow alone). Each
+// reads by brightness, its eyes and movement, not by colour alone. A step
+// eases in over STAMINA_FADE ms (at once with reduced motion); a dead snake
+// wears none.
 const STAMINA_FADE = 250, TIRED_SHRIVEL = 0.07, TIRED_GRAY = '#6b6f6c', TIRED_WASH = 0.3, TIRED_LID = 0.62, TIRED_SAG = 0.07, TIRED_SAG_MS = 1700;
+const CHARGE_WARM = '#ff8a5c', CHARGE_GLOW = 0.28, CHARGE_SWELL = 0.06, CHARGE_MS = 900;
 // The face being drawn (set by staminaFace, read by the eye helpers in
 // faces.js): how tired, how bright, and its lids' colour.
 let tiredNow = 0, brightNow = 0, lidNow = INK;
@@ -15,22 +19,26 @@ let tiredNow = 0, brightNow = 0, lidNow = INK;
 // Once a frame, in prepare, after its radii: eases it toward its step, and
 // tired, shrivels its body (its head keeps its size, as hunger's slim does).
 function staminaLook(s, a, dead) {
-  if (a.tired === undefined) { a.tired = 0; a.bright = 0; a.lidFor = ''; a.lid = INK; }
+  if (a.tired === undefined) { a.tired = 0; a.bright = 0; a.charge = 0; a.lidFor = ''; a.lid = INK; }
   const step = dead || !game || !s.alive ? 1 : SnakeEngine.staminaStep(game, s, shownTime);
   const k = reduced || dead ? 1 : Math.min(1, frameDt / STAMINA_FADE);
+  const banked = step === 3 ? Math.min(1, s.bank / Math.max(1, (T.STAMINA_BANK - 1) * T.STAMINA_MS)) : 0; // (how near the cap)
   a.tired += Math.max(-k, Math.min(k, (step === 0 ? 1 : 0) - a.tired));
-  a.bright += Math.max(-k, Math.min(k, (step === 2 ? 1 : 0) - a.bright));
+  a.bright += Math.max(-k, Math.min(k, (step >= 2 ? 1 : 0) - a.bright));
+  a.charge += Math.max(-k, Math.min(k, (banked ? 0.35 + 0.65 * banked : 0) - a.charge));
   if (a.tired) for (let i = 1; i < a.n; i++) a.rad[i] *= 1 - TIRED_SHRIVEL * a.tired;
+  if (a.charge > 0.004 && !reduced) for (let i = 1; i < a.n; i++) a.rad[i] *= 1 + CHARGE_SWELL * a.charge * Math.max(0, Math.sin(lastNow * TAU / CHARGE_MS - i * 0.7)); // (a swell running down it)
 }
 
-// Its gray wash, tired (in the last pass, with hunger's pale one: see
+// Its gray wash, tired, or its warm glow, charged (in the last pass, with hunger's pale one: see
 // drawPasses). Not over Star's head: its points dim and light up as its
 // stamina comes back (its tell), and a wash over them would blur the count.
 function staminaWash(a) {
-  if (!(a.tired > 0.004) || a.n < 2 && a.star) return;
+  const tired = a.tired > 0.004, charged = a.charge > 0.004;
+  if (!(tired || charged) || a.n < 2 && a.star) return;
   const was = ctx.globalAlpha;
-  ctx.globalAlpha = was * TIRED_WASH * a.tired;
-  ctx.fillStyle = TIRED_GRAY;
+  ctx.globalAlpha = was * (tired ? TIRED_WASH * a.tired : CHARGE_GLOW * a.charge);
+  ctx.fillStyle = tired ? TIRED_GRAY : CHARGE_WARM;
   shape(a, 0, a.star ? 1 : 0);
   ctx.fill();
   ctx.globalAlpha = was;
@@ -94,6 +102,6 @@ function guideStamina(g) {
   });
   g.restore();
   g.save(); g.translate(c * 0.35, c * 0.48); g.scale(0.55, 0.55);
-  guideSnake(g, '#4ade80', true, (x, y) => restRing(x, y, c * 0.84, 0.8, 1));
+  guideSnake(g, '#4ade80', true, (x, y) => restRing(x, y, c * 0.84, (1 + T.DASH_STAMINA_MS / T.STAMINA_MS) / 2, 1));
   g.restore();
 }

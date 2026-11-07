@@ -10,17 +10,21 @@
 // move it would have made with the move's price waived)?
 // --rest forbids that rival the move for the rest of the round in the play without it: one tick measures when to use
 // it (the rival still holds it and uses it later), the rest of the round whether having it helps.
-//   node tools/dev/fork-moves.js <root> --move fly|now|dash|portal [--rounds 40] [--seed 1] [--per-round 4] [--forced] [--rest] [--json]
+//   node tools/dev/fork-moves.js <root> --move fly|now|dash|portal|power|golden [--rounds 40] [--seed 1] [--per-round 4] [--forced] [--rest] [--json]
 //     fly: a golden flight held past the plain hop (always GOLD_FLY cells); now: a plain leap now; dash: a golden flash;
 //     portal: following someone through a gold portal (no --forced)
-//     golden (2z): a golden apple eaten, played on four ways from the tick after: as it went; uneaten (its growth and its
-//       meal undone); as a plain apple (+1); and as the apple of vigour (+3, both rests refilled). No --forced or --rest.
+//     power (2u+): a plain jump or flash used with both in the bar, played on with the jump, the flash and neither
+//       (which was the more useful, each moment). No --forced or --rest.
+//     golden (2z): a golden apple eaten, played on six ways from the tick after: as it went; uneaten; and, from the
+//       stamina and shield it had before, as +3 alone, as a plain +1, with a full bar of stamina (2u+), and with that
+//       and a shield that takes one crash (--shield MS, default 10000). No --forced or --rest.
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const args = process.argv.slice(2);
 const root = path.resolve(args[0] && !args[0].startsWith('--') ? args[0] : path.join(__dirname, '..', '..'));
 const opt = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const MOVE = opt('--move', 'fly'), ROUNDS = Number(opt('--rounds', 40)), SEED = Number(opt('--seed', 1)), PER = Number(opt('--per-round', 4));
+const SHIELD_MS = Number(opt('--shield', 10000)); // (golden: the shield tried, ms)
 const FORCED = args.includes('--forced'), JSON_OUT = args.includes('--json'), REST = args.includes('--rest');
 const State = require(path.join(__dirname, '..', 'snapshots', 'state.js'));
 
@@ -38,7 +42,11 @@ function patchAI(text) {
   swap('!portalOut(sx, sy, d, 1)) return -1;', '!portalOut(sx, sy, d, 1) || globalThis.__forbid.portal.has(me.id)) return -1;');
   swap('if (me.dashes > 0) { const v', 'if (me.dashes > 0 && !globalThis.__forbid.dash.has(me.id)) { const v');
   // (--forced: the move's price waived, so it's taken wherever it scores above the crawl)
-  swap('v += extra - price * cheap * (full ? 1 : habit.price) * U;', 'v += extra - (globalThis.__force.any.has(me.id) && (flash ? globalThis.__force.dash.has(me.id) : (globalThis.__force.fly.has(me.id) && leapFly) || (globalThis.__force.now.has(me.id) && leapNow)) ? 0 : price * cheap * (full ? 1 : habit.price) * U);');
+  swap('v += extra - (price * (full ? 1 : habit.price) + wait) * cheap * U;', 'v += extra - (globalThis.__force.any.has(me.id) && (flash ? globalThis.__force.dash.has(me.id) : (globalThis.__force.fly.has(me.id) && leapFly) || (globalThis.__force.now.has(me.id) && leapNow)) ? 0 : (price * (full ? 1 : habit.price) + wait) * cheap * U);');
+  // (power, 2u+: the plain jump or the plain flash forbidden, or the other forced: taken wherever it can go, priced at nothing)
+  swap('consider = (d, flash, v, price, extra, wait = 0) => {', 'consider = (d, flash, v, price, extra, wait = 0) => { const pk = flash ? (me.dashes > 0 ? \'\' : \'pdash\') : (me.leaps > 0 ? \'\' : \'pjump\'), pf = !!pk && globalThis.__force[pk].has(me.id); if (pk && globalThis.__forbid[pk].has(me.id)) v = null; if (pf) { price = 0; wait = 0; }');
+  swap('if (v > (bestPower ? bestPower.v : crawlScore + 1))', 'if (v > (bestPower ? bestPower.v : pf ? -Infinity : crawlScore + 1))');
+  swap('me.flashIn === 0 && (trapped || d === crawlDir', 'me.flashIn === 0 && (trapped || globalThis.__force.pdash.has(me.id) || d === crawlDir');
   return text;
 }
 
@@ -46,7 +54,7 @@ let rngState = 0;
 const rng = () => { rngState = (rngState + 0x6d2b79f5) >>> 0; let t = rngState; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 const M = Object.create(Math); M.random = rng;
 const ctx = vm.createContext({ window: {}, console, Math: M });
-const empty = () => ({ fly: new Set(), now: new Set(), dash: new Set(), portal: new Set(), any: new Set() });
+const empty = () => ({ fly: new Set(), now: new Set(), dash: new Set(), portal: new Set(), any: new Set(), pjump: new Set(), pdash: new Set() });
 ctx.__forbid = empty(); ctx.__force = empty();
 const gameFiles = require('../game-files.js'), files = gameFiles(root), read = f => fs.readFileSync(path.join(root, f), 'utf8');
 vm.runInContext(read('tuning.js'), ctx, { filename: 'tuning.js' });
@@ -65,9 +73,12 @@ function used(g, s) {
     if (MOVE === 'dash' && e.type === 'dash' && !e.plain) return true;
     if (MOVE === 'portal' && e.type === 'through') return true; // (following someone through a gold portal)
     if (MOVE === 'golden' && e.type === 'eat' && e.kind === 'golden') return true;
+    if (MOVE === 'power' && plainPower(e)) return true;
   }
   return false;
 }
+// A plain jump or a plain flash, and which ('pjump', 'pdash'), or ''.
+const plainPower = e => e.type === 'leap' && !e.gold ? 'pjump' : e.type === 'dash' && e.plain ? 'pdash' : '';
 // Could s use the move now (for --forced)?
 const could = s => s.alive && !s.flight && (MOVE === 'dash' ? s.dashes > 0 : MOVE === 'fly' ? s.leaps > 0 : E.leapIn(currentGame, s) === 0);
 let currentGame = null;
@@ -91,6 +102,8 @@ const sig = g => JSON.stringify([g.tick, g.time, g.snakes.map(s => [s.alive, s.b
 const snap = g => ({ tree: State.encode(g, known), rng: rngState });
 const back = sv => { rngState = sv.rng; return decode(sv.tree, known); };
 
+// What play a gained over play b, for one snake (each from playOut).
+const d = (a, b) => ({ place: b.place - a.place, win: (a.place === 1) - (b.place === 1), alive: (a.alive - b.alive) / 1000, out5: (b.alive < 5000) - (a.alive < 5000), len10: a.len10 - b.len10 });
 const diffs = []; // ({ place: without - with (positive: the use helped), win: with - without, alive: with - without (s), persona })
 for (let r = 0; r < ROUNDS; r++) {
   rngState = (SEED * 100003 + r * 7919) >>> 0;
@@ -120,6 +133,7 @@ for (let r = 0; r < ROUNDS; r++) {
     const s0 = g.snakes.find(s => !s.isPlayer && used(g, s));
     if (!s0) continue;
     const id = s0.id, after = snap(g);
+    if (MOVE === 'power') { if (power(before, g, s0)) forks++; g = back(after); continue; }
     if (MOVE === 'golden') { golden(before, after, id, g.snakes[id].name, g.events.some(e => e.type === 'eat' && e.snake === s0 && e.kind !== 'golden' && e.kind !== 'mushroom')); forks++; g = back(after); continue; }
     const A = back(before), B = back(before);
     rngState = before.rng; E.step(A); const afterA = rngState;
@@ -134,28 +148,69 @@ for (let r = 0; r < ROUNDS; r++) {
     g = back(after);
   }
 }
-// 2z: one golden apple eaten, played on as it went (A), uneaten (B), as a plain apple (P) and as the apple of vigour (V),
-// all from the same random numbers after the tick. Diffs: what the apple as it is gave (A against B), its +3 over a
-// plain apple's +1 (A against P), and what vigour would add (V against A).
+// 2z: one golden apple eaten, played on from the same random numbers after the tick: as it went (A); uneaten (B: its
+// growth, its meal and what it gave the stamina undone); and (2u+) from the stamina, bank and shield it had before
+// it, whatever the tuning gives: as the +3 alone (N), as a plain apple (P), with a full bar (F) and with a full bar and
+// a shield (S). Diffs: what the apple as it is gave (A against B), its +3 over a plain +1 (N against P), what a full
+// bar adds (F against N) and a shield on top of it (S against F). (A meal's own top-up of the bar is left out of N, P,
+// F and S alike.)
 function golden(before, after, id, persona, otherMeal) {
-  const was = back(before).snakes[id], now = back(after), G = T.GOLDEN_GROWTH;
+  const then = back(before), was = then.snakes[id], G = T.GOLDEN_GROWTH;
   const play = edit => { const x = back(after), s = x.snakes[id]; edit(x, s); rngState = after.rng; return playOut(x).get(id); };
+  const bare = s => { if (!otherMeal) { s.restedAt = was.restedAt; s.bank = was.bank; } s.shieldUntil = was.shieldUntil; }; // (another meal the same tick keeps its refill)
   const A = play(() => {});
-  const B = play((x, s) => { s.grow -= G; s.eaten -= G; if (!otherMeal) for (const k of ['lastAte', 'nextStarve', 'mealMs', 'ateTick']) s[k] = was[k]; }); // (another meal the same tick, a flash's on the way, keeps its refill: one meal's is any meal's)
-  const P = play((x, s) => { s.grow -= G - 1; s.eaten -= G - 1; });
-  const V = play((x, s) => { s.restedAt = Math.min(s.restedAt, x.time); });
-  const d = (a, b) => ({ place: b.place - a.place, win: (a.place === 1) - (b.place === 1), alive: (a.alive - b.alive) / 1000, out5: (b.alive < 5000) - (a.alive < 5000), len10: a.len10 - b.len10 });
-  diffs.push({ ...d(A, B), plain: d(A, P), vigour: d(V, A), rested: now.snakes[id].restedAt > now.time ? 1 : 0, persona });
+  const B = play((x, s) => { s.grow -= G; s.eaten -= G; bare(s); if (!otherMeal) for (const k of ['lastAte', 'nextStarve', 'mealMs', 'ateTick']) s[k] = was[k]; }); // (one meal's hunger refill is any meal's)
+  const N = play((x, s) => bare(s));
+  const P = play((x, s) => { s.grow -= G - 1; s.eaten -= G - 1; bare(s); });
+  const F = play((x, s) => { bare(s); s.restedAt = Math.min(s.restedAt, x.time); });
+  const S = play((x, s) => { bare(s); s.restedAt = Math.min(s.restedAt, x.time); s.shieldUntil = x.time + SHIELD_MS; });
+  diffs.push({ ...d(A, B), plain: d(N, P), vigour: d(F, N), shield: d(S, F), rested: was.restedAt > then.time ? 1 : 0, persona });
+}
+// 2u+: a plain jump or flash used with both in the bar and no golden ones held, played on three ways from the tick
+// before: with the jump (the flash forbidden, the jump taken wherever it can go, at no price), with the flash (the
+// other way round) and with neither. Kept only where both could go. Diffs: the jump against the flash, and each
+// against neither.
+function power(before, g, s0) {
+  const id = s0.id, was = back(before).snakes[id];
+  if (was.leaps > 0 || was.dashes > 0 || E.flashIn(back(before), was) > 0 || E.leapIn(back(before), was) > 0) return false;
+  const play = (forbid, force) => {
+    const x = back(before);
+    for (const k of forbid) ctx.__forbid[k].add(id);
+    if (force) ctx.__force[force].add(id);
+    E.step(x); ctx.__forbid = empty(); ctx.__force = empty();
+    const took = x.events.filter(e => e.snake?.id === id).map(plainPower).find(Boolean) || '';
+    return { took, out: playOut(x).get(id) };
+  };
+  const J = play(['pdash'], 'pjump'), D = play(['pjump'], 'pdash'), C = play(['pjump', 'pdash']);
+  if (J.took !== 'pjump' || D.took !== 'pdash' || C.took) return false;
+  // (1: a was the more useful, -1: b, 0: no difference. Over the whole round a fork's two plays part ways for good
+  // and either can come out ahead by chance, so the moment's own worth is read near it: alive 5 s on, then length
+  // 10 s on; the place and time alive, over the round, beside it)
+  const better = (a, b) => Math.sign((a.alive >= 5000) - (b.alive >= 5000) || a.len10 - b.len10);
+  const longer = (a, b) => Math.sign(b.place - a.place || a.alive - b.alive);
+  diffs.push({ ...d(J.out, D.out), jumpBetter: better(J.out, D.out), jumpLonger: longer(J.out, D.out), jump: d(J.out, C.out), dash: d(D.out, C.out), used: plainPower(g.events.find(e => e.snake?.id === id && plainPower(e))), persona: s0.name });
+  return true;
 }
 const mean = k => diffs.reduce((t, d) => t + d[k], 0) / Math.max(1, diffs.length);
 const se = k => { const m = mean(k); return Math.sqrt(diffs.reduce((t, d) => t + (d[k] - m) ** 2, 0) / Math.max(1, diffs.length - 1) / Math.max(1, diffs.length)); };
 const res = { move: MOVE, forced: FORCED, seed: SEED, rounds: ROUNDS, uses: diffs.length, place: mean('place'), placeSE: se('place'), win: mean('win'), winSE: se('win'), alive: mean('alive'), aliveSE: se('alive'), out5: mean('out5'), out5SE: se('out5'), len10: mean('len10'), len10SE: se('len10') };
 if (MOVE === 'golden') { // (the three comparisons, each paired over the same eats)
   const row = (name, pick) => { const xs = diffs.map(pick), m = k => xs.reduce((t, d) => t + d[k], 0) / Math.max(1, xs.length), e = k => Math.sqrt(xs.reduce((t, d) => t + (d[k] - m(k)) ** 2, 0) / Math.max(1, xs.length - 1) / Math.max(1, xs.length)); return `${name}: place ${m('place').toFixed(3)} ± ${e('place').toFixed(3)} · wins ${(100 * m('win')).toFixed(1)} ± ${(100 * e('win')).toFixed(1)} points · alive ${m('alive').toFixed(1)} ± ${e('alive').toFixed(1)} s · length at 10 s ${m('len10').toFixed(2)} ± ${e('len10').toFixed(2)}`; };
-  console.log(`golden apples: ${diffs.length} eaten in ${ROUNDS} rounds (seed ${SEED}); rests not ready when eaten, of 2: ${(diffs.reduce((t, d) => t + d.rested, 0) / Math.max(1, diffs.length)).toFixed(2)}`);
+  console.log(`golden apples: ${diffs.length} eaten in ${ROUNDS} rounds (seed ${SEED}); bar not full when eaten: ${(diffs.reduce((t, d) => t + d.rested, 0) / Math.max(1, diffs.length)).toFixed(2)}`);
   console.log('  ' + row('eaten, against uneaten', d => d));
   console.log('  ' + row('+3, against a plain +1', d => d.plain));
-  console.log('  ' + row('vigour, against as it is', d => d.vigour));
+  console.log('  ' + row('a full bar, against none', d => d.vigour));
+  console.log('  ' + row(`a shield (${SHIELD_MS / 1000} s), against the full bar alone`, d => d.shield));
+  if (JSON_OUT) console.log(JSON.stringify({ seed: SEED, rounds: ROUNDS, diffs }));
+} else if (MOVE === 'power') { // (each moment, which was the more useful: the jump, the flash, or neither by place and time alive)
+  const by = {};
+  for (const x of diffs) { const b = by[x.persona] ??= [0, 0, 0]; b[x.jumpBetter + 1]++; }
+  const all = diffs.reduce((b, x) => (b[x.jumpBetter + 1]++, b), [0, 0, 0]), long = diffs.reduce((b, x) => (b[x.jumpLonger + 1]++, b), [0, 0, 0]);
+  const share = b => `${b[2]} jump, ${b[0]} dash, ${b[1]} even: the jump ${(100 * b[2] / Math.max(1, b[0] + b[2])).toFixed(0)}% of the decided`;
+  console.log(`power: ${diffs.length} moments in ${ROUNDS} rounds (seed ${SEED}) · near it, ${share(all)} · jump against dash, place ${res.place.toFixed(3)} ± ${res.placeSE.toFixed(3)}, alive ${res.alive.toFixed(1)} ± ${res.aliveSE.toFixed(1)} s`);
+  console.log(`  over the whole round: ${share(long)}`);
+  for (const [k, pick] of [['jump against neither', x => x.jump], ['dash against neither', x => x.dash]]) { const xs = diffs.map(pick), m = f => xs.reduce((t, x) => t + x[f], 0) / Math.max(1, xs.length); console.log(`  ${k}: place ${m('place').toFixed(3)} · alive ${m('alive').toFixed(1)} s`); }
+  for (const p of Object.keys(by).sort()) console.log(`  ${p}: ${share(by[p])}`);
   if (JSON_OUT) console.log(JSON.stringify({ seed: SEED, rounds: ROUNDS, diffs }));
 } else if (JSON_OUT) console.log(JSON.stringify({ ...res, diffs }));
 else console.log(`${FORCED ? 'forced ' : ''}${MOVE}: ${diffs.length} uses in ${ROUNDS} rounds (seed ${SEED}) · place gained a use ${res.place.toFixed(3)} ± ${res.placeSE.toFixed(3)} · wins ${(100 * res.win).toFixed(1)} ± ${(100 * res.winSE).toFixed(1)} points · alive ${res.alive.toFixed(1)} ± ${res.aliveSE.toFixed(1)} s · out within 5 s saved ${(100 * res.out5).toFixed(1)} ± ${(100 * res.out5SE).toFixed(1)} points · length at 10 s ${res.len10.toFixed(2)} ± ${res.len10SE.toFixed(2)}`);

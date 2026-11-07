@@ -33,7 +33,7 @@ declare namespace Engine {
     autopilot?: boolean;
     persona?: unknown; personaKey?: string;
     stunUntil: number; burnUntil: number; burnFrom: number;
-    leaps: number; leapArmed: number; restedAt: number; dashes: number; wrapUntil: number;
+    leaps: number; leapArmed: number; restedAt: number; bank: number; shieldUntil: number; dashes: number; wrapUntil: number;
     flight: { dir: Dir; over: { x: number; y: number }[]; land: { x: number; y: number }; gold?: Flag; held?: Flag; flown?: number; path?: number[]; ring?: { x: number; y: number; n?: number } } | null;
     jumpHeld?: Flag; leapNow?: Flag; flyFor?: number; flyTurn?: { at: number; dir: Dir } | null; flew?: number; bumped?: boolean;
     flashArmed: number;
@@ -83,7 +83,7 @@ declare namespace Engine {
     | { type: 'spawn'; kind: string; x?: number; y?: number; gold?: Flag }
     | { type: 'squash'; snake: Snake; x: number; y: number }
     | { type: 'spit'; snake: Snake; x: number; y: number; tx: number; ty: number; power: number; hit: number; lx: number | null; ly: number | null }
-    | { type: 'crash'; snake: Snake; x: number; y: number; cause: string; killer: string | null; killerId: number | null; lost: number; failed?: 1; air?: 1 }
+    | { type: 'crash'; snake: Snake; x: number; y: number; cause: string; killer: string | null; killerId: number | null; lost: number; failed?: 1; air?: 1; shield?: 1 }
     | { type: 'leap'; snake: Snake; x: number; y: number; gold?: Flag; reach: number; now?: 1 }
     | { type: 'dash'; snake: Snake; x: number; y: number; n: number; plain?: Flag }
     | { type: 'fizzle'; snake: Snake; why: string; x: number; y: number; flash?: Flag }

@@ -39,7 +39,7 @@ const vm = require('vm');
 
 const ROOT = path.join(__dirname, '..');
 const args = process.argv.slice(2), seedAt = args.indexOf('--seed');
-const SEED = seedAt >= 0 ? Number(args[seedAt + 1]) : 1;
+const SEED = seedAt >= 0 ? Number(args[seedAt + 1]) : 2; // (2u+: seed 1's rounds, under the stamina economy, brought too few rainbows, spit hits and followers through a portal; seed 2's bring every one)
 const rounds = Number(args.find((a, i) => /^\d+$/.test(a) && i !== seedAt + 1)) || 3;
 const MIN = 3; // (crossings of each event kind, each thing it says, each field of a tick)
 
@@ -77,7 +77,7 @@ const LINEUPS = [
 // What a snake's memory sends (a guest's renderer and chatter read them all).
 const LOOKS = ['home', 'colonies', 'mood', 'moodChangedAt', 'modelId', 'victimId', 'lureId', 'site', 'desperate'];
 // The fields of a snake in a tick, in order (see online.js: tick and apply).
-const FIELDS = ['alive', 'dir', 'eaten', 'lastAte', 'nextStarve', 'cells', 'memory', 'autopilot', 'stunUntil', 'burnUntil', 'burnFrom', 'leaps', 'leapArmed', 'dashes', 'restedAt', 'wrapUntil', 'flight', 'flashArmed', 'mealMs', 'land', 'airLeft', 'airGold', 'cheek', 'spitAt', 'ring', 'ringIn'];
+const FIELDS = ['alive', 'dir', 'eaten', 'lastAte', 'nextStarve', 'cells', 'memory', 'autopilot', 'stunUntil', 'burnUntil', 'burnFrom', 'leaps', 'leapArmed', 'dashes', 'restedAt', 'bank', 'shieldUntil', 'wrapUntil', 'flight', 'flashArmed', 'mealMs', 'land', 'airLeft', 'airGold', 'cheek', 'spitAt', 'ring', 'ringIn'];
 // What a data channel would deliver (PeerJS refuses JSON messages of 16,300 bytes or more).
 const LIMIT = 16000;
 let biggest = 0;
@@ -150,7 +150,7 @@ function matched(r, host, guest, dyingHost, dyingGuest) {
   check(r, k, 'alive', host.snakes.map(s => s.alive), guest.snakes.map(s => s.alive));
   check(r, k, 'dirs', host.snakes.map(s => s.dir), guest.snakes.map(s => s.dir));
   check(r, k, 'hunger', host.snakes.map(s => [s.eaten, s.lastAte, s.nextStarve, s.mealMs]), guest.snakes.map(s => [s.eaten, s.lastAte, s.nextStarve, s.mealMs]));
-  const powers = g => g.snakes.map(s => [s.stunUntil, s.burnUntil, s.burnFrom, s.leaps, s.leapArmed, s.dashes, s.restedAt, s.wrapUntil, s.flight ? [s.flight.dir, s.flight.land, s.flight.over, !!s.flight.gold, s.flight.ring ? [s.flight.ring.x, s.flight.ring.y, s.flight.ring.n] : null] : null, s.flashArmed, !!s.autopilot, s.cheek ? [s.cheek.power, s.cheek.spitAt] : null]);
+  const powers = g => g.snakes.map(s => [s.stunUntil, s.burnUntil, s.burnFrom, s.leaps, s.leapArmed, s.dashes, s.restedAt, s.bank, s.shieldUntil, s.wrapUntil, s.flight ? [s.flight.dir, s.flight.land, s.flight.over, !!s.flight.gold, s.flight.ring ? [s.flight.ring.x, s.flight.ring.y, s.flight.ring.n] : null] : null, s.flashArmed, !!s.autopilot, s.cheek ? [s.cheek.power, s.cheek.spitAt] : null]);
   check(r, k, 'stuns, burns and powers', powers(host), powers(guest));
   const food = g => g.food.map(f => [f.x, f.y, f.kind, f.expires, f.color, f.dir && f.kind === 'beetle' ? f.dir : null, f.px ?? null, f.py ?? null, f.movedAt ?? null, !!f.scared, f.heat || 0, !!f.cooked, !!f.gold, f.owner ?? null, f.digUntil ?? null, f.power || 0]);
   check(r, k, 'food', food(host), food(guest));

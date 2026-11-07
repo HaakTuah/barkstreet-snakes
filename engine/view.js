@@ -5,6 +5,7 @@ function snapshot(game) {
       id: s.id, body: s.body.map(c => ({ x: c.x, y: c.y })), dir: s.dir,
       stun: Math.max(0, s.stunUntil - game.tick), leaps: s.leaps, // (all of it shows: stars, pips, a gold outline, cough puffs...)
       step: staminaStep(game, s), // (2u: tired, awake or game on, as its look shows: never its stamina itself)
+      shield: s.shieldUntil > game.time ? 1 : 0, // (2u+: a golden apple's shield, as its ring shows)
       dashes: s.dashes, wrap: Math.max(0, s.wrapUntil - game.time), air: s.flight ? s.flight.ring.n : 0, land: s.flight ? key(s.flight.ring.x, s.flight.ring.y) : -1, // (in the air: how many ticks till it's down, and where: its ring)
       spitIn: s.cheek ? s.cheek.spitAt - game.tick : 0, spitPower: s.cheek ? Math.min(T.SHRINK_MAX, s.cheek.power + 1) : 0, // (a green bulge, and its ring: it's spat after this many more moves, this strong)
     })),
@@ -59,7 +60,9 @@ function aiView(game, snake) {
       // (its powers: golden leaps and dashes held, how long the edges still wrap for it, how long till it can jump, and flash)
       leaps: snake.leaps, dashes: snake.dashes, wrap: Math.max(0, snake.wrapUntil - game.time), leapIn: leapIn(game, snake), flashIn: flashIn(game, snake),
       // (its stamina, in ms of refill (STAMINA_MS full), golden powers held or not, as the ring round its head shows a person theirs)
-      stamina: T.STAMINA_MS - spent(game, snake),
+      stamina: stamina(game, snake),
+      // (2u+: how long its golden apple's shield still holds, ms; 0: none)
+      shield: Math.max(0, snake.shieldUntil - game.time),
       // (up on a golden flight: which way, and how many cells it's flown, so it can plan where to come down as it flies)
       flight: snake.flight?.gold && snake.flight.held ? { dir: snake.flight.dir, flown: snake.flight.flown } : null,
       // (who it just met head-on, if it was in the last 3 s or so: it keeps clear of them for a while)

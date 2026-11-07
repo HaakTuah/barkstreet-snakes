@@ -46,6 +46,7 @@ function step(game) {
   const moving = [], fallback = new Map(), held = new Map(); // (fallback: the auto-turn, for a power asked for over a crash that may not go after all; held: a flash there that can't go, and why)
   for (const s of alive) {
     s.tailMoves = false; s.air = false; s.landing = false; s.boom = false; s.failed = false; s.passed = null; s.bumped = false;
+    s.shielded = s.shieldUntil > game.time; // (2u+: a crash this tick costs it no tail: see lossOf)
     if (s.stunUntil > game.tick) { s.next = null; continue; }
     let land = null;
     const f = s.flight;
@@ -281,6 +282,11 @@ function step(game) {
   }
   const room = s => {
     if (roomAfterStun(game, s, out)) return true;
+    if (s.shielded) { // (2u+: a shield that'd keep it boxed, its tail kept, isn't spent: it pays the crash as anyone would)
+      s.shielded = false;
+      if (roomAfterStun(game, s, out)) return true;
+      s.shielded = true;
+    }
     const h = s.body[0], back = s.body[1];
     for (const d of CRAWL) { // (a cell heads met in: the others there are out, or have room of their own)
       const { x, y } = ahead(game, s, h.x, h.y, d);
@@ -315,6 +321,8 @@ function step(game) {
       continue;
     }
     s.queue.length = 0; // (a crash: whatever was pressed before it was for a board that's gone)
+    const shield = s.shielded; // (2u+: a golden apple's shield takes this crash, and is gone)
+    if (shield) s.shieldUntil = -1;
     const lost = Math.min(lossOf(s), s.body.length - T.MIN_LENGTH);
     for (let n = 0; n < lost; n++) { const t = s.body.pop(); drops.push({ x: t.x, y: t.y, color: s.color, owner: s.id }); }
     s.stunUntil = game.tick + 1 + stunOf(s);
@@ -325,7 +333,7 @@ function step(game) {
     }
     s.bounce = c.headOn ? { x: s.next.x, y: s.next.y, by: c.killerId } : null;
     if (c.headOn) s.bumpedBy = { id: c.killerId, tick: game.tick };
-    game.events.push({ type: 'crash', snake: s, x: s.next.x, y: s.next.y, cause: c.cause, killer: c.killer, killerId: c.killerId, lost, ...(s.failed ? { failed: 1 } : {}), ...(c.air ? { air: 1 } : {}) });
+    game.events.push({ type: 'crash', snake: s, x: s.next.x, y: s.next.y, cause: c.cause, killer: c.killer, killerId: c.killerId, lost, ...(s.failed ? { failed: 1 } : {}), ...(c.air ? { air: 1 } : {}), ...(shield ? { shield: 1 } : {}) });
   }
 
   for (const s of moving) {
@@ -388,5 +396,5 @@ function step(game) {
 
 window.SnakeEngine = {
   GRID, PLAYER_COLOR, PERSONAS, DIRS, WEATHER,
-  createGame, step, tickMs: tickLength, hungerLeft, hungerWarning, aiView, canThinkAhead, thinkAhead, suddenDeath, leap, letGo, leapIn, flash, flashIn, staminaIn, staminaStep, rollSide, knockTo, knocks, beakDepth, beakGap,
+  createGame, step, tickMs: tickLength, hungerLeft, hungerWarning, aiView, canThinkAhead, thinkAhead, suddenDeath, leap, letGo, leapIn, flash, flashIn, stamina, staminaIn, staminaStep, rollSide, knockTo, knocks, beakDepth, beakGap,
 };
