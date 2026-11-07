@@ -636,7 +636,7 @@ function setGame(g) {
 
 window.SnakeRender = {
   showYou,
-  // (your jump's back, or with 'flash' your flash: its half-ring's flick; the renderer sees both itself, so this only makes sure)
+  // (your jump's back, or with 'flash' your flash: the ring's flick in its colour; the renderer sees both itself, so this only makes sure)
   ready: (s, kind) => { const a = animOf(s, lastNow || performance.now()), now = lastNow || performance.now(); if (kind === 'flash') { if (!(now - a.flashFx < 600)) a.flashFx = now; } else if (!(now - a.readyAt < 600)) a.readyAt = now; },
   init, setGame, resize, frame, onTick, shake, hold: holdFor, headPx, colorOf, markOf, celebrate, setQuality, setBoardRect, pressed,
   get quality() { return quality; },

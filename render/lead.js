@@ -109,20 +109,20 @@ function bridgeFor(s, x, y) {
   return !!o && o !== s && o.body.findIndex(c => c.x === x && c.y === y) > 0;
 }
 // Would a jump asked for go, its head at h heading d, the game's clock at
-// t (as the game's hopPlan has it)? Golden, or the plain one rested and
-// long enough; something right in front to hop and a free cell to land on
+// t (as the game's hopPlan has it)? Golden, or the plain one with a jump's
+// worth of stamina by then; something right in front to hop and a free cell to land on
 // within LEAP_REACH beyond it. Where it lands (hopsTo: landX, landY), or
 // false.
 let landX = 0, landY = 0;
 function hops(s, h, d, t) {
-  if (!(s.leaps > 0) && (t < s.leapReadyAt || s.body.length <= T.MIN_LENGTH)) return false;
+  if (!(s.leaps > 0) && SnakeEngine.staminaIn(game, s, T.JUMP_STAMINA_MS, t) > 0) return false;
   return hopsTo(s, h, d);
 }
 // A jump asked for, waiting: the first hurdle on its way within the
 // LEAP_WINDOW moves the press waits, and where it'd land hopping it from
 // the cell before (landX, landY), if the jump will be ready.
 function ringAhead(s, h, d) {
-  if (!(s.leaps > 0) && (s.body.length <= T.MIN_LENGTH || s.leapReadyAt > game.time + (s.leapArmed - game.tick) * (timeAt - timeFrom || T.START_TICK))) return false;
+  if (!(s.leaps > 0) && SnakeEngine.staminaIn(game, s, T.JUMP_STAMINA_MS, game.time + (s.leapArmed - game.tick) * (timeAt - timeFrom || T.START_TICK)) > 0) return false;
   let x = h.x, y = h.y;
   for (let i = 0; i < Math.max(1, s.leapArmed - game.tick + 1) && i < T.LEAP_WINDOW; i++) {
     stepOn(s, x, y, d);
@@ -163,7 +163,7 @@ function lastsFor(s, x, y, moves) {
 // edge or a hole: that shows at its tick).
 function flashReach(s, d, x, y) {
   const gold = s.dashes > 0;
-  if (!gold && (game.time < s.flashReadyAt || (T.FLASH_COST > 0 && s.body.length <= T.MIN_LENGTH))) return 0;
+  if (!gold && SnakeEngine.flashIn(game, s) > 0) return 0;
   const len = gold ? T.DASH_LENGTH : T.FLASH_LENGTH;
   for (let i = 1; ; i++) {
     const k = y * GRID + x;

@@ -124,7 +124,7 @@ addEventListener('resize', fitStartCard);
 
 // What the chips mean, in words (phones have no tooltips).
 function yourPowerWords(s) {
-  const how = (left, gold) => gold ? `${gold} golden` : left === 0 ? 'ready' : left === Infinity ? 'not at 3' : 'resting';
+  const how = (left, gold) => gold ? `${gold} golden` : left === 0 ? 'ready' : 'resting';
   return `${touchFirst ? 'A tap' : 'Space or a click'} jumps: ${how(Engine.leapIn(theGame, s), s.leaps)}. ${touchFirst ? 'A swipe ahead' : 'E, Shift or right-click'} dashes: ${how(Engine.flashIn(theGame, s), s.dashes)}.`;
 }
 // Golden powers held, as words: ['2 golden jumps', '1 golden flash'].
@@ -195,13 +195,13 @@ function updateHud(force = false) {
       last.jump = last.flash = null; // (new chips: their rests are written afresh)
     }
     if (mine) {
-      rest(t, 'jump', Engine.leapIn(theGame, s), TUNE.LEAP_COOLDOWN_MS, s.leaps);
-      rest(t, 'flash', Engine.flashIn(theGame, s), TUNE.FLASH_COOLDOWN_MS, s.dashes);
+      rest(t, 'jump', Engine.leapIn(theGame, s), TUNE.JUMP_STAMINA_MS, s.leaps);
+      rest(t, 'flash', Engine.flashIn(theGame, s), TUNE.DASH_STAMINA_MS, s.dashes);
     }
-    // Your plain powers back from their rest: a flick round your head and a
+    // Your stamina back up to a plain power: a flick round your head and a
     // tick (the jump's, or the flash's), unless you're holding golden ones.
-    const jumpBack = mine && s.body.length > TUNE.MIN_LENGTH && theGame.time >= s.leapReadyAt;
-    const flashBack = mine && !(TUNE.FLASH_COST > 0 && s.body.length <= TUNE.MIN_LENGTH) && theGame.time >= s.flashReadyAt;
+    const jumpBack = mine && Engine.leapIn(theGame, s) === 0;
+    const flashBack = mine && Engine.flashIn(theGame, s) === 0;
     if (!force && jumpBack && last.jumpBack === false && !s.leaps) { Render.ready(s, 'jump'); Sound.play('ready'); }
     if (!force && flashBack && last.flashBack === false && !s.dashes) { Render.ready(s, 'flash'); Sound.play('flashReady'); }
     last.jumpBack = jumpBack; last.flashBack = flashBack;
@@ -217,18 +217,17 @@ function chip(kind, n, s) {
     : gold ? (kind === 'jump' ? 'Golden jumps: long ones, free' : 'Golden dashes: three cells at once') : '';
   return `<span class="chip ${kind}${gold ? ' gold' : ''}${isMe(s) ? ' mine' : ''}"${title ? ` title="${title}"` : ''}>${POW_ICON[kind]}${n ? `<b>${n}</b>` : ''}</span>`;
 }
-// Your own chip's rest: filling in tenths (a write a few times a second, not
-// every frame), solid when ready, greyed when you're too small for it.
+// Your own chip's rest: filling in tenths as the stamina comes back to its
+// share (a write a few times a second, not every frame), solid when ready.
 function rest(t, kind, left, full, gold) {
   const el = t[kind];
   if (!el) return;
-  const now = gold ? 'gold' : left === 0 ? 'ready' : left === Infinity ? 'small' : Math.floor((1 - left / full) * 10) * 10;
+  const now = gold ? 'gold' : left === 0 ? 'ready' : Math.floor((1 - left / full) * 10) * 10;
   if (t.last[kind] === now) return;
   t.last[kind] = now;
   el.classList.toggle('ready', now === 'ready');
-  el.classList.toggle('small', now === 'small');
   if (typeof now === 'number') el.style.setProperty('--fill', `${now}%`);
-  if (!gold) el.title = `Your ${kind}${now === 'ready' ? ' is ready' : now === 'small' ? ': too small for it' : ' is resting'} (${kind === 'jump' ? (touchFirst ? 'tap' : 'Space or a click') : touchFirst ? 'swipe ahead' : 'E, Shift or right-click'})`;
+  if (!gold) el.title = `Your ${kind}${now === 'ready' ? ' is ready' : ' is resting'} (${kind === 'jump' ? (touchFirst ? 'tap' : 'Space or a click') : touchFirst ? 'swipe ahead' : 'E, Shift or right-click'})`;
 }
 
 // The chips' icons: small inline drawings in ink (no fallback-font glyphs).

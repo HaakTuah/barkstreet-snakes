@@ -67,7 +67,7 @@ function pieces2s(g, mark) {
     g.snakes = g.snakes.slice(0, 1);
     const r = g.snakes[0];
     // (its head more than PECK_CLEARANCE from the neck, as a mark is from heads; alone, so nothing else draws it)
-    r.body = [[7, 10], [6, 10], [5, 10], [4, 10]].map(([x, y]) => ({ x, y })); r.dir = D.right; r.flashReadyAt = 1e9; r.leapReadyAt = 1e9;
+    r.body = [[7, 10], [6, 10], [5, 10], [4, 10]].map(([x, y]) => ({ x, y })); r.dir = D.right; r.restedAt = 1e9;
     g.food = [{ x: 15, y: 10, kind: 'food' }]; g.given = new Set([K(15, 10)]);
     for (let k = 0; k < T.GRID * T.GRID; k++) if (!land3.some(([x, y]) => K(x, y) === k)) g.holes.add(k);
     g.time = T.SUDDEN_DEATH_MS;

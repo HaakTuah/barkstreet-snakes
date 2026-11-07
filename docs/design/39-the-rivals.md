@@ -68,10 +68,12 @@ too. Everywhere else the neck test is as above.
 ### Rivals read heads better
 
 Every persona fears the cells a rival could strike next (`headRisk`) and where it may be by now (`zoneRisk`), read so:
-- **A rival's flash I fear only when it has a reason to flash.** A plain flash costs its rest: a snake spends one racing
+- **A rival's flash I fear only when it has a reason to flash.** A plain flash costs stamina: a snake spends one racing
   for food on its line, not to cross a cell it can't crawl to. So its flash cells count (half a head's risk) only with
   food straight ahead of it within the flash's reach and one cell more, or when it holds a golden leap or dash, or faces
   something it could hop.
+- **A tired rival can't reach further** (2u): while it looks tired (its stamina step, `step` in `aiView()`'s others,
+  nothing more exact), it can afford neither plain power, so only its golden ones reach past the next cell.
 - **Only cells it can step into:** not back into its neck, a hole or a body still there.
 - **Fear by when I'd get there.** A cell beside a rival's head is a head-on on my first move, and, for the next `age`
   moves, its body if it went there (I can't see that yet). After that, I'd see where it went in time to turn, so it
@@ -132,11 +134,12 @@ spit flies along the line" in `40-powers-and-moves.md`. Desperate, it takes no s
 Each power is weighed as a move in the rival's own search, from where the power leaves it and to the same horizon, plus
 what it eats on the way, less the risk where it ends and a price in apples (what an apple is worth to it now), and
 pressed only when it beats crawling (`powerPick` in `ai/powers.js`):
-- *The plain flash:* two apples, or one to win a race for food (food a rival could reach as soon as it would crawl
+- *The plain flash and jump* spend one stamina (2u), priced by what they take of it: see `ai/powers.js`.
+- *The plain flash:* its price, or half to win a race for food (food a rival could reach as soon as it would crawl
   there, but not as soon as it flashes) or to get out of a crash. Weighed the way the rival would crawl anyway (any way,
   out of a crash; the hunters and the aggressive, a cut to the side too).
-- *The plain jump:* out of a crash or a box, to another island, or to come down on food or just short of it, priced at
-  1.5 apples (`LEAP_COST` and a rest).
+- *The plain jump:* out of a crash or a box, to another island, or to come down on food or just short of it, at its
+  price.
 - *Golden jumps:* whenever one pays, at a third of an apple (0.35).
 - *Golden dashes:* 0.6 of an apple, pressed out of a trap or for a cut that puts a rival out.
 - Desperate, every power is half the price.
@@ -215,13 +218,15 @@ shows what they can do; a shooting star dragging a rainbow is the most natural h
 
 It prices powers far below anyone else, by the same rules and the same engine calls, through two persona weights that
 are off for everyone else, so rounds without Star play exactly as if it didn't exist:
-- **`w.powers`** `{ price: 0, risk: 350, everyWay, jumpAny, dashSpend }`. Its powers are free to it, unless one ends
+- **`w.powers`** `{ price: 0, risk: 350, everyWay, jumpAny, dashSpend, keepFlash: 0.01 }`. Its powers are free to it, unless one ends
   where its risk is over 350 (a rival could strike there: in reach of its powers, or nearer), and there it pays the
   full price, as anyone would. A power still has to beat crawling by a point.
-  - **Flashes:** whenever it's rested and the flash doesn't run into anything, weighed every way, not just the way it
-    would crawl: about four times as often as anyone else.
+  - **Flashes:** whenever it has a flash's worth of stamina and the flash doesn't run into anything, weighed every
+    way, not just the way it would crawl: about three times as often as the median rival.
   - **Jumps:** any hurdle with somewhere free to land beyond it that no rival could get to before it's down, not just
-    out of a crash or onto food.
+    out of a crash or onto food: over twice as often as the median rival. What it keeps is a flash's worth of stamina
+    (`keepFlash`): a jump that leaves less costs it a hundredth of the wait it costs anyone, so its jumps don't eat
+    its flashes, and both stay in the band (2u).
   - **Golden dashes:** spent on speed too, not only on cuts and golden things, but at anyone's price for one (0.6 of
     an apple), so only for a real gain, such as beating a rival to an apple.
 - **`w.golden`** `{ power: 6, apple: 1.5, contested: 0.5 }`. It craves golden things above everything, to feed the

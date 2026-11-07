@@ -11,9 +11,13 @@ PERSONAS.star = {
     margin: 4, headRisk: 700, zoneRisk: 100,
     // Its powers are free to it, unless one ends where a rival could
     // strike (half a head's risk: in reach of its powers, or nearer), or
-    // it's a golden dash just for speed: it flashes over four times as
-    // often as anyone, and jumps ten times as often.
-    powers: { price: 0, risk: 350, everyWay: true, jumpAny: true, dashSpend: true },
+    // it's a golden dash just for speed: it flashes and jumps far more
+    // often than anyone (how much: "Star" in 39-the-rivals.md). What it keeps is a
+    // flash's worth of stamina: a jump that leaves less costs it the wait,
+    // at keepFlash times what it costs anyone, so its jumps don't eat its
+    // flashes. (At a tenth, they did the other way round: its jumps fell
+    // to a quarter of its plain powers; at a hundredth both keep in band.)
+    powers: { price: 0, risk: 350, everyWay: true, jumpAny: true, dashSpend: true, keepFlash: 0.01 },
     golden: { power: 6, apple: 1.5, contested: 0.5 }, // (it eats about twice as much golden power food as anyone)
   },
 };

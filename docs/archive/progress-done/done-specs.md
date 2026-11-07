@@ -81,3 +81,16 @@ contested, and whether a snake that eats one places or wins better than one that
 is. If it does not: +3 and both rests refilled ("the apple of vigour"), measured both ways like any rule.
 
 Done (PR #459): measured, and no rule changed. The question is #460.
+
+### 2u. One stamina for jump and dash (the owner, 2 November 2026; an engine-rules entry, after 2z and before part 7)
+
+One stamina for both plain powers, shown in how each snake looks, no tail cost, each power a third to two thirds of
+plain power uses and neither better in aggregate, the pace kept: `docs/design/37-one-stamina.md`. Part 7's pricing then
+prices the one stamina. Once it merges, the golden apple is measured again with the stamina refilled in place of the
+two rests (2z, #460): "The golden apple's worth" in `docs/design/04-food-and-the-world.md`.
+
+**Who builds it** (the owner, 6 November 2026; #530): the second account's builder, which merges its parked
+`entry/2u-stamina-looks` into `entry/2u-one-stamina` and finishes 2u in PR #462.
+
+Done (PR #462): one stamina for both plain powers, the looks on every snake (tired, awake, game on), your ring, no
+tail cost; each power a third to two thirds of plain uses, the pace kept. Star's question is #552 (answered: keep).

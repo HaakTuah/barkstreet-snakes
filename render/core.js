@@ -50,6 +50,7 @@
 //                 and every snake drawn in turn, its passes and trails
 //   tongues.js    every look's tongue (or gag)
 //   faces.js      eyes, lids, mouths, hats and beaks, and every look's face
+//   stamina.js    stamina on the snake: tired, awake or game on, in its body and eyes
 //   land.js       Sovereign's realm and Colonist's colonies: land on a map
 //   flags.js      land made ahead of a strike, its dashes, banners, flags, ripples and hues
 //   food.js       the food and its pictures, a mushroom's spit rings and cheeks

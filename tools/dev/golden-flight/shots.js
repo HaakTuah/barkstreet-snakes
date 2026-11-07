@@ -22,7 +22,7 @@ const { launch, serve, sleep } = require(path.join(root, 'tools', 'browser.js'))
       g.time = 60000; g.tick = 500; g.weather.until = 1e12;
       if (!${now}) for (let y = 9; y <= 13; y++) for (let x = 7; x <= 9; x++) g.holes.add(y * G + x);
       const [me, o] = g.snakes;
-      me.body = Array.from({ length: 9 }, (_, i) => ({ x: 6 - i, y: 10 })); me.dir = E.DIRS.right; me.leaps = ${now} ? 0 : 2; me.leapReadyAt = 0;
+      me.body = Array.from({ length: 9 }, (_, i) => ({ x: 6 - i, y: 10 })); me.dir = E.DIRS.right; me.leaps = ${now} ? 0 : 2; me.restedAt = 0;
       o.body = [[13, 12], [14, 12], [15, 12], [16, 12], [16, 13]].map(([x, y]) => ({ x, y })); o.dir = E.DIRS.left;
       for (const s of g.snakes) { s.prev = s.body.map(c => ({ ...c })); s.lastAte = g.time; s.nextStarve = g.time + 99999; }
       g.food = [{ x: 12, y: 7, kind: 'food', expires: g.tick + 900 }];
