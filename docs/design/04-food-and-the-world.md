@@ -223,5 +223,20 @@ The golden apple (+3) doesn't pay. The rivals eat every one, 19 ticks after it c
 (another head within 5 cells). Played on from each eat with and without it (`tools/dev/fork-moves.js --move golden`; 903
 eats on seeds 101 to 104), eating one gains −0.01 ± 0.05 places and costs 2.9 ± 1.2 s alive: the length outweighs the
 meal. "The apple of vigour" (both rests refilled as well) adds +0.01 ± 0.02 places, since the rests are mostly ready when
-it's eaten (0.36 of 2 still resting). So the apple stays as it is for now, and is measured again with the one stamina
-refilled once 2u merges. The owner's question is #460.
+it's eaten (0.36 of 2 still resting). So 2z left the apple as it was, to be measured again against the one stamina
+(the owner's question, #460; answered, and built by 2u+ below).
+
+**2u+ (PR #560):** the golden apple now also fills the bar (only its growth's share of stamina banks) and gives a
+shield (`GOLDEN_SHIELD_MS`, 10 s): the next crash you live through costs no tail (the stun stays: without it, snakes
+bounced straight back into what they hit), and the shield is gone; boxed in, it can't save you, and where only the
+tail a crash sheds would leave you room it isn't spent (you pay the crash as anyone would). Its cue is a cream ring
+round the head (`render/shield.js`), flickering over its last 2 s and bursting when it takes a crash; its lesson comes
+with your first golden apple. Forked at each eat as it ships (seeds 524 and 525, about 237 eats each), the full bar
+comes out a hair below even (0.000 ± 0.027 and −0.111 ± 0.037 places: rivals flash more than pays, #536, and a full
+bar invites it), and the shield on top even (−0.025 and +0.017 ± 0.030 places) while saving a fifth of a segment at
+10 s: it never makes anyone safe. The +3 itself is a little ahead of a plain +1 there, within noise (+0.15 ± 0.10 places on each seed),
+where on 2u it cost (−10.5 ± 4.1 points of wins on seed 521). Neither extra moves whole rounds; they are built as
+the owner asked, and part 7 prices every power. Everyone sees a shield by its ring, the rivals too (`aiView()`), and
+each knows its own: a rival gives a shielded head twice the berth (`ai/risk.js`), so nobody can ram rivals with it.
+Shielded itself, a rival keeps its usual berth: fearing a head-on half as much then cost it 0.12 ± 0.04 places a
+golden apple.

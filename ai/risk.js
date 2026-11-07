@@ -6,7 +6,10 @@
 // read with when I'd get there, see evaluate), and its wider reach since
 // I last saw it (soft zone, `risk`).
 // (A rival still stunned next tick can't strike; one I just met head-on,
-// I give twice the berth for a while, so we don't go for the same cell again.)
+// I give twice the berth for a while, so we don't go for the same cell again.
+// 2u+: a golden apple's shield takes a bump for nothing, so a shielded head
+// I give twice the berth. Shielded myself, I keep my usual berth: fearing a
+// head-on half as much cost the shielded 0.12 places a golden apple.)
 // Only cells it can step into: not back into its neck, a hole or a body
 // still there. (One I saw in the air comes down on its ring on the move
 // its ring says: a head-on then; a move either side at half (a flight
@@ -18,7 +21,7 @@ function readRisk() {
   rings = [];
   ringRisk = (i, t) => { let v = 0; for (let n = 0; n < rings.length; n += 3) if (rings[n + 1] === i && Math.abs(rings[n] - t) <= 1) v += rings[n] === t ? rings[n + 2] : rings[n + 2] / 2; return v; };
   others.forEach((o, k) => {
-    const strike = stunLeft(o) > 1 ? 0 : w.headRisk * (o.id === me.bumped ? 2 : 1);
+    const strike = stunLeft(o) > 1 ? 0 : w.headRisk * (o.id === me.bumped ? 2 : 1) * (o.shield && !me.shield ? 2 : 1);
     const wrapO = o.wrap > 0, at = v => wrapO ? (v + N) % N : v; // (the edges wrap for it a while)
     for (const d of DIR_LIST) {
       if (d.x === -o.dir.x && d.y === -o.dir.y) continue; // (its neck)

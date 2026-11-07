@@ -42,19 +42,37 @@ function flash(game, s) {
 // One stamina for both plain powers (2u): s.restedAt, when its bar is full
 // again (game time), so how much is spent is how long till then, in ms of
 // refill. A plain power goes with its share (JUMP_STAMINA_MS or
-// DASH_STAMINA_MS) in the bar, and spending it pushes restedAt on by that.
+// DASH_STAMINA_MS) in the bar. Food puts
+// some back (STAMINA_FOOD_MS a segment it grows you), and what's put back
+// past the full bar banks in s.bank, up to STAMINA_BANK bars in all (2u+);
+// a power is paid from the bank first, so a snake with any banked is full.
 // (At time t: the renderer asks on the clock as drawn, and ahead of it.)
 const spent = (game, s, t = game.time) => Math.max(0, s.restedAt - t);
+// What's in the bar and the bank (ms of stamina), at time t.
+const stamina = (game, s, t = game.time) => T.STAMINA_MS - spent(game, s, t) + s.bank;
 // How long until it has `cost` in the bar (ms; 0: now), at time t.
 const staminaIn = (game, s, cost, t = game.time) => Math.max(0, spent(game, s, t) - (T.STAMINA_MS - cost));
-function tire(game, s, cost) { s.restedAt = Math.max(s.restedAt, game.time) + cost; }
+function tire(game, s, cost) {
+  const b = Math.min(s.bank, cost);
+  s.bank -= b;
+  if (cost > b) s.restedAt = Math.max(s.restedAt, game.time) + cost - b;
+}
+// ms of stamina put back (a meal): the bar first, the rest banked.
+function refill(game, s, ms) {
+  const gap = spent(game, s);
+  if (ms <= gap) { s.restedAt -= ms; return; }
+  s.restedAt = Math.min(s.restedAt, game.time);
+  s.bank = Math.min((T.STAMINA_BANK - 1) * T.STAMINA_MS, s.bank + ms - gap);
+}
 // How long until it can jump, or flash (ms; 0: now), golden charges included.
 const leapIn = (game, s) => s.leaps > 0 ? 0 : staminaIn(game, s, T.JUMP_STAMINA_MS);
 const flashIn = (game, s) => s.dashes > 0 ? 0 : staminaIn(game, s, T.DASH_STAMINA_MS);
 // How its stamina shows on it (37-one-stamina), as anyone on the log sees
 // it, at time t: 0 tired (it can afford neither power), 1 awake (one, or
-// golden ones), 2 game on (a full bar). Never more than the step.
+// golden ones), 2 game on (a full bar), 3 charged (some banked above it:
+// 2u+). Never more than the step.
 function staminaStep(game, s, t = game.time) {
+  if (s.bank > 0) return 3;
   const left = T.STAMINA_MS - spent(game, s, t);
   if (left >= T.STAMINA_MS) return 2;
   return s.leaps > 0 || s.dashes > 0 || left >= Math.min(T.JUMP_STAMINA_MS, T.DASH_STAMINA_MS) ? 1 : 0;

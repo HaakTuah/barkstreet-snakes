@@ -68,7 +68,9 @@ function makeSnake(id, spawn, props) {
     stunUntil: -1, burnUntil: -1, burnFrom: -1,
     // Powers. leaps: golden leaps held (golden beetles); dashes: golden
     // flashes held (golden leaves); both can be held at once. restedAt:
-    // when its stamina is full again (game time; see the engine's leapIn);
+    // when its stamina is full again (game time; see the engine's leapIn),
+    // bank: what it has banked above the full bar (2u+, ms of stamina);
+    // shieldUntil: its golden apple's shield holds till then (game time);
     // wrapUntil: the edges wrap round for it till then (a golden mushroom);
     // flight: while its head is in the air, { dir, over: [the cells it
     // still flies over, a tick each], land: { x, y } (where it comes down,
@@ -77,7 +79,7 @@ function makeSnake(id, spawn, props) {
     // it asked for goes (the next one it moves). cheek: a mushroom in its
     // cheek (round six B), { power: the segments it'll take next, spitAt:
     // the tick it's spat, left: the ticks it had left to wilt }, or null.
-    leaps: 0, dashes: 0, restedAt: 0, wrapUntil: -1, flight: null, leapArmed: -1, flashArmed: -1, cheek: null,
+    leaps: 0, dashes: 0, restedAt: 0, bank: 0, shieldUntil: -1, wrapUntil: -1, flight: null, leapArmed: -1, flashArmed: -1, cheek: null,
     queue: [], cause: null, killer: null, killerId: null, diedAt: null, memory: {}, planned: null, plannedTick: -1, ...props,
   };
 }
