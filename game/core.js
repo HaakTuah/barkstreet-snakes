@@ -149,7 +149,7 @@ const FLAVOR = {
   youGoldBeetle: n => `Golden: ${n} long jump${n === 1 ? '' : 's'}, free. ${touchFirst ? 'Tap' : 'Space or a click'} to jump.`,
   bridgeFirst: 'A snake across a pit is a bridge, until its tail passes.', // (the first time a snake lies across a pit near you: round six B's bridges)
   youStamina: 'One stamina: jump or dash, your choice.', // (2u: the first plain jump or dash that leaves you tired, the spec's words; the ring round your head is the bar, and the looks are on every snake: see render/stamina.js)
-  youCharged: 'Every meal tops up your stamina. Past full, it banks: you glow warm.', // (2u+: the first meal that banks some above the full bar, the glow on your snake while you read: see render/stamina.js)
+  youCharged: 'Meals top up stamina. Past full, it banks: you glow.', // (2u+: the first meal that banks some above the full bar, the glow on your snake while you read: see render/stamina.js)
   youDashFirst: 'Golden dashes cut bodies two thick and put out fire.',
   youCutFirst: 'A dash cuts through a thin body.', // (round six B: your first cut)
   youFlashFailed: 'Too thick! A failed dash costs 5 off your tail.', // (your first failed flash)
