@@ -84,7 +84,8 @@ A mushroom shrinks whoever eats it, so it looks it, as the first seconds settled
 
 ### Rivals see food as it is
 
-Rivals see other snakes a quarter of a second late, like a person's reaction, and food as it is now (seen late, they
+Rivals see other snakes as a person would notice them, a quarter of a second late near them and later across the log
+("What a rival sees" in `39-the-rivals.md`), and food as it is now (seen late, they
 chased where a beetle had been).
 
 - A rival aims where a fleeing beetle is heading, from the way it faces and its pace, which anyone can see: straight on,

@@ -43,15 +43,56 @@ function holesSeen(game, n) {
   }
   return game.holesView.set;
 }
-// What an AI "sees": its own body now, the other snakes (and holes and
-// fire) as of its reaction time ago, like a person would; the food as it
+// How many ticks late an AI sees another snake (2q): as late as a person
+// would notice it, REACTION_MS near its head growing to REACTION_FAR_MS
+// across the board, give or take a little that drifts from moment to moment
+// (the same whenever it's asked, and in every copy of the game), so it's
+// REACTION_MS near on average, as the ticks fall; never sooner than a tick.
+// It drifts slowly, and what's seen of a snake never goes back in time
+// (aiView). Its distance is read where the snake was a reaction time ago.
+function noticeDelay(game, snake, o, tickMs) {
+  const h = snake.body[0];
+  let d = Infinity;
+  for (const c of o.body) d = Math.min(d, Math.abs(c.x - h.x) + Math.abs(c.y - h.y));
+  const u = game.tick / T.REACTION_DRIFT_TICKS, i = Math.floor(u), f = u - i;
+  const jitter = noticeJitter(i, snake.id, o.id) * (1 - f) + noticeJitter(i + 1, snake.id, o.id) * f;
+  const ms = T.REACTION_MS + (T.REACTION_FAR_MS - T.REACTION_MS) * Math.min(1, d / T.REACTION_FAR_CELLS) + T.REACTION_JITTER_MS * jitter;
+  return Math.max(1, Math.round(ms / tickMs));
+}
+// (A number in [-1, 1) from a moment and the two snakes' ids, the same in every copy of the game.)
+function noticeJitter(i, a, b) {
+  let r = Math.imul(i + 1, 0x9e3779b1) ^ Math.imul(a + 1, 0x85ebca6b) ^ Math.imul(b + 1, 0xc2b2ae35);
+  r = Math.imul(r ^ (r >>> 15), 0x27d4eb2f); r ^= r >>> 13;
+  return (r >>> 0) / 0x80000000 - 1;
+}
+// What an AI "sees": its own body now, the other snakes as of when it would
+// notice them (noticeDelay) and holes and fire as of its reaction time ago,
+// like a person would; the food as it
 // is now (a beetle as it is: where it is, which way it faces, when it last
 // moved, and whether it's scurrying). Rivals are just ids and bodies;
 // nothing says which one is human.
 function aiView(game, snake) {
-  const delay = Math.max(1, Math.round(T.REACTION_MS / tickLength(game)));
-  const idx = Math.max(0, game.history.length - 1 - delay);
+  const tickMs = tickLength(game), last = game.history.length - 1;
+  const delay = Math.max(1, Math.round(T.REACTION_MS / tickMs));
+  const idx = Math.max(0, last - delay);
   const snap = game.history[idx];
+  const others = [];
+  for (const o of snap.snakes) {
+    if (o.id === snake.id) continue;
+    // (Never an older look than the last: its head can jump, over a wrapped edge or in a flight, and with it the
+    // distance; `noticed` keeps the tick of the moment it last saw each snake.)
+    const at = Math.max(0, last - noticeDelay(game, snake, o, tickMs), last - game.tick + ((snake.noticed ||= {})[o.id] ?? -Infinity)), d = idx - at;
+    snake.noticed[o.id] = game.tick - last + at;
+    const seen = d !== 0 && game.history[at].snakes.find(l => l.id === o.id); // (none: dead since, so seen as in the rest of the view)
+    // (Seen d ticks before the rest (or after, d < 0), its timers are counted on by those d ticks, so every one reads
+    // as of `age` ago, as the rest of the view does, and a rival reckons where it's got to as for any snake: a stun
+    // under 0 is how long it's been moving before then. Its turns since, it doesn't see.)
+    // (late: how many ticks before the rest it was seen, for one who watches the snakes from moment to moment.)
+    others.push(!seen ? o : {
+      ...seen, late: d, stun: seen.stun - d, spitIn: seen.spitIn && seen.spitIn - d,
+      air: seen.air && Math.max(1, seen.air - d), wrap: seen.wrap && Math.max(0, seen.wrap - d * tickMs), // (none stays none)
+    });
+  }
   return {
     grid: GRID,
     me: {
@@ -70,7 +111,7 @@ function aiView(game, snake) {
       // (a mushroom in its cheek: it's spat after this many more moves (0: none), this strong)
       spitIn: snake.cheek ? Math.max(0, snake.cheek.spitAt - game.tick) : 0, spitPower: snake.cheek ? Math.min(T.SHRINK_MAX, snake.cheek.power + 1) : 0,
     },
-    others: snap.snakes.filter(o => o.id !== snake.id),
+    others, // (each as of when I'd notice it: `age` ticks ago near my head, a little more across the board)
     food: game.food, // (as it is: it only changes on a tick, so thinking ahead sees what the tick would)
     holes: blockedSeen(game, snap),
     fire: fireCellsSeen(snap), // (among the holes: the cells that are only fire, which it can go through, at a price)

@@ -7,8 +7,8 @@ when it is merged into `develop`; add the owner's new tasks where he places them
 
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
-**The main lane is 2ab;** part 4 (#198, merged as it stands), 2y, 2y+, part 5, 2x, 2z, 2u and 2u+ before it are
-done. The polish lane and the workshop lane run beside it, each claimed by a draft PR.
+**The main lane is item 5's part 3b+** (the spit along the line; 2ab is blocked on #574); part 4 (#198, merged as it stands),
+2y, 2y+, part 5, 2x, 2z, 2u, 2u+ and 2q before it are done. The polish lane and the workshop lane run beside it, each claimed by a draft PR.
 
 ## For the owner
 
@@ -131,17 +131,18 @@ useful in about half the moments (design 37): the extra dashes are poor picks. E
 does not pay, in its own style, the rules unchanged; done when that gap closes within noise, trademarks kept. Before
 part 7, whose pricing needs rivals that judge a dash well.
 
+**Blocked, waiting on the owner (#574).** On fresh seeds (631, 632; 1200 pairs) the gap is −1.3 s [−3.5, +1.0], under
+half of #560's. Two fixes did not move it: no plain dash when boxed (−1.1 s, and 0.4 fewer flashes a minute) and three
+times the reserve when boxed (−1.7 s). Neither price change alone differs from develop (cheaper dash −0.2 s, dearer jump
++0.3 s), and no rival stands out. The brief and the `pdash` fork mode are on draft PR #572.
+
 ### 5. Round six B: the new moves (DESIGN "Round six B")
 
-The golden jump that flies, leap now, gold portals, dropped charges, the spit along the line and one pricing model for every power, each its own playable PR that the rivals use well. *Done:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195). **Next, in order:** part 4 (draft PR #198, 2r folded in; the owner answered on 1 November 2026 that the moves stay as designed and the rivals are improved until their users come out ahead: the row is in `docs/archive/progress-done/owner-answered.md`, "For the owner, answered"), then 2x (done, PR #456), then 2q (2s done, PR #289; part 4's both-ways test runs again on its log when part 4 goes on), part 3b+ (the spit flies along the line), part 5 (done, PR #202: gold portals; its finding, that following feeds but wins no places, is #447), part 6 (built on `round6b/dropped-charges`) and part 7 (parked on `round6b/pricing`; it also fixes the trademark measures and lifts Joker into the band, see the spec); then the teaching system (item 4). Spec: `docs/handoff/queue-specs.md`, "5. Round six B: the new moves". **When part 4 merges:** run the census on seeds 3 and 11 again (`scripts/sim.sh 200 --seed 3 --census --check`): chased beetles must still get away a third to 45% of the time (2w measured it before the flight was in; `--check` fails a census outside that band).
+The golden jump that flies, leap now, gold portals, dropped charges, the spit along the line and one pricing model for every power, each its own playable PR that the rivals use well. *Done:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195). **Next, in order:** part 4 (draft PR #198, 2r folded in; the owner answered on 1 November 2026 that the moves stay as designed and the rivals are improved until their users come out ahead: the row is in `docs/archive/progress-done/owner-answered.md`, "For the owner, answered"), then 2x (done, PR #456), then 2q (done, PR #576, part 4's both-ways test run again on its log), part 3b+ (the spit flies along the line), part 5 (done, PR #202: gold portals; its finding, that following feeds but wins no places, is #447), part 6 (built on `round6b/dropped-charges`) and part 7 (parked on `round6b/pricing`; it also fixes the trademark measures and lifts Joker into the band, see the spec); then the teaching system (item 4). Spec: `docs/handoff/queue-specs.md`, "5. Round six B: the new moves". **When part 4 merges:** run the census on seeds 3 and 11 again (`scripts/sim.sh 200 --seed 3 --census --check`): chased beetles must still get away a third to 45% of the time (2w measured it before the flight was in; `--check` fails a census outside that band).
 
 ### 2r. No hop onto a doomed island (30 October 2026; part of item 5's part 4)
 
 Before a hop or a flight a rival weighs where it lands, above all whether it can jump off again; built into part 4 (#198). Spec: `docs/handoff/queue-specs.md`, "2r. No hop onto a doomed island".
-
-### 2q. Rivals notice like people (30 October 2026; an AI entry, after 2s)
-
-Every rival sees another snake as late as a person would notice it: `REACTION_MS` near its own head, growing to about 400 ms across the board, measured with `tools/abtest.js`. Spec: `docs/handoff/queue-specs.md`, "2q. Rivals notice like people".
 
 ### 2b. Hunger's worth at a contested apple, for every rival (the owner, 29 October 2026; an AI entry)
 
