@@ -189,8 +189,11 @@ window.TUNING = Object.freeze({
   EMBER_FIRE_TICKS: 22,     // ...then burns this long, a small fire that doesn't spread
 
   // --------------------------------------------------------------------- AI
-  REACTION_MS: 240,         // how stale every AI's view of the other snakes is
-  HISTORY: 8,               // board snapshots kept for that delay
+  REACTION_MS: 240,         // how stale every AI's view of the other snakes is near its own head (and of holes and fire)...
+  REACTION_FAR_MS: 400,     // ...growing with how far the snake is, to this at REACTION_FAR_CELLS or more away (2q: noticed as a person would)...
+  REACTION_FAR_CELLS: 24,   // ...(steps from its head to that snake's nearest cell)...
+  REACTION_JITTER_MS: 50,   // ...give or take up to this, moment to moment (never under REACTION_MS)
+  HISTORY: 8,               // board snapshots kept for those delays
   AI_HUNGRY_MS: 10000,      // with this long left before starving, an AI starts looking for food, harder as it gets closer
   AI_DESPERATE_MS: 11000,   // with less than this much life left by hunger (its own clock, shrinking included), an AI drops its errands and takes its chances for food
   LAND_REACH: 0.5,          // a cell is Sovereign's or a colony's land when its centre is within the field's radius plus this of the field's centre (one rule: AI, chatter, HUD, borders)
