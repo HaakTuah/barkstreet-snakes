@@ -48,7 +48,7 @@ for (const { what, time, gold } of [
   { what: 'a golden dash', time: 1000, gold: true },
 ]) {
   await round(time);
-  await ev(`(() => { const g = SnakeDebug.game(), me = g.snakes[0]; me.body = [8, 7, 6, 5, 4, 3].map(x => ({ x, y: 12 })); me.prev = null; me.dir = SnakeEngine.DIRS.right; me.queue.length = 0; me.stunUntil = -1; me.flight = null; me.leapArmed = me.flashArmed = -1; me.flashReadyAt = 0; me.dashes = ${gold ? 2 : 0}; me.leaps = 0; return 'ok'; })()`);
+  await ev(`(() => { const g = SnakeDebug.game(), me = g.snakes[0]; me.body = [8, 7, 6, 5, 4, 3].map(x => ({ x, y: 12 })); me.prev = null; me.dir = SnakeEngine.DIRS.right; me.queue.length = 0; me.stunUntil = -1; me.flight = null; me.leapArmed = me.flashArmed = -1; me.restedAt = 0; me.dashes = ${gold ? 2 : 0}; me.leaps = 0; return 'ok'; })()`);
   await ev('vf(12)');
   // Just after a tick, press E (early in the tick: the head still short of its cell's centre).
   await toTick(1);
@@ -73,7 +73,7 @@ const setUp = async (dashes, more = '') => {
   await ev(`(() => {
     const g = SnakeDebug.game(), me = g.snakes[0], E = SnakeEngine;
     me.body = [7, 6, 5, 4, 3, 2].map(x => ({ x, y: 12 })); me.prev = me.body.map(c => ({ x: c.x - 1, y: c.y })); me.dir = E.DIRS.right; me.queue.length = 0;
-    me.stunUntil = -1; me.flight = null; me.leapArmed = me.flashArmed = -1; me.flashReadyAt = me.leapReadyAt = 0; me.dashes = ${dashes}; me.leaps = 0; me.grow = 0;
+    me.stunUntil = -1; me.flight = null; me.leapArmed = me.flashArmed = -1; me.restedAt = 0; me.dashes = ${dashes}; me.leaps = 0; me.grow = 0;
     ${more}
     return 'ok';
   })()`);

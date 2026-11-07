@@ -187,6 +187,7 @@ let combosOk = 0;
 for (const [ahead, want] of [[1, 'leap dash:plain'], [3, 'dash:plain leap']]) {
   for (const contact of [100, 150]) {
     await ev('centre()');
+    await ev(`Object.defineProperty(SnakeDebug.game().snakes[0], 'restedAt', { get: () => 0, set() {}, configurable: true }); 'ok'`); // (a stamina that never runs out, as in the mouse suite's chord)
     await hole(ahead);
     await touch('touchStart', [{ x: cx + 20, y: cy + 30, id: 1 }]);
     await ev(`vadvance(${contact})`);
@@ -201,6 +202,7 @@ for (const [ahead, want] of [[1, 'leap dash:plain'], [3, 'dash:plain leap']]) {
     if (got === want) combosOk++;
   }
 }
+await ev(`(() => { const me = SnakeDebug.game().snakes[0]; delete me.restedAt; me.restedAt = 0; return 'ok'; })()`);
 check(combosOk === 4, 'a held tap, lifted, then a fresh swipe ahead: the jump and the flash both go', combos.join('; '));
 
 // A quick tap that rolls a few pixels as it lifts is still a tap.

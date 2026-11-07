@@ -7,7 +7,7 @@ when it is merged into `develop`; add the owner's new tasks where he places them
 
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
-**The main lane is 2u;** part 4 (#198, merged as it stands), 2y, 2y+, part 5, 2x and 2z before it are done. The
+**The main lane is 2u+;** part 4 (#198, merged as it stands), 2y, 2y+, part 5, 2x, 2z and 2u before it are done. The
 polish lane and the workshop lane run beside it, each claimed by a draft PR.
 
 ## For the owner
@@ -126,20 +126,12 @@ landing is almost never contestable. The flight stays as built for now, and no r
 The steering key of the way you're going dashes again, as a swipe ahead does, behind touch's guard: its spec is in
 `docs/handoff/queue-specs.md` under the same title.
 
-### 2u. One stamina for jump and dash (the owner, 2 November 2026; an engine-rules entry, after 2z and before part 7)
-
-One stamina for both plain powers, shown in how each snake looks, no tail cost, each power a third to two thirds of
-plain power uses and neither better in aggregate, the pace kept: `docs/design/37-one-stamina.md`. Part 7's pricing then
-prices the one stamina. Once it merges, the golden apple is measured again with the stamina refilled in place of the
-two rests (2z, #460): "The golden apple's worth" in `docs/design/04-food-and-the-world.md`.
-
-**Who builds it** (the owner, 6 November 2026; #530): the second account's builder, which merges its parked
-`entry/2u-stamina-looks` into `entry/2u-one-stamina` and finishes 2u in PR #462.
-
 ### 2u+. The stamina economy and the golden apple's worth (the owner, 3 and 4 November 2026; #460; a measurement right after 2u, then an engine-rules entry for what pays)
 
 Where the one stamina comes from (food, its own recharge, banking to a cap) and what the golden apple gives (a full
-refill, a one-bump shield), measured for every rival: its spec is in `docs/handoff/queue-specs.md` under the same title.
+refill, a one-bump shield), measured for every rival: its spec is in `docs/handoff/queue-specs.md` under the same title. 2u's
+measurements to start from (PR #462): rivals leaning on the jump outlive those leaning on the dash, and the rivals
+flash more than pays (#536), so the dash's stamina cost is the first lever.
 
 ### 5. Round six B: the new moves (DESIGN "Round six B")
 

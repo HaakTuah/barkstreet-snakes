@@ -33,7 +33,7 @@
  * @typedef {0 | 1} Flag
  * @typedef {[alive: Flag, dir: number, eaten: number, lastAte: number, nextStarve: number, cells: number[], memory: Engine.Memory | 0,
  *   autopilot: Flag, stunUntil: number, burnUntil: number, burnFrom: number, leaps: number, leapArmed: number, dashes: number,
- *   leapReadyAt: number, wrapUntil: number, flight: number, flashReadyAt: number, flashArmed: number, mealMs: number,
+ *   restedAt: number, wrapUntil: number, flight: number, flashArmed: number, mealMs: number,
  *   land: number, airLeft: number, airGold: Flag, cheek: number, spitAt: number, ring: number, ringIn: number]} SnakeRow  land: where a jump in the air comes down if it flies no further (y * 1000 + x; -1: on the ground); airLeft: cells it still flies over; ring: where its ring shows it comes down (a committed golden flight's, GOLD_FLY cells out; y * 1000 + x, -1: on the ground), ringIn the moves till it's down there; cheek: the segments a mushroom in its cheek took (0: none), spat at tick spitAt
  * @typedef {[x: number, y: number, kind: number, expires: number, zero: 0, dir: number, px: number, py: number, movedAt: number,
  *   scared: Flag, gold: Flag, digUntil: number]} BeetleRow
@@ -90,7 +90,7 @@
  * @typedef {{ t: 'away' | 'back' }} AwayMsg  the page went out of sight, and came back
  */
 window.SnakeOnline = (() => {
-  const VERSION = 24; // 2: burrows, fire and weather; 3: the woodpecker's chunks, winter; 4: crashes, burning snakes, cooking, rot; 5: golden beetles and leaps, Ouroboros; 6: powers (everyone leaps; golden leaves, dashes; golden mushrooms, wrap); 7: jump and flash apart (everyone flashes), beads' owners and rot, holes under bodies, the last apples; 8: plans, so friends draw everyone ahead the way they're going, and a held jump taken back; 9: choking on your own beads (each snake's cough; chokes and nudges, and where each piece rolled); 10: beetles that dig in (each one's digUntil; digs, and dives that were digs), several beetles underground, and food the woodpecker knocks aside (where each piece flew, and a bead's colour; where its strike promised each would land); burrows as the engine keeps them (when each was last used, and whether a dig left it), a dug burrow opening and one closing over; 11: burrows grow shut (when each started and will close over, and one starting to); 12: rivals chosen (a round's, and a shared best round's, chosen flag); 13: the lobby shows the line-up (the host's rivals, seat by seat, and which were chosen); 14: Capricious does every rival (its mood any of them, worn as a costume); 15: Copycat plays as its model plays (the style it reads, for its note); 16: round six B's island hop (a jump in the air: where it comes down, how many cells it still flies over, golden); 17: round six B's bridges (no message changed: a rule both sides must play by); 18: round six B's cuts (a failed flash's crash says so; the plain flash cuts, its own tail too: a rule both sides play by) and your own beads squashed (no choke, cough or nudge: each snake's cough gone; a squash where each went); 19: round six B's mushrooms come back up (each snake's cheek, and when it's spat; a spat mushroom's strength; a spit, where it came down, whom it hit, where it lies); 20: 2s, a piece cut loose falls (the woodpecker's mark says which of its cells fall, and its strike which fell); 21: round six B's golden flight, leap now and bumps in the air (a jump let go, a crash in the air); 22: 2y, the held golden flight always flies 5 (where each jump's ring is); 23: part 5, gold portals (each open portal in the tick; portal, through, portalShut); 24: 2x, the spitter slides over its own mushroom (a spat one's slideUntil, so it shows wet while it does)
+  const VERSION = 25; // 2: burrows, fire and weather; 3: the woodpecker's chunks, winter; 4: crashes, burning snakes, cooking, rot; 5: golden beetles and leaps, Ouroboros; 6: powers (everyone leaps; golden leaves, dashes; golden mushrooms, wrap); 7: jump and flash apart (everyone flashes), beads' owners and rot, holes under bodies, the last apples; 8: plans, so friends draw everyone ahead the way they're going, and a held jump taken back; 9: choking on your own beads (each snake's cough; chokes and nudges, and where each piece rolled); 10: beetles that dig in (each one's digUntil; digs, and dives that were digs), several beetles underground, and food the woodpecker knocks aside (where each piece flew, and a bead's colour; where its strike promised each would land); burrows as the engine keeps them (when each was last used, and whether a dig left it), a dug burrow opening and one closing over; 11: burrows grow shut (when each started and will close over, and one starting to); 12: rivals chosen (a round's, and a shared best round's, chosen flag); 13: the lobby shows the line-up (the host's rivals, seat by seat, and which were chosen); 14: Capricious does every rival (its mood any of them, worn as a costume); 15: Copycat plays as its model plays (the style it reads, for its note); 16: round six B's island hop (a jump in the air: where it comes down, how many cells it still flies over, golden); 17: round six B's bridges (no message changed: a rule both sides must play by); 18: round six B's cuts (a failed flash's crash says so; the plain flash cuts, its own tail too: a rule both sides play by) and your own beads squashed (no choke, cough or nudge: each snake's cough gone; a squash where each went); 19: round six B's mushrooms come back up (each snake's cheek, and when it's spat; a spat mushroom's strength; a spit, where it came down, whom it hit, where it lies); 20: 2s, a piece cut loose falls (the woodpecker's mark says which of its cells fall, and its strike which fell); 21: round six B's golden flight, leap now and bumps in the air (a jump let go, a crash in the air); 22: 2y, the held golden flight always flies 5 (where each jump's ring is); 23: part 5, gold portals (each open portal in the tick; portal, through, portalShut); 24: 2x, the spitter slides over its own mushroom (a spat one's slideUntil, so it shows wet while it does); 25: 2u, one stamina for jump and flash (each snake's restedAt, in place of its two rests)
   const POWERS = ['leap', 'flash', 'unleap', 'letgo'];
   const MAX_PEOPLE = 4;
   // Seat colors for people: the host is green; friends get colors no rival wears.
@@ -151,8 +151,8 @@ window.SnakeOnline = (() => {
       s: game.snakes.map(s => [
         s.alive ? 1 : 0, DIR_NAMES.indexOf(dirName(s.dir)), s.eaten, s.lastAte, s.nextStarve, cells(s),
         memoryOf(s), s.autopilot ? 1 : 0, s.stunUntil, s.burnUntil, s.burnFrom, s.leaps, s.leapArmed,
-        s.dashes, s.leapReadyAt, s.wrapUntil, s.flight ? DIR_NAMES.indexOf(dirName(s.flight.dir)) : -1,
-        s.flashReadyAt, s.flashArmed, s.mealMs,
+        s.dashes, s.restedAt, s.wrapUntil, s.flight ? DIR_NAMES.indexOf(dirName(s.flight.dir)) : -1,
+        s.flashArmed, s.mealMs,
         s.flight ? s.flight.land.y * 1000 + s.flight.land.x : -1, s.flight ? s.flight.over.length : 0, s.flight?.gold ? 1 : 0,
         s.cheek ? s.cheek.power : 0, s.cheek ? s.cheek.spitAt : -1, s.flight?.ring ? s.flight.ring.y * 1000 + s.flight.ring.x : -1, s.flight?.ring ? s.flight.ring.n ?? 0 : 0,
       ]),
@@ -301,7 +301,7 @@ window.SnakeOnline = (() => {
     game.time = msg.ms;
     /** @param {unknown} v */
     const num = v => Number.isFinite(v);
-    msg.s.forEach(([alive, dir, eaten, lastAte, nextStarve, cells, memory, autopilot, stunUntil, burnUntil, burnFrom, leaps, leapArmed, dashes, leapReadyAt, wrapUntil, flight, flashReadyAt, flashArmed, mealMs, land, airLeft, airGold, cheek, spitAt, ring, ringIn], id) => {
+    msg.s.forEach(([alive, dir, eaten, lastAte, nextStarve, cells, memory, autopilot, stunUntil, burnUntil, burnFrom, leaps, leapArmed, dashes, restedAt, wrapUntil, flight, flashArmed, mealMs, land, airLeft, airGold, cheek, spitAt, ring, ringIn], id) => {
       const s = game.snakes[id];
       if (!s) return;
       s.alive = !!alive;
@@ -316,13 +316,12 @@ window.SnakeOnline = (() => {
       s.leaps = num(leaps) ? leaps : 0;
       s.leapArmed = num(leapArmed) ? leapArmed : -1;
       s.dashes = num(dashes) ? dashes : 0;
-      s.leapReadyAt = num(leapReadyAt) ? leapReadyAt : 0;
+      s.restedAt = num(restedAt) ? restedAt : 0;
       s.wrapUntil = num(wrapUntil) ? wrapUntil : -1;
       // (In the air: on over airLeft more cells, straight on, then down at land.)
       const fd = num(flight) && flight >= 0 && num(land) && land >= 0 ? DIRS[DIR_NAMES[flight]] : null, head = cells[0], left = num(airLeft) ? Math.max(0, Math.min(8, airLeft)) : 0;
       const G = window.TUNING.GRID, wrapped = /** @param {number} v */ v => s.wrapUntil > msg.ms ? (v + G) % G : v; // (over the wrapped edge, as the host has it)
       s.flight = fd ? { dir: fd, over: Array.from({ length: left }, (_, i) => ({ x: wrapped(head % 1000 + fd.x * (i + 1)), y: wrapped(Math.floor(head / 1000) + fd.y * (i + 1)) })), land: { x: land % 1000, y: (land - land % 1000) / 1000 }, gold: airGold ? 1 : 0, ...(num(ring) && ring >= 0 ? { ring: { x: ring % 1000, y: (ring - ring % 1000) / 1000, n: num(ringIn) ? Math.max(0, Math.min(8, ringIn)) : 1 } } : {}) } : null;
-      s.flashReadyAt = num(flashReadyAt) ? flashReadyAt : 0;
       s.flashArmed = num(flashArmed) ? flashArmed : -1;
       s.mealMs = num(mealMs) && mealMs > 0 ? mealMs : s.mealMs; // (for the hunger bar)
       s.cheek = Number.isInteger(cheek) && cheek > 0 && Number.isInteger(spitAt) ? { power: Math.min(window.TUNING.SHRINK_MAX, cheek), spitAt, left: 0 } : null; // (the bulge and its ring)

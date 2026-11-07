@@ -33,19 +33,18 @@ window.TUNING = Object.freeze({
   // tap; E, Shift or a swipe the way you're going). A jump hops islands: up
   // over what's right in front (a body, a hole or fire) and up to
   // LEAP_REACH cells of it, a cell a tick, landing on the first free cell
-  // beyond, for the tip of your tail; then it needs a moment. A flash goes FLASH_LENGTH
-  // cells in one tick along the ground, free, then rests. Round six B: a
+  // beyond. A flash goes FLASH_LENGTH cells in one tick along the ground.
+  // Both spend from one stamina (2u): no tail, only the bar. Round six B: a
   // flash cuts through a body FLASH_THICK thick (a dash, DASH_THICK) with
   // free log beyond (anyone's, your own too: the part behind the cut falls
   // to beads; fewer than MIN_LENGTH left in front of it, and it's out), and
   // a flash that runs into what it can't get through has failed.
-  LEAP_COST: 1,             // a leap costs this many segments off the tail (and needs more than MIN_LENGTH)...
-  LEAP_COOLDOWN_MS: 4000,   // ...and can't be done again for this long
+  STAMINA_MS: 11500,        // one stamina for both plain powers (37-one-stamina): the bar, in ms of refill from empty to full...
+  JUMP_STAMINA_MS: 5000,    // ...a plain jump takes this much of it...
+  DASH_STAMINA_MS: 8500,    // ...a plain flash this much (each goes only with that much in the bar; golden ones take none)
   LEAP_WINDOW: 5,           // a jump pressed for waits this many ticks for something right in front to hop, and somewhere to land within reach (so a press made with a hurdle 4 or 5 cells ahead still goes; 3 before round six B), for rivals too
   LEAP_REACH: 3,            // round six B, the island hop: a jump goes over up to this many cells of anything it hops (bodies, holes, fire; one before), a cell a tick in the air, and comes down on the first free cell beyond: over three, it's up three ticks and lands on the fourth
   FLASH_LENGTH: 2,          // a flash: this many cells in one tick, along the ground (it eats on the way, cuts a body one thick with free log beyond, and puts out the first fire it passes)...
-  FLASH_COST: 0,            // ...for this many segments off the tail (free: a cost made rounds longer and starved snakes, in simulation)...
-  FLASH_COOLDOWN_MS: 12000, // ...and then it rests this long (6 s before it cut: round six B wants 10 to 12 s; at 11, rivals cut 10 times a round)
   FLASH_THICK: 1,           // a flash cuts through a body this many cells thick, a dash DASH_THICK; with nothing free beyond, or thicker, or a head, it fails
   FAIL_LOSS: 5,             // a failed flash (into the edge, a hole, a head, a body it can't cut) costs this many segments off the tail, not CRASH_LOSS...
   FAIL_STUN_TICKS: 6,       // ...and stuns this long, not STUN_TICKS (a golden one into the edge or a hole still blows up)

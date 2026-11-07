@@ -5,7 +5,7 @@
 // | { type: 'crash', snake, x, y, cause, killer, killerId, lost } (it bounced, lost `lost` segments, and is stunned)
 // | { type: 'leap', snake, x, y, gold, reach } (it took off over the cell x, y; reach: the cells it flies over, a tick each, landing the tick after)
 // | { type: 'dash', snake, x, y, n, plain } (it went n cells from x, y: plain 1, a flash; else a golden dash) | { type: 'douse', x, y } (a dash put a fire out)
-// | { type: 'fizzle', snake, why, x, y, flash } (asked to jump, or flash (flash: 1), but couldn't: 'resting', 'small' or
+// | { type: 'fizzle', snake, why, x, y, flash } (asked to jump, or flash (flash: 1), but couldn't: 'resting' or
 //   'landing'; x, y the cell it faced, off the board at the edge)
 // | { type: 'alight', snake } (crawled into fire) | { type: 'singe', snake } (lost a segment to the flames)
 // | { type: 'starving', snake } | { type: 'woodpecker' } (it came) | { type: 'aim', x, y }
@@ -388,5 +388,5 @@ function step(game) {
 
 window.SnakeEngine = {
   GRID, PLAYER_COLOR, PERSONAS, DIRS, WEATHER,
-  createGame, step, tickMs: tickLength, hungerLeft, hungerWarning, aiView, canThinkAhead, thinkAhead, suddenDeath, leap, letGo, leapIn, flash, flashIn, rollSide, knockTo, knocks, beakDepth, beakGap,
+  createGame, step, tickMs: tickLength, hungerLeft, hungerWarning, aiView, canThinkAhead, thinkAhead, suddenDeath, leap, letGo, leapIn, flash, flashIn, staminaIn, staminaStep, rollSide, knockTo, knocks, beakDepth, beakGap,
 };

@@ -33,10 +33,10 @@ declare namespace Engine {
     autopilot?: boolean;
     persona?: unknown; personaKey?: string;
     stunUntil: number; burnUntil: number; burnFrom: number;
-    leaps: number; leapArmed: number; leapReadyAt: number; dashes: number; wrapUntil: number;
+    leaps: number; leapArmed: number; restedAt: number; dashes: number; wrapUntil: number;
     flight: { dir: Dir; over: { x: number; y: number }[]; land: { x: number; y: number }; gold?: Flag; held?: Flag; flown?: number; path?: number[]; ring?: { x: number; y: number; n?: number } } | null;
     jumpHeld?: Flag; leapNow?: Flag; flyFor?: number; flyTurn?: { at: number; dir: Dir } | null; flew?: number; bumped?: boolean;
-    flashReadyAt: number; flashArmed: number;
+    flashArmed: number;
     /** A mushroom in its cheek (round six B): the segments it took, when it's spat, the ticks it had left to wilt. */
     cheek: { power: number; spitAt: number; left: number } | null;
     /** A rival's next way once it's thought, and the tick it thought it for; a person's queued turns. */

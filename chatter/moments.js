@@ -325,7 +325,7 @@ function update() {
     // Star's flash back from its rest: raring to go, once it's been back a
     // moment (if it flashes or jumps by then, it's resting again: no word).
     if (showsOff(s)) {
-      const resting = chatGame.time < s.flashReadyAt;
+      const resting = window.SnakeEngine.flashIn(chatGame, s) > 0;
       if (was.resting && !resting) was.readyAt = chatGame.time + READY_AFTER;
       if (resting) was.readyAt = null;
       else if (was.readyAt != null && chatGame.time >= was.readyAt) { was.readyAt = null; showOff(s, 'ready'); }
@@ -374,7 +374,7 @@ function update() {
   // Small talk now and then. (Star, while its flash rests, grumbles as often as not.)
   if (chatGame.time - lastAny > 3500 && Math.random() < 0.04) {
     const s = chatPick(alive);
-    if (s) chatSay(s, showsOff(s) && chatGame.time < s.flashReadyAt && Math.random() < 0.5 ? 'resting' : 'idle', anyone(s));
+    if (s) chatSay(s, showsOff(s) && window.SnakeEngine.flashIn(chatGame, s) > 0 && Math.random() < 0.5 ? 'resting' : 'idle', anyone(s));
   }
 }
 
