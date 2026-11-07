@@ -40,8 +40,8 @@ function bump(shielded) {
 }
 {
   const bare = bump(false), held = bump(true);
-  check('2u+: a shield takes the next crash: no tail lost, no stun, and it\'s gone (the crash says so)',
-    held.alive && held.len === 6 && held.stun <= 1 && held.shield === -1 && held.said && bare.len === 6 - T.CRASH_LOSS && bare.stun > 1, JSON.stringify({ bare, held }));
+  check('2u+: a shield takes the next crash: no tail lost (the stun stays), and it\'s gone (the crash says so)',
+    held.alive && held.len === 6 && held.stun === bare.stun && held.shield === -1 && held.said && bare.len === 6 - T.CRASH_LOSS && bare.stun > 1, JSON.stringify({ bare, held }));
   // Boxed in, it does no good: a shielded snake nose to nose with a wall, walls all round.
   const g = board([[line(5, 5, 3), 'right'], [[[6, 4], [6, 5], [6, 6], [5, 6], [4, 6], [3, 6], [3, 5], [3, 4], [4, 4], [5, 4]], 'up']], { time: 60000 }), s = g.snakes[0];
   s.shieldUntil = g.time + 5000;

@@ -154,11 +154,12 @@ function freeBy(game, o, j, wake) {
   return wait + L - j + o.grow <= wake;
 }
 // What a crash this tick costs a snake, and how long it stuns it: more
-// for a failed flash; nothing with a golden apple's shield (2u+), unless
-// only the tail it'd lose leaves it room: then the shield stays unspent
-// and it pays as anyone would (see room, in step).
+// for a failed flash. A golden apple's shield (2u+) takes the tail it'd
+// lose, not the stun (bouncing on at once, it ran back into what it hit),
+// unless only that tail leaves it room: then the shield stays unspent and
+// it pays as anyone would (see room, in step).
 const lossOf = s => s.shielded ? 0 : s.failed ? T.FAIL_LOSS : T.CRASH_LOSS;
-const stunOf = s => s.shielded ? 0 : s.failed ? T.FAIL_STUN_TICKS : T.STUN_TICKS;
+const stunOf = s => s.failed ? T.FAIL_STUN_TICKS : T.STUN_TICKS;
 // A head that gets to (x, y) this tick (it doesn't crash), if one does.
 function arrivalAt(x, y) {
   for (const o of moving0) if (o.next && o.next.x === x && o.next.y === y && !crashes0.has(o)) return o;

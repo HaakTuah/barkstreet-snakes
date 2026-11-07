@@ -227,7 +227,8 @@ it's eaten (0.36 of 2 still resting). So 2z left the apple as it was, to be meas
 (the owner's question, #460; answered, and built by 2u+ below).
 
 **2u+ (PR #560):** the golden apple now also fills the bar (only its growth's share of stamina banks) and
-gives a shield (`GOLDEN_SHIELD_MS`, 10 s): the next crash you live through costs no tail and no stun, and the shield
+gives a shield (`GOLDEN_SHIELD_MS`, 10 s): the next crash you live through costs no tail (the stun stays: without it,
+snakes bounced straight back into what they hit), and the shield
 is gone; boxed in, it can't save you, and where only the tail a crash sheds would leave you room it isn't spent
 (you pay the crash as anyone would). Its cue is a cream ring round the head (`render/shield.js`), flickering over its
 last 2 s and bursting when it takes a crash; its lesson comes with your first golden apple. Forked at each eat (seeds

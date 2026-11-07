@@ -82,7 +82,7 @@ const GUIDE_ROWS = [
   ]],
   ['Food', [
     ['apple', 'Apple', `Worth 1, and a full tummy. ${inWords(TUNE.APPLES).replace(/^./, c => c.toUpperCase())} on the log at a time; leave one too long and it rots.`],
-    ['golden', 'Golden apple', `Worth ${TUNE.GOLDEN_GROWTH}, a full bar of stamina, and a shield round your head for ${secs(TUNE.GOLDEN_SHIELD_MS)} s: it takes your next bump (no tail lost, no stun). Boxed in, it can’t save you. Everyone saw it land.`],
+    ['golden', 'Golden apple', `Worth ${TUNE.GOLDEN_GROWTH}, a full bar of stamina, and a shield round your head for ${secs(TUNE.GOLDEN_SHIELD_MS)} s: it takes your next bump (no tail lost). Boxed in, it can’t save you. Everyone saw it land.`],
     ['beetle', 'Beetles', `Worth ${TUNE.BEETLE_GROWTH}, up to ${inWords(TUNE.BEETLE_MAX ?? 2)} out at once, even in sudden death. They scurry from heads at half your speed. A cornered one digs in: come straight at it and it’s gone, so be nearer, or cut it off from its burrow. They flee the woodpecker’s mark too, and it eats any still on it when it strikes.`],
     ['dig', 'Burrows', `${TUNE.BURROW_FROM_DIG ? 'A beetle that digs in leaves a burrow, taking the place of any burrow near it (burrows keep apart). ' : ''}A burrow left unused grows shut (past ${inWords(TUNE.BURROW_MAX)}, the one unused longest): beetles still go in, but none come out.`],
     [['pellet', 'squash'], 'Beads', `What a crash knocks off, and what a dead snake leaves (${TUNE.CORPSE_EVERY === 2 ? 'every other segment' : TUNE.CORPSE_EVERY === 1 ? 'all of it' : `one segment in ${TUNE.CORPSE_EVERY}`}). Worth 1 each, and they rot. Your own beads you squash flat as you pass, so they feed nobody: run them over to keep them from the others.`],
