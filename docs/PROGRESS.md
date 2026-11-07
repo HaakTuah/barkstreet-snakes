@@ -7,8 +7,8 @@ when it is merged into `develop`; add the owner's new tasks where he places them
 
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
-**The main lane is 5,** round six B's new moves, at its next part (2q); part 4 (#198, merged as it stands), 2y, 2y+,
-part 5, 2x, 2z, 2u and 2u+ before it are done. The polish lane and the workshop lane run beside it, each claimed by a
+**The main lane is 2ab;** part 4 (#198, merged as it stands), 2y, 2y+, part 5, 2x, 2z, 2u and 2u+ before it are
+done. The polish lane and the workshop lane run beside it, each claimed by a
 draft PR.
 
 ## For the owner
@@ -124,6 +124,13 @@ landing is almost never contestable. The flight stays as built for now, and no r
    or follower.
 4. **Measured again after 2u and part 7,** whose stamina and pricing change what a flight costs. Only if it is still
    even then does a bigger change go to the owner as a question: a longer flight, or the ring shown before take-off.
+
+### 2ab. Rivals skip the marginal dash (the owner, 7 November 2026; #569; an AI entry, right after 2u+, before part 7)
+
+Rivals pushed to dash more live about 3 s less than rivals pushed to jump more (PR #560), though each power is the more
+useful in about half the moments (design 37): the extra dashes are poor picks. Each rival learns to pass up a dash that
+does not pay, in its own style, the rules unchanged; done when that gap closes within noise, trademarks kept. Before
+part 7, whose pricing needs rivals that judge a dash well.
 
 ### 5. Round six B: the new moves (DESIGN "Round six B")
 
