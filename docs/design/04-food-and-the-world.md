@@ -234,7 +234,7 @@ round the head (`render/shield.js`), flickering over its last 2 s and bursting w
 with your first golden apple. Forked at each eat as it ships (seeds 524 and 525, about 237 eats each), the full bar
 comes out a hair below even (0.000 ± 0.027 and −0.111 ± 0.037 places: rivals flash more than pays, #536, and a full
 bar invites it), and the shield on top even (−0.025 and +0.017 ± 0.030 places) while saving a fifth of a segment at
-10 s: it never makes anyone safe. The +3 itself is even against a plain +1 there (+0.15 ± 0.10 places on each seed),
+10 s: it never makes anyone safe. The +3 itself is a little ahead of a plain +1 there, within noise (+0.15 ± 0.10 places on each seed),
 where on 2u it cost (−10.5 ± 4.1 points of wins on seed 521). Neither extra moves whole rounds; they are built as
 the owner asked, and part 7 prices every power. Everyone sees a shield by its ring, the rivals too (`aiView()`), and
 each knows its own: a rival gives a shielded head twice the berth (`ai/risk.js`), so nobody can ram rivals with it.
