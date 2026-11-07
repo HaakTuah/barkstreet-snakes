@@ -9,8 +9,8 @@ const CODES = { KeyW: 'up', KeyS: 'down', KeyA: 'left', KeyD: 'right' }; // phys
 
 // Queue a turn (up to T.QUEUE ahead), checked against the last queued
 // direction so no combo of quick presses can reverse into the neck.
-// - Pressing the way you're already going does nothing: steering only
-//   steers (the powers have presses of their own).
+// - Pressing the way you're already going queues nothing: a fresh press
+//   that way flashes instead (swipeTo).
 // - Reversing a turn that hasn't happened yet changes your mind: it takes
 //   that turn's place, if it's a legal way from the one before it.
 // - Stunned, the latest press wins (checked against your neck), so you get
