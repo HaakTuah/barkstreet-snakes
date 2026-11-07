@@ -131,6 +131,13 @@ refill, a one-bump shield), measured for every rival: its spec is in `docs/hando
 measurements to start from (PR #462): rivals leaning on the jump outlive those leaning on the dash, and the rivals
 flash more than pays (#536), so the dash's stamina cost is the first lever.
 
+### 2ab. Rivals skip the marginal dash (the owner, 7 November 2026; #569; an AI entry, right after 2u+, before part 7)
+
+Rivals pushed to dash more live about 3 s less than rivals pushed to jump more (PR #560), though each power is the more
+useful in about half the moments (design 37): the extra dashes are poor picks. Each rival learns to pass up a dash that
+does not pay, in its own style, the rules unchanged; done when that gap closes within noise, trademarks kept. Before
+part 7, whose pricing needs rivals that judge a dash well.
+
 ### 5. Round six B: the new moves (DESIGN "Round six B")
 
 The golden jump that flies, leap now, gold portals, dropped charges, the spit along the line and one pricing model for every power, each its own playable PR that the rivals use well. *Done:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195). **Next, in order:** part 4 (draft PR #198, 2r folded in; the owner answered on 1 November 2026 that the moves stay as designed and the rivals are improved until their users come out ahead: the row is in `docs/archive/progress-done/owner-answered.md`, "For the owner, answered"), then 2x (done, PR #456), then 2q (2s done, PR #289; part 4's both-ways test runs again on its log when part 4 goes on), part 3b+ (the spit flies along the line), part 5 (done, PR #202: gold portals; its finding, that following feeds but wins no places, is #447), part 6 (built on `round6b/dropped-charges`) and part 7 (parked on `round6b/pricing`; it also fixes the trademark measures and lifts Joker into the band, see the spec); then the teaching system (item 4). Spec: `docs/handoff/queue-specs.md`, "5. Round six B: the new moves". **When part 4 merges:** run the census on seeds 3 and 11 again (`scripts/sim.sh 200 --seed 3 --census --check`): chased beetles must still get away a third to 45% of the time (2w measured it before the flight was in; `--check` fails a census outside that band).
