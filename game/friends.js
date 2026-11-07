@@ -96,7 +96,7 @@ const GUIDE_ROWS = [
   ]],
   ['Your powers', [
     ['jump', 'Jump', `${touchFirst ? 'A tap' : 'Space or a click on the log'}: hop snakes, holes or fire, up to ${TUNE.LEAP_REACH} cells, to the first free cell: across a gap too. ${touchFirst ? 'Tap twice' : 'Press twice'} to leap now, open ground too. A ring shows where you’ll land. It takes ${share(TUNE.JUMP_STAMINA_MS)} of your stamina. Bump into a flier in the air and you drop: onto a body or into a hole, you’re out. Lie on a flier’s ring before it lands and it’s out: rivals will try it on you.`],
-    ['flash', 'Dash', `${touchFirst ? 'A swipe the way you’re going' : 'E, Shift or a right-click on the log'}: two cells in a blink, for ${share(TUNE.DASH_STAMINA_MS)} of your stamina.`],
+    ['flash', 'Dash', `${touchFirst ? 'A swipe the way you’re going' : 'E, Shift, a right-click on the log or the key you’re going'}: two cells in a blink, for ${share(TUNE.DASH_STAMINA_MS)} of your stamina.`],
     ['cut', 'Cuts', 'A dash cuts through a body one thick with free log beyond: the part behind falls to beads. Leave fewer than 3 in front and that snake is out. Your own body too: drop your tail to fit a pocket. Along the edge, or against a hole or another body, nothing can be cut from that side.'],
     ['failflash', 'Failed dash', `Dash into a head, a body too thick, the edge or a hole and it fails: ${TUNE.FAIL_LOSS} off your tail and a longer stun.`],
     ['held', 'Golden powers', 'Gold round a snake: it holds golden powers. Sky dots are golden jumps, ember diamonds golden dashes.'],

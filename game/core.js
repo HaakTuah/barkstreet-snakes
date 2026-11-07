@@ -67,9 +67,9 @@ const FLAVOR = {
   intro: 'You, three rivals and a mossy log. Last one wriggling wins.',
   // (The arrows first: anyone knows them. A click is the mouse's left button on the board. A first-timer's
   // Hall of Fame is empty: the Field guide's key, G, is in its place before a first round, both under the board.)
-  hintStart: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click dashes · P naps · Enter starts · G opens the Field guide',
-  hintKeys: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click dashes · P or Esc naps, any key wakes · Enter starts over · H opens the Hall of Fame · G opens the Field guide · M mutes · N toggles the music · V the voices',
-  hintOnline: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click dashes · M mutes · N toggles the music · V the voices',
+  hintStart: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift, right-click or the key you’re going dashes · P naps · Enter starts · G opens the Field guide',
+  hintKeys: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift, right-click or the key you’re going dashes · P or Esc naps, any key wakes · Enter starts over · H opens the Hall of Fame · G opens the Field guide · M mutes · N toggles the music · V the voices',
+  hintOnline: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift, right-click or the key you’re going dashes · M mutes · N toggles the music · V the voices',
   hintOnlineTouch: 'Swipe to steer · Tap to jump · Swipe ahead to dash',
   hintTouch: 'Swipe to steer · Tap to jump · Swipe ahead to dash · Tap ⏸ to nap',
   // Watching (Watch AIs, or after you're out): nothing of yours to steer.
@@ -132,7 +132,7 @@ const FLAVOR = {
   lostCapital: 'The woodpecker took a capital: its realm moves.',
   lastApples: 'The last apples are falling.',
   // Your flash, ready and never used yet: the key, once a round (until you've flashed).
-  flashKey: touchFirst ? 'Your dash is ready: swipe the way you’re going.' : 'Your dash is ready: E, Shift or right-click.', // (what it does is the Field guide's: a lesson is 60 characters at most)
+  flashKey: touchFirst ? 'Your dash is ready: swipe the way you’re going.' : 'Your dash is ready: E, Shift, or the key you’re going.', // (what it does is the Field guide's: a lesson is 60 characters at most)
   // Beside the YOU arrow, as a round starts (until you steer).
   steerHint: touchFirst ? 'Swipe to steer' : 'Arrow keys to steer (or WASD)',
   leapNothing: 'Nothing to jump. Jumps clear a snake, a hole or fire.',
