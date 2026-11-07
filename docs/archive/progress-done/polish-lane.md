@@ -59,3 +59,5 @@ owner's three notes of 2 November merged as PRs #322 (the remains), #320 (the fl
 
 - Mason's vein, marble not gold (#431, PR #551): his every fourth vein, his beads' vein and his tag's fleck turn rose
   marble, so gold stays for powers alone.
+- Speech bubbles keep apart as they glide (#326, PR #565): a glide that would cross another bubble or the banner hops
+  straight there; at 4× overlaps fell from 202 to 20 in two minutes on a phone (longest 0.53 s to 0.13 s), 98 to 6 on desktop.
