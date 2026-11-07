@@ -52,19 +52,38 @@ for (const [k, kind, ev1] of [[' ', 'leap', 'leap'], ['e', 'flash', 'dash:plain'
   check(ok === 12, `${k === ' ' ? 'Space' : k} ${kind === 'leap' ? 'jumps' : 'flashes'} on the next tick`, `${ok}/12`);
 }
 
-// Pressing the way you're going, and holding a key, fire nothing.
+// A fresh press the way you're going dashes, an arrow or WASD, on the next
+// tick, as E does; it queues no turn.
+let dashed = 0;
+for (const k of ['ArrowRight', 'd']) {
+  await ev('centre()');
+  const before = await powers(), steps = await ev('__log.steps.length');
+  await key(k);
+  await toTick();
+  const asked = await ev(`__log.powers.slice(${before}).map(p => p.kind).join(',')`), step = await ev(`__log.steps[${steps}]`);
+  if (asked === 'flash' && step?.evs.includes('dash:plain') && await ev('SnakeDebug.game().snakes[0].queue.length') === 0) dashed++;
+}
+check(dashed === 2, 'a fresh press the way you’re going (arrow or WASD) dashes on the next tick', `${dashed}/2`);
+// A press the way the last press turned you, within POWER_AFTER_TURN_MS, is
+// that turn pressed twice: one turn, no dash. A moment later, a dash.
 await ev('centre()');
 let before = await powers();
-for (const k of ['ArrowRight', 'd', 'ArrowRight']) { await key(k); await ev('vf(3)'); }
-const queued = await ev('SnakeDebug.game().snakes[0].queue.length');
-check(await powers() === before && queued === 0, 'pressing the way you’re going does nothing', `queue ${queued}`);
-for (const k of [' ', 'e', 'ShiftLeft']) {
+const stepsTwice = await ev('__log.steps.length');
+await key('ArrowUp'); await key('w');
+await toTick(); await toTick();
+const twice = await ev(`({ asked: __log.powers.length - ${before}, dirs: __log.steps.slice(${stepsTwice}).map(s => dirName(s.dir)).join(','), queue: SnakeDebug.game().snakes[0].queue.length })`);
+check(twice.asked === 0 && twice.dirs === 'up,up' && twice.queue === 0, 'a turn pressed twice quickly turns once and dashes nothing', JSON.stringify(twice));
+await b.sleep(400);
+before = await powers();
+await key('ArrowUp');
+check(await ev(`__log.powers.slice(${before}).map(p => p.kind).join(',')`) === 'flash', 'the way you turned, pressed again a moment later, dashes');
+for (const k of [' ', 'e', 'ShiftLeft', 'ArrowRight']) {
   await ev('centre()');
   before = await powers();
   await down(k);
   for (let i = 0; i < 6; i++) { await ev('vf(2)'); await down(k, true); } // (the keyboard's auto-repeat)
   await up(k);
-  check(await powers() - before === 1, `${k === ' ' ? 'Space' : k} held down fires once`, `${await powers() - before} asked`);
+  check(await powers() - before === 1, `${k === ' ' ? 'Space' : k} held down fires once${k === 'ArrowRight' ? ' (an arrow ahead: its first press dashes, its auto-repeat never)' : ''}`, `${await powers() - before} asked`);
 }
 await ev('centre()');
 before = await powers();
@@ -72,7 +91,7 @@ await down('ArrowUp');
 for (let i = 0; i < 6; i++) { await ev('vf(2)'); await down('ArrowUp', true); }
 await up('ArrowUp');
 await toTick();
-check(await powers() === before, 'an arrow held down (auto-repeat) fires no power');
+check(await powers() === before, 'an arrow held down across the way you’re going (auto-repeat) turns and fires no power');
 
 // Two presses in one tick turn on consecutive ticks.
 let pairs = 0;

@@ -27,7 +27,7 @@ A snake game on a mossy log: you against three AI rivals on a fallen log in the 
 Everyone has two powers, each with its own press, and one stamina they both spend:
 
 - **Jump** (Space, or a click on the board; on a phone, tap): hop over bodies, holes or fire, up to 3 cells of them, a cell a tick in the air, and come down on the first free cell beyond. So you can hop a gap in the log, or onto a snake's back where it bridges a hole. There's no auto-jump: a press waits up to 5 moves for something right in front to hop, and a ring shows where you'll land. It takes two fifths of your stamina, and nothing off your tail. **Press twice to leap now**, open ground included: up at once, over three cells, down on the fourth. In the air you pass over heads on the ground, but fly into another flier's head or its lifted body and you drop where you are: over bark a crash, over a hole you fall in, onto a body you're out. And a flier's ring is a target: lie on it before the flier comes down and it's out, so steer away when someone's racing for yours.
-- **Dash** (E or Shift, or a right-click on the board; on a phone, swipe the way you're already going): two cells in one tick, along the ground. It takes three quarters of your stamina. It eats what it passes and puts out the first fire on its way.
+- **Dash** (E or Shift, the steering key you're already going, or a right-click on the board; on a phone, swipe the way you're already going): two cells in one tick, along the ground. It takes three quarters of your stamina. It eats what it passes and puts out the first fire on its way.
 - **Cuts:** a dash cuts through a body one thick with free log beyond: you come out the other side, and the part behind the cut falls off as beads. Leave that snake fewer than 3 segments in front of the cut and it's out. It works on your own body too: drop your tail to fit a pocket (the game says so when you're really in one, not when you've coiled up with room to crawl out after your tail). A body along the edge, or against a hole or another body, can't be cut from that side.
 - **A failed dash:** dash into a head, a body too thick (or with nowhere free beyond), the edge or a hole and it fails: 5 segments off your tail and a longer stun.
 
@@ -71,7 +71,7 @@ Press **Play with friends** on the start screen, then **Host a game** and send t
 |--------|----------|-------|
 | Steer | Arrow keys (or WASD); turns are queued, so quick double turns work | Swipe (anywhere on the screen during a round) |
 | Jump | Space, or click the board | Tap |
-| Dash | E or Shift, or right-click the board | Swipe the way you're already going |
+| Dash | E or Shift, the key you're going, or right-click the board | Swipe the way you're already going |
 | Nap (pause) | P or Esc | ⏸ button |
 | Wake up | Any key that plays: Space, an arrow (it wakes and steers), E, Shift, Enter, P or Esc; the wake never fires a power | Tap the board or the card, or Wake up |
 | Start / start over | Enter or R (mid-round it asks first: press it again), or any arrow on the start screen | Play button |

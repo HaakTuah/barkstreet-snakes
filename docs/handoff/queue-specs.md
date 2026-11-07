@@ -39,19 +39,6 @@ it holds anywhere else or pull in more. Done when a test shows the policy in pla
 preview or, while previews are down, a round played on a local copy in two browsers (the owner, 6 November 2026;
 #534), and `SECURITY.md` and `docs/developing.md` point to it.
 
-### 2aa. Dash on the key you're going (the owner, 4 November 2026; an input entry, a side lane now)
-
-The owner: "I noticed you don't dash, when you press the arrow keys or wsad in the direction you are moving. I think you
-oughta." Pressing the steering key (arrow or WASD) of the way the snake is already going dashes, as a swipe ahead
-already does on a phone; E, Shift and a right-click stay. It was the old power press, dropped because held keys and
-auto-repeat fired it by accident ("Steering keys only steer" in `docs/archive/design-powers.md`), so it comes back with
-touch's guard, `POWER_AFTER_TURN_MS`: only a fresh keydown dashes, never a held key or auto-repeat (`e.repeat`), and a
-press within 300 ms of the press that turned the snake that way is that turn pressed twice, not a dash. The dash itself
-is unchanged: the same engine call and online message (no protocol change), and the rivals, who already dash, are
-untouched. Updated in the same PR: the hints under the board and on the start card, the dash lesson, the Field guide
-row, the README and `docs/design/40-powers-and-moves.md`. Done when a rules test shows a fresh press ahead dashing, a
-held key and auto-repeat never dashing, and a double-tapped turn turning once.
-
 ### 2u+. The stamina economy and the golden apple's worth (the owner, 3 and 4 November 2026; #460; a measurement right after 2u, then an engine-rules entry for what pays)
 
 Right after 2u, on fresh seeds and for every rival, in two steps, each against the game as 2u leaves it. **Where stamina
