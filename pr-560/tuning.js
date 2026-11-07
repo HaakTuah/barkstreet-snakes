@@ -209,7 +209,7 @@ window.TUNING = Object.freeze({
   // ----------------------------------------------------------------- input
   QUEUE: 3,                 // turns you can queue ahead
   CHORD_MS: 60,             // a reversal pressed this soon before the turn it needs (a U-turn's keys rolled together) still counts
-  POWER_AFTER_TURN_MS: 300, // a fresh swipe the way the last swipe turned you, this soon after that one lifted (or while it's down), is the turn swiped twice to make sure, not a flash (a double flick puts its second touch down 150-280 ms after the first lifts; keys only steer: no such guard)
+  POWER_AFTER_TURN_MS: 300, // a fresh swipe the way the last swipe turned you, this soon after that one lifted (or while it's down), is the turn swiped twice to make sure, not a flash (a double flick puts its second touch down 150-280 ms after the first lifts); a fresh keydown the way the last key turned you, this soon after it, likewise
   SWIPE_CELLS: 0.5,         // a swipe registers after the finger travels this many cells...
   SWIPE_MIN_PX: 12,         // ...and at least this far (about 3 mm), so a jittery finger doesn't turn
   SWIPE_CHAIN_PX: 8,        // ...but a finger already swiping chains its next turn after this far

@@ -70,7 +70,7 @@ function renderRecords() {
 // the renderer, as it is on the log) and its rule in a line or two.
 const secs = ms => Math.round(ms / 1000);
 // A power's share of the stamina, in words, near enough: 'two fifths', 'three quarters'.
-const SHARES = [[1 / 4, 'a quarter'], [1 / 3, 'a third'], [2 / 5, 'two fifths'], [1 / 2, 'half'], [2 / 3, 'two thirds'], [3 / 4, 'three quarters'], [1, 'all']];
+const SHARES = [[1 / 4, 'a quarter'], [1 / 3, 'a third'], [2 / 5, 'two fifths'], [1 / 2, 'half'], [2 / 3, 'two thirds'], [3 / 4, 'three quarters'], [4 / 5, 'four fifths'], [1, 'all']];
 const share = ms => SHARES.find(([f]) => Math.abs(ms / TUNE.STAMINA_MS - f) < 0.04)?.[1] ?? `${Math.round(100 * ms / TUNE.STAMINA_MS)}%`;
 const GUIDE_ROWS = [
   // (How to play opens here: the round in four lines, before the things on the log.)
@@ -96,7 +96,7 @@ const GUIDE_ROWS = [
   ]],
   ['Your powers', [
     ['jump', 'Jump', `${touchFirst ? 'A tap' : 'Space or a click on the log'}: hop snakes, holes or fire, up to ${TUNE.LEAP_REACH} cells, to the first free cell: across a gap too. ${touchFirst ? 'Tap twice' : 'Press twice'} to leap now, open ground too. A ring shows where you’ll land. It takes ${share(TUNE.JUMP_STAMINA_MS)} of your stamina. Bump into a flier in the air and you drop: onto a body or into a hole, you’re out. Lie on a flier’s ring before it lands and it’s out: rivals will try it on you.`],
-    ['flash', 'Dash', `${touchFirst ? 'A swipe the way you’re going' : 'E, Shift or a right-click on the log'}: two cells in a blink, for ${share(TUNE.DASH_STAMINA_MS)} of your stamina.`],
+    ['flash', 'Dash', `${touchFirst ? 'A swipe the way you’re going' : 'E, Shift, a right-click on the log or the key you’re going'}: two cells in a blink, for ${share(TUNE.DASH_STAMINA_MS)} of your stamina.`],
     ['cut', 'Cuts', 'A dash cuts through a body one thick with free log beyond: the part behind falls to beads. Leave fewer than 3 in front and that snake is out. Your own body too: drop your tail to fit a pocket. Along the edge, or against a hole or another body, nothing can be cut from that side.'],
     ['failflash', 'Failed dash', `Dash into a head, a body too thick, the edge or a hole and it fails: ${TUNE.FAIL_LOSS} off your tail and a longer stun.`],
     ['held', 'Golden powers', 'Gold round a snake: it holds golden powers. Sky dots are golden jumps, ember diamonds golden dashes.'],
@@ -486,7 +486,7 @@ async function joinRoom(text) {
   const code = codeIn(text);
   if (!Online.isCode(code)) {
     if (state !== 'lobby') openFriends(); // (a bad ?join= link: show where the problem is)
-    return setStatus('Room codes are five characters, like K7QXM.', true);
+    return setStatus('That’s not a room code: they’re five characters, like K7QXM.', true);
   }
   saveLobbyName();
   const attempt = ++joinAttempt;
@@ -640,7 +640,7 @@ click(lobbyCopy, async () => {
     setStatus('Link copied. Send it to your friends.');
   } catch {
     lobbyLink.select();
-    setStatus('Select the link and copy it.');
+    setStatus('Couldn’t copy it. Select the link and copy it yourself.');
   }
 });
 lobbyCopy.textContent = navigator.share && touchFirst ? 'Share link' : 'Copy link';
