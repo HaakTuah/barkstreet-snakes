@@ -1,8 +1,9 @@
 // The renderer (see render/core.js): a golden apple's shield (2u+, see
-// docs/design/37-one-stamina.md). While it holds, a thin bubble round the
-// snake's head, cream with an ink line so it reads on any body, flickering
-// over its last SHIELD_WARN ms; when it takes a crash, it bursts, a ring
-// opening out over SHIELD_POP ms. Anyone's, as anyone on the log sees it.
+// "The golden apple's worth" in docs/design/04-food-and-the-world.md).
+// While it holds, a thin ring round the snake's head, cream with an ink
+// line so it reads on any body, flickering over its last SHIELD_WARN ms;
+// when it takes a crash, it bursts, a ring opening out over SHIELD_POP ms.
+// Anyone's, as anyone on the log sees it.
 const SHIELD_WARN = 2000, SHIELD_POP = 350, SHIELD_GAP = 0.42;
 
 function drawShield(s, a, now) {
