@@ -232,6 +232,7 @@ is gone; boxed in, it can't save you. Its cue is a cream ring round the head (`r
 last 2 s and bursting when it takes a crash; its lesson comes with your first golden apple. Forked at each eat (seeds
 521 and 522, about 240 eats each), the full bar adds +0.05 ± 0.05 places where food also refills the bar, and the
 shield on top +0.06 ± 0.03 places and 0.3 segments at 10 s, but only +0.4 s alive: it never makes anyone safe. The
-+3 itself still costs (−10.5 ± 4.1 points of wins against a plain +1 on seed 521, −5.1 ± 4.1 on seed 522), so the apple pays mostly through what it gives
-besides its length. A crash is never something a rival chooses, so the shield is protection for everyone alike, not a
-move.
++3 itself still costs (−10.5 ± 4.1 points of wins against a plain +1 on seed 521, −5.1 ± 4.1 on seed 522), so the
+apple pays mostly through what it gives besides its length. Everyone sees a shield by its ring, the rivals too (`aiView()`), and each knows its own: a rival
+gives a shielded head twice the berth, and fears a head-on half as much while shielded itself (`ai/risk.js`), so
+nobody can ram with it while the rivals can't.
