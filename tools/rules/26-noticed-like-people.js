@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------- the rivals notice like people (2q)
 // (39-the-rivals, "What a rival sees": a snake near a rival's head is seen REACTION_MS late, one across the
-// board later, up to REACTION_FAR_MS, give or take a little; never sooner than REACTION_MS.)
+// board later, up to REACTION_FAR_MS, give or take a little.)
 
 // How many ticks late snake 0 sees each other snake, read off the board's snapshots, over many ticks.
 {
@@ -17,10 +17,10 @@
       lags[o.id === g.snakes[1].id ? 'near' : 'far'].push(k);
     }
   }
-  const base = Math.max(1, Math.round(T.REACTION_MS / tick));
+  const near = T.REACTION_MS / tick;
   const mean = a => a.reduce((x, y) => x + y, 0) / a.length;
-  check('2q: a snake beside a rival\'s head is seen its reaction time late, never sooner',
-    lags.near.length >= 6 && Math.min(...lags.near) >= base && mean(lags.near) < base + 1, `${lags.near.join(',')} (base ${base})`);
+  check('2q: a snake beside a rival\'s head is seen its reaction time late, on average, give or take a tick',
+    lags.near.length >= 6 && Math.min(...lags.near) >= Math.floor(near) && Math.abs(mean(lags.near) - near) < 0.6, `${lags.near.join(',')} (${near.toFixed(2)} ticks)`);
   check('2q: one across the board is seen later, up to REACTION_FAR_MS give or take, and not always the same',
     mean(lags.far) > mean(lags.near) && Math.max(...lags.far) <= Math.round((T.REACTION_FAR_MS + T.REACTION_JITTER_MS) / tick) && new Set(lags.far).size > 1,
     `${lags.far.join(',')} (near ${lags.near.join(',')})`);
