@@ -49,8 +49,9 @@ the second account until its usage is spent; on the main account the brake close
   - The lessons and the Field guide: terse lessons and subjectless rows read straight, rules unchanged (PR #445).
   - The guard: the chatter suite fails a voice with more than four lines of one shape (PR #448).
   - The menus: the start card's trailer-shaped intro, the nap card's cliché, the repeated friends joke and errors that didn't say what went wrong (PR #558).
-  *Next on resume:* the news lines (PR #561).
-  *Left:* the news lines and the README's player text (PR #562); the guide's Burrows, Jump, Cuts and Golden beetle rows
+  - The news lines: the repeated "no longer", semicolon lists, "islands" and a stray "Leap now!" gone, the top line left to the milestone (PR #561).
+  *Next on resume:* the README's player text (PR #562).
+  *Left:* the README's player text; the guide's Burrows, Jump, Cuts and Golden beetle rows
   and one name for each thing (hole, pit or gap; jump, hop or leap; the rings), once part 5 (#202) merges. Wildcard's
   and Mason's protected lines stay as they are; the Chinese is rewritten with each changed line.
 - **What belongs:** whatever makes the game feel finished without changing how it plays: things drawn wrong, out of
