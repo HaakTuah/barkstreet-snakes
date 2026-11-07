@@ -50,7 +50,7 @@ function patchAI(text) {
   swap('if (v > (bestPower ? bestPower.v : crawlScore + 1))', 'if (v > (bestPower ? bestPower.v : pf ? -Infinity : crawlScore + 1))');
   swap('me.flashIn === 0 && (trapped || d === crawlDir', 'me.flashIn === 0 && (trapped || globalThis.__force.pdash.has(me.id) || d === crawlDir');
   // (pdash, 2ab: why each pick that's a plain flash was weighed, and its edge over the best else, in apples)
-  swap('bestPower = { d, flash, v,', 'globalThis.__why[me.id] = flash && pk ? { why: trapped ? \'trapped\' : cutTarget ? \'target\' : race(d) ? \'race\' : covered ? \'cover\' : d === crawlDir ? \'ahead\' : \'cut\', edge: (v - (bestPower ? bestPower.v : crawlScore)) / U, price, wait } : null, bestPower = { d, flash, v,');
+  swap('bestPower = { d, flash, v,', 'globalThis.__why[me.id] = flash && pk ? { why: trapped ? \'trapped\' : cutTarget ? \'target\' : race(d) ? \'race\' : coverNear(d) ? \'cover\' : d === crawlDir ? \'ahead\' : \'cut\', edge: (v - (bestPower ? bestPower.v : crawlScore)) / U, price, wait } : null, bestPower = { d, flash, v,');
   return text;
 }
 
