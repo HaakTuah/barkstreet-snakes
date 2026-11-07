@@ -102,6 +102,8 @@ const sig = g => JSON.stringify([g.tick, g.time, g.snakes.map(s => [s.alive, s.b
 const snap = g => ({ tree: State.encode(g, known), rng: rngState });
 const back = sv => { rngState = sv.rng; return decode(sv.tree, known); };
 
+// What play a gained over play b, for one snake (each from playOut).
+const d = (a, b) => ({ place: b.place - a.place, win: (a.place === 1) - (b.place === 1), alive: (a.alive - b.alive) / 1000, out5: (b.alive < 5000) - (a.alive < 5000), len10: a.len10 - b.len10 });
 const diffs = []; // ({ place: without - with (positive: the use helped), win: with - without, alive: with - without (s), persona })
 for (let r = 0; r < ROUNDS; r++) {
   rngState = (SEED * 100003 + r * 7919) >>> 0;
@@ -157,7 +159,6 @@ function golden(before, after, id, persona, otherMeal) {
   const P = play((x, s) => { s.grow -= G - 1; s.eaten -= G - 1; });
   const V = play((x, s) => { s.restedAt = Math.min(s.restedAt, x.time); }); // (2u+: a full bar, as a golden apple could give)
   const VS = play((x, s) => { s.restedAt = Math.min(s.restedAt, x.time); s.shieldUntil = x.time + SHIELD_MS; }); // (and a shield)
-  const d = (a, b) => ({ place: b.place - a.place, win: (a.place === 1) - (b.place === 1), alive: (a.alive - b.alive) / 1000, out5: (b.alive < 5000) - (a.alive < 5000), len10: a.len10 - b.len10 });
   diffs.push({ ...d(A, B), plain: d(A, P), vigour: d(V, A), shield: d(VS, V), rested: now.snakes[id].restedAt > now.time ? 1 : 0, persona });
 }
 // 2u+: a plain jump or flash used with both in the bar and no golden ones held, played on three ways from the tick
@@ -177,7 +178,6 @@ function power(before, g, s0) {
   };
   const J = play(['pdash'], 'pjump'), D = play(['pjump'], 'pdash'), C = play(['pjump', 'pdash']);
   if (J.took !== 'pjump' || D.took !== 'pdash' || C.took) return false;
-  const d = (a, b) => ({ place: b.place - a.place, win: (a.place === 1) - (b.place === 1), alive: (a.alive - b.alive) / 1000, out5: (b.alive < 5000) - (a.alive < 5000), len10: a.len10 - b.len10 });
   // (1: a was the more useful, -1: b, 0: no difference. Over the whole round a fork's two plays part ways for good
   // and either can come out ahead by chance, so the moment's own worth is read near it: alive 5 s on, then length
   // 10 s on; the place and time alive, over the round, beside it)

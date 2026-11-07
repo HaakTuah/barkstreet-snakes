@@ -50,8 +50,9 @@ function bump(shielded) {
 }
 { // What a rival sees of a charged snake: its step, never the bank.
   const g = board([[line(5, 5, 4), 'right'], [line(5, 15, 4), 'right']], { time: 60000 }), o = g.snakes[1];
-  g.food = []; o.bank = 5000;
+  g.food = []; o.bank = 5000; o.shieldUntil = g.time + 8000; g.snakes[0].shieldUntil = g.time + 8000;
   for (let t = 0; t < 6; t++) E.step(g);
-  const seen = E.aiView(g, g.snakes[0]).others.find(q => q.id === o.id);
+  const view = E.aiView(g, g.snakes[0]), seen = view.others.find(q => q.id === o.id);
   check('2u+: the rivals see a charged snake\'s step (3), and not what it has banked', seen.step === 3 && !Object.keys(seen).some(k => /bank/i.test(k)), JSON.stringify({ step: seen.step }));
+  check('2u+: ...and see a shield, as its ring shows, and know how long their own holds', seen.shield === 1 && view.me.shield > 0 && view.me.shield <= 8000, JSON.stringify({ seen: seen.shield, mine: view.me.shield }));
 }

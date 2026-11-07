@@ -32,12 +32,12 @@ bar could just recover a bit quicker."
   - each power is the more useful one in at least about 30% of the moments where either could be used, in the best
     play the rivals can manage, and the aim is about half (the owner, 6 November 2026, #536: usefulness, not uses,
     and 30% a floor, not a target); it is measured as moves too rare to move whole rounds are, each such moment forked
-    and played on once with the jump and once with the dash. 2u ships held to the earlier band (each power a third to
-    two thirds of plain power uses); 2u+ retunes to this one. The dash plays well as it is, so what 2u+ tunes is its
-    stamina cost and, if need be, how much a full bar holds (the rivals flash more than pays, and one stamina makes
-    every wasted flash cost a jump too);
+    and played on once with the jump and once with the dash. 2u shipped held to the earlier band (each power a third to
+    two thirds of plain power uses); 2u+ retuned the powers' stamina costs to this one ("Where stamina comes from",
+    below);
   - neither is better or worse in aggregate: snakes that lean on the jump and snakes that lean on the dash come out
-    even (the seat-split A/B), while each rival keeps its own lean and its trademark;
+    even (the seat-split A/B), while each rival keeps its own lean and its trademark. Not yet: rivals pushed onto the
+    dash still live about 3 s less (2u and 2u+ alike), the owner's question #569;
   - the pace stays: round length, deaths by cause and power uses a minute within noise of today; if the game slows,
     stamina comes back quicker.
 - **Golden ones stay apart.** Golden jumps and dashes are still free charges from golden food, spent before stamina,
