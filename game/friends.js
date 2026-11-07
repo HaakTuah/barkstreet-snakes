@@ -70,7 +70,7 @@ function renderRecords() {
 // the renderer, as it is on the log) and its rule in a line or two.
 const secs = ms => Math.round(ms / 1000);
 // A power's share of the stamina, in words, near enough: 'two fifths', 'three quarters'.
-const SHARES = [[1 / 4, 'a quarter'], [1 / 3, 'a third'], [2 / 5, 'two fifths'], [1 / 2, 'half'], [2 / 3, 'two thirds'], [3 / 4, 'three quarters'], [1, 'all']];
+const SHARES = [[1 / 4, 'a quarter'], [1 / 3, 'a third'], [2 / 5, 'two fifths'], [1 / 2, 'half'], [2 / 3, 'two thirds'], [3 / 4, 'three quarters'], [4 / 5, 'four fifths'], [1, 'all']];
 const share = ms => SHARES.find(([f]) => Math.abs(ms / TUNE.STAMINA_MS - f) < 0.04)?.[1] ?? `${Math.round(100 * ms / TUNE.STAMINA_MS)}%`;
 const GUIDE_ROWS = [
   // (How to play opens here: the round in four lines, before the things on the log.)
