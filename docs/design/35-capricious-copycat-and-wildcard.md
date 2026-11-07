@@ -36,12 +36,12 @@ the cast (`39-the-rivals.md`).
 
 - **Its model** is whoever leads (the longest snake). It changes model only when another snake leads by 3 or more.
 - **It reads every leader by behaviour alone,** rival or person: the AI's view carries no persona, and must not ("The
-  rivals never treat a person differently"). Over the ticks it has watched (each at the moment it noticed it, as it saw it: `late` in `aiView()`),
-  each snake's eight traits: moves per turn, coiling, riding tails, distance from heads, heads near, growth, jumps and
-  flashes, and how far it strays (`watchStyles`, `traitsOf` in `ai/moods.js`). The style is the nearest of twelve
-  rivals' own (`styleOf`, `STYLES`, measured by `tools/dev/copycat-styles.js`), after 60 ticks watched (`STYLE_MIN`).
-  So a person is copied as Mason if they run long and straight, as Gobbler if they eat a lot and go near heads, and so
-  on.
+  rivals never treat a person differently"). Over the ticks it has watched (each at the moment it noticed it, as it
+  saw it: `late` in `aiView()`), each snake's eight traits: moves per turn, coiling, riding tails, distance from
+  heads, heads near, growth, jumps and flashes, and how far it strays (`watchStyles`, `traitsOf` in `ai/moods.js`).
+  The style is the nearest of twelve rivals' own (`styleOf`, `STYLES`, measured by `tools/dev/copycat-styles.js`),
+  after 60 ticks watched (`STYLE_MIN`). So a person is copied as Mason if they run long and straight, as Gobbler if
+  they eat a lot and go near heads, and so on.
 - **Not styles:** Capricious, Copycat and Wildcard (mixes of others); Mute and Metagamer, which play like Sniper and
   Drab from outside; Colonist, whose mark is its flags.
 - **It takes the style's habits:** its weights (the short forms of `MOOD_FORMS`, as Capricious's) and its driver, with

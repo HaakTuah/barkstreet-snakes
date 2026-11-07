@@ -90,7 +90,7 @@ function aiView(game, snake) {
     // (late: how many ticks before the rest it was seen, for one who watches the snakes from moment to moment.)
     others.push(!seen ? o : {
       ...seen, late: d, stun: seen.stun - d, spitIn: seen.spitIn && seen.spitIn - d,
-      air: seen.air && Math.max(0, seen.air - d), wrap: seen.wrap && Math.max(0, seen.wrap - d * tickMs), // (none stays none)
+      air: seen.air && Math.max(1, seen.air - d), wrap: seen.wrap && Math.max(0, seen.wrap - d * tickMs), // (none stays none)
     });
   }
   return {
