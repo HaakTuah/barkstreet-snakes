@@ -41,7 +41,7 @@ function flashOpt(d, gold) {
   const agg = (w.aggression || 0) + (w.hunt ? 0.5 : 0);
   const body = i => myCells[i] === stampM || (mineFree[i] > 1 && (!holes.has(i) || (fire.has(i) && others.some(o => o.body.some(q => q.y * N + q.x === i))))); // (mine, or a rival's that'll still be there, on fire too)
   let cut = 0, got = false, fires = 0, run = 0;
-  ownCut = -1; cutKills = false; covered = 0;
+  ownCut = -1; cutKills = false; cutTarget = false; covered = 0;
   for (let i = 0; i < n; i++) {
     const c = path[i];
     if (holes.has(c) && !fire.has(c)) return null; // (a hole, or the woodpecker's mark: it'd fail or blow up, or soon)
@@ -63,6 +63,7 @@ function flashOpt(d, gold) {
         if (!o || j0 === 0) return null; // (a head, or where one may be)
         const j = j0 + Math.max(0, age - (o.stun || 0)); // (where it's cut: it's moved on since I saw it)
         const mark = o.id === memory.victimId ? 2 : 1; // (my target, twice over: Sniper cuts off its target, Mute its boxed one)
+        if (mark === 2) cutTarget = true; // (2u+: a cut through my target goes at half the flash's price, as a race does)
         if (j < TUNE.MIN_LENGTH) cutKills = true; // (it's out)
         cut += mark * (j < TUNE.MIN_LENGTH ? KILL * (0.5 + agg) : Math.min(CUT_TAIL, Math.max(0, o.body.length - j)) * 0.1 * (0.5 + agg)); // (in apples: out, or its tail off, up to CUT_TAIL of it: at 0.4 a segment, uncapped, rivals cut 14 times a round and the beads swamped the board; at 0.15, 10 times, and the cut starved small)
       }
