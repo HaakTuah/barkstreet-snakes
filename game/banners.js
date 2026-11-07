@@ -115,7 +115,7 @@ function news(dying) {
     if (e.type === 'eat' && e.kind === 'leaf') { flashFrame('gold', true); return toast(FLAVOR.youLeaf(e.snake.dashes), 3200, 'gold', 'lesson'); }
     if (e.type === 'eat' && e.kind === 'goldcap') { flashFrame('gold', true); return toast(FLAVOR.youGoldcap(Math.round((me.wrapUntil - theGame.time) / 1000)), 3000, 'gold', 'lesson'); } // (a second one adds to the first: the real total)
     if (e.type === 'eat' && e.kind === 'beetle') flashFrame('beetle');
-    if (e.type === 'eat' && e.kind === 'golden') flashFrame('gold', true);
+    if (e.type === 'eat' && e.kind === 'golden') { flashFrame('gold', true); if (TUNE.GOLDEN_SHIELD_MS && once('shield')) return toast(FLAVOR.youShield, 3000, 'gold', 'lesson'); } // (2u+: the bubble shows while you read)
     if (e.type === 'spit' && e.lx != null && once('spitWet')) return toast(FLAVOR.youSpitWet, 2400, 'warn', 'lesson'); // (2x: your first spit that lies: wet, you slide over it)
     if (e.type === 'eat' && e.kind === 'mushroom' && once('mushroom')) return toast(FLAVOR.youMushroomSpit, 2600, 'warn', 'lesson'); // (round six B: it comes back up, aimed by steering)
     if (e.type === 'eat' && e.snake.bank > 0 && once('charged')) return toast(FLAVOR.youCharged, 3000, 'you', 'lesson'); // (2u+: the first meal that banks stamina: you're charged as you read)
