@@ -9,8 +9,8 @@ const CODES = { KeyW: 'up', KeyS: 'down', KeyA: 'left', KeyD: 'right' }; // phys
 
 // Queue a turn (up to T.QUEUE ahead), checked against the last queued
 // direction so no combo of quick presses can reverse into the neck.
-// - Pressing the way you're already going does nothing: steering only
-//   steers (the powers have presses of their own).
+// - Pressing the way you're already going queues nothing: a fresh press
+//   that way flashes instead (swipeTo).
 // - Reversing a turn that hasn't happened yet changes your mind: it takes
 //   that turn's place, if it's a legal way from the one before it.
 // - Stunned, the latest press wins (checked against your neck), so you get
@@ -58,9 +58,9 @@ function turn(name, p = player()) {
     if (held && (held.tick === theGame.tick || now - held.at < TUNE.CHORD_MS) && held.dir !== next && !reverse(held.dir, next) && p.queue.length < TUNE.QUEUE) p.queue.push(held.dir); // (the U-turn, both keys, any time before the snake moves)
   }
 }
-// A fresh swipe: the way you're already going flashes, any other way steers.
-// (A swipe the way you turned a moment ago is that turn swiped twice, not a
-// flash: two quick swipes up mean up.)
+// A fresh swipe or keydown: the way you're already going flashes, any other
+// way steers. (A press the way you turned a moment ago is that turn pressed
+// twice, not a flash: two quick swipes or taps of up mean up.)
 function swipeTo(name, p = player()) {
   const next = DIRS[name], ahead = p.queue.length ? p.queue[p.queue.length - 1] : p.dir;
   if (next !== ahead) return turn(name, p);
@@ -78,8 +78,8 @@ function moved(p) {
 }
 
 // A direction: steers, and on the start card or during the countdown also
-// gets the round going (already turning). swipe: a fresh swipe, which
-// flashes the way you're already going once the round's going (a swipe
+// gets the round going (already turning). swipe: a fresh swipe or keydown,
+// which flashes the way you're already going once the round's going (one
 // that starts or wakes the round only steers).
 function steerTo(name, swipe = false) {
   if (!playerAlive()) return;
@@ -101,7 +101,7 @@ function steerTo(name, swipe = false) {
   else if (state === 'running') { heard(); press(name, player()); }
 }
 
-// A power: Space or a tap jumps; E, Shift or a fresh swipe ahead flashes.
+// A power: Space or a tap jumps; E, Shift or a fresh swipe or key ahead flashes.
 // Only while you're playing a round that's going (asked for while you're
 // stunned, it goes when the stun's over): they never start, wake or
 // dismiss anything. Online it goes to the host's game, as your turns do.
@@ -208,7 +208,7 @@ document.addEventListener('keydown', e => {
     return;
   }
   const dir = KEYS[e.key] || CODES[e.code];
-  if (dir) { e.preventDefault(); if (!e.repeat) { if (!playerAlive()) wakes(); steerTo(dir); } return; } // (out and napping, it only wakes) // (a held key's repeats steer nothing: its first press did)
+  if (dir) { e.preventDefault(); if (!e.repeat) { if (!playerAlive()) wakes(); steerTo(dir, true); } return; } // (out and napping, it only wakes) // (a fresh press, as a fresh swipe: the way you're going dashes; a held key's repeats do nothing, its first press did)
   // A held key repeats nothing, not even a focused button (holding Enter on
   // Play would otherwise start the round and then skip its countdown).
   if (e.repeat) { if (e.key === 'Enter') e.preventDefault(); return; }

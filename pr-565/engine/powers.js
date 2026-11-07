@@ -32,8 +32,8 @@ function flightRing(game, s) {
   if (f.gold && f.held) while (flown < T.GOLD_FLY && flyOn(game, s, { land, dir: f.dir })) { land = ahead(game, s, land.x, land.y, f.dir); flown++; n++; }
   return { x: land.x, y: land.y, n };
 }
-// A snake asks to flash: a person with E, Shift or a swipe the way they're
-// going, an AI by saying so (memory.flash: the tick). It goes the next tick
+// A snake asks to flash: a person with E, Shift or a fresh key or swipe the
+// way they're going, an AI by saying so (memory.flash: the tick). It goes the next tick
 // it moves on the ground (in the air, once it's down): golden (a dash) if
 // it holds any, else the plain one if rested.
 function flash(game, s) {
