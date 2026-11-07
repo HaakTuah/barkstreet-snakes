@@ -234,5 +234,5 @@ last 2 s and bursting when it takes a crash; its lesson comes with your first go
 shield on top +0.06 ± 0.03 places and 0.3 segments at 10 s, but only +0.4 s alive: it never makes anyone safe. The
 +3 itself still costs (−10.5 ± 4.1 points of wins against a plain +1 on seed 521, −5.1 ± 4.1 on seed 522), so the
 apple pays mostly through what it gives besides its length. Everyone sees a shield by its ring, the rivals too (`aiView()`), and each knows its own: a rival
-gives a shielded head twice the berth, and fears a head-on half as much while shielded itself (`ai/risk.js`), so
-nobody can ram with it while the rivals can't.
+gives a shielded head twice the berth (`ai/risk.js`), so nobody can ram rivals with it. Shielded itself, a rival
+keeps its usual berth: fearing a head-on half as much then cost it 0.12 ± 0.04 places a golden apple.
