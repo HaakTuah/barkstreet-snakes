@@ -9,6 +9,7 @@
 window.SnakeVersion = {
   build: 'dev',
   news: [
+    { on: '2026-11-07', line: 'Jump and dash share one stamina; tired snakes show it.' },
     { on: '2026-11-06', line: 'Rings show who’s racing you; Mason’s vein is rose.' },
     { on: '2026-11-06', line: 'A flag’s pole now shows through a fallen snake.' },
     { on: '2026-11-06', line: 'A flag’s pole stays in sight behind other snakes.' },
