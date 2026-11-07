@@ -8,8 +8,7 @@ when it is merged into `develop`; add the owner's new tasks where he places them
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
 **The main lane is 2ab;** part 4 (#198, merged as it stands), 2y, 2y+, part 5, 2x, 2z, 2u and 2u+ before it are
-done. The polish lane and the workshop lane run beside it, each claimed by a
-draft PR.
+done. The polish lane and the workshop lane run beside it, each claimed by a draft PR.
 
 ## For the owner
 
