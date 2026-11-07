@@ -225,3 +225,13 @@ eats on seeds 101 to 104), eating one gains −0.01 ± 0.05 places and costs 2.9
 meal. "The apple of vigour" (both rests refilled as well) adds +0.01 ± 0.02 places, since the rests are mostly ready when
 it's eaten (0.36 of 2 still resting). So the apple stays as it is for now, and is measured again with the one stamina
 refilled once 2u merges. The owner's question is #460.
+
+**2u+ (PR #560):** the golden apple now also fills the bar (`GOLDEN_STAMINA_MS`, a full bar, banking the rest) and
+gives a shield (`GOLDEN_SHIELD_MS`, 10 s): the next crash you live through costs no tail and no stun, and the shield
+is gone; boxed in, it can't save you. Its cue is a cream ring round the head (`render/shield.js`), flickering over its
+last 2 s and bursting when it takes a crash; its lesson comes with your first golden apple. Forked at each eat (seeds
+521 and 522, about 240 eats each), the full bar adds +0.05 ± 0.05 places where food also refills the bar, and the
+shield on top +0.06 ± 0.03 places and 0.3 segments at 10 s, but only +0.4 s alive: it never makes anyone safe. The
++3 itself still costs (−5 to −10 points of wins against a plain +1), so the apple pays mostly through what it gives
+besides its length. A crash is never something a rival chooses, so the shield is protection for everyone alike, not a
+move.

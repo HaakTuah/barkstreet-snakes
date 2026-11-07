@@ -16,7 +16,7 @@ bar could just recover a bit quicker."
   - *tired* while it can afford neither power: a little grayer and shriveled, eyes heavy, never overdone;
   - *awake* once it can afford one;
   - *game on* at a full bar: bright eyes, its game face;
-  - *charged* above the full bar, once 2u+ banks stamina: more and more alive with energy as it nears the cap, a warm
+  - *charged* above the full bar (2u+, below): more and more alive with energy as it nears the cap, a warm
     glow and livelier movement, never sparks or lightning.
 
   Each step reads by brightness, eyes and movement as well as colour, for colour-blind players; none looks like a
@@ -46,3 +46,31 @@ bar could just recover a bit quicker."
   the looks and your ring as its cue, drawn in a file of their own (new work goes in its own file: "Split by meaning" in
   `AGENTS.md`); a one-time lesson ("One stamina: jump or dash, your choice") that shows the tired and awake looks; the
   Field guide row; online in step, with a protocol bump; tested both ways.
+
+## Where stamina comes from (2u+)
+
+Built in entry 2u+ (the owner, 3 and 4 November 2026, #460: "anything you eat should give a little stamina recharge";
+"It will still slowly recharge"; "Maybe the cap should start at 3x baseline, and be figured out in testing"). The
+measurements behind each number are in PR #560.
+
+- **Every meal tops it up,** in proportion to what it grows you: `STAMINA_FOOD_MS` a segment (300 ms, a fortieth of a
+  bar for an apple). More, and plentiful rounds turned into power spam: at a tenth of a bar an apple, rivals flashed
+  half as often again.
+- **Past the full bar it banks,** up to `STAMINA_BANK` bars in all (3, the owner's first guess), and a power is paid from
+  the bank first. Only food banks: the bar's own refill stops at full.
+- **It still comes back on its own, as built** (`STAMINA_MS` from empty to full). A slower refill starved the snakes
+  that spend the most: at a quarter speed Star's flashes a minute halved (its trademark), and no food rate gave them
+  back, so the economy's lever is the powers' price instead (below).
+- **The powers' prices** (`JUMP_STAMINA_MS`, `DASH_STAMINA_MS`, half and four fifths of the bar): set so that power
+  uses a minute stay those of 2u. Measured by forking each moment a rival used a plain power with both in the bar
+  (`tools/dev/fork-moves.js --move power`), the jump and the dash each turned out the more useful about half the time,
+  at 2u's prices and at these.
+- **The look:** *charged* (step 3, `render/stamina.js`): bright-eyed, a warm glow over the body and a swell running
+  down it, more the nearer the cap; with reduced motion, the glow alone. The rivals see the step, never the bank.
+- **The rivals** weigh a meal's stamina below the full bar at the powers' price, twice that when they can afford
+  neither power (`ai/food.js`); what they bank above it they take as it comes (weighed too, it tipped them into
+  apples in traps). A cut through the rival a hunter is after goes at half a dash's price, as a race does: at the new
+  price Sniper stopped cutting.
+- **The lesson** ("Meals top up stamina. Past full, it banks: you glow.") on the first meal that banks some; the Field
+  guide's Stamina row says it; online, each snake's bank (protocol 26).
+
