@@ -282,6 +282,11 @@ function step(game) {
   }
   const room = s => {
     if (roomAfterStun(game, s, out)) return true;
+    if (s.shielded) { // (2u+: a shield that'd keep it boxed, its tail kept, isn't spent: it pays the crash as anyone would)
+      s.shielded = false;
+      if (roomAfterStun(game, s, out)) return true;
+      s.shielded = true;
+    }
     const h = s.body[0], back = s.body[1];
     for (const d of CRAWL) { // (a cell heads met in: the others there are out, or have room of their own)
       const { x, y } = ahead(game, s, h.x, h.y, d);

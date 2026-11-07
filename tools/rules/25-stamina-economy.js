@@ -47,12 +47,13 @@ function bump(shielded) {
   s.shieldUntil = g.time + 5000;
   E.step(g);
   check('2u+: ...but boxed in, a shielded snake is out all the same', !s.alive, `alive ${s.alive}`);
-  // Its only way out is through the tail a crash would shed, which a shield keeps: no room, so it's out now, its
-  // shield unspent, never saved for a tick and then crashing again for the full cost.
+  // Its only way out is through the tail a crash sheds, which a shield would keep: the shield isn't spent, and it pays
+  // the crash as anyone would (its tail off, stunned) and lives, never left boxed by its shield.
   const p = board([[[[5, 5], [4, 5], [4, 4], [5, 4], [6, 4], [7, 4]], 'right']]), q = p.snakes[0];
   p.holes = new Set([K(6, 5), K(5, 6)]); q.shieldUntil = p.time + 5000;
   E.step(p);
-  check('2u+: ...and its room is judged with the tail and the stun the shield spares it (out, not saved for a tick)', !q.alive, `alive ${q.alive}, shield ${q.shieldUntil}`);
+  check('2u+: ...and a shield that would keep it boxed is not spent: it pays the crash and lives, the shield kept',
+    q.alive && q.body.length === 6 - T.CRASH_LOSS && q.stunUntil > p.tick + 1 && q.shieldUntil > p.time, JSON.stringify({ alive: q.alive, len: q.body.length, shield: q.shieldUntil - p.time }));
 }
 { // What a rival sees of a charged snake: its step, never the bank.
   const g = board([[line(5, 5, 4), 'right'], [line(5, 15, 4), 'right']], { time: 60000 }), o = g.snakes[1];
