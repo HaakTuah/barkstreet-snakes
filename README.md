@@ -122,7 +122,7 @@ Each round, three of these eighteen are dealt from a shuffled deck, so you meet 
 
 All of them share the same sense of danger. They plan a few moves ahead, check that they'll still have room to move (or can chase their own tail), don't let themselves be pinned against the edge or a body (or shut in a pocket) where another snake could come round and close the way out, and avoid the space around other snakes' heads. Food by the edge, in a corner or beside a hole, fire or a body isn't a trap in itself, though: a snake that has just eaten there is gone on its next move, so only a head close enough to cut it off keeps them away. On top of that, each one chases its own goal.
 
-They're also fair. They see the other snakes as they were about a quarter of a second ago, like a human's reaction time, so they can't dodge your sudden turns any faster than you could dodge theirs. Food they see as it is, as you do, and they read the log as you can: where the woodpecker will knock food aside (its rings), a beetle running for a burrow or digging in, and every burrow there is. And they aren't told which snake is you: you're judged only by how you move, like everyone else.
+They're also fair. They see the other snakes as they were about a quarter of a second ago, like a human's reaction time, and a snake across the log a beat later still, as you'd notice it, so they can't dodge your sudden turns any faster than you could dodge theirs. Food they see as it is, as you do, and they read the log as you can: where the woodpecker will knock food aside (its rings), a beetle running for a burrow or digging in, and every burrow there is. And they aren't told which snake is you: you're judged only by how you move, like everyone else.
 
 ## Hall of Fame and stats
 

@@ -1,7 +1,8 @@
 // AI brain for the rival snakes.
 //
 // Fairness: an AI sees the *other* snakes as they were `age` ticks ago (its
-// reaction time), so it can't respond to a sudden turn any faster than a
+// reaction time; one far off a little more, as a person notices it, its
+// timers counted on to `age`), so it can't respond to a sudden turn any faster than a
 // human could. It treats the cells an opponent might have reached since then
 // as risky. It always knows its own body exactly. It is never told which
 // snake is the human: every rival is just a snake with an id.

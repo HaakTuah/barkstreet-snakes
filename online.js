@@ -322,8 +322,15 @@ window.SnakeOnline = (() => {
       s.wrapUntil = num(wrapUntil) ? wrapUntil : -1;
       // (In the air: on over airLeft more cells, straight on, then down at land.)
       const fd = num(flight) && flight >= 0 && num(land) && land >= 0 ? DIRS[DIR_NAMES[flight]] : null, head = cells[0], left = num(airLeft) ? Math.max(0, Math.min(8, airLeft)) : 0;
-      const G = window.TUNING.GRID, wrapped = /** @param {number} v */ v => s.wrapUntil > msg.ms ? (v + G) % G : v; // (over the wrapped edge, as the host has it)
-      s.flight = fd ? { dir: fd, over: Array.from({ length: left }, (_, i) => ({ x: wrapped(head % 1000 + fd.x * (i + 1)), y: wrapped(Math.floor(head / 1000) + fd.y * (i + 1)) })), land: { x: land % 1000, y: (land - land % 1000) / 1000 }, gold: airGold ? 1 : 0, ...(num(ring) && ring >= 0 ? { ring: { x: ring % 1000, y: (ring - ring % 1000) / 1000, n: num(ringIn) ? Math.max(0, Math.min(8, ringIn)) : 1 } } : {}) } : null;
+      // (Over the wrapped edge, or through a gold portal, as the host has it: it keeps one open while a flight's through it.)
+      const G = window.TUNING.GRID, over = [];
+      for (let i = 0, x = head % 1000, y = Math.floor(head / 1000); fd && i < left; i++) {
+        const through = s.wrapUntil > msg.ms || (Array.isArray(msg.po) && msg.po.some(p => Array.isArray(p) && p[0] === x && p[1] === y && p[2] === fd.x && p[3] === fd.y));
+        x += fd.x; y += fd.y;
+        if (through) { x = (x + G) % G; y = (y + G) % G; }
+        over.push({ x, y });
+      }
+      s.flight = fd ? { dir: fd, over, land: { x: land % 1000, y: (land - land % 1000) / 1000 }, gold: airGold ? 1 : 0, ...(num(ring) && ring >= 0 ? { ring: { x: ring % 1000, y: (ring - ring % 1000) / 1000, n: num(ringIn) ? Math.max(0, Math.min(8, ringIn)) : 1 } } : {}) } : null;
       s.flashArmed = num(flashArmed) ? flashArmed : -1;
       s.mealMs = num(mealMs) && mealMs > 0 ? mealMs : s.mealMs; // (for the hunger bar)
       s.cheek = Number.isInteger(cheek) && cheek > 0 && Number.isInteger(spitAt) ? { power: Math.min(window.TUNING.SHRINK_MAX, cheek), spitAt, left: 0 } : null; // (the bulge and its ring)

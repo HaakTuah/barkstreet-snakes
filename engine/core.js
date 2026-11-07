@@ -80,7 +80,7 @@ function makeSnake(id, spawn, props) {
     // cheek (round six B), { power: the segments it'll take next, spitAt:
     // the tick it's spat, left: the ticks it had left to wilt }, or null.
     leaps: 0, dashes: 0, restedAt: 0, bank: 0, shieldUntil: -1, wrapUntil: -1, flight: null, leapArmed: -1, flashArmed: -1, cheek: null,
-    queue: [], cause: null, killer: null, killerId: null, diedAt: null, memory: {}, planned: null, plannedTick: -1, ...props,
+    queue: [], cause: null, killer: null, killerId: null, diedAt: null, memory: {}, noticed: {}, planned: null, plannedTick: -1, ...props, // (noticed: the tick of the moment it last saw each other snake, by id: see aiView)
   };
 }
 const aiSnake = (id, spawn, key) => {

@@ -131,3 +131,20 @@ when low, banking before a fight. The dash's worth is retuned too (#536; "No hid
 `docs/design/37-one-stamina.md`). Part 7 then prices the powers against the economy that wins.
 
 Done (PR #560): every meal tops up stamina (300 ms a segment) and banks past the full bar, up to 3 bars, the charged look its cue; the refill stays as built; a jump 5.8 s and a dash 9.5 s of the bar, each the more useful in about half the moments; the golden apple fills the bar and gives a 10 s shield. The pace and every trademark kept.
+
+### 2q. Rivals notice like people (30 October 2026; an AI entry, after 2s)
+
+The owner: "do the snakes have a bit too good reaction time? [...] Just seems they play a bit too well in that regard
+perhaps", and to the take that what is superhuman is not the 240 ms but seeing the whole board at once: "Agreed to
+all!". Every rival's view of another snake is as old as a person's notice of it would be: `REACTION_MS` (240) near its
+own head, growing with distance to about 400 ms across the board (`REACTION_FAR_MS`, first guesses), with a little
+variation from moment to moment, so near things are seen at once and far ones a beat late, as a person sees them
+("Clever rivals, human reactions"; the AI still plans as far ahead as before). Online the same. Measured before and
+after: per-persona win rates, every trademark and the feel numbers within noise or explained, through
+`tools/abtest.js` on fresh seeds; the PR shows the table.
+
+Done (PR #576): another snake is seen `REACTION_MS` late near a rival's head, growing to `REACTION_FAR_MS` (400 ms) 24
+steps off, give or take 50 ms drifting over 8 ticks (never back in time); a snake seen later has its timers counted on,
+so a rival reckons where it's got to, and Copycat watches each at its own moment. On fresh seeds 79 and 83 (1,200
+paired rounds) pace, starving and every trademark the same, no win rate decided; deaths by cut 4.6% to 7.1% (a
+flasher beside a snake is noticed a beat later). Part 4's per-use test again: the flight +0.20 ± 0.15 place a use.
