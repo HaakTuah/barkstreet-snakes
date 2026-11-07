@@ -360,13 +360,14 @@ A mushroom is a weapon you aim:
   (0.22) as the second runs out, and on each of the last three moves it throbs (0.06 bigger as the move starts,
   settling through it), so the spit comes on the beat after the third; with reduced motion it swells, without the
   throbs.
-- **Aim by steering.** While it's in your cheek, a small ring marks the cell `SPIT_REACH` (3) ahead of your head,
-  wherever you face. When the time is up, you spit it there in an arc, over anything between: it leaves at the start of
-  that tick, before anyone moves, from the head and the way it faces then, exactly where the ring has been.
-- **Where it lands:** on bark, it lies there, poisonous; on a head, that snake swallows it (shrinking, and spitting it on
-  in its turn), unless its own mouth is full, when it bounces off as off a body; on a body, food or a burrow, it rolls
-  off by the roll rule ("Where it rolls is a rule, never chance"), and with nowhere to roll it's gone; off the board, in
-  a hole or in a fire, it's gone.
+- **Aim by steering.** While it's in your cheek, a dotted green line runs from your head the way you face, `SPIT_REACH`
+  (5) cells out (to the edge or a hole, if nearer). When the time is up, you spit it along that line: it leaves at the
+  start of that tick, before anyone moves, from the head and the way it faces then, and flies straight on ("The spit
+  flies along the line", below).
+- **Where it stops:** at the first thing in its way. On a head, that snake swallows it (shrinking, and spitting it on in
+  its turn), unless its own mouth is full, when it bounces off as off a body; on a body, food or a burrow, it rolls off
+  by the roll rule ("Where it rolls is a rule, never chance"), and with nowhere to roll it's gone; off the board, in a
+  hole or in a fire, it's gone; with nothing in its way, it lies on the bark `SPIT_REACH` out, poisonous.
 - **You slide over your own.** For `OWN_SPIT_TICKS` (6) moves after the spit, the spitter's head goes over the mushroom
   it spat, as a full mouth goes over food, and it stays; anyone else who comes over it swallows it as ever. (2x, the
   owner's playtest: before, a snake that kept going swallowed it again three moves later, shrank, and spat it again, a
@@ -379,31 +380,39 @@ A mushroom is a weapon you aim:
   log holds no more poison than before.
 - **Eating one on purpose** is a real choice: a few segments for a shot at a rival, best when you're long and they're
   close.
-- *The cue:* the green bulge, the ring, the arc and a "ptoo"; a hit is a green puff on the target's head.
-- *The lessons:* your first, "Bleh! Steer to aim it: it lands three ahead."; your first spit that lies, "Still wet: you
-  slide over your own."; the first time one hits you, "Ptoo! Name
-  got you. Steer to spit it back."
-- *The Field guide's Mushroom row:* "Poison: 3 off your tail (never below 3). A second later it comes back up, three
-  ahead of you: steer to aim it at a head; you slide over it while it's wet. Each time it comes back up it takes one more, up to 5, a shade darker. Keep
-  out of a green ring."
-- *The rivals* (`ai/spit.js`): everyone aims one in the cheek (the last moves before the spit), closes in on where it
-  could hit a head before that, and keeps its head out of any ring due within its search;
-  eating one on purpose is weighed only at a mushroom within 4 of its head with a rival's head close and a line to spit
-  along, as a shot worth its taste for it × 0.35 (`SPIT_HIT`) × half an apple (`SPIT_SEG`) for each segment it would
-  take off ("Mushrooms, to a rival" in `39-the-rivals.md`).
+- *The cue:* the green bulge, the dotted line, the "ptoo", the mushroom flying, spinning, over the snakes; a hit is a
+  green puff on the target's head.
+- *The lessons:* your first, "Bleh! Steer to aim it: it flies straight ahead."; your first spit that lies, "Still wet:
+  you slide over your own."; the first time one hits you, "Ptoo! Name got you. Steer to spit it back."
+- *The Field guide's Mushroom row:* "Poison: 3 off your tail (never below 3). A second later it comes back up and flies
+  straight ahead of you, up to five: steer to aim it at a head; a body in the way stops it. You slide over your own
+  while it's wet. Each time it comes back up it takes one more, up to 5, a shade darker. Step out of a dotted green
+  line."
+- *The rivals* (`ai/spit.js`): everyone aims one in the cheek (the last moves before the spit), leading the head it
+  aims at, closes in on a cell in line with a head before that, and keeps its head out of any line due within its
+  search, and of any mushroom in the air ("The spit flies along the line", below); eating one on purpose is weighed
+  only at a mushroom within 4 of its head with a rival's head close and a line to spit along, as a shot worth its
+  taste for it × 0.35 (`SPIT_HIT`) × half an apple (`SPIT_SEG`) for each segment it would take off ("Mushrooms, to a
+  rival" in `39-the-rivals.md`).
 
 ### The spit flies along the line
 
-To build (3b+ of round six B, in `docs/PROGRESS.md`; the spitter sliding over its own mushroom, 2x, goes first): the
-arc to a ring 3 ahead goes; the mushroom flies straight ahead of you, the way you face when the second is up, up to 5
-cells (`SPIT_REACH`), two cells a tick, and stops at the first thing in its way: a **head** swallows it (poisoned); a
-**body**, yours or anyone's, bounces it off by the roll rule; **food or a burrow** rolls it off; **the edge or a hole**
-and it's gone; nothing in the way, and it lies on the bark 5 cells out. While it's in your cheek, a dotted line marks its
-path from your head instead of the ring, so a target still has its second to get out of the line, and a body between
-you and it is a shield. *The rivals* lead their shots and step out of any line pointed at them, each in its style
-(Sniper's head shots its trademark). *The A/B:* the spitters should come out ahead, and hiding behind a body only blocks
-one line. *The cue:* the dotted line, the mushroom flying, the green puff. *The lesson:* "Bleh! Steer to aim it: it
-flies straight ahead." Online: a protocol bump. First guesses: reach 5, two cells a tick.
+The shot of "Mushrooms come back up" (3b+ of round six B; the owner, 30 October 2026: "3. Agreed, do it expertly!"):
+the mushroom flies straight ahead of the spitter, the way it faced when the second was up, `SPIT_SPEED` (2) cells a
+tick, up to `SPIT_REACH` (5), and stops at the first thing in its way (above, "Where it stops"). Each tick it flies on
+at the start, before anyone moves (the ones already in the air first, then any spat that tick, in seat order); a head
+that moves onto it where it hangs between ticks is hit too, as if it had flown into it. So a head two out is hit at
+once, four out the tick after, and a target has the second of the dotted line, and the flight, to step out of the line;
+a body between the spitter and it is a shield. Over the edge it flies on only where the edges wrapped for the spitter as
+it left; a gold portal is a way through for snakes, not for what they spit. The spitter's own head goes over it in the
+air, as over its own lying wet.
+- *The rivals* (`ai/spit.js`): each line is the engine's, cell by cell and tick by tick (`spitLine`), stopped at a hole,
+  the edge or a body still there as they'd see it. Dodging: from a rival's cheek, every way it might face (straight on
+  the likeliest), and from any mushroom in the air as seen a reaction time ago (2q), and from a cheek whose time has run
+  out though they haven't yet seen it fly. Aiming: the head where it'll be when the mushroom gets there, by two even
+  guesses, where they reckon it and a move further on (they may have noticed it late, 2q), so a line the target walks
+  into is the surest shot (`aimGain`). Each in its style: a weight for turning keeps Mason on its straight runs, a shot
+  or not; Sniper's and Joker's taste for a shot makes them eat one on purpose most.
 
 ### Where it rolls is a rule, never chance
 
@@ -426,6 +435,6 @@ jump let go); each snake's row carries its golden charges (`leaps`, `dashes`), i
 25), a waiting press (`leapArmed`, `flashArmed`), its wrap (`wrapUntil`), its stun and burn, its flight
 (`flight`, `land`, `airLeft`, `airGold`, and the ring, `ring` and `ringIn`) and its cheek (`cheek`, `spitAt`); and the
 events carry leaps (golden, how far, a leap now), dashes (plain or golden), fizzles (a press that couldn't go), cuts,
-douses, crashes (a failed flash's, and one in the air, say so), squashes and spits (where it came down, whom it hit,
-where it lies). Bridges and cuts changed no message: they're rules both sides
+douses, crashes (a failed flash's, and one in the air, say so), squashes, spits (where each left from) and where each
+stopped (whom it hit, where it lies); each tick carries the mushrooms in the air (protocol 27). Bridges and cuts changed no message: they're rules both sides
 play by.
