@@ -48,8 +48,11 @@ the second account until its usage is spent; on the main account the brake close
   - The banners and cards: the deflating tag ("X. For now.") and the repeated jokes gone (PR #443).
   - The lessons and the Field guide: terse lessons and subjectless rows read straight, rules unchanged (PR #445).
   - The guard: the chatter suite fails a voice with more than four lines of one shape (PR #448).
-  *Next on resume:* the menus (the start card, the room card and the nap card's words), then the news lines.
-  *Left:* the menus, the news lines and the README's player text; the guide's Burrows, Jump, Cuts and Golden beetle rows
+  - The menus: the start card's trailer-shaped intro, the nap card's cliché, the repeated friends joke and errors that didn't say what went wrong (PR #558).
+  - The news lines: the repeated "no longer", semicolon lists, "islands" and a stray "Leap now!" gone, the top line left to the milestone (PR #561).
+  - The README's player text: run-ons with piled brackets, "So …" summaries and one phrase four times, facts unchanged (PR #562).
+  *Next on resume:* the guide's Burrows, Jump, Cuts and Golden beetle rows, once 2u+ and 2aa merge.
+  *Left:* the guide's Burrows, Jump, Cuts and Golden beetle rows
   and one name for each thing (hole, pit or gap; jump, hop or leap; the rings), once part 5 (#202) merges. Wildcard's
   and Mason's protected lines stay as they are; the Chinese is rewritten with each changed line.
 - **What belongs:** whatever makes the game feel finished without changing how it plays: things drawn wrong, out of
@@ -120,11 +123,6 @@ landing is almost never contestable. The flight stays as built for now, and no r
    or follower.
 4. **Measured again after 2u and part 7,** whose stamina and pricing change what a flight costs. Only if it is still
    even then does a bigger change go to the owner as a question: a longer flight, or the ring shown before take-off.
-
-### 2aa. Dash on the key you're going (the owner, 4 November 2026; an input entry, a side lane now)
-
-The steering key of the way you're going dashes again, as a swipe ahead does, behind touch's guard: its spec is in
-`docs/handoff/queue-specs.md` under the same title.
 
 ### 2u+. The stamina economy and the golden apple's worth (the owner, 3 and 4 November 2026; #460; a measurement right after 2u, then an engine-rules entry for what pays)
 

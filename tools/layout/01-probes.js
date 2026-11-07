@@ -82,7 +82,7 @@ const BANNERS = [ // (the widest a phone shows: a lesson with no shorter words, 
   ['On fire: 3 bites of tail, and at 3 it ends you. Rain helps.', '', 'lesson'],
   ['Rat-a-tat. The woodpecker has come for the log, a patch at a time.', 'bird', 'round'],
   ['First out: Capricious got cut in two by Metagamer.', 'kill', 'round', { phone: 'First out: Capricious was cut by Metagamer.' }],
-  ['Let the wriggling begin.', 'go', 'round'],
+  ['Here they come.', 'go', 'round'],
 ];
 const BANNER = ([text, kind, level, opts] = [], show = true) => `(() => {
   const t = document.getElementById('toast');
