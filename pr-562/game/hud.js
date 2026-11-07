@@ -125,7 +125,7 @@ addEventListener('resize', fitStartCard);
 // What the chips mean, in words (phones have no tooltips).
 function yourPowerWords(s) {
   const how = (left, gold) => gold ? `${gold} golden` : left === 0 ? 'ready' : 'resting';
-  return `${touchFirst ? 'A tap' : 'Space or a click'} jumps: ${how(Engine.leapIn(theGame, s), s.leaps)}. ${touchFirst ? 'A swipe ahead' : 'E, Shift or right-click'} dashes: ${how(Engine.flashIn(theGame, s), s.dashes)}.`;
+  return `${touchFirst ? 'A tap' : 'Space or a click'} jumps: ${how(Engine.leapIn(theGame, s), s.leaps)}. ${touchFirst ? 'A swipe ahead' : 'E, Shift, right-click or the key ahead'} dashes: ${how(Engine.flashIn(theGame, s), s.dashes)}.`;
 }
 // Golden powers held, as words: ['2 golden jumps', '1 golden flash'].
 const goldWords = s => [s.leaps > 0 && `${s.leaps} golden jump${s.leaps === 1 ? '' : 's'}`, s.dashes > 0 && `${s.dashes} golden dash${s.dashes === 1 ? '' : 'es'}`].filter(Boolean);
@@ -227,7 +227,7 @@ function rest(t, kind, left, full, gold) {
   t.last[kind] = now;
   el.classList.toggle('ready', now === 'ready');
   if (typeof now === 'number') el.style.setProperty('--fill', `${now}%`);
-  if (!gold) el.title = `Your ${kind}${now === 'ready' ? ' is ready' : ' is resting'} (${kind === 'jump' ? (touchFirst ? 'tap' : 'Space or a click') : touchFirst ? 'swipe ahead' : 'E, Shift or right-click'})`;
+  if (!gold) el.title = `Your ${kind}${now === 'ready' ? ' is ready' : ' is resting'} (${kind === 'jump' ? (touchFirst ? 'tap' : 'Space or a click') : touchFirst ? 'swipe ahead' : 'E, Shift, right-click or the key ahead'})`;
 }
 
 // The chips' icons: small inline drawings in ink (no fallback-font glyphs).
