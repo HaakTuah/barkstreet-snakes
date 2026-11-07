@@ -48,8 +48,8 @@ function holesSeen(game, n) {
 // across the board, give or take a little that drifts from moment to moment
 // (the same whenever it's asked, and in every copy of the game), so it's
 // REACTION_MS near on average, as the ticks fall; never sooner than a tick.
-// It drifts slowly enough that what's seen of a snake never goes back in
-// time. Its distance is read where the snake was a reaction time ago.
+// It drifts slowly, and what's seen of a snake never goes back in time
+// (aiView). Its distance is read where the snake was a reaction time ago.
 function noticeDelay(game, snake, o, tickMs) {
   const h = snake.body[0];
   let d = Infinity;
@@ -79,7 +79,10 @@ function aiView(game, snake) {
   const others = [];
   for (const o of snap.snakes) {
     if (o.id === snake.id) continue;
-    const at = Math.max(0, last - noticeDelay(game, snake, o, tickMs)), d = idx - at;
+    // (Never an older look than the last: its head can jump, over a wrapped edge or in a flight, and with it the
+    // distance; `noticed` keeps the tick of the moment it last saw each snake.)
+    const at = Math.max(0, last - noticeDelay(game, snake, o, tickMs), last - game.tick + ((snake.noticed ||= {})[o.id] ?? -Infinity)), d = idx - at;
+    snake.noticed[o.id] = game.tick - last + at;
     const seen = d !== 0 && game.history[at].snakes.find(l => l.id === o.id); // (none: dead since, so seen as in the rest of the view)
     // (Seen d ticks before the rest (or after, d < 0), its timers are counted on by those d ticks, so every one reads
     // as of `age` ago, as the rest of the view does, and a rival reckons where it's got to as for any snake: a stun
@@ -87,7 +90,7 @@ function aiView(game, snake) {
     // (late: how many ticks before the rest it was seen, for one who watches the snakes from moment to moment.)
     others.push(!seen ? o : {
       ...seen, late: d, stun: seen.stun - d, spitIn: seen.spitIn && seen.spitIn - d,
-      air: seen.air > d ? seen.air - d : 0, wrap: Math.max(0, seen.wrap - d * tickMs),
+      air: seen.air && Math.max(0, seen.air - d), wrap: seen.wrap && Math.max(0, seen.wrap - d * tickMs), // (none stays none)
     });
   }
   return {

@@ -20,8 +20,9 @@ in `25-round-four-measured.md`, "Round five, measured" in `26-round-five-star.md
   about a quarter of a second, and never less than a tick) ago, and another snake as late as a person would notice it
   (2q): `REACTION_MS` near its own head, growing with the steps to that snake's nearest cell to `REACTION_FAR_MS` (400)
   at `REACTION_FAR_CELLS` (24) or more, give or take up to `REACTION_JITTER_MS` (50), drifting from moment to moment
-  (`REACTION_DRIFT_TICKS`) so what it sees of a snake never goes back in time, and near it averages `REACTION_MS` as the
-  ticks fall. It reckons where a snake seen later has got to as for any snake, from its look then; its turns since,
+  (`REACTION_DRIFT_TICKS`), and near it averages `REACTION_MS` as the
+  ticks fall. What it sees of a snake never goes back in time, even when its own head jumps (over a wrapped edge, in a flight): it
+  remembers the moment it last saw each. It reckons where a snake seen later has got to as for any snake, from its look then; its turns since,
   it doesn't see. The variation is drawn from the tick and the two snakes' ids, so every copy of the game, online too,
   sees the same. It knows its own body, hunger and
   powers exactly, and sees food, burrows, the weather and the woodpecker's strike and promised landings as they are now

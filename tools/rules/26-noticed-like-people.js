@@ -38,3 +38,13 @@
   }
   check('2q: ...however the distance and the variation move', back === 0, `${back} times back`);
 }
+{ // ...nor when the rival's own head jumps across the board (over a wrapped edge): the snake beside it is now far off.
+  const g = board([[line(3, 3, 4), 'right'], [line(3, 4, 4), 'right']], { time: 150000 }); // (the fastest ticks: the most ticks between near and far)
+  for (let t = 0; t < 8; t++) E.step(g);
+  const me = g.snakes[0], o = g.snakes[1], body = q => JSON.stringify(q.body);
+  const lateOf = v => [...g.history].reverse().findIndex(h => body(h.snakes.find(s => s.id === o.id)) === body(v.others[0]));
+  const before = lateOf(E.aiView(g, me));
+  me.body = me.body.map((c, i) => ({ x: 23, y: 23 - i }));
+  const after = lateOf(E.aiView(g, me));
+  check('2q: ...nor when its own head jumps across the board', g.snakes.every(s => s.alive) && before >= 0 && after >= 0 && after <= before, `${before} then ${after} ticks late`);
+}

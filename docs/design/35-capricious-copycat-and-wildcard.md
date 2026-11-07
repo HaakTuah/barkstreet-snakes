@@ -36,7 +36,7 @@ the cast (`39-the-rivals.md`).
 
 - **Its model** is whoever leads (the longest snake). It changes model only when another snake leads by 3 or more.
 - **It reads every leader by behaviour alone,** rival or person: the AI's view carries no persona, and must not ("The
-  rivals never treat a person differently"). Over the ticks it has watched (as it saw them, its reaction time late),
+  rivals never treat a person differently"). Over the ticks it has watched (each at the moment it noticed it, as it saw it: `late` in `aiView()`),
   each snake's eight traits: moves per turn, coiling, riding tails, distance from heads, heads near, growth, jumps and
   flashes, and how far it strays (`watchStyles`, `traitsOf` in `ai/moods.js`). The style is the nearest of twelve
   rivals' own (`styleOf`, `STYLES`, measured by `tools/dev/copycat-styles.js`), after 60 ticks watched (`STYLE_MIN`).
