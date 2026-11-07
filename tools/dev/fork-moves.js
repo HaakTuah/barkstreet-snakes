@@ -10,8 +10,10 @@
 // move it would have made with the move's price waived)?
 // --rest forbids that rival the move for the rest of the round in the play without it: one tick measures when to use
 // it (the rival still holds it and uses it later), the rest of the round whether having it helps.
-//   node tools/dev/fork-moves.js <root> --move fly|now|dash|portal|power|golden [--rounds 40] [--seed 1] [--per-round 4] [--forced] [--rest] [--json]
+//   node tools/dev/fork-moves.js <root> --move fly|now|dash|pdash|portal|power|golden [--rounds 40] [--seed 1] [--per-round 4] [--forced] [--rest] [--json]
 //     fly: a golden flight held past the plain hop (always GOLD_FLY cells); now: a plain leap now; dash: a golden flash;
+//     pdash (2ab): a plain flash, against that tick without it; each use says why it was weighed (trapped, race, cut,
+//       cover, ahead: the way I'd crawl) and by how much, in apples, it beat the best else (--json for each);
 //     portal: following someone through a gold portal (no --forced)
 //     power (2u+): a plain jump or flash used with both in the bar, played on with the jump, the flash and neither
 //       (which was the more useful, each moment). No --forced or --rest.
@@ -47,6 +49,8 @@ function patchAI(text) {
   swap('consider = (d, flash, v, price, extra, wait = 0) => {', 'consider = (d, flash, v, price, extra, wait = 0) => { const pk = flash ? (me.dashes > 0 ? \'\' : \'pdash\') : (me.leaps > 0 ? \'\' : \'pjump\'), pf = !!pk && globalThis.__force[pk].has(me.id); if (pk && globalThis.__forbid[pk].has(me.id)) v = null; if (pf) { price = 0; wait = 0; }');
   swap('if (v > (bestPower ? bestPower.v : crawlScore + 1))', 'if (v > (bestPower ? bestPower.v : pf ? -Infinity : crawlScore + 1))');
   swap('me.flashIn === 0 && (trapped || d === crawlDir', 'me.flashIn === 0 && (trapped || globalThis.__force.pdash.has(me.id) || d === crawlDir');
+  // (pdash, 2ab: why each pick that's a plain flash was weighed, and its edge over the best else, in apples)
+  swap('bestPower = { d, flash, v,', 'globalThis.__why[me.id] = flash && pk ? { why: trapped ? \'trapped\' : cutTarget ? \'target\' : race(d) ? \'race\' : coverNear(d) ? \'cover\' : d === crawlDir ? \'ahead\' : \'cut\', edge: (v - (bestPower ? bestPower.v : crawlScore)) / U, price, wait, boxed, crawl: crawlScore / U, endRisk: endRisk / U, stamina: me.stamina } : null, bestPower = { d, flash, v,');
   return text;
 }
 
@@ -55,7 +59,7 @@ const rng = () => { rngState = (rngState + 0x6d2b79f5) >>> 0; let t = rngState; 
 const M = Object.create(Math); M.random = rng;
 const ctx = vm.createContext({ window: {}, console, Math: M });
 const empty = () => ({ fly: new Set(), now: new Set(), dash: new Set(), portal: new Set(), any: new Set(), pjump: new Set(), pdash: new Set() });
-ctx.__forbid = empty(); ctx.__force = empty();
+ctx.__forbid = empty(); ctx.__force = empty(); ctx.__why = {};
 const gameFiles = require('../game-files.js'), files = gameFiles(root), read = f => fs.readFileSync(path.join(root, f), 'utf8');
 vm.runInContext(read('tuning.js'), ctx, { filename: 'tuning.js' });
 vm.runInContext(patchAI(files.filter(gameFiles.ai).map(read).join('\n')), ctx, { filename: 'ai' }); // (the AI's files as one script, patched)
@@ -71,6 +75,7 @@ function used(g, s) {
     if (MOVE === 'fly' && e.type === 'leap' && e.gold && s.flight?.held) return true; // (held: the full flight, 2y)
     if (MOVE === 'now' && e.type === 'leap' && e.now && !e.gold) return true;
     if (MOVE === 'dash' && e.type === 'dash' && !e.plain) return true;
+    if (MOVE === 'pdash' && e.type === 'dash' && e.plain) return true;
     if (MOVE === 'portal' && e.type === 'through') return true; // (following someone through a gold portal)
     if (MOVE === 'golden' && e.type === 'eat' && e.kind === 'golden') return true;
     if (MOVE === 'power' && plainPower(e)) return true;
@@ -140,7 +145,8 @@ for (let r = 0; r < ROUNDS; r++) {
     if (process.env.FORK_CHECK && (sig(A) !== sig(back(after)) || afterA !== after.rng)) throw new Error(`round ${r}, tick ${g.tick}: the fork's own play differs from the round's`);
     rngState = before.rng; ctx.__forbid[MOVE].add(id); E.step(B); ctx.__forbid = empty(); const afterB = rngState;
     if (used(B, B.snakes[id])) { g = back(after); continue; } // (it couldn't be stopped: a held move)
-    const ctxA = { cut: A.events.some(e => e.type === 'cut' && e.by === id), ate: A.events.filter(e => e.type === 'eat' && e.snake?.id === id).length, len: A.snakes[id].body.length, late: E.suddenDeath(A) ? 1 : 0, gold: A.snakes[id].leaps };
+    const why = MOVE === 'pdash' ? { ...ctx.__why[id] } : {};
+    const ctxA = { ...why, cut: A.events.some(e => e.type === 'cut' && e.by === id), ate: A.events.filter(e => e.type === 'eat' && e.snake?.id === id).length, len: A.snakes[id].body.length, late: E.suddenDeath(A) ? 1 : 0, gold: A.snakes[id].leaps };
     rngState = afterA; const oa = playOut(A); rngState = afterB; if (REST) ctx.__forbid[MOVE].add(id); const ob = playOut(B); ctx.__forbid = empty();
     const a = oa.get(id), bb = ob.get(id);
     diffs.push({ ...ctxA, causeA: a.alive < 10000 ? a.cause : '', causeB: bb.alive < 10000 ? bb.cause : '', place: bb.place - a.place, win: (a.place === 1) - (bb.place === 1), alive: (a.alive - bb.alive) / 1000, out5: (bb.alive < 5000) - (a.alive < 5000), len10: a.len10 - bb.len10, persona: g.snakes[id].name });
