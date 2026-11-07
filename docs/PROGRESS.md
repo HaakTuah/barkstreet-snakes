@@ -48,8 +48,9 @@ the second account until its usage is spent; on the main account the brake close
   - The banners and cards: the deflating tag ("X. For now.") and the repeated jokes gone (PR #443).
   - The lessons and the Field guide: terse lessons and subjectless rows read straight, rules unchanged (PR #445).
   - The guard: the chatter suite fails a voice with more than four lines of one shape (PR #448).
-  *Next on resume:* the menus (the start card, the room card and the nap card's words), then the news lines.
-  *Left:* the menus, the news lines and the README's player text; the guide's Burrows, Jump, Cuts and Golden beetle rows
+  - The news lines: the repeated "no longer", semicolon lists, "islands" and a stray "Leap now!" gone, the top line left to the milestone (PR #561).
+  *Next on resume:* the menus (the start card, the room card and the nap card's words, PR #558).
+  *Left:* the menus and the README's player text (PR #562); the guide's Burrows, Jump, Cuts and Golden beetle rows
   and one name for each thing (hole, pit or gap; jump, hop or leap; the rings), once part 5 (#202) merges. Wildcard's
   and Mason's protected lines stay as they are; the Chinese is rewritten with each changed line.
 - **What belongs:** whatever makes the game feel finished without changing how it plays: things drawn wrong, out of
