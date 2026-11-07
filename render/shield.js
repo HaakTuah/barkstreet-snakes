@@ -10,12 +10,12 @@ function drawShield(s, a, now) {
   if (left > 0) {
     a.shielded = true;
     const k = left < SHIELD_WARN && !reduced ? 0.45 + 0.55 * Math.abs(Math.sin(now / 110)) : 1;
-    bubble(x, y, r, 0.6 * k);
+    shieldRing(x, y, r, 0.6 * k);
   } else if (a.shielded) { a.shielded = false; if (s.shieldUntil === -1) a.shieldPop = now; } // (-1: it took a crash; a shield that faded just goes)
   const t = (now - (a.shieldPop ?? -Infinity)) / SHIELD_POP;
-  if (t >= 0 && t < 1) bubble(x, y, r * (1 + 0.5 * t), 0.6 * (1 - t));
+  if (t >= 0 && t < 1) shieldRing(x, y, r * (1 + 0.5 * t), 0.6 * (1 - t));
 }
-function bubble(x, y, r, alpha) {
+function shieldRing(x, y, r, alpha) {
   const was = ctx.globalAlpha;
   ctx.globalAlpha = was * alpha;
   ctx.lineWidth = CELL * 0.1; ctx.strokeStyle = INK;
