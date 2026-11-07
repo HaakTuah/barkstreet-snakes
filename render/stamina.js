@@ -102,6 +102,6 @@ function guideStamina(g) {
   });
   g.restore();
   g.save(); g.translate(c * 0.35, c * 0.48); g.scale(0.55, 0.55);
-  guideSnake(g, '#4ade80', true, (x, y) => restRing(x, y, c * 0.84, 0.8, 1));
+  guideSnake(g, '#4ade80', true, (x, y) => restRing(x, y, c * 0.84, (1 + T.DASH_STAMINA_MS / T.STAMINA_MS) / 2, 1));
   g.restore();
 }
