@@ -121,11 +121,6 @@ landing is almost never contestable. The flight stays as built for now, and no r
 4. **Measured again after 2u and part 7,** whose stamina and pricing change what a flight costs. Only if it is still
    even then does a bigger change go to the owner as a question: a longer flight, or the ring shown before take-off.
 
-### 2aa. Dash on the key you're going (the owner, 4 November 2026; an input entry, a side lane now)
-
-The steering key of the way you're going dashes again, as a swipe ahead does, behind touch's guard: its spec is in
-`docs/handoff/queue-specs.md` under the same title.
-
 ### 2u+. The stamina economy and the golden apple's worth (the owner, 3 and 4 November 2026; #460; a measurement right after 2u, then an engine-rules entry for what pays)
 
 Where the one stamina comes from (food, its own recharge, banking to a cap) and what the golden apple gives (a full

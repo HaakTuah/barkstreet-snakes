@@ -2,6 +2,13 @@
 
 ## The queue, done
 
+### 2aa. Dash on the key you're going (the owner, 4 November 2026; an input entry, a side lane now)
+
+The steering key of the way you're going dashes again, as a swipe ahead does, behind touch's guard: its spec is in
+`docs/handoff/queue-specs.md` under the same title.
+
+*Done* (PR #557): a fresh keydown of the steering key the snake is already going dashes, through a swipe ahead's path (the same engine call and online message, so no protocol change and no rival change), behind touch's guard: never auto-repeat, and a press the way the last press turned you within `POWER_AFTER_TURN_MS` is that turn pressed twice. The hints, the dash lesson, the Field guide row, the README and `docs/design/40-powers-and-moves.md` ("The key ahead flashes, behind touch's guard") say so; the input suite proves it.
+
 ### 2x. The spitter slides over its own mushroom (the owner, 2 November 2026; an engine-rules entry, after part 5)
 
 Taken out of 3b+ and moved to the front, since it still bites (the owner: "Still get the bug with swallowing a mushroom over and over again after puking it up."): the spec is 3b+'s "The spitter slides over its own mushroom" in `docs/handoff/queue-specs.md`, entry 5.
