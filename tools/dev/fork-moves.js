@@ -175,8 +175,12 @@ function power(before, g, s0) {
   const J = play(['pdash'], 'pjump'), D = play(['pjump'], 'pdash'), C = play(['pjump', 'pdash']);
   if (J.took !== 'pjump' || D.took !== 'pdash' || C.took) return false;
   const d = (a, b) => ({ place: b.place - a.place, win: (a.place === 1) - (b.place === 1), alive: (a.alive - b.alive) / 1000, out5: (b.alive < 5000) - (a.alive < 5000), len10: a.len10 - b.len10 });
-  const better = (a, b) => Math.sign(b.place - a.place || a.alive - b.alive); // (1: a was the more useful, -1: b, 0: no difference)
-  diffs.push({ ...d(J.out, D.out), jumpBetter: better(J.out, D.out), jump: d(J.out, C.out), dash: d(D.out, C.out), used: plainPower(g.events.find(e => e.snake?.id === id && plainPower(e))), persona: s0.name });
+  // (1: a was the more useful, -1: b, 0: no difference. Over the whole round a fork's two plays part ways for good
+  // and either can come out ahead by chance, so the moment's own worth is read near it: alive 5 s on, then length
+  // 10 s on; the place and time alive, over the round, beside it)
+  const better = (a, b) => Math.sign((a.alive >= 5000) - (b.alive >= 5000) || a.len10 - b.len10);
+  const longer = (a, b) => Math.sign(b.place - a.place || a.alive - b.alive);
+  diffs.push({ ...d(J.out, D.out), jumpBetter: better(J.out, D.out), jumpLonger: longer(J.out, D.out), jump: d(J.out, C.out), dash: d(D.out, C.out), used: plainPower(g.events.find(e => e.snake?.id === id && plainPower(e))), persona: s0.name });
   return true;
 }
 const mean = k => diffs.reduce((t, d) => t + d[k], 0) / Math.max(1, diffs.length);
@@ -192,9 +196,10 @@ if (MOVE === 'golden') { // (the three comparisons, each paired over the same ea
 } else if (MOVE === 'power') { // (each moment, which was the more useful: the jump, the flash, or neither by place and time alive)
   const by = {};
   for (const x of diffs) { const b = by[x.persona] ??= [0, 0, 0]; b[x.jumpBetter + 1]++; }
-  const all = diffs.reduce((b, x) => (b[x.jumpBetter + 1]++, b), [0, 0, 0]);
+  const all = diffs.reduce((b, x) => (b[x.jumpBetter + 1]++, b), [0, 0, 0]), long = diffs.reduce((b, x) => (b[x.jumpLonger + 1]++, b), [0, 0, 0]);
   const share = b => `${b[2]} jump, ${b[0]} dash, ${b[1]} even: the jump ${(100 * b[2] / Math.max(1, b[0] + b[2])).toFixed(0)}% of the decided`;
-  console.log(`power: ${diffs.length} moments in ${ROUNDS} rounds (seed ${SEED}) · ${share(all)} · jump against dash, place ${res.place.toFixed(3)} ± ${res.placeSE.toFixed(3)}, alive ${res.alive.toFixed(1)} ± ${res.aliveSE.toFixed(1)} s`);
+  console.log(`power: ${diffs.length} moments in ${ROUNDS} rounds (seed ${SEED}) · near it, ${share(all)} · jump against dash, place ${res.place.toFixed(3)} ± ${res.placeSE.toFixed(3)}, alive ${res.alive.toFixed(1)} ± ${res.aliveSE.toFixed(1)} s`);
+  console.log(`  over the whole round: ${share(long)}`);
   for (const [k, pick] of [['jump against neither', x => x.jump], ['dash against neither', x => x.dash]]) { const xs = diffs.map(pick), m = f => xs.reduce((t, x) => t + x[f], 0) / Math.max(1, xs.length); console.log(`  ${k}: place ${m('place').toFixed(3)} · alive ${m('alive').toFixed(1)} s`); }
   for (const p of Object.keys(by).sort()) console.log(`  ${p}: ${share(by[p])}`);
   if (JSON_OUT) console.log(JSON.stringify({ seed: SEED, rounds: ROUNDS, diffs }));

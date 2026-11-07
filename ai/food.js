@@ -63,11 +63,19 @@ function readFood() {
   // Food worth by kind. Negative means "avoid eating".
   appleWorth = w.normalFood ?? 1;
   craving = w.golden || PLAIN_GOLD; // (for golden things: Star's)
+  // (2u+: a meal puts stamina back, ms of it; that's worth its share of a
+  // full bar at the powers' price (STAMINA_PRICE), twice that when I'm out
+  // of both powers, and half once I'm only banking it)
+  const lift = ms => {
+    if (!ms) return 0;
+    const room = TUNE.STAMINA_BANK * TUNE.STAMINA_MS - me.stamina, low = me.stamina < Math.min(TUNE.JUMP_STAMINA_MS, TUNE.DASH_STAMINA_MS) ? 2 : me.stamina < TUNE.STAMINA_MS ? 1 : 0.5;
+    return STAMINA_PRICE * low * Math.min(ms, Math.max(0, room)) / TUNE.STAMINA_MS;
+  };
   worth = {
-    food: Math.max(appleWorth, hunger),
-    golden: TUNE.GOLDEN_GROWTH * Math.max(appleWorth, hunger) * craving.apple,
-    beetle: TUNE.BEETLE_GROWTH * Math.max(appleWorth, hunger), // it moves, but it's worth what it's worth
-    pellet: w.pellet ?? 1,
+    food: Math.max(appleWorth, hunger) + lift(TUNE.STAMINA_FOOD_MS),
+    golden: TUNE.GOLDEN_GROWTH * Math.max(appleWorth, hunger) * craving.apple + lift(Math.max(TUNE.GOLDEN_GROWTH * TUNE.STAMINA_FOOD_MS, TUNE.GOLDEN_STAMINA_MS)),
+    beetle: TUNE.BEETLE_GROWTH * Math.max(appleWorth, hunger) + lift(TUNE.BEETLE_GROWTH * TUNE.STAMINA_FOOD_MS), // it moves, but it's worth what it's worth
+    pellet: (w.pellet ?? 1) + lift(TUNE.STAMINA_FOOD_MS),
     mushroom: Math.min(-TUNE.SHRINK, w.mushroom ?? -TUNE.SHRINK), // (it takes SHRINK segments off, and it isn't a meal: as many apples lost, hungry or not)
     leaf: 2 * Math.max(appleWorth, hunger, 0.5) * craving.power, // (golden powers: worth it for what they do)
     goldcap: 1.5 * Math.max(appleWorth, hunger, 0.5) * craving.power,
