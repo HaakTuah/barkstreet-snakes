@@ -102,17 +102,6 @@ each danger (a landing ring, a flash's line, a bridge's tail end). Rules tests p
 calls as a person's, and the head-to-head shows the users ahead ("No ability only people use", "every new move is
 tested both ways"); the pricing part then makes the choices among them as good as they can be.
 
-### 2q. Rivals notice like people (30 October 2026; an AI entry, after 2s)
-
-The owner: "do the snakes have a bit too good reaction time? [...] Just seems they play a bit too well in that regard
-perhaps", and to the take that what is superhuman is not the 240 ms but seeing the whole board at once: "Agreed to
-all!". Every rival's view of another snake is as old as a person's notice of it would be: `REACTION_MS` (240) near its
-own head, growing with distance to about 400 ms across the board (`REACTION_FAR_MS`, first guesses), with a little
-variation from moment to moment, so near things are seen at once and far ones a beat late, as a person sees them
-("Clever rivals, human reactions"; the AI still plans as far ahead as before). Online the same. Measured before and
-after: per-persona win rates, every trademark and the feel numbers within noise or explained, through
-`tools/abtest.js` on fresh seeds; the PR shows the table.
-
 ### 2r. No hop onto a doomed island (30 October 2026; part of item 5's part 4)
 
 The owner: "I see snakes jumping onto small islands where they have no chance to survive for very long". Before a hop or
