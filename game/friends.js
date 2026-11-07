@@ -70,7 +70,7 @@ function renderRecords() {
 // the renderer, as it is on the log) and its rule in a line or two.
 const secs = ms => Math.round(ms / 1000);
 // A power's share of the stamina, in words, near enough: 'two fifths', 'three quarters'.
-const SHARES = [[1 / 4, 'a quarter'], [1 / 3, 'a third'], [2 / 5, 'two fifths'], [1 / 2, 'half'], [2 / 3, 'two thirds'], [3 / 4, 'three quarters'], [1, 'all']];
+const SHARES = [[1 / 4, 'a quarter'], [1 / 3, 'a third'], [2 / 5, 'two fifths'], [1 / 2, 'half'], [2 / 3, 'two thirds'], [3 / 4, 'three quarters'], [4 / 5, 'four fifths'], [1, 'all']];
 const share = ms => SHARES.find(([f]) => Math.abs(ms / TUNE.STAMINA_MS - f) < 0.04)?.[1] ?? `${Math.round(100 * ms / TUNE.STAMINA_MS)}%`;
 const GUIDE_ROWS = [
   // (How to play opens here: the round in four lines, before the things on the log.)
@@ -82,7 +82,7 @@ const GUIDE_ROWS = [
   ]],
   ['Food', [
     ['apple', 'Apple', `Worth 1, and a full tummy. ${inWords(TUNE.APPLES).replace(/^./, c => c.toUpperCase())} on the log at a time; leave one too long and it rots.`],
-    ['golden', 'Golden apple', `Worth ${TUNE.GOLDEN_GROWTH}, and everyone saw it land.`],
+    ['golden', 'Golden apple', `Worth ${TUNE.GOLDEN_GROWTH}, a full bar of stamina, and a shield round your head for ${secs(TUNE.GOLDEN_SHIELD_MS)} s: it takes your next bump (no tail lost). Boxed in, it can’t save you. Everyone saw it land.`],
     ['beetle', 'Beetles', `Worth ${TUNE.BEETLE_GROWTH}, up to ${inWords(TUNE.BEETLE_MAX ?? 2)} out at once, even in sudden death. They scurry from heads at half your speed. A cornered one digs in: come straight at it and it’s gone, so be nearer, or cut it off from its burrow. They flee the woodpecker’s mark too, and it eats any still on it when it strikes.`],
     ['dig', 'Burrows', `${TUNE.BURROW_FROM_DIG ? 'A beetle that digs in leaves a burrow, taking the place of any burrow near it (burrows keep apart). ' : ''}A burrow left unused grows shut (past ${inWords(TUNE.BURROW_MAX)}, the one unused longest): beetles still go in, but none come out.`],
     [['pellet', 'squash'], 'Beads', `What a crash knocks off, and what a dead snake leaves (${TUNE.CORPSE_EVERY === 2 ? 'every other segment' : TUNE.CORPSE_EVERY === 1 ? 'all of it' : `one segment in ${TUNE.CORPSE_EVERY}`}). Worth 1 each, and they rot. Your own beads you squash flat as you pass, so they feed nobody: run them over to keep them from the others.`],
@@ -100,7 +100,7 @@ const GUIDE_ROWS = [
     ['cut', 'Cuts', 'A dash cuts through a body one thick with free log beyond: the part behind falls to beads. Leave fewer than 3 in front and that snake is out. Your own body too: drop your tail to fit a pocket. Along the edge, or against a hole or another body, nothing can be cut from that side.'],
     ['failflash', 'Failed dash', `Dash into a head, a body too thick, the edge or a hole and it fails: ${TUNE.FAIL_LOSS} off your tail and a longer stun.`],
     ['held', 'Golden powers', 'Gold round a snake: it holds golden powers. Sky dots are golden jumps, ember diamonds golden dashes.'],
-    ['rests', 'Stamina', `The ring round your head: one stamina for jump and dash, full again ${secs(TUNE.STAMINA_MS)} s after it runs dry. The sky notch is a jump’s worth, the ember one a dash’s. Spend it on one and it’s not there for the other. Every snake wears its own: grayer and heavy-eyed when it can’t afford either, bright-eyed when it’s full.`],
+    ['rests', 'Stamina', `The ring round your head: one stamina for jump and dash, full again ${secs(TUNE.STAMINA_MS)} s after it runs dry, sooner the more you eat. The sky notch is a jump’s worth, the ember one a dash’s. Spend it on one and it’s not there for the other. Eat past full and it banks, up to ${TUNE.STAMINA_BANK} bars. Every snake wears its own: grayer and heavy-eyed when it can’t afford either, bright-eyed when it’s full, glowing warm with some banked.`],
   ]],
   ['The log', [
     ['fire', 'Fire', 'Lightning lights it. Crawl in and it takes 3 bites of tail; rain puts it out.'],

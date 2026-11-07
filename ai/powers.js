@@ -14,7 +14,8 @@
 //   than the same rivals never flashing, or worse; an edge that small is
 //   mostly the search's own guesswork), or half to win a race (food a
 //   rival could reach as soon as I'd crawl there, but not as soon as I'd
-//   flash) or to get out of a crash. (Weighing every way cost half as
+//   flash), to get out of a crash, or to cut the rival I'm hunting (2u+:
+//   at a dash's price of 9.5 s, Sniper stopped cutting). (Weighing every way cost half as
 //   much again as the whole decision, for a third more flashes; the rest
 //   were no better for it.)
 // - Golden dashes: only to cut someone in two (more readily the more
@@ -38,7 +39,7 @@ const RESERVE_MARGIN = DRAB.margin; // (the margin, spare room wanted, of a snak
 // (powerPick() sets these for each call:)
 let crawlScore, crawlDir, air, jump, U, habit, safe, cheap, keep, stampM, trapped, boxed, roomsHere, foodHere, hereFree,
   hereFood, landFood, landCells, pecks, cellAt, freeSoon, inTheWay, path, straight, leapNow, leapFly, leapTurn, ate, ateV,
-  ateL, ateG, ateGain, endRisk, idle, muteWas, ateBug, ateWas, meal, bugsOn, cutter, bestPower, ownCut, cutKills, consider,
+  ateL, ateG, ateGain, endRisk, idle, muteWas, ateBug, ateWas, meal, bugsOn, cutter, bestPower, ownCut, cutKills, cutTarget, consider,
   waitPrice;
 function powerPick(crawlIn, crawlDirIn) {
   crawlScore = crawlIn; crawlDir = crawlDirIn;
@@ -90,7 +91,7 @@ function powerPick(crawlIn, crawlDirIn) {
   // the ones I ate there are gone.)
   bugsOn = (s, hx, hy) => { for (let b = 0; b < bugCount; b++) if (ateBug & (1 << b)) { const n = b * BUG_SLOTS + s + 1; bugCell[n] = -1; bugDug[n] = -1; } else bugStep(b, s, s + 1, s, hx, hy, otherBug(b, s)); };
   cutter = !!w.hunt || (w.aggression || 0) >= 0.5; // (the hunters and the aggressive weigh a cut off to the side too)
-  bestPower = null, ownCut = -1, cutKills = false; // (ownCut, cutKills: see flashOpt)
+  bestPower = null, ownCut = -1, cutKills = false, cutTarget = false; // (ownCut, cutKills, cutTarget: see flashOpt)
   consider = (d, flash, v, price, extra, wait = 0) => { // (wait: what it leaves me below my reserve, priced apart: a habit doesn't make that free)
     const full = endRisk > safe || idle;
     idle = false;
@@ -103,7 +104,7 @@ function powerPick(crawlIn, crawlDirIn) {
     if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
     const extra = (intent.mimicDir && sameDir(d, intent.mimicDir) ? w.mimic : 0) - (w.turn && !sameDir(d, me.dir) ? w.turn : 0);
     if (me.dashes > 0) { const v = flashOpt(d, true); if (trapped || cutKills || habit.dashSpend) consider(d, true, v, 0.6, extra); } // (a golden dash, held: out of a trap, or for a cut that puts a rival out; spent so, it gains (see part 4's chosen numbers); spent as it came, −0.11 ± 0.09 place a use; Star (dashSpend), its trademark, spends them as they come)
-    else if (me.flashIn === 0 && (trapped || d === crawlDir || habit.everyWay || (cutter && bodyNear(d)) || coverNear(d))) consider(d, true, flashOpt(d, false), STAMINA_PRICE * TUNE.DASH_STAMINA_MS / TUNE.STAMINA_MS * (trapped || race(d) ? 0.5 : 1), extra, waitPrice(TUNE.DASH_STAMINA_MS, true));
+    else if (me.flashIn === 0 && (trapped || d === crawlDir || habit.everyWay || (cutter && bodyNear(d)) || coverNear(d))) consider(d, true, flashOpt(d, false), STAMINA_PRICE * TUNE.DASH_STAMINA_MS / TUNE.STAMINA_MS * (trapped || cutTarget || race(d) ? 0.5 : 1), extra, waitPrice(TUNE.DASH_STAMINA_MS, true));
     if (jump) { const v = leapOpt(d); consider(d, false, v, (me.leaps > 0 ? 0.35 : STAMINA_PRICE * TUNE.JUMP_STAMINA_MS / TUNE.STAMINA_MS) * (leapNow ? (w.leapNow ?? 1) : 1), extra, me.leaps > 0 ? 0 : waitPrice(TUNE.JUMP_STAMINA_MS, false)); } // (leap now, at the jump's price times my style's: only out of a trap, see leapOpt)
   }
   return bestPower;

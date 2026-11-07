@@ -84,7 +84,7 @@ function drawPip(x, y, a2, pr, leap) {
 // anyway: no ring.)
 function drawRests(s, a, now) {
   const x = a.pts[0], y = a.pts[1], rr = a.rad[0] + CELL * 0.3;
-  const used = Math.max(0, s.restedAt - shownTime);
+  const used = Math.max(0, T.STAMINA_MS - SnakeEngine.stamina(game, s, shownTime)); // (of the bar: what's banked shows on the body, not here)
   const jumpOk = s.leaps > 0 || SnakeEngine.staminaIn(game, s, T.JUMP_STAMINA_MS, shownTime) === 0, flashOk = s.dashes > 0 || SnakeEngine.staminaIn(game, s, T.DASH_STAMINA_MS, shownTime) === 0;
   if (a.jc && jumpOk && !s.leaps && !(now - a.readyAt < 600)) a.readyAt = now; // (back: the flick)
   if (a.fc && flashOk && !s.dashes && !(now - a.flashFx < 600)) a.flashFx = now;
@@ -703,10 +703,10 @@ function drawPasses(from, to, now, halos) {
         if (pass === 0) { if (i >= to) drawHalo(s, a); else drawOutline(s, a, !!halos); }
         else if (pass === 1) drawBody(s, a, now, false);
         else if (pass === 2) { if (s.burnUntil > game.tick) drawBurning(s, a, now); }
-        else { // queasy after a mushroom: a sickly green wash, fading; tired, a gray one; starving, a pale one
+        else { // queasy after a mushroom: a sickly green wash, fading; tired, a gray one (charged, a warm one); starving, a pale one
           const q = a.queasyAt ? 1 - (now - a.queasyAt) / 1400 : 0;
           if (q > 0 && q <= 1) { ctx.fillStyle = rgba('#65a30d', 0.38 * q); silhouette(a, 0.5); }
-          staminaWash(a); // (tired: a little grayer, see render/stamina.js)
+          staminaWash(a); // (tired: a little grayer; charged, a warm glow: see render/stamina.js)
           drawPale(a); // (starving: it pales, see hungerLook; its colour floods back as a meal goes down, see mealSwell)
         }
         if (ox || oy) ctx.translate(-ox, -oy);

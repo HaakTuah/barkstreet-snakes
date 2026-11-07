@@ -7,8 +7,8 @@ when it is merged into `develop`; add the owner's new tasks where he places them
 
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
-**The main lane is 2u+;** part 4 (#198, merged as it stands), 2y, 2y+, part 5, 2x, 2z and 2u before it are done. The
-polish lane and the workshop lane run beside it, each claimed by a draft PR.
+**The main lane is 2ab;** part 4 (#198, merged as it stands), 2y, 2y+, part 5, 2x, 2z, 2u and 2u+ before it are
+done. The polish lane and the workshop lane run beside it, each claimed by a draft PR.
 
 ## For the owner
 
@@ -124,12 +124,12 @@ landing is almost never contestable. The flight stays as built for now, and no r
 4. **Measured again after 2u and part 7,** whose stamina and pricing change what a flight costs. Only if it is still
    even then does a bigger change go to the owner as a question: a longer flight, or the ring shown before take-off.
 
-### 2u+. The stamina economy and the golden apple's worth (the owner, 3 and 4 November 2026; #460; a measurement right after 2u, then an engine-rules entry for what pays)
+### 2ab. Rivals skip the marginal dash (the owner, 7 November 2026; #569; an AI entry, right after 2u+, before part 7)
 
-Where the one stamina comes from (food, its own recharge, banking to a cap) and what the golden apple gives (a full
-refill, a one-bump shield), measured for every rival: its spec is in `docs/handoff/queue-specs.md` under the same title. 2u's
-measurements to start from (PR #462): rivals leaning on the jump outlive those leaning on the dash, and the rivals
-flash more than pays (#536), so the dash's stamina cost is the first lever.
+Rivals pushed to dash more live about 3 s less than rivals pushed to jump more (PR #560), though each power is the more
+useful in about half the moments (design 37): the extra dashes are poor picks. Each rival learns to pass up a dash that
+does not pay, in its own style, the rules unchanged; done when that gap closes within noise, trademarks kept. Before
+part 7, whose pricing needs rivals that judge a dash well.
 
 ### 5. Round six B: the new moves (DESIGN "Round six B")
 
