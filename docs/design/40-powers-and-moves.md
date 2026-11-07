@@ -27,14 +27,15 @@ The jump and the flash are two presses, so holding a golden flash never turns a 
 into it.
 
 - **Jump:** Space or a click on the board, or a tap on a phone. Golden jumps go first, and are free.
-- **Flash:** E, either Shift or a right-click on the board, or on a phone a swipe the way you're already going. Golden
-  flashes go first.
+- **Flash:** E, either Shift, a right-click on the board or a fresh press of the steering key (arrow or WASD) the way
+  you're already going, or on a phone a swipe that way. Golden flashes go first.
 - **Pressed together,** the jump goes first if it can (something right in front to hop, somewhere to land), because no
   flash gets past that; the flash goes once you're down. A flash pressed in the air goes once you're down too.
-- **Steering keys only steer.** Pressing the way you're already going does nothing. For swipes only,
-  `POWER_AFTER_TURN_MS` (300) stays: a fresh swipe the way the last swipe turned you, while that one's still down or
-  within 300 ms of its lift, is the turn swiped twice, not a flash. Only a swipe that turned counts, so golden flashes
-  swiped back to back still go. Keys need no guard.
+- **The key ahead flashes, behind touch's guard** (the owner, 4 November 2026; it was dropped once because held keys
+  fired it by accident: `docs/archive/design-powers.md`). Only a fresh keydown counts, never a held key's auto-repeat;
+  and `POWER_AFTER_TURN_MS` (300): a fresh press the way the last press turned you, within 300 ms of it (for a swipe,
+  while that one's still down or within 300 ms of its lift), is the turn pressed twice, not a flash. Only a press that
+  turned counts, so golden flashes pressed back to back still go. A press that starts or wakes the round only steers.
 - **Nap is P and Esc** (and the ⏸ button), since Space jumps. Enter, R or an arrow starts and starts over; P and Esc
   don't start a round from the start or round-over card.
 - **Space, E and Shift never start or dismiss anything.** They're the keys you mash in a fight. A button you Tabbed to
@@ -50,9 +51,9 @@ into it.
   began before it came up or within `CARD_TAP_MS` (500 ms) of it, nor one in a run of touches, each within
   `CARD_MASH_MS` (350 ms) of the last, that began then. Mashing jump never plays again.
 - **Teaching it.** The flash's key is taught once a round, from 6 s in, until you've flashed: "Your dash is ready: E,
-  Shift or right-click." (on a phone, "Your dash is ready: swipe the way you’re going."). A short phone teaches both on
+  Shift, or the key you’re going." (on a phone, "Your dash is ready: swipe the way you’re going."). A short phone teaches both on
   the first Go: "Tap jumps. Swipe ahead dashes." The key help reads "Arrow keys steer (or WASD) · Space or click jumps ·
-  E, Shift or right-click dashes · …" ("Swipe to steer · Tap to jump · Swipe ahead to dash" on a phone).
+  E, Shift, right-click or the key you’re going dashes · …" ("Swipe to steer · Tap to jump · Swipe ahead to dash" on a phone).
 
 ### Pressing during a stun
 
@@ -235,7 +236,7 @@ on the ground (in the air, once it's down). *Why no tail:* a flash that cost a t
 starved snakes, in simulation.
 - *The cue:* ember speed lines either side, thinner and shorter than a golden flash's. The stamina ring has an ember
   notch at a flash's worth; when the stamina is back up to it, an ember flick and a small spark.
-- *The Field guide's Dash row:* "E, Shift or a right-click on the log: two cells in a blink, for three quarters of
+- *The Field guide's Dash row:* "E, Shift, a right-click on the log or the key you’re going: two cells in a blink, for three quarters of
   your stamina." (each share is written from `tuning.js`)
   (On a phone: "A swipe the way you’re going".)
 - *The sound:* a short whoosh of air, lighter than a golden flash's zip.

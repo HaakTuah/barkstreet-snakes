@@ -347,6 +347,9 @@ function layout(alpha, boardPx, keepClear = null) {
     }
     b.ox += (tx - b.ox) * glide;
     b.oy += (ty - b.oy) * glide;
+    // (a glide that would carry it over another bubble or the banner on its
+    // way: it hops straight to where it's going instead)
+    if ((b.ox !== tx || b.oy !== ty) && crosses(b, inX(headAt.x + b.ox), inY(headAt.y + b.oy), w, h)) { b.ox = tx; b.oy = ty; }
     const x = Math.round(inX(headAt.x + b.ox));
     const y = Math.round(inY(headAt.y + b.oy));
     // (where it's going, not where it's got to: newer bubbles keep clear of that)
@@ -373,6 +376,14 @@ function layout(alpha, boardPx, keepClear = null) {
 function free(x, y, w, h) {
   for (const r of taken) if (x < r.x + r.w + CLEAR && r.x < x + w + CLEAR && y < r.y + r.h + CLEAR && r.y < y + h + CLEAR) return false;
   return true;
+}
+
+// Is this bubble, drawn here, over the banner or another bubble as drawn?
+function crosses(me, x, y, w, h) {
+  const over = r => x < r.x + r.w && r.x < x + w && y < r.y + r.h && r.y < y + h;
+  if (banner && over(banner)) return true;
+  for (const o of chatBubbles.values()) if (o !== me && o.w && Number.isFinite(o.x) && over({ x: o.x, y: o.y, w: o.w, h: o.h })) return true;
+  return false;
 }
 
 // A bubble with no clear side moves out of the way by as little as it can:

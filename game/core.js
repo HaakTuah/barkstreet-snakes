@@ -64,22 +64,22 @@ const pick = list => {
 };
 const inWords = n => ['none', 'one', 'two', 'three', 'four', 'five'][n] ?? String(n);
 const FLAVOR = {
-  intro: 'Three rivals. One mossy log. Last snake wriggling wins.',
+  intro: 'You, three rivals and a mossy log. Last one wriggling wins.',
   // (The arrows first: anyone knows them. A click is the mouse's left button on the board. A first-timer's
   // Hall of Fame is empty: the Field guide's key, G, is in its place before a first round, both under the board.)
-  hintStart: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click dashes · P naps · Enter starts · G opens the Field guide',
-  hintKeys: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click dashes · P or Esc naps, any key wakes · Enter starts over · H opens the Hall of Fame · G opens the Field guide · M mutes · N toggles the music · V the voices',
-  hintOnline: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click dashes · M mutes · N toggles the music · V the voices',
+  hintStart: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift, right-click or the key you’re going dashes · P naps · Enter starts · G opens the Field guide',
+  hintKeys: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift, right-click or the key you’re going dashes · P or Esc naps, any key wakes · Enter starts over · H opens the Hall of Fame · G opens the Field guide · M mutes · N toggles the music · V the voices',
+  hintOnline: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift, right-click or the key you’re going dashes · M mutes · N toggles the music · V the voices',
   hintOnlineTouch: 'Swipe to steer · Tap to jump · Swipe ahead to dash',
   hintTouch: 'Swipe to steer · Tap to jump · Swipe ahead to dash · Tap ⏸ to nap',
   // Watching (Watch AIs, or after you're out): nothing of yours to steer.
   hintWatch: '1, 2, 4 set the speed · P naps, any key wakes · Enter plays · H opens the Hall of Fame · G opens the Field guide · M mutes · N toggles the music · V the voices',
   hintWatchTouch: 'The speed buttons set 1×, 2× or 4× · Tap ⏸ to nap',
   rivals: ['Your rivals today:', 'Up on the log with you:', 'Sharing your bark:'],
-  spectators: ['Tonight on the bark:', 'In the ring today:', 'Place your bets:'],
+  spectators: ['Tonight on the bark:', 'On the log today:', 'Place your bets:'],
   go: ['Slither!', 'Off you go.', 'Mind the edges.'],
-  goWatch: ['And they’re off.', 'Off they slither.', 'Let the wriggling begin.'],
-  pause: ['Snakes need rest too.', 'Curled up in a warm patch of bark.', 'The log will wait.'],
+  goWatch: ['And they’re off.', 'Off they slither.', 'Here they come.'],
+  pause: ['Forty winks on the log.', 'Curled up in a warm patch of bark.', 'The log will wait.'],
   wake: touchFirst ? 'Tap to wake up.' : 'Any key to wake up.',
   // (Bonk! is for a knock you survive, Snip! for a cut you survive: a
   // death's title is a word that means out.)
@@ -132,7 +132,7 @@ const FLAVOR = {
   lostCapital: 'The woodpecker took a capital: its realm moves.',
   lastApples: 'The last apples are falling.',
   // Your flash, ready and never used yet: the key, once a round (until you've flashed).
-  flashKey: touchFirst ? 'Your dash is ready: swipe the way you’re going.' : 'Your dash is ready: E, Shift or right-click.', // (what it does is the Field guide's: a lesson is 60 characters at most)
+  flashKey: touchFirst ? 'Your dash is ready: swipe the way you’re going.' : 'Your dash is ready: E, Shift, or the key you’re going.', // (what it does is the Field guide's: a lesson is 60 characters at most)
   // Beside the YOU arrow, as a round starts (until you steer).
   steerHint: touchFirst ? 'Swipe to steer' : 'Arrow keys to steer (or WASD)',
   leapNothing: 'Nothing to jump. Jumps clear a snake, a hole or fire.',
@@ -182,7 +182,7 @@ const FLAVOR = {
   fizzleFlash: { resting: 'Your dash needs a moment.', landing: 'Nowhere to dash.' },
   newBest: n => `New best: ${n}!`,
   startOver: 'Start over?',
-  startOverText: key => key ? `${key} again starts over. P, Esc or an arrow keeps going.` : 'This round’s gone if you do.',
+  startOverText: key => key ? `${key} again to start over; P, Esc or an arrow to keep going.` : 'This round’s gone if you do.',
   awake: 'Awake.',
   friendWin: ['Bragging rights: yours.', 'Rematch?', 'Fair and square.'],
   friendKill: ['No hard feelings. Well, a few.', 'So much for teamwork.', 'They’ll remember that.'],
@@ -193,14 +193,14 @@ const FLAVOR = {
   roomGone: name => `${name} closed the room.`,
   roomLost: 'Lost the connection to the room.',
   friendLeft: name => `${name} left. An AI takes over their snake.`,
-  friendJoined: name => `${name} is here. Their best rounds join your Hall of Fame.`,
+  friendJoined: name => `${name} is here. Their best rounds go in your Hall of Fame too.`,
   friendAway: name => `${name} went quiet. An AI steers until they’re back.`,
   friendBack: name => `${name} is back.`,
   youAway: 'You went quiet for a moment, so an AI steered for you.',
-  tapTip: touchFirst ? 'Tap names to swap, tags to see how they play.' : 'Click names to swap, tags to see how they play.', // (no "above": on a phone on its side the tags are beside the log)
+  tapTip: touchFirst ? 'Tap a name to swap it, a tag to see how it plays.' : 'Click a name to swap it, a tag to see how it plays.', // (no "above": on a phone on its side the tags are beside the log)
   takeBack: 'An AI kept your snake going. Steer to take it back.',
   watchingFirst: 'This round’s already going. You’re in from the next one.',
-  rivals0: 'Just friends today. No mercy:',
+  rivals0: 'Just friends on the log today:',
   // On a phone held upright a banner has one line, over the header's title
   // row (DESIGN "Teaching by showing"): the longest round news, in fewer
   // words there; the full words everywhere else, and for a screen reader.
