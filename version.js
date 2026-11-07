@@ -2,14 +2,16 @@
 // commit by .github/workflows/pages.yml as it publishes the site (main's and
 // each preview's); anywhere else it stays 'dev', and nothing updates. update.js
 // asks for this file afresh to learn whether a newer version is out.
-// news: one line per milestone, newest first, written with it (under about 60
-// characters: it takes the start card's intro line for a few rounds after the
-// update, so no longer than the intro). A milestone without its line just shows the last one to whoever has
+// news: one line per milestone, newest first, written with it (50 characters
+// at most: with "New: " in front it takes the start card's intro line for a
+// few rounds after the update, so no longer than the intro, as the ui suite
+// checks). A milestone without its line just shows the last one to whoever has
 // not seen it yet.
 window.SnakeVersion = {
   build: 'dev',
   news: [
-    { on: '2026-11-07', line: 'Jump and dash share one stamina; tired snakes show it.' },
+    { on: '2026-11-07', line: 'The key you’re going dashes, like a swipe ahead.' },
+    { on: '2026-11-07', line: 'Jump and dash share stamina; tired snakes show it.' },
     { on: '2026-11-06', line: 'Rings show who’s racing you; Mason’s vein is rose.' },
     { on: '2026-11-06', line: 'A flag’s pole now shows through a fallen snake.' },
     { on: '2026-11-06', line: 'A flag’s pole stays in sight behind other snakes.' },
