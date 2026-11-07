@@ -41,8 +41,9 @@ const COPIES = {};
 const STYLE_TRAITS = ['run', 'coiled', 'riding', 'apart', 'near', 'eat', 'power', 'spread'];
 const STYLE_MIN = 60; // (ticks watched before it judges a style)
 const STYLE_HOLD = 40; // (ticks a new read of its model holds before Copycat changes style)
-function watchStyles(obs, snakes, tick) {
+function watchStyles(obs, snakes, tickSeen) {
   for (const o of snakes) {
+    const tick = tickSeen - (o.late || 0); // (the moment I saw it: one far off, a little before the rest, 2q)
     const ob = (obs[o.id] ||= { tick: -1, n: 0, moves: 0, turns: 0, long: 0, coiled: 0, riding: 0, apart: 0, near: 0, grown: 0, power: 0, sx: 0, sy: 0, sxx: 0, syy: 0, len: o.body.length, hx: o.body[0].x, hy: o.body[0].y, dx: o.dir.x, dy: o.dir.y });
     if (ob.tick === tick) continue;
     const last = ob.tick;

@@ -45,19 +45,25 @@ function holesSeen(game, n) {
 }
 // How many ticks late an AI sees another snake (2q): as late as a person
 // would notice it, REACTION_MS near its head growing to REACTION_FAR_MS
-// across the board, give or take a little from moment to moment (the same
-// for a tick whenever it's asked, and in every copy of the game), so it's
+// across the board, give or take a little that drifts from moment to moment
+// (the same whenever it's asked, and in every copy of the game), so it's
 // REACTION_MS near on average, as the ticks fall; never sooner than a tick.
-// Its distance is read where the snake was a reaction time ago, as it's seen.
+// It drifts slowly enough that what's seen of a snake never goes back in
+// time. Its distance is read where the snake was a reaction time ago.
 function noticeDelay(game, snake, o, tickMs) {
   const h = snake.body[0];
   let d = Infinity;
   for (const c of o.body) d = Math.min(d, Math.abs(c.x - h.x) + Math.abs(c.y - h.y));
-  let r = Math.imul(game.tick + 1, 0x9e3779b1) ^ Math.imul(snake.id + 1, 0x85ebca6b) ^ Math.imul(o.id + 1, 0xc2b2ae35);
-  r = Math.imul(r ^ (r >>> 15), 0x27d4eb2f); r ^= r >>> 13;
-  const ms = T.REACTION_MS + (T.REACTION_FAR_MS - T.REACTION_MS) * Math.min(1, d / T.REACTION_FAR_CELLS)
-    + T.REACTION_JITTER_MS * ((r >>> 0) / 0x80000000 - 1);
+  const u = game.tick / T.REACTION_DRIFT_TICKS, i = Math.floor(u), f = u - i;
+  const jitter = noticeJitter(i, snake.id, o.id) * (1 - f) + noticeJitter(i + 1, snake.id, o.id) * f;
+  const ms = T.REACTION_MS + (T.REACTION_FAR_MS - T.REACTION_MS) * Math.min(1, d / T.REACTION_FAR_CELLS) + T.REACTION_JITTER_MS * jitter;
   return Math.max(1, Math.round(ms / tickMs));
+}
+// (A number in [-1, 1) from a moment and the two snakes' ids, the same in every copy of the game.)
+function noticeJitter(i, a, b) {
+  let r = Math.imul(i + 1, 0x9e3779b1) ^ Math.imul(a + 1, 0x85ebca6b) ^ Math.imul(b + 1, 0xc2b2ae35);
+  r = Math.imul(r ^ (r >>> 15), 0x27d4eb2f); r ^= r >>> 13;
+  return (r >>> 0) / 0x80000000 - 1;
 }
 // What an AI "sees": its own body now, the other snakes as of when it would
 // notice them (noticeDelay) and holes and fire as of its reaction time ago,
@@ -78,8 +84,9 @@ function aiView(game, snake) {
     // (Seen d ticks before the rest (or after, d < 0), its timers are counted on by those d ticks, so every one reads
     // as of `age` ago, as the rest of the view does, and a rival reckons where it's got to as for any snake: a stun
     // under 0 is how long it's been moving before then. Its turns since, it doesn't see.)
+    // (late: how many ticks before the rest it was seen, for one who watches the snakes from moment to moment.)
     others.push(!seen ? o : {
-      ...seen, stun: seen.stun - d, spitIn: seen.spitIn && seen.spitIn - d,
+      ...seen, late: d, stun: seen.stun - d, spitIn: seen.spitIn && seen.spitIn - d,
       air: seen.air > d ? seen.air - d : 0, wrap: Math.max(0, seen.wrap - d * tickMs),
     });
   }
