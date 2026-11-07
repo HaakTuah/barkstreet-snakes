@@ -167,47 +167,79 @@ function shrink(s, n) {
   n -= fromGrow;
   while (n-- > 0 && s.body.length > T.MIN_LENGTH) s.body.pop();
 }
-// Mushrooms come back up (round six B). A mushroom in a cheek, its time up,
-// is spat SPIT_REACH cells ahead of the head, the way the snake faces, in an
-// arc over anything between, a segment stronger (to SHRINK_MAX). Where it
-// comes down: off the board, in a hole or a fire, it's gone; on a head, that
-// snake swallows it (shrinking, and spitting it on in its turn), unless its
-// own mouth is full: then it bounces off, as off a body; on a body, it rolls
-// off by the roll rule (see rollSide), as it does off food or a burrow
-// (with nowhere to roll, it's gone); on bark, it lies there, wilting in half
-// the time it had left. Where it lies, the spitter slides over it for
-// OWN_SPIT_TICKS (spitBy, slideUntil: see eat), as a full mouth goes over
-// food; anyone else is hit by it as ever. Worked out in seat order, at the start of the tick
-// its time is up, before anyone moves: the head and the way it faces as
-// the ring showed them. Never kills: a shrink stops at MIN_LENGTH. (A head
-// over a hole or in a fire it hits isn't swallowed: it's gone, as there.)
+// Mushrooms come back up (round six B), and the spit flies along the line
+// (3b+). A mushroom in a cheek, its time up, leaves the head the way the
+// snake faces, a segment stronger (to SHRINK_MAX), and flies straight on,
+// SPIT_SPEED cells a tick, up to SPIT_REACH (over the edge only where the
+// edges wrapped for the spitter as it left; a gold portal is a way through
+// for snakes, not for what they spit). It stops at the first thing in its
+// way (see strike): a head swallows it (shrinking, and spitting it on in
+// its turn), unless its own mouth is full: then it bounces off, as off a
+// body; a body, the spitter's too, or food or a burrow: it rolls off by
+// the roll rule (see rollSide), and with nowhere to roll it's gone; off the
+// board, in a hole or a fire, it's gone. Nothing in its way, it lies on the
+// bark where it ran out, wilting in half the time it had left. The spitter's
+// own head goes over it, in the air or lying (spitBy, slideUntil: see eat),
+// as a full mouth goes over food. It flies at the start of each tick, before
+// anyone moves (in seat order, the ones in the air first): it leaves from the
+// head and the way it faces as the dotted line showed them; and a head that
+// moves onto it where it hangs between ticks is hit too (see spitCaught).
+// Never kills: a shrink stops at MIN_LENGTH.
 function spit(game) {
+  const flying = game.spits;
+  game.spits = [];
+  for (const m of flying) flyOn(game, m);
   for (const s of game.snakes) {
     if (!s.alive || !s.cheek || game.tick < s.cheek.spitAt) continue;
-    const power = Math.min(T.SHRINK_MAX, s.cheek.power + 1), left = Math.max(T.SPIT_WILT_MIN, Math.round(s.cheek.left / 2)), h = s.body[0];
+    const h = s.body[0], power = Math.min(T.SHRINK_MAX, s.cheek.power + 1);
+    const m = { x: h.x, y: h.y, dir: s.dir, left: T.SPIT_REACH, power, wilt: Math.max(T.SPIT_WILT_MIN, Math.round(s.cheek.left / 2)), by: s.id, wrap: wraps(game, s) };
     s.cheek = null;
-    let c = h;
-    for (let n = 0; n < T.SPIT_REACH; n++) c = wraps(game, s) ? ahead(game, s, c.x, c.y, s.dir) : { x: c.x + s.dir.x, y: c.y + s.dir.y }; // (over the edge where they wrap for it, as its ring shows; a gold portal is a way through for snakes, not for what they spit)
-    game.events.push({ type: 'spit', snake: s, x: h.x, y: h.y, tx: c.x, ty: c.y, power, hit: -1, lx: null, ly: null });
-    const e = game.events[game.events.length - 1];
-    const k = key(c.x, c.y);
-    if (!inside(c.x, c.y) || game.holes.has(k) || burning(game, k)) continue; // (gone)
-    const o = game.snakes.find(o => o !== s && o.alive && o.body[0].x === c.x && o.body[0].y === c.y);
-    if (o && !o.cheek) { // (swallowed)
-      shrink(o, power);
-      o.cheek = { power, spitAt: game.tick + T.CHEEK_TICKS, left };
-      e.hit = o.id;
-      continue;
-    }
-    let at = c;
-    if (!foodRoom(game, c.x, c.y)) { // (a body, food or a burrow there: it rolls off)
-      const b = game.snakes.find(b => b.alive && b.body.some(p => p.x === c.x && p.y === c.y));
-      const j = b ? b.body.findIndex(p => p.x === c.x && p.y === c.y) : -1;
-      const along = b ? { body: b.body.slice(j), dir: j > 0 ? stepWay(b.body[j], b.body[j - 1]) || b.dir : b.dir } : { body: [c], dir: s.dir };
-      at = rollSide(game, along, c.x, c.y, (x, y) => foodRoom(game, x, y), (x, y) => foodPast(game, x, y));
-      if (!at) continue; // (nowhere to roll: gone)
-    }
-    game.food.push({ x: at.x, y: at.y, kind: 'mushroom', power, expires: game.tick + left, spitBy: s.id, slideUntil: game.tick + T.OWN_SPIT_TICKS });
-    e.lx = at.x; e.ly = at.y;
+    game.events.push({ type: 'spit', snake: s, x: h.x, y: h.y, power });
+    flyOn(game, m);
   }
+}
+// On SPIT_SPEED cells, or as far as it has left, till it stops.
+function flyOn(game, m) {
+  m.fx = m.x; m.fy = m.y; // (where it was as the tick began, for whoever draws its flight)
+  for (let n = 0; n < T.SPIT_SPEED && m.left > 0; n++) {
+    let x = m.x + m.dir.x, y = m.y + m.dir.y;
+    if (m.wrap) { x = (x + GRID) % GRID; y = (y + GRID) % GRID; }
+    m.x = x; m.y = y; m.left--;
+    const k = key(x, y);
+    if (!inside(x, y) || game.holes.has(k) || burning(game, k)) return spat(game, m, -1, null); // (gone)
+    if (strike(game, m, false)) return;
+  }
+  if (m.left > 0) return void game.spits.push(m);
+  game.food.push({ x: m.x, y: m.y, kind: 'mushroom', power: m.power, expires: game.tick + m.wilt, spitBy: m.by, slideUntil: game.tick + T.OWN_SPIT_TICKS });
+  spat(game, m, -1, m);
+}
+// What a mushroom in the air meets in its cell, if anything: a head (not
+// the spitter's), a body, food or a burrow (moved: only a head that's just
+// come there, after everyone moved). True if it stopped there.
+function strike(game, m, moved) {
+  const o = game.snakes.find(o => o.id !== m.by && o.alive && o.body[0].x === m.x && o.body[0].y === m.y);
+  if (o && !o.cheek) { // (swallowed)
+    shrink(o, m.power);
+    o.cheek = { power: m.power, spitAt: game.tick + T.CHEEK_TICKS, left: m.wilt };
+    spat(game, m, o.id, null);
+    return true;
+  }
+  if (moved ? !o : foodRoom(game, m.x, m.y)) return false;
+  // (a body, food or a burrow there: it rolls off, as off the body it hit, or the way it flew)
+  const b = game.snakes.find(b => b.alive && b.body.some(p => p.x === m.x && p.y === m.y));
+  const j = b ? b.body.findIndex(p => p.x === m.x && p.y === m.y) : -1;
+  const along = b ? { body: b.body.slice(j), dir: j > 0 ? stepWay(b.body[j], b.body[j - 1]) || b.dir : b.dir } : { body: [m], dir: m.dir };
+  const at = rollSide(game, along, m.x, m.y, (x, y) => foodRoom(game, x, y), (x, y) => foodPast(game, x, y));
+  if (at) game.food.push({ x: at.x, y: at.y, kind: 'mushroom', power: m.power, expires: game.tick + m.wilt, spitBy: m.by, slideUntil: game.tick + T.OWN_SPIT_TICKS });
+  spat(game, m, -1, at); // (nowhere to roll: gone)
+  return true;
+}
+// A head that moved onto a mushroom in the air is hit by it, as if it had
+// flown into that head (after everyone moved, before anyone eats).
+function spitCaught(game) {
+  if (game.spits.length) game.spits = game.spits.filter(m => !strike(game, m, true));
+}
+// Where a mushroom stopped (x, y; from fx, fy this tick), whom it hit, where it lies (null: swallowed or gone).
+function spat(game, m, hit, at) {
+  game.events.push({ type: 'spat', snake: game.snakes[m.by], x: m.x, y: m.y, fx: m.fx, fy: m.fy, power: m.power, hit, lx: at ? at.x : null, ly: at ? at.y : null });
 }

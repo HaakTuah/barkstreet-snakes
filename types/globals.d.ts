@@ -65,6 +65,8 @@ declare namespace Engine {
   interface Burrow { x: number; y: number; at: number; used?: number; dug?: number | boolean; shutFrom?: number; shutAt?: number }
   /** A gold portal (round six B, part 5): the entry, the way through it, the exit, whose, and when it shuts (0: its owner's body is still through it). */
   interface Portal { x: number; y: number; dx: number; dy: number; tx: number; ty: number; owner: number; shutAt: number; followed?: number[] }
+  /** A mushroom in the air (3b+): where it is, which way it flies, the cells it has left, its strength, the ticks it'll lie, whose, over the edge or not. */
+  interface Spit { x: number; y: number; fx?: number; fy?: number; dir: Dir; left: number; power: number; wilt: number; by: number; wrap: boolean }
   interface Fire { from: number; until: number; strike: boolean; ember?: boolean; group: number }
   interface Weather { kind: string; since: number; until: number }
   interface Woodpecker {
@@ -82,7 +84,8 @@ declare namespace Engine {
     | { type: 'death'; snake: Snake }
     | { type: 'spawn'; kind: string; x?: number; y?: number; gold?: Flag }
     | { type: 'squash'; snake: Snake; x: number; y: number }
-    | { type: 'spit'; snake: Snake; x: number; y: number; tx: number; ty: number; power: number; hit: number; lx: number | null; ly: number | null }
+    | { type: 'spit'; snake: Snake; x: number; y: number; power: number }
+    | { type: 'spat'; snake: Snake; x: number; y: number; fx: number; fy: number; power: number; hit: number; lx: number | null; ly: number | null }
     | { type: 'crash'; snake: Snake; x: number; y: number; cause: string; killer: string | null; killerId: number | null; lost: number; failed?: 1; air?: 1; shield?: 1 }
     | { type: 'leap'; snake: Snake; x: number; y: number; gold?: Flag; reach: number; now?: 1 }
     | { type: 'dash'; snake: Snake; x: number; y: number; n: number; plain?: Flag }
@@ -114,6 +117,7 @@ declare namespace Engine {
     woodpecker: Woodpecker | null;
     burrows: Burrow[];
     portals: Portal[];
+    spits: Spit[];
     /** By cell. */
     fires: Map<number, Fire>;
     weather: Weather;

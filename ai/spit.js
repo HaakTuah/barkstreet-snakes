@@ -26,46 +26,48 @@ function readSpit() {
     }
     return { x, y };
   };
-  // Where I could spit from to hit rival k after m moves (its head then,
-  // as I'd guess it, SPIT_REACH ahead of mine, whichever way I'd face),
-  // within `budget` moves of `from`: the nearest such cell, or null.
+  // Where I could spit from to hit rival k (the spit flies along the line,
+  // 3b+): a cell in line with its head, up to SPIT_REACH off, leading it by
+  // the moves the mushroom takes to get there; within `budget` moves of
+  // `from`: the nearest such cell, or null.
   firingAt = (k, m, from, budget) => {
-    const q = headAfter(k, m), R = TUNE.SPIT_REACH;
     let best = null, bestD = budget + 1;
-    for (const d of DIR_LIST) {
-      const x = q.x - d.x * R, y = q.y - d.y * R, dd = Math.abs(x - from.x) + Math.abs(y - from.y);
-      if (inGrid(x, y) && !holes.has(y * N + x) && dd < bestD) { bestD = dd; best = { x, y }; }
+    for (let j = 1; j <= TUNE.SPIT_REACH; j++) {
+      const q = headAfter(k, m + flightMoves(j));
+      for (const d of DIR_LIST) {
+        const x = q.x - d.x * j, y = q.y - d.y * j, dd = Math.abs(x - from.x) + Math.abs(y - from.y);
+        if (inGrid(x, y) && !holes.has(y * N + x) && dd < bestD) { bestD = dd; best = { x, y }; }
+      }
     }
     return best;
   };
   // A segment's worth, in what the search counts an apple.
   appleW = w.food * w.foodRange + w.eat;
-  // Rivals with one in their cheek: it comes up SPIT_REACH ahead of their
-  // head after the moves their bulge says (as I saw it, `age` ago), aimed
-  // as they steer: likeliest straight on, else to a side. I keep my head
-  // out of that ring when it comes, unless my own mouth is full then (it
-  // bounces off). dodge: [move, cell, what it'd cost me] for each.
+  // Mushrooms coming at me: one in a rival's cheek flies from its head after
+  // the moves its bulge says (as I saw it, `age` ago), along the line it
+  // faces then: likeliest straight on, else to a side; one in the air flies
+  // on from where I saw it. I keep my head out of each line, where and when
+  // the mushroom would be there, unless my own mouth is full then (it
+  // bounces off); a body in its way shields me. Not my own: I slide over it.
+  // dodge: [move, cell, what it'd cost me] for each.
   dodge = [];
+  const loss = p => Math.min(p || TUNE.SHRINK, me.body.length - TUNE.MIN_LENGTH);
   others.forEach((o, k) => {
-    const m = (o.spitIn || 0) - age;
-    if (m < 1 || m > steps || (me.spitIn || 0) >= m) return;
-    const loss = Math.min(o.spitPower || TUNE.SHRINK, me.body.length - TUNE.MIN_LENGTH);
-    if (loss <= 0) return;
-    const p = headAfter(k, m), R = TUNE.SPIT_REACH;
-    for (const d of DIR_LIST) {
-      if (d.x === -o.dir.x && d.y === -o.dir.y) continue;
-      const x = p.x + d.x * R, y = p.y + d.y * R;
-      if (inGrid(x, y)) dodge.push(m, y * N + x, loss * appleW * (sameDir(d, o.dir) ? 1 : 0.5));
-    }
+    const m = (o.spitIn || 0) - age, v = loss(o.spitPower);
+    if (m < 1 || m > steps || v <= 0) return;
+    const p = headAfter(k, m);
+    for (const d of DIR_LIST) if (d.x !== -o.dir.x || d.y !== -o.dir.y) lineOf(p.x, p.y, d, TUNE.SPIT_REACH, m, v * appleW * (sameDir(d, o.dir) ? 1 : 0.5));
   });
-  // Mine: after me.spitIn moves it comes up SPIT_REACH ahead, the way I
-  // face then. aim: [cell, worth] for each rival head I might hit there (a
+  for (const f of view.spits || EMPTY_SPITS) if (f.by !== me.id && !f.wrap) lineOf(f.x, f.y, f.dir, f.left, -age, loss(TUNE.SHRINK) * appleW);
+  // Mine: after me.spitIn moves it flies from my head, the way I face then.
+  // aim: [moves, cell, worth] for each rival head I might hit, where I guess
+  // it'll be after as many moves as the mushroom takes to get there (a
   // segment of theirs SPIT_SEG of an apple, as many as it'd shrink them;
   // beside where I guess it'll be, a third: it may turn into it). Not one
   // whose own mouth is full by then: it would bounce off.
   mySpitAt = me.spitIn || 0, aim = [];
   // (Till then, farther off than the search sees: I close in on the rival
-  // I'd hit hardest, to about SPIT_REACH from its head, at the search's
+  // I'd hit hardest, to a cell in line with its head, at the search's
   // last step. closeOn: [rival, worth].)
   closeOn = [];
   if (AIM && mySpitAt > steps) {
@@ -81,8 +83,40 @@ function readSpit() {
     if ((o.spitIn || 0) - age >= mySpitAt) return;
     const v = AIM * SPIT_SEG * appleW * Math.min(me.spitPower || TUNE.SHRINK, o.body.length - TUNE.MIN_LENGTH);
     if (v <= 0) return;
-    const q = headAfter(k, mySpitAt);
-    aim.push(q.y * N + q.x, v);
-    for (const d of DIR_LIST) if (inGrid(q.x + d.x, q.y + d.y)) aim.push((q.y + d.y) * N + q.x + d.x, v / 3);
+    for (let n = mySpitAt; n <= mySpitAt + flightMoves(TUNE.SPIT_REACH) + 1; n++) {
+      const q = headAfter(k, n);
+      aim.push(n, q.y * N + q.x, v);
+      for (const d of DIR_LIST) if (inGrid(q.x + d.x, q.y + d.y)) aim.push(n, (q.y + d.y) * N + q.x + d.x, v / 3);
+    }
   });
+}
+const EMPTY_SPITS = [];
+// The spit flies along the line (3b+), SPIT_SPEED cells a tick before anyone
+// moves: the cell j out is reached after this many more moves (and a head
+// that moves onto it where it hangs, one more).
+const flightMoves = j => Math.ceil(j / TUNE.SPIT_SPEED) - 1;
+// A mushroom's line, from (x, y) the way d, `left` cells, leaving after m
+// moves of mine: where my head would be hit, and when, into dodge (worth v
+// to keep out of), till something's in its way.
+function lineOf(x, y, d, left, m, v) {
+  for (let j = 1; j <= left; j++) {
+    const n = m + flightMoves(j), cx = x + d.x * j, cy = y + d.y * j;
+    if (!inGrid(cx, cy) || otherFree[cy * N + cx] - age > n) return; // (off the board, a hole or fire, or a body still there: it stops)
+    if (n >= 1 && n >= (me.spitIn || 0)) dodge.push(n, cy * N + cx, v);
+    if (j % TUNE.SPIT_SPEED === 0 && j < left && n + 1 >= Math.max(1, me.spitIn || 0)) dodge.push(n + 1, cy * N + cx, v); // (hanging there between ticks)
+  }
+}
+// My own, as I'd face after the move that comes before it flies (from
+// x, y the way d): what it's worth, as the first head in its way, by my
+// guess where they'll be (aim); nothing past a hole, the edge or a body.
+function aimGain(x, y, d) {
+  for (let j = 1; j <= TUNE.SPIT_REACH; j++) {
+    const n = mySpitAt + flightMoves(j), cx = x + d.x * j, cy = y + d.y * j, c = cy * N + cx;
+    if (!inGrid(cx, cy)) return 0;
+    let best = 0;
+    for (let i = 0; i < aim.length; i += 3) if (aim[i + 1] === c && (aim[i] === n || (aim[i] === n + 1 && j % TUNE.SPIT_SPEED === 0 && j < TUNE.SPIT_REACH))) best = Math.max(best, aim[i + 2]);
+    if (best > 0) return best;
+    if (otherFree[c] - age > n) return 0;
+  }
+  return 0;
 }

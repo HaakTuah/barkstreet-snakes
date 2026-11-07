@@ -13,10 +13,11 @@ function snapshot(game) {
     // (Fire, crackling, smouldering or burning, and the woodpecker's next patch: keep out.)
     fires: game.fires.size ? [...game.fires.keys()] : NO_FIRES,
     pecks: game.woodpecker?.target.length ? [...game.woodpecker.target] : NO_FIRES,
+    spits: game.spits.length ? game.spits.map(m => ({ x: m.x, y: m.y, dir: m.dir, left: m.left, by: m.by, wrap: m.wrap })) : NO_SPITS, // (3b+: mushrooms in the air, where they were after the tick's moves)
   });
   if (game.history.length > T.HISTORY) game.history.shift();
 }
-const NO_FIRES = [];
+const NO_FIRES = [], NO_SPITS = [];
 // What an AI must keep out of in a snapshot: its holes and any fire (as
 // walls). Worked out once per snapshot, shared by every AI.
 function blockedSeen(game, snap) {
@@ -115,6 +116,7 @@ function aiView(game, snake) {
     food: game.food, // (as it is: it only changes on a tick, so thinking ahead sees what the tick would)
     holes: blockedSeen(game, snap),
     fire: fireCellsSeen(snap), // (among the holes: the cells that are only fire, which it can go through, at a price)
+    spits: snap.spits, // (3b+: mushrooms in the air, as of `age` ago, as a person would see them fly: [{ x, y, dir, left, by, wrap }])
     pecks: snap.pecks.length ? (snap.peckSet ||= new Set(snap.pecks)) : NO_CELLS, // (among them too: the woodpecker's mark, not a hole yet: nothing to hop)
     // (When its strike comes, as anyone sees the bird drum it (its last blow
     // lands on the strike), and in the aim's last PECK_PROMISE_TICKS moves
@@ -137,11 +139,11 @@ function aiView(game, snake) {
 // everything in aiView() is fixed between ticks (the food too: it only
 // moves, grows or goes during a tick, after everyone has decided), except
 // a snake about to starve, which shrinks at the start of the tick and must
-// decide after that, and everyone on a tick a mushroom comes back up.
+// decide after that, and everyone on a tick a mushroom comes back up or flies.
 // (A stunned snake doesn't decide at all until it can move again, nor one in the air.)
 const canThinkAhead = (game, s) => s.alive && (!s.isPlayer || !!s.autopilot) && game.time < s.nextStarve && s.plannedTick !== game.tick && s.stunUntil <= game.tick && !s.flight && !spitDue(game);
-// (A mushroom due to come up this tick changes the board before anyone decides: see spit.)
-const spitDue = game => game.snakes.some(o => o.alive && o.cheek && o.cheek.spitAt <= game.tick);
+// (A mushroom due to come up this tick, or one in the air, changes the board before anyone decides: see spit.)
+const spitDue = game => game.spits.length > 0 || game.snakes.some(o => o.alive && o.cheek && o.cheek.spitAt <= game.tick);
 // A person's snake is handed to an AI (autopilot: a persona) when they leave.
 const brainOf = s => s.autopilot || s.persona;
 function thinkAhead(game, s) {

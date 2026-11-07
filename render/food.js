@@ -784,28 +784,61 @@ const drawBead = (g, v) => {
   g.fillStyle = 'rgba(255,255,255,0.55)'; // the gloss
   g.beginPath(); g.ellipse(-r * 0.32, -r * 0.38, r * 0.3, r * 0.2, -0.6, 0, TAU); g.fill();
 };
-// Mushrooms come back up (round six B). While one's in a snake's cheek:
-// a small green ring on the cell SPIT_REACH ahead of its head, the way it
-// faces (where it'll land: steering aims it), drawing in as the second
-// runs out, for everyone to see and dodge; and its cheeks puffed green (see
-// drawCheeks), a shade darker the stronger it was swallowed (as the mushroom's own shade).
+// Mushrooms come back up (round six B), and fly along the line (3b+).
+// While one's in a snake's cheek: a dotted green line from its head, the
+// way it faces, SPIT_REACH cells out (to the edge, or a hole: there it's
+// gone), where it'll fly (steering aims it), the dots swelling as the
+// second runs out, for everyone to see and step out of; and its cheeks
+// puffed green (see drawCheeks), a shade darker the stronger it was
+// swallowed (as the mushroom's own shade).
 const SPIT_RING = '#a3e635', CHEEKS = ['#84cc16', '#65a30d', '#4d7c0f'];
-function drawSpitRings(now) {
+function drawSpitLines(now) {
   if (!game) return;
   const t = reduced ? 0 : now / 1000;
   for (const s of game.snakes) {
     if (!s.alive || !s.cheek) continue;
-    const h = s.body[0], wrap = s.wrapUntil > game.time; // (the edges wrap for it: it lands on the far side)
-    let x = h.x + s.dir.x * T.SPIT_REACH, y = h.y + s.dir.y * T.SPIT_REACH;
-    if (wrap) { x = (x + GRID) % GRID; y = (y + GRID) % GRID; }
-    if (x < 0 || y < 0 || x >= GRID || y >= GRID) continue; // (over the edge: it's gone, nothing to dodge)
+    const wrap = s.wrapUntil > game.time; // (the edges wrap for it: it flies on from the far side)
     const left = Math.max(0, Math.min(1, (s.cheek.spitAt - game.tick) / T.CHEEK_TICKS));
-    const cx = (x + 0.5) * CELL, cy = (y + 0.5) * CELL, r = CELL * (0.24 + 0.14 * left + 0.03 * Math.sin(t * 12));
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.strokeStyle = INK; ctx.lineWidth = CELL * 0.18; ctx.stroke();
-    ctx.strokeStyle = SPIT_RING; ctx.lineWidth = CELL * 0.09; ctx.stroke();
+    let { x, y } = s.body[0];
+    for (let n = 1; n <= T.SPIT_REACH; n++) {
+      x += s.dir.x; y += s.dir.y;
+      if (wrap) { x = (x + GRID) % GRID; y = (y + GRID) % GRID; }
+      if (x < 0 || y < 0 || x >= GRID || y >= GRID || game.holes.has(y * GRID + x)) break; // (over the edge or into a hole: it's gone, nothing further to step out of)
+      const r = CELL * (0.07 + 0.06 * (1 - left) + 0.015 * Math.sin(t * 12 - n));
+      ctx.beginPath();
+      ctx.arc((x + 0.5) * CELL, (y + 0.5) * CELL, r, 0, Math.PI * 2);
+      ctx.fillStyle = SPIT_RING; ctx.fill();
+      ctx.strokeStyle = INK; ctx.lineWidth = CELL * 0.05; ctx.stroke();
+    }
   }
+}
+// A mushroom in the air: on its way from where it was at the start of the
+// tick to where it is (SPIT_SPEED cells a tick), over the snakes, spinning,
+// its shadow on the ground; and the last of its flight, to where it stopped
+// (see spitStopped).
+const lastLegs = [];
+function drawSpitsInAir(alpha, now) {
+  if (!game || !(game.spits.length || lastLegs.length)) return;
+  const u = reduced ? 1 : Math.min(1, alpha);
+  for (const m of game.spits) {
+    const fx = m.x - m.dir.x * T.SPIT_SPEED, fy = m.y - m.dir.y * T.SPIT_SPEED, over = fx < 0 || fy < 0 || fx >= GRID || fy >= GRID; // (over: through the wrapped edge, drawn there)
+    spitAt(over ? m.x : fx + (m.x - fx) * u, over ? m.y : fy + (m.y - fy) * u, m.power, now);
+  }
+  for (let i = lastLegs.length - 1; i >= 0; i--) {
+    const l = lastLegs[i], v = reduced ? 1 : (now - l.at) / l.ms;
+    if (v >= 1) { lastLegs.splice(i, 1); continue; }
+    spitAt(l.fx + (l.x - l.fx) * v, l.fy + (l.y - l.fy) * v, l.power, now);
+  }
+}
+function spitAt(x, y, power, now) {
+  const px = (x + 0.5) * CELL, py = (y + 0.5) * CELL;
+  shadowAt(px + 1, py + CELL * 0.36, 0.7);
+  blitAbout(mushroomSprite(power), px, py - CELL * 0.3, 0, CELL * 0.2, 0.8, 0.8, reduced ? 0 : now / 90);
+}
+// Where one stopped: it flies the last of the way (from fx, fy) in the tick's time, unless it's to lie there or
+// roll off what it hit, which the food's own toss draws (see moveFood).
+function spitStopped(e, now) {
+  if (e.lx == null && Math.abs(e.x - e.fx) + Math.abs(e.y - e.fy) > 0) lastLegs.push({ fx: e.fx, fy: e.fy, x: e.x, y: e.y, power: e.power, at: now, ms: tickMs() });
 }
 // The bulge counts down to the spit (the owner, 2 November 2026: "Really not
 // easy to tell either when your character will spit it"): it swells from a
