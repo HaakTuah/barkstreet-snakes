@@ -10,6 +10,7 @@
 window.SnakeVersion = {
   build: 'dev',
   news: [
+    { on: '2026-11-07', line: 'Meals bank stamina; golden apples bring a shield.' },
     { on: '2026-11-07', line: 'The rivals’ speech bubbles no longer overlap.' },
     { on: '2026-11-07', line: 'The key you’re going dashes, like a swipe ahead.' },
     { on: '2026-11-07', line: 'Jump and dash share stamina; tired snakes show it.' },
