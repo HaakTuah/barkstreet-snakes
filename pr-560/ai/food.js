@@ -75,7 +75,7 @@ function readFood() {
   };
   worth = {
     food: Math.max(appleWorth, hunger) + lift(TUNE.STAMINA_FOOD_MS),
-    golden: TUNE.GOLDEN_GROWTH * Math.max(appleWorth, hunger) * craving.apple + lift(Math.max(TUNE.GOLDEN_GROWTH * TUNE.STAMINA_FOOD_MS, TUNE.GOLDEN_STAMINA_MS)),
+    golden: TUNE.GOLDEN_GROWTH * Math.max(appleWorth, hunger) * craving.apple + lift(TUNE.STAMINA_MS), // (it fills my bar)
     beetle: TUNE.BEETLE_GROWTH * Math.max(appleWorth, hunger) + lift(TUNE.BEETLE_GROWTH * TUNE.STAMINA_FOOD_MS), // it moves, but it's worth what it's worth
     pellet: (w.pellet ?? 1) + lift(TUNE.STAMINA_FOOD_MS),
     mushroom: Math.min(-TUNE.SHRINK, w.mushroom ?? -TUNE.SHRINK), // (it takes SHRINK segments off, and it isn't a meal: as many apples lost, hungry or not)
