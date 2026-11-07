@@ -315,9 +315,11 @@ function step(game) {
       continue;
     }
     s.queue.length = 0; // (a crash: whatever was pressed before it was for a board that's gone)
-    const lost = Math.min(lossOf(s), s.body.length - T.MIN_LENGTH);
+    const shield = s.shieldUntil > game.time; // (2u+: a golden apple's shield takes this crash, and is gone)
+    if (shield) s.shieldUntil = -1;
+    const lost = shield ? 0 : Math.min(lossOf(s), s.body.length - T.MIN_LENGTH);
     for (let n = 0; n < lost; n++) { const t = s.body.pop(); drops.push({ x: t.x, y: t.y, color: s.color, owner: s.id }); }
-    s.stunUntil = game.tick + 1 + stunOf(s);
+    s.stunUntil = game.tick + 1 + (shield ? 0 : stunOf(s));
     if (s.flashArmed > game.tick) s.flashArmed = s.stunUntil; // (a flash waiting on a jump, or on its landing: it goes when it moves again, as one pressed in a stun does)
     if ((s.landing || s.bumped) && burning(game, key(s.body[0].x, s.body[0].y))) { // (come down on fire: alight)
       if (!(s.burnUntil > game.tick)) { s.burnFrom = game.tick; game.events.push({ type: 'alight', snake: s }); }
@@ -325,7 +327,7 @@ function step(game) {
     }
     s.bounce = c.headOn ? { x: s.next.x, y: s.next.y, by: c.killerId } : null;
     if (c.headOn) s.bumpedBy = { id: c.killerId, tick: game.tick };
-    game.events.push({ type: 'crash', snake: s, x: s.next.x, y: s.next.y, cause: c.cause, killer: c.killer, killerId: c.killerId, lost, ...(s.failed ? { failed: 1 } : {}), ...(c.air ? { air: 1 } : {}) });
+    game.events.push({ type: 'crash', snake: s, x: s.next.x, y: s.next.y, cause: c.cause, killer: c.killer, killerId: c.killerId, lost, ...(s.failed ? { failed: 1 } : {}), ...(c.air ? { air: 1 } : {}), ...(shield ? { shield: 1 } : {}) });
   }
 
   for (const s of moving) {

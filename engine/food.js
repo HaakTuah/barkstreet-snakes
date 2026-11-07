@@ -156,6 +156,7 @@ function consume(game, s, f, x, y) {
     s.eaten += growth;
     const back = Math.max(growth * T.STAMINA_FOOD_MS, f.kind === 'golden' ? T.GOLDEN_STAMINA_MS : 0); // (2u+: every meal puts some stamina back)
     if (back > 0) refill(game, s, back);
+    if (f.kind === 'golden' && T.GOLDEN_SHIELD_MS) s.shieldUntil = game.time + T.GOLDEN_SHIELD_MS;
     if (f.kind === 'pellet') s.pellets++;
   }
 }
