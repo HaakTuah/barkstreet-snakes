@@ -43,8 +43,7 @@ window.TUNING = Object.freeze({
   JUMP_STAMINA_MS: 5800,    // ...a plain jump takes this much of it...
   DASH_STAMINA_MS: 9500,    // ...a plain flash this much (each goes only with that much in the bar; golden ones take none)
   STAMINA_FOOD_MS: 300,     // 2u+: each segment a meal grows you puts this much back in it...
-  STAMINA_BANK: 3,          // ...banking above the full bar up to this many bars (1: no bank)...
-  GOLDEN_STAMINA_MS: 11500, // ...and a golden apple a full bar's worth (or its growth's, if more)
+  STAMINA_BANK: 3,          // ...banking above the full bar up to this many bars (1: no bank); a golden apple fills the bar, and its growth's share banks
   GOLDEN_SHIELD_MS: 10000,  // 2u+: a golden apple's shield, held this long: it takes the next crash you live through (no tail lost, no stun); boxed in, it does you no good
   LEAP_WINDOW: 5,           // a jump pressed for waits this many ticks for something right in front to hop, and somewhere to land within reach (so a press made with a hurdle 4 or 5 cells ahead still goes; 3 before round six B), for rivals too
   LEAP_REACH: 3,            // round six B, the island hop: a jump goes over up to this many cells of anything it hops (bodies, holes, fire; one before), a cell a tick in the air, and comes down on the first free cell beyond: over three, it's up three ticks and lands on the fourth

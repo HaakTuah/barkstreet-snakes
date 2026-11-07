@@ -226,7 +226,7 @@ meal. "The apple of vigour" (both rests refilled as well) adds +0.01 ± 0.02 pla
 it's eaten (0.36 of 2 still resting). So the apple stays as it is for now, and is measured again with the one stamina
 refilled once 2u merges. The owner's question is #460.
 
-**2u+ (PR #560):** the golden apple now also fills the bar (`GOLDEN_STAMINA_MS`, a full bar, banking the rest) and
+**2u+ (PR #560):** the golden apple now also fills the bar (only its growth's share of stamina banks) and
 gives a shield (`GOLDEN_SHIELD_MS`, 10 s): the next crash you live through costs no tail and no stun, and the shield
 is gone; boxed in, it can't save you. Its cue is a cream ring round the head (`render/shield.js`), flickering over its
 last 2 s and bursting when it takes a crash; its lesson comes with your first golden apple. Forked at each eat (seeds
