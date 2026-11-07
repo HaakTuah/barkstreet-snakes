@@ -59,7 +59,7 @@ function aiView(game, snake) {
       // (its powers: golden leaps and dashes held, how long the edges still wrap for it, how long till it can jump, and flash)
       leaps: snake.leaps, dashes: snake.dashes, wrap: Math.max(0, snake.wrapUntil - game.time), leapIn: leapIn(game, snake), flashIn: flashIn(game, snake),
       // (its stamina, in ms of refill (STAMINA_MS full), golden powers held or not, as the ring round its head shows a person theirs)
-      stamina: T.STAMINA_MS - spent(game, snake),
+      stamina: stamina(game, snake),
       // (up on a golden flight: which way, and how many cells it's flown, so it can plan where to come down as it flies)
       flight: snake.flight?.gold && snake.flight.held ? { dir: snake.flight.dir, flown: snake.flight.flown } : null,
       // (who it just met head-on, if it was in the last 3 s or so: it keeps clear of them for a while)

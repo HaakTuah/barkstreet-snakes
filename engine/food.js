@@ -154,6 +154,8 @@ function consume(game, s, f, x, y) {
     s.ateTick = game.tick; // (a snake out of time that reaches food grows instead of starving this tick)
     s.grow += growth;
     s.eaten += growth;
+    const back = Math.max(growth * T.STAMINA_FOOD_MS, f.kind === 'golden' ? T.GOLDEN_STAMINA_MS : 0); // (2u+: every meal puts some stamina back)
+    if (back > 0) refill(game, s, back);
     if (f.kind === 'pellet') s.pellets++;
   }
 }

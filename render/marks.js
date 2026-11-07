@@ -84,7 +84,7 @@ function drawPip(x, y, a2, pr, leap) {
 // anyway: no ring.)
 function drawRests(s, a, now) {
   const x = a.pts[0], y = a.pts[1], rr = a.rad[0] + CELL * 0.3;
-  const used = Math.max(0, s.restedAt - shownTime);
+  const used = Math.max(0, T.STAMINA_MS - SnakeEngine.stamina(game, s, shownTime)); // (of the bar: what's banked shows on the body, not here)
   const jumpOk = s.leaps > 0 || SnakeEngine.staminaIn(game, s, T.JUMP_STAMINA_MS, shownTime) === 0, flashOk = s.dashes > 0 || SnakeEngine.staminaIn(game, s, T.DASH_STAMINA_MS, shownTime) === 0;
   if (a.jc && jumpOk && !s.leaps && !(now - a.readyAt < 600)) a.readyAt = now; // (back: the flick)
   if (a.fc && flashOk && !s.dashes && !(now - a.flashFx < 600)) a.flashFx = now;
