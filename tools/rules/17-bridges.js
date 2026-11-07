@@ -84,7 +84,7 @@ function bridgeScene(persona, tail) {
   for (let y = 0; y < T.GRID; y++) for (let x = 0; x < T.GRID; x++) if (!strip(x, y) && !isle(x, y)) g.holes.add(K(x, y));
   s.body = []; for (let y = 12; y <= 21; y++) s.body.push({ x: 2, y }); for (let y = 21; y >= 12; y--) s.body.push({ x: 1, y }); s.dir = D.up;
   b.body = []; for (let x = 7; x >= 3; x--) b.body.push({ x, y: 11 }); for (let y = 12; y < 12 + tail; y++) b.body.push({ x: 3, y }); b.dir = D.right; b.queue = [];
-  s.leapReadyAt = 1e12; // (no jumping: the bridge only)
+  s.restedAt = 1e12; // (no jumping: the bridge only)
   g.food = [{ x: 12, y: 11, kind: 'food', expires: 9999 }];
   g.given = new Set([K(12, 11)]);
   const snap = () => ({ snakes: g.snakes.map(q => ({ id: q.id, body: q.body.map(c => ({ ...c })), dir: q.dir, stun: 0, leaps: 0, dashes: 0, wrap: 0, air: 0, land: -1, cough: 0 })), holes: g.holes.size, fires: [], pecks: [] });

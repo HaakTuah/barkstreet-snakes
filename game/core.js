@@ -148,7 +148,7 @@ const FLAVOR = {
   goldBeetleWatch: ['A golden beetle! Whoever catches it jumps far.', 'A golden beetle is scuttling about.'],
   youGoldBeetle: n => `Golden: ${n} long jump${n === 1 ? '' : 's'}, free. ${touchFirst ? 'Tap' : 'Space or a click'} to jump.`,
   bridgeFirst: 'A snake across a pit is a bridge, until its tail passes.', // (the first time a snake lies across a pit near you: round six B's bridges)
-  youLeapFirst: 'Hup! A jump costs your tail tip, then a short rest.',
+  youStamina: 'One stamina: jump or dash, your choice.', // (2u: the first plain jump or dash that leaves you tired, the spec's words; the ring round your head is the bar, and the looks are on every snake: see render/stamina.js)
   youDashFirst: 'Golden dashes cut bodies two thick and put out fire.',
   youCutFirst: 'A dash cuts through a thin body.', // (round six B: your first cut)
   youFlashFailed: 'Too thick! A failed dash costs 5 off your tail.', // (your first failed flash)
@@ -175,9 +175,8 @@ const FLAVOR = {
   youHungry: ['Your tummy is rumbling. Time for a snack.', 'Getting peckish… find food soon.'],
   youStarvingSmall: 'Starving at\u00a03, with nothing to spare. Eat now.',
   // A press that couldn't go (the first time each way, in a round): a jump, or a flash.
-  // (A flash is free, FLASH_COST 0, so it's never too small; it has nowhere
-  // to go only over a crash: straight back in, or blown up at the edge or a hole.)
-  fizzle: { resting: 'Your jump needs a moment.', small: 'Too small to jump: it costs tail.', landing: 'Nowhere to land.' },
+  // (A flash has nowhere to go only over a crash: straight back in, or blown up at the edge or a hole.)
+  fizzle: { resting: 'Your jump needs a moment.', landing: 'Nowhere to land.' },
   fizzleFlash: { resting: 'Your dash needs a moment.', landing: 'Nowhere to dash.' },
   newBest: n => `New best: ${n}!`,
   startOver: 'Start over?',

@@ -1,22 +1,30 @@
 // The powers, each weighed as a move (powerPick), and where each comes down:
 
-// - The flash, rested: two cells in a tick along the ground, every one
-//   of them free by then, only the way I'd crawl anyway (or any way out
-//   of a crash). It costs two apples (it's free, but it rests: at one,
-//   rivals flashed three times a minute and did no better than the same
-//   rivals never flashing, or worse; an edge that small is mostly the
-//   search's own guesswork), or one to win a race (food a rival could
-//   reach as soon as I'd crawl there, but not as soon as I'd flash) or
-//   to get out of a crash. (Weighing every way cost half as much again
-//   as the whole decision, for a third more flashes; the rest were no
-//   better for it.)
+// - The plain jump and flash spend one stamina (2u), each priced by the
+//   share of it it takes (STAMINA_PRICE apples a full bar), and by what it
+//   leaves: what's spent on one isn't there for the other. Each of us
+//   keeps a reserve: what the other power needs (more or less as I'm
+//   cautious: my margin), and a spend that leaves less costs RESERVE_PRICE
+//   apples a full bar for the wait till it's back. Out of a trap (every
+//   crawl ends in a crash) the reserve is what it's for: no wait is priced.
+// - The flash, with its share in the bar: two cells in a tick along the
+//   ground, every one of them free by then, only the way I'd crawl anyway
+//   (or any way out of a crash). Its full price (when it rested apart, two
+//   apples: at one, rivals flashed three times a minute and did no better
+//   than the same rivals never flashing, or worse; an edge that small is
+//   mostly the search's own guesswork), or half to win a race (food a
+//   rival could reach as soon as I'd crawl there, but not as soon as I'd
+//   flash) or to get out of a crash. (Weighing every way cost half as
+//   much again as the whole decision, for a third more flashes; the rest
+//   were no better for it.)
 // - Golden dashes: only to cut someone in two (more readily the more
 //   aggressive I am), to grab something golden first, or as the way out.
 //   (Spent on speed, they stopped cutting anyone.)
 // - Golden leaps: whenever one pays (they're free, and held they're wasted).
-// - The plain jump: out of a crash, or to come down on food (it costs a
-//   segment and a rest: jumping for position, or just in case, lost).
-// Desperate, every power is half the price. (Nobody's told anyone's rests.)
+// - The plain jump: out of a crash, or to come down on food (jumping for
+//   position, or just in case, lost when it cost a segment and a rest).
+// Desperate, every power is half the price. (Of the others' stamina, I see
+// only how tired each looks: see ai/risk.js.)
 // A power habit (w.powers: Star's) prices them all far lower, and may
 // weigh the flash every way, jump any hurdle there's somewhere to land
 // beyond that no rival could get to first, and spend golden dashes on
@@ -24,18 +32,30 @@
 // same tests of where each goes (it never takes one into a crash) and the
 // same risk where it ends. One that ends where a rival could strike costs
 // it the full price.
+const STAMINA_PRICE = 2; // (apples, a full bar of stamina: each power costs its share of that)
+const RESERVE_PRICE = 2.4; // (apples, a full bar's worth of waiting below my reserve)
+const RESERVE_MARGIN = DRAB.margin; // (the margin, spare room wanted, of a snake that keeps all the other power needs: the default's; less cautious, less; more, more)
 // (powerPick() sets these for each call:)
 let crawlScore, crawlDir, air, jump, U, habit, safe, cheap, keep, stampM, trapped, boxed, roomsHere, foodHere, hereFree,
   hereFood, landFood, landCells, pecks, cellAt, freeSoon, inTheWay, path, straight, leapNow, leapFly, leapTurn, ate, ateV,
-  ateL, ateG, ateGain, endRisk, idle, muteWas, ateBug, ateWas, meal, bugsOn, cutter, bestPower, ownCut, cutKills, consider;
+  ateL, ateG, ateGain, endRisk, idle, muteWas, ateBug, ateWas, meal, bugsOn, cutter, bestPower, ownCut, cutKills, consider,
+  waitPrice;
 function powerPick(crawlIn, crawlDirIn) {
   crawlScore = crawlIn; crawlDir = crawlDirIn;
   air = me.flight || null; // (up on a golden flight: only where to come down is weighed, see leapOpt)
-  jump = air || me.leaps > 0 || (me.leapIn === 0 && me.body.length > TUNE.MIN_LENGTH);
+  jump = air || me.leapIn === 0;
   if (me.flashIn !== 0 && !jump) return null;
   U = Math.max(40, foodW * w.foodRange + eatW); // (an apple, to me, now)
   habit = w.powers || NO_HABIT, safe = habit.risk ?? Infinity;
   cheap = desperate ? 0.5 : 1;
+  // (the wait a plain spend leaves me below what I keep for the other
+  // power. Star (keepFlash) keeps only a flash's worth, for its flashes,
+  // its trademark, and minds the wait keepFlash as much as anyone)
+  waitPrice = (cost, flash) => {
+    if (trapped || (flash && habit.keepFlash !== undefined)) return 0;
+    const reserve = flash ? TUNE.JUMP_STAMINA_MS * w.margin / RESERVE_MARGIN : TUNE.DASH_STAMINA_MS * (habit.keepFlash !== undefined ? 1 : w.margin / RESERVE_MARGIN);
+    return RESERVE_PRICE * (habit.keepFlash ?? 1) * Math.max(0, reserve - (me.stamina - cost)) / TUNE.STAMINA_MS;
+  };
   keep = me.grow > 0 ? me.body.length : me.body.length - 1, stampM = ++markStamp;
   for (let j = 0; j < keep; j++) myCells[me.body[j].y * N + me.body[j].x] = stampM;
   trapped = crawlScore < DEAD / 2, boxed = crawlScore < -NECK_COST;
@@ -71,11 +91,11 @@ function powerPick(crawlIn, crawlDirIn) {
   bugsOn = (s, hx, hy) => { for (let b = 0; b < bugCount; b++) if (ateBug & (1 << b)) { const n = b * BUG_SLOTS + s + 1; bugCell[n] = -1; bugDug[n] = -1; } else bugStep(b, s, s + 1, s, hx, hy, otherBug(b, s)); };
   cutter = !!w.hunt || (w.aggression || 0) >= 0.5; // (the hunters and the aggressive weigh a cut off to the side too)
   bestPower = null, ownCut = -1, cutKills = false; // (ownCut, cutKills: see flashOpt)
-  consider = (d, flash, v, price, extra) => {
+  consider = (d, flash, v, price, extra, wait = 0) => { // (wait: what it leaves me below my reserve, priced apart: a habit doesn't make that free)
     const full = endRisk > safe || idle;
     idle = false;
     if (v === null) return;
-    v += extra - price * cheap * (full ? 1 : habit.price) * U;
+    v += extra - (price * (full ? 1 : habit.price) + wait) * cheap * U;
     if (v > (bestPower ? bestPower.v : crawlScore + 1)) bestPower = { d, flash, v, now: !flash && leapNow, fly: flash ? 0 : leapFly, turn: flash ? null : leapTurn };
   };
   if (air) { const v = leapOpt(air.dir); return v === null ? null : { d: air.dir, flash: false, v, now: false, fly: leapFly, turn: leapTurn }; } // (in the air: where to come down, from here)
@@ -83,8 +103,8 @@ function powerPick(crawlIn, crawlDirIn) {
     if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
     const extra = (intent.mimicDir && sameDir(d, intent.mimicDir) ? w.mimic : 0) - (w.turn && !sameDir(d, me.dir) ? w.turn : 0);
     if (me.dashes > 0) { const v = flashOpt(d, true); if (trapped || cutKills || habit.dashSpend) consider(d, true, v, 0.6, extra); } // (a golden dash, held: out of a trap, or for a cut that puts a rival out; spent so, it gains (see part 4's chosen numbers); spent as it came, −0.11 ± 0.09 place a use; Star (dashSpend), its trademark, spends them as they come)
-    else if (me.flashIn === 0 && (trapped || d === crawlDir || habit.everyWay || (cutter && bodyNear(d)) || coverNear(d))) consider(d, true, flashOpt(d, false), trapped || race(d) ? 1 : 2, extra);
-    if (jump) { const v = leapOpt(d); consider(d, false, v, (me.leaps > 0 ? 0.35 : TUNE.LEAP_COST + 0.5) * (leapNow ? (w.leapNow ?? 1) : 1), extra); } // (leap now, at the jump's price times my style's: only out of a trap, see leapOpt)
+    else if (me.flashIn === 0 && (trapped || d === crawlDir || habit.everyWay || (cutter && bodyNear(d)) || coverNear(d))) consider(d, true, flashOpt(d, false), STAMINA_PRICE * TUNE.DASH_STAMINA_MS / TUNE.STAMINA_MS * (trapped || race(d) ? 0.5 : 1), extra, waitPrice(TUNE.DASH_STAMINA_MS, true));
+    if (jump) { const v = leapOpt(d); consider(d, false, v, (me.leaps > 0 ? 0.35 : STAMINA_PRICE * TUNE.JUMP_STAMINA_MS / TUNE.STAMINA_MS) * (leapNow ? (w.leapNow ?? 1) : 1), extra, me.leaps > 0 ? 0 : waitPrice(TUNE.JUMP_STAMINA_MS, false)); } // (leap now, at the jump's price times my style's: only out of a trap, see leapOpt)
   }
   return bestPower;
 }

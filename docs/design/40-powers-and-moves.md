@@ -59,7 +59,7 @@ into it.
 A power you ask for while stunned goes the way you pressed when the stun's over (it counts as steering, if it can go,
 so the snake isn't turned aside first). A power that can't get anywhere says so, with an inked × and, the first time
 in a round, a line ("Nowhere to land.", "Nowhere to dash."; resting, "Your jump needs a moment." or "Your dash needs a
-moment."; too short to pay a jump's tip, "Too small to jump: it costs tail."), and the auto-turn takes you clear. For a
+moment."), and the auto-turn takes you clear. For a
 flash, that's a plain one into what you hit, or a golden one that would blow up at the edge or a hole on its way, or
 crash straight back in; a golden flash at a body one thick still goes, since that's its cut. A power that could go but
 then can't (a jump whose landing another head takes as it goes) gets the auto-turn too.
@@ -72,9 +72,10 @@ Golden powers add up:
 - each golden mushroom adds `WRAP_MS` (12 s) of wrap, up to `WRAP_MAX_MS` (20 s).
 
 You can hold golden jumps and golden flashes at once, since they're different presses. Golden charges are spent before
-the plain power and leave its rest alone. Nobody holds a power the others can't see: a snake holding one wears gold
+the plain power and leave the stamina alone. Nobody holds a power the others can't see: a snake holding one wears gold
 ("Telling powers apart" in `03-the-snake-as-a-character.md`), and the rivals see everyone's golden powers in their view
-(`leaps`, `dashes`, `wrap`), and their own rests (`leapIn`, `flashIn`).
+(`leaps`, `dashes`, `wrap`), their own stamina exactly (`stamina`, `leapIn`, `flashIn`), and each other snake's only
+as its look shows it (`step`: "Stamina on the body" in `03-the-snake-as-a-character.md`).
 
 ### Where golden powers come from
 
@@ -107,17 +108,19 @@ hop rarely reaches the next island across a hollow.
 - **It waits:** a press waits up to `LEAP_WINDOW` (5) moves for something to hop and somewhere to land within reach,
   and isn't spent on open ground ("Too early: a jump waits 5 moves, then gives up."; "Nothing to jump. Jumps clear a
   snake, a hole or fire.").
-- **It costs** the tip of your tail (`LEAP_COST` 1, so it needs more than `MIN_LENGTH`), then rests
-  `LEAP_COOLDOWN_MS` (4 s). A leap is a crash you saw coming, traded for one segment instead of three and a stun.
+- **It costs** its share of the one stamina (`JUMP_STAMINA_MS`; "One stamina for jump and dash",
+  `37-one-stamina.md`), and nothing off your tail (before 2u: the tip of it, and a 4 s rest of its own). A leap is a
+  crash you saw coming, traded for stamina instead of three segments and a stun.
 - *The cue:* the landing cell gets a ring while the jump waits; the flight is the arch, shadow and dust of "Bridges and
-  jumps you can see" (`03-the-snake-as-a-character.md`). While it rests, the left half-ring round your head (in sky)
-  fills; when it's back, one bright flick and a wooden tick.
-- *The lessons:* your first jump, "Hup! A jump costs your tail tip, then a short rest."; the first time you're boxed in
+  jumps you can see" (`03-the-snake-as-a-character.md`). The stamina ring round your head (see "One stamina for
+  jump and dash") has a sky notch at a jump's worth; when the stamina is back up to it, one bright sky flick and a
+  wooden tick.
+- *The lessons:* the first plain jump or dash that leaves you tired, "One stamina: jump or dash, your choice."; the first time you're boxed in
   with a jumpable gap, "Space hops up to three cells. Hop the gap!" ("Tap to hop up to three cells. Hop the gap!" on a
   phone).
 - *The Field guide's Jump row:* "Space or a click on the log: hop snakes, holes or fire, up to 3 cells, to the first
-  free cell: across a gap too. Press twice to leap now, open ground too. A ring shows where you’ll land. It costs your
-  tail’s tip, then rests 4 s. Bump into a flier in the air and you drop: onto a body or into a hole, you’re out. Lie on a
+  free cell: across a gap too. Press twice to leap now, open ground too. A ring shows where you’ll land. It takes two
+  fifths of your stamina. Bump into a flier in the air and you drop: onto a body or into a hole, you’re out. Lie on a
   flier’s ring before it lands and it’s out: rivals will try it on you." (On a phone: "A tap", "Tap twice".)
 - *The sound:* a springy boing up and a whoosh of air.
 - *The rivals* ask for it through the same call (`memory.power` from `decide()`: `leap()` in `engine/powers.js`), with
@@ -226,12 +229,14 @@ a leap now down on it, puts the flier out (it comes down on a body).
 
 ### A flash for everyone
 
-Everyone can flash: **two cells in one tick, along the ground, free, then a rest** (`FLASH_LENGTH` 2, `FLASH_COST` 0,
-`FLASH_COOLDOWN_MS` 12 s). It eats what it passes. It goes the next tick the snake moves on the ground (in the air,
-once it's down). *Why free:* a flash that cost a tail segment made rounds longer and starved snakes, in simulation.
-- *The cue:* ember speed lines either side, thinner and shorter than a golden flash's. While it rests, the right
-  half-ring round your head fills; when it's back, a small ember spark.
-- *The Field guide's Dash row:* "E, Shift or a right-click on the log: two cells in a blink, free. Then it rests 12 s."
+Everyone can flash: **two cells in one tick, along the ground, for its share of the one stamina** (`FLASH_LENGTH` 2,
+`DASH_STAMINA_MS`; before 2u it rested 12 s on its own). It eats what it passes. It goes the next tick the snake moves
+on the ground (in the air, once it's down). *Why no tail:* a flash that cost a tail segment made rounds longer and
+starved snakes, in simulation.
+- *The cue:* ember speed lines either side, thinner and shorter than a golden flash's. The stamina ring has an ember
+  notch at a flash's worth; when the stamina is back up to it, an ember flick and a small spark.
+- *The Field guide's Dash row:* "E, Shift or a right-click on the log: two cells in a blink, for three quarters of
+  your stamina." (each share is written from `tuning.js`)
   (On a phone: "A swipe the way you’re going".)
 - *The sound:* a short whoosh of air, lighter than a golden flash's zip.
 - *The rivals* flash through the same call (`memory.flash`: `flash()`), weighed in their own search
@@ -416,8 +421,8 @@ else is pushed aside by a head.
 
 Everything here crosses to a friend's screen (protocol 22; `VERSION` in `online.js` lists each bump): a power press is its own message
 (`{t:'pow', k}`: `'leap'`, `'flash'`, `'unleap'`, a jump a finger held still asked for, taken back, and `'letgo'`, a
-jump let go); each snake's row carries its golden charges (`leaps`, `dashes`), its rests (`leapReadyAt`,
-`flashReadyAt`), a waiting press (`leapArmed`, `flashArmed`), its wrap (`wrapUntil`), its stun and burn, its flight
+jump let go); each snake's row carries its golden charges (`leaps`, `dashes`), its stamina (`restedAt`, protocol
+25), a waiting press (`leapArmed`, `flashArmed`), its wrap (`wrapUntil`), its stun and burn, its flight
 (`flight`, `land`, `airLeft`, `airGold`, and the ring, `ring` and `ringIn`) and its cheek (`cheek`, `spitAt`); and the
 events carry leaps (golden, how far, a leap now), dashes (plain or golden), fizzles (a press that couldn't go), cuts,
 douses, crashes (a failed flash's, and one in the air, say so), squashes and spits (where it came down, whom it hit,

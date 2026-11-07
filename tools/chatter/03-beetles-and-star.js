@@ -140,20 +140,20 @@ const STAR = VOICES.star;
   check(tick(g, flash(), 5000).length === 0, '...and a flash 5 s after that: nothing');
   let h = tick(g, [...dash(), { type: 'cut', snake: you, x: 3, y: 22, lost: 2, by: star.id }], 10500);
   check(says(h, star, STAR.snip, you) && !says(h, star, STAR.dash), `a golden dash that cuts your tail off: Star's snip, not its dash line (said: ${lineOf(h, star)})`);
-  star.flashReadyAt = g.time + 10600;
+  star.restedAt = g.time + T.STAMINA_MS - T.DASH_STAMINA_MS + 10600;
   check(tick(g, [], 10000).length === 0, 'resting: nothing yet');
   check(tick(g, [], 700).length === 0, '...its flash back from its rest: nothing yet (it flashes the moment it can, as a rule)');
   check(says(tick(g, [], 1000), star, STAR.ready), '...but still back a second later: a ready line');
-  star.flashReadyAt = g.time + 12000;
+  star.restedAt = g.time + T.STAMINA_MS - T.DASH_STAMINA_MS + 12000;
   tick(g, [], 11900);
   check(tick(g).length === 0, 'its rest over again: nothing yet');
-  star.flashReadyAt = g.time + 100 + T.FLASH_COOLDOWN_MS; // (it flashes the tick after its rest ends, as its AI does)
+  star.restedAt = g.time + T.STAMINA_MS - T.DASH_STAMINA_MS + 100 + 12000; // (it flashes the tick after its rest ends, as its AI does)
   h = tick(g, flash());
   check(says(h, star, STAR.zoom), `...and it flashes a tick later: the flash has the word (said: ${lineOf(h, star)})`);
   check(!says(tick(g, [], 1000), star, STAR.ready) && !says(tick(g, [], 1000), star, STAR.ready), '...and no ready line after it');
-  star.flashReadyAt = g.time + 12000;
+  star.restedAt = g.time + T.STAMINA_MS - T.DASH_STAMINA_MS + 12000;
   tick(g, [], 11900);
-  star.flashReadyAt = g.time + 100 + T.FLASH_COOLDOWN_MS; // (as when it flashes the moment its rest ends: resting again at once)
+  star.restedAt = g.time + T.STAMINA_MS - T.DASH_STAMINA_MS + 100 + 12000; // (as when it flashes the moment its rest ends: resting again at once)
   check(!says(tick(g), star, STAR.ready) && !says(tick(g, [], 1000), star, STAR.ready), 'a rest that ends in another flash on the same tick: no ready line either');
   tick(g, [], 20000); tick(g, [], 1000); // (its rest is over: it may say so)
   check(tick(g, flash(you), 20000).length === 0 && tick(g, [{ type: 'leap', snake: you, x: 3, y: 22, gold: 1 }], 20000).length === 0, 'your flashes and jumps: nobody speaks for you');
@@ -162,7 +162,7 @@ const STAR = VOICES.star;
 }
 { // While its flash rests, Star's small talk grumbles (as often as not); rested, it's small talk.
   let g = stage(['star'], { 0: [3, 22], 1: [12, 12] }), [you, star] = g.snakes;
-  star.flashReadyAt = g.time + 20000;
+  star.restedAt = g.time + T.STAMINA_MS - T.DASH_STAMINA_MS + 20000;
   check(says(tick(g, [], 4000, 0.01), star, STAR.resting, you), `resting: a grumble (said: ${lineOf(heard, star)})`);
   g = stage(['star'], { 0: [3, 22], 1: [12, 12] }); [you, star] = g.snakes;
   check(says(tick(g, [], 4000, 0.01), star, STAR.idle, you), `rested: its small talk (said: ${lineOf(heard, star)})`);
