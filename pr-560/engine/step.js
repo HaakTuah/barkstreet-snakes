@@ -46,7 +46,7 @@ function step(game) {
   const moving = [], fallback = new Map(), held = new Map(); // (fallback: the auto-turn, for a power asked for over a crash that may not go after all; held: a flash there that can't go, and why)
   for (const s of alive) {
     s.tailMoves = false; s.air = false; s.landing = false; s.boom = false; s.failed = false; s.passed = null; s.bumped = false;
-    s.shielded = s.shieldUntil > game.time; // (2u+: a crash this tick costs it nothing: see lossOf)
+    s.shielded = s.shieldUntil > game.time; // (2u+: a crash this tick costs it no tail: see lossOf)
     if (s.stunUntil > game.tick) { s.next = null; continue; }
     let land = null;
     const f = s.flight;
