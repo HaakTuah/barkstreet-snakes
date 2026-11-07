@@ -50,8 +50,9 @@ the second account until its usage is spent; on the main account the brake close
   - The guard: the chatter suite fails a voice with more than four lines of one shape (PR #448).
   - The menus: the start card's trailer-shaped intro, the nap card's cliché, the repeated friends joke and errors that didn't say what went wrong (PR #558).
   - The news lines: the repeated "no longer", semicolon lists, "islands" and a stray "Leap now!" gone, the top line left to the milestone (PR #561).
-  *Next on resume:* the README's player text (PR #562).
-  *Left:* the README's player text; the guide's Burrows, Jump, Cuts and Golden beetle rows
+  - The README's player text: run-ons with piled brackets, "So …" summaries and one phrase four times, facts unchanged (PR #562).
+  *Next on resume:* the guide's Burrows, Jump, Cuts and Golden beetle rows, once 2u+ and 2aa merge.
+  *Left:* the guide's Burrows, Jump, Cuts and Golden beetle rows
   and one name for each thing (hole, pit or gap; jump, hop or leap; the rings), once part 5 (#202) merges. Wildcard's
   and Mason's protected lines stay as they are; the Chinese is rewritten with each changed line.
 - **What belongs:** whatever makes the game feel finished without changing how it plays: things drawn wrong, out of
