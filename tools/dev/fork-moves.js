@@ -15,9 +15,9 @@
 //     portal: following someone through a gold portal (no --forced)
 //     power (2u+): a plain jump or flash used with both in the bar, played on with the jump, the flash and neither
 //       (which was the more useful, each moment). No --forced or --rest.
-//     golden (2z): a golden apple eaten, played on five ways from the tick after: as it went; uneaten (its growth and its
-//       meal undone); as a plain apple (+1); with a full bar of stamina (2u+); and with that and a shield that takes
-//       one crash (--shield MS, default 10000). No --forced or --rest.
+//     golden (2z): a golden apple eaten, played on six ways from the tick after: as it went; uneaten; and, from the
+//       stamina and shield it had before, as +3 alone, as a plain +1, with a full bar of stamina (2u+), and with that
+//       and a shield that takes one crash (--shield MS, default 10000). No --forced or --rest.
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const args = process.argv.slice(2);
@@ -148,18 +148,23 @@ for (let r = 0; r < ROUNDS; r++) {
     g = back(after);
   }
 }
-// 2z: one golden apple eaten, played on as it went (A), uneaten (B), as a plain apple (P) and with a full bar (V) and with a shield too (VS),
-// all from the same random numbers after the tick. Diffs: what the apple as it is gave (A against B), its +3 over a
-// plain apple's +1 (A against P), what a full bar would add (V against A) and a shield on top (VS against V).
+// 2z: one golden apple eaten, played on from the same random numbers after the tick: as it went (A); uneaten (B: its
+// growth, its meal and what it gave the stamina undone); and (2u+) from the stamina, bank and shield it had before
+// it, whatever the tuning gives: as the +3 alone (N), as a plain apple (P), with a full bar (F) and with a full bar and
+// a shield (S). Diffs: what the apple as it is gave (A against B), its +3 over a plain +1 (N against P), what a full
+// bar adds (F against N) and a shield on top of it (S against F). (A meal's own top-up of the bar is left out of N, P,
+// F and S alike.)
 function golden(before, after, id, persona, otherMeal) {
-  const was = back(before).snakes[id], now = back(after), G = T.GOLDEN_GROWTH;
+  const then = back(before), was = then.snakes[id], G = T.GOLDEN_GROWTH;
   const play = edit => { const x = back(after), s = x.snakes[id]; edit(x, s); rngState = after.rng; return playOut(x).get(id); };
+  const bare = s => { if (!otherMeal) { s.restedAt = was.restedAt; s.bank = was.bank; } s.shieldUntil = was.shieldUntil; }; // (another meal the same tick keeps its refill)
   const A = play(() => {});
-  const B = play((x, s) => { s.grow -= G; s.eaten -= G; if (!otherMeal) for (const k of ['lastAte', 'nextStarve', 'mealMs', 'ateTick']) s[k] = was[k]; }); // (another meal the same tick, a flash's on the way, keeps its refill: one meal's is any meal's)
-  const P = play((x, s) => { s.grow -= G - 1; s.eaten -= G - 1; });
-  const V = play((x, s) => { s.restedAt = Math.min(s.restedAt, x.time); }); // (2u+: a full bar, as a golden apple could give)
-  const VS = play((x, s) => { s.restedAt = Math.min(s.restedAt, x.time); s.shieldUntil = x.time + SHIELD_MS; }); // (and a shield)
-  diffs.push({ ...d(A, B), plain: d(A, P), vigour: d(V, A), shield: d(VS, V), rested: now.snakes[id].restedAt > now.time ? 1 : 0, persona });
+  const B = play((x, s) => { s.grow -= G; s.eaten -= G; bare(s); if (!otherMeal) for (const k of ['lastAte', 'nextStarve', 'mealMs', 'ateTick']) s[k] = was[k]; }); // (one meal's hunger refill is any meal's)
+  const N = play((x, s) => bare(s));
+  const P = play((x, s) => { s.grow -= G - 1; s.eaten -= G - 1; bare(s); });
+  const F = play((x, s) => { bare(s); s.restedAt = Math.min(s.restedAt, x.time); });
+  const S = play((x, s) => { bare(s); s.restedAt = Math.min(s.restedAt, x.time); s.shieldUntil = x.time + SHIELD_MS; });
+  diffs.push({ ...d(A, B), plain: d(N, P), vigour: d(F, N), shield: d(S, F), rested: was.restedAt > then.time ? 1 : 0, persona });
 }
 // 2u+: a plain jump or flash used with both in the bar and no golden ones held, played on three ways from the tick
 // before: with the jump (the flash forbidden, the jump taken wherever it can go, at no price), with the flash (the
@@ -194,7 +199,7 @@ if (MOVE === 'golden') { // (the three comparisons, each paired over the same ea
   console.log(`golden apples: ${diffs.length} eaten in ${ROUNDS} rounds (seed ${SEED}); bar not full when eaten: ${(diffs.reduce((t, d) => t + d.rested, 0) / Math.max(1, diffs.length)).toFixed(2)}`);
   console.log('  ' + row('eaten, against uneaten', d => d));
   console.log('  ' + row('+3, against a plain +1', d => d.plain));
-  console.log('  ' + row('a full bar, against as it is', d => d.vigour));
+  console.log('  ' + row('a full bar, against none', d => d.vigour));
   console.log('  ' + row(`a shield (${SHIELD_MS / 1000} s), against the full bar alone`, d => d.shield));
   if (JSON_OUT) console.log(JSON.stringify({ seed: SEED, rounds: ROUNDS, diffs }));
 } else if (MOVE === 'power') { // (each moment, which was the more useful: the jump, the flash, or neither by place and time alive)
