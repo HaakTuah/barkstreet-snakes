@@ -109,3 +109,25 @@ row, the README and `docs/design/40-powers-and-moves.md`. Done when a rules test
 held key and auto-repeat never dashing, and a double-tapped turn turning once.
 
 Done (PR #557).
+
+### 2u+. The stamina economy and the golden apple's worth (the owner, 3 and 4 November 2026; #460; a measurement right after 2u, then an engine-rules entry for what pays)
+
+Right after 2u, on fresh seeds and for every rival, in two steps, each against the game as 2u leaves it. **Where stamina
+comes from** (the owner, 4 November 2026: "anything you eat should give a little stamina recharge"; "stamina maybe
+becomes something that don't recharge by itself, or at least very slowly. But maybe food gives it, and you can reach
+over baseline, save up?"): every food refills it in proportion to how much it grows the snake; on its own it still comes
+back ("It will still slowly recharge"), as built or only slowly, either up to a floor (a first guess of half a bar, so a
+snake far from food is never powerless) or all the way to the full bar; and it banks above the full bar up to a cap
+("Maybe the cap should start at 3x baseline, and be figured out in testing"), shown as the charged look in
+`docs/design/37-one-stamina.md`, never as a bar ("should not show a bar above you"). **The golden apple** (2z, PR #459:
+its +3 costs more time alive than it helps): a full baseline's refill ("Golden apples gives full 1x baseline"), against
+that plus a shield that absorbs one bump ("I only imagined it as absorbing 1 bump. If you have no space to move, it does
+you no good"), kept until used or fading after a while (a first guess of 10 s), and against the supercharge of 3
+November (a first guess of 4 s at a faster refill). What pays is built, with its cue, lesson, Field guide row and
+protocol bump: eating late must come to pay without always paying, plentiful rounds must not turn into power spam, the
+shield must never make anyone safe (if shielded snakes outlive everyone, it is tightened or dropped), every trademark
+holds (Gobbler's food share, Mute's boxing and Creeper's tail-riding above all), and the rivals play it well: eating
+when low, banking before a fight. The dash's worth is retuned too (#536; "No hidden prices" in
+`docs/design/37-one-stamina.md`). Part 7 then prices the powers against the economy that wins.
+
+Done (PR #560): every meal tops up stamina (300 ms a segment) and banks past the full bar, up to 3 bars, the charged look its cue; the refill stays as built; a jump 5.8 s and a dash 9.5 s of the bar, each the more useful in about half the moments; the golden apple fills the bar and gives a 10 s shield. The pace and every trademark kept.
