@@ -57,11 +57,11 @@ window.SnakeNet = (() => {
   /** @param {any} err */
   function explain(err) {
     const type = err?.type || err?.message;
-    if (type === 'library') return 'Online play didn’t load. Are you connected?';
+    if (type === 'library') return 'Couldn’t load what online play needs. Are you online?';
     if (type === 'peer-unavailable') return 'There’s no room with that code. Check it, or ask for a fresh link.';
     if (type === 'browser-incompatible') return 'This browser can’t play with friends. Try a recent Chrome, Firefox or Safari.';
-    if (type === 'timeout') return 'Couldn’t reach the room. Try another network, such as mobile data instead of Wi-Fi.';
-    return 'Couldn’t reach the rooms just now. Check your connection and try again.';
+    if (type === 'timeout') return 'Couldn’t reach the room. Try another network, say mobile data instead of Wi-Fi.';
+    return 'Couldn’t reach the matchmaking service. Check your connection and try again.';
   }
 
   const peerOptions = () => ({ config: { iceServers: ICE_SERVERS }, debug: 0 });

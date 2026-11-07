@@ -200,7 +200,7 @@ function openPicker(seat) {
     name.textContent = key ? CAST[key].name : 'Any';
     const blurb = document.createElement('span');
     blurb.className = 'blurb';
-    blurb.textContent = key ? CAST[key].blurb : 'Dealt: you meet every rival before any comes round twice.';
+    blurb.textContent = key ? CAST[key].blurb : 'Dealt: you meet them all before anyone twice.';
     button.append(dot, name, blurb);
     const other = key ? seats.indexOf(key) : -1;
     if (other >= 0 && other !== seat) {

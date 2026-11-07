@@ -486,7 +486,7 @@ async function joinRoom(text) {
   const code = codeIn(text);
   if (!Online.isCode(code)) {
     if (state !== 'lobby') openFriends(); // (a bad ?join= link: show where the problem is)
-    return setStatus('That’s not a room code: they’re five characters, like K7QXM.', true);
+    return setStatus('Room codes are five characters, like K7QXM.', true);
   }
   saveLobbyName();
   const attempt = ++joinAttempt;
@@ -640,7 +640,7 @@ click(lobbyCopy, async () => {
     setStatus('Link copied. Send it to your friends.');
   } catch {
     lobbyLink.select();
-    setStatus('Couldn’t copy it. Select the link and copy it yourself.');
+    setStatus('Select the link and copy it.');
   }
 });
 lobbyCopy.textContent = navigator.share && touchFirst ? 'Share link' : 'Copy link';
