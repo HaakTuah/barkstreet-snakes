@@ -100,7 +100,7 @@ const GUIDE_ROWS = [
     ['cut', 'Cuts', 'A dash cuts through a body one thick with free log beyond: the part behind falls to beads. Leave fewer than 3 in front and that snake is out. Your own body too: drop your tail to fit a pocket. Along the edge, or against a hole or another body, nothing can be cut from that side.'],
     ['failflash', 'Failed dash', `Dash into a head, a body too thick, the edge or a hole and it fails: ${TUNE.FAIL_LOSS} off your tail and a longer stun.`],
     ['held', 'Golden powers', 'Gold round a snake: it holds golden powers. Sky dots are golden jumps, ember diamonds golden dashes.'],
-    ['rests', 'Stamina', `The ring round your head: one stamina for jump and dash, full again ${secs(TUNE.STAMINA_MS)} s after it runs dry. The sky notch is a jump’s worth, the ember one a dash’s. Spend it on one and it’s not there for the other. Every snake wears its own: grayer and heavy-eyed when it can’t afford either, bright-eyed when it’s full.`],
+    ['rests', 'Stamina', `The ring round your head: one stamina for jump and dash, full again ${secs(TUNE.STAMINA_MS / TUNE.STAMINA_RATE)} s after it runs dry, sooner the more you eat. The sky notch is a jump’s worth, the ember one a dash’s. Spend it on one and it’s not there for the other. Eat past full and it banks, up to ${TUNE.STAMINA_BANK} bars. Every snake wears its own: grayer and heavy-eyed when it can’t afford either, bright-eyed when it’s full, glowing warm with some banked.`],
   ]],
   ['The log', [
     ['fire', 'Fire', 'Lightning lights it. Crawl in and it takes 3 bites of tail; rain puts it out.'],
