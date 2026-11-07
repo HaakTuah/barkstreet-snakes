@@ -111,6 +111,7 @@ function counted(msg, last, events) {
   if (msg.bu.some(b => b[4])) cross('burrows dug');
   if (msg.bu.some(b => b[6] > 0)) cross('burrows shut');
   if (!same(msg.un, last?.un)) cross('unders');
+  if (msg.sp.length) cross('spits');
   if (msg.un.some(u => u[3])) cross('unders gold');
   for (const f of msg.fi) cross(`fire ${FIRES[f[3]]}`);
   cross(`weather ${msg.sky[0]}`);
@@ -158,6 +159,7 @@ function matched(r, host, guest, dyingHost, dyingGuest) {
   check(r, k, 'woodpecker', host.woodpecker, guest.woodpecker);
   check(r, k, 'burrows', host.burrows, guest.burrows);
   check(r, k, 'beetles underground', host.unders || [], guest.unders);
+  check(r, k, 'mushrooms in the air', host.spits.map(m => [m.x, m.y, m.dir, m.left, m.power, m.by]), guest.spits.map(m => [m.x, m.y, m.dir, m.left, m.power, m.by]));
   check(r, k, 'fire', [...host.fires].map(([c, f]) => [c, f.from, f.until, f.strike, f.group, !!f.ember]), [...guest.fires].map(([c, f]) => [c, f.from, f.until, f.strike, f.group, !!f.ember]));
   check(r, k, 'weather', [host.weather.kind, host.weather.since, host.weather.until], [guest.weather.kind, guest.weather.since, guest.weather.until]);
   check(r, k, 'deaths', dyingHost.map(s => [s.id, s.cause, s.killer, s.killerId, s.diedAt, s.fatal || null]), dyingGuest.map(s => [s.id, s.cause, s.killer, s.killerId, s.diedAt, s.fatal || null]));
@@ -184,7 +186,7 @@ const EVENTS = (s, o, h, k) => {
     weather: [{ kind: ['sun', 'wind', 'rain', 'storm', 'snow'][k % 5] }], ember: [{ ...at, fx: Math.max(0, h.x - 1), fy: h.y }], woodpecker: [{}],
     peck: [{ ...at, cells: [h.y * E.GRID + h.x], under: [s.id] }, { ...at, cells: [h.y * E.GRID + h.x], under: [], fall: [h.y * E.GRID + h.x] }], rot: [{ ...at, kind: 'apple' }, { ...at, kind: 'pellet', color: o.color }],
     baked: [{ ...at, kind: 'food' }], ash: [{ ...at, kind: 'pellet' }],
-    squash: [{ snake: s, ...at }], spit: [{ snake: s, ...at, tx: at.x, ty: at.y + 3, power: 4, hit: o.id, lx: null, ly: null }, { snake: s, ...at, tx: at.x, ty: at.y + 3, power: 5, hit: -1, lx: at.x, ly: at.y }], crash: [{ snake: s, ...at, cause: `crashed into ${o.name}`, killer: o.name, killerId: o.id, lost: 3 }, { snake: s, ...at, cause: 'hit the edge', killer: 'wall', killerId: null, lost: 5, failed: 1 }, { snake: s, ...at, cause: `bumped into ${o.name} in mid-air`, killer: o.name, killerId: o.id, lost: 3, air: 1 }],
+    squash: [{ snake: s, ...at }], spit: [{ snake: s, ...at, power: 4 }], spat: [{ snake: s, ...at, fx: at.x, fy: at.y, power: 4, hit: o.id, lx: null, ly: null }, { snake: s, ...at, fx: at.x, fy: at.y, power: 5, hit: -1, lx: at.x, ly: at.y }, { snake: s, x: -1, y: at.y, fx: 0, fy: at.y, power: 3, hit: -1, lx: null, ly: null }], crash: [{ snake: s, ...at, cause: `crashed into ${o.name}`, killer: o.name, killerId: o.id, lost: 3 }, { snake: s, ...at, cause: 'hit the edge', killer: 'wall', killerId: null, lost: 5, failed: 1 }, { snake: s, ...at, cause: `bumped into ${o.name} in mid-air`, killer: o.name, killerId: o.id, lost: 3, air: 1 }],
     dig: [{ ...at, until: k + 8 }], dive: [{ ...at }, { ...at, dug: 1 }],
     knock: [{ kind: 'food', ...at, tx: Math.min(E.GRID - 1, h.x + 2), ty: h.y }, { kind: 'beetle', ...at, tx: h.x, ty: Math.max(0, h.y - 2), gold: 1 }, { kind: 'pellet', ...at, tx: null, ty: null, color: o.color }], // (knocked aside, a golden beetle scurrying, and a bead in its colour with nowhere to go)
     burrow: [{ ...at }, { ...at, dug: 1 }], shut: [{ ...at, at: 9000 + k }], heal: [{ ...at }], // (one cracked open, or left by a dig; one starting to grow shut; one closing over)
@@ -344,7 +346,7 @@ for (const fatal of FATAL.filter(k => short(`death fatal ${k}`))) {
 // ones that only say where, where; a death, what the snake does.)
 const ways = EVENTS({ id: 1, color: '#fff', name: 'S' }, { id: 2, color: '#000', name: 'O' }, { x: 1, y: 1 }, 1);
 const says = KINDS.filter(k => k !== 'death').flatMap(k => [...new Set((ways[k] || [{ x: 1, y: 1 }]).flatMap(w => Object.keys(w).filter(f => !blank(w[f]))))].map(f => `${k} ${f}`));
-const want = [...KINDS, ...says, ...['snake', 'cause', 'killer', 'diedAt', 'fatal'].map(f => `death ${f}`), ...FATAL.map(k => `death fatal ${k}`), ...FIELDS.map(f => `snake ${f}`), ...LOOKS.map(f => `memory ${f}`), 'holes', 'burrows', 'burrows dug', 'burrows shut', 'unders', 'unders gold',
+const want = [...KINDS, ...says, ...['snake', 'cause', 'killer', 'diedAt', 'fatal'].map(f => `death ${f}`), ...FATAL.map(k => `death fatal ${k}`), ...FIELDS.map(f => `snake ${f}`), ...LOOKS.map(f => `memory ${f}`), 'holes', 'burrows', 'burrows dug', 'burrows shut', 'unders', 'unders gold', 'spits',
   ...['food', 'golden', 'mushroom', 'pellet', 'beetle', 'leaf', 'goldcap'].flatMap(k => [`food ${k}`, `food ${k} 3`]), // (each kind, and when it goes)
   'food food 5', 'food food 6', 'food pellet 4', 'food pellet 7', ...[5, 6, 7, 8, 9, 10, 11].map(j => `food beetle ${j}`), // (warming and baked; a bead's colour and whose; a beetle's way, where from, when it moved, scared, golden, digging in)
   ...FIRES.map(k => `fire ${k}`),
@@ -380,6 +382,7 @@ function protocolSamples() {
   host.woodpecker = { x: 1, y: 2, at: 3, target: [10, 11], strikeAt: 20, last: [9], struckAt: 4, restUntil: 5, pecks: 2, landings: [[10, 12], [11, -1]] };
   host.burrows = [{ x: 2, y: 3, at: 4, used: 8, dug: 1, shutFrom: 900, shutAt: 9900 }];
   host.portals = [{ x: 2, y: 3, dx: 1, dy: 0, tx: 4, ty: 3, owner: 0, shutAt: 0 }];
+  host.spits = [{ x: 5, y: 3, dir: D.right, left: 3, power: 4, wilt: 0, by: 0, wrap: false }];
   host.fires = new Map([[44, { from: 1, until: 9, strike: true, group: 1 }]]);
   host.weather = { kind: 'rain', since: 1, until: 99 };
   const at = { x: 2, y: 3 };
@@ -387,7 +390,7 @@ function protocolSamples() {
     { type: 'eat', snake: a, kind: 'pellet', ...at, color: '#f00', cooked: true, gold: false }, { type: 'leap', snake: a, ...at, gold: 1, reach: 2 },
     { type: 'dash', snake: a, ...at, n: 3, plain: 1 }, { type: 'death', snake: d }, { type: 'fizzle', snake: a, why: 'resting', ...at, flash: 1 },
     { type: 'crash', snake: a, ...at, cause: 'hit B', killer: 'B', killerId: 1, lost: 2 }, { type: 'cut', snake: a, ...at, lost: 3, by: 1 },
-    { type: 'squash', snake: a, ...at }, { type: 'spit', snake: a, ...at, tx: 2, ty: 6, power: 4, hit: 1, lx: null, ly: null }, { type: 'spit', snake: a, ...at, tx: 2, ty: 6, power: 5, hit: -1, lx: 3, ly: 6 }, { type: 'crash', snake: a, ...at, cause: 'hit the edge', killer: 'wall', killerId: null, lost: 5, failed: 1 }, { type: 'crash', snake: a, ...at, cause: 'bumped into B in mid-air', killer: 'B', killerId: 1, lost: 3, air: 1 }, { type: 'dig', ...at, until: 30 },
+    { type: 'squash', snake: a, ...at }, { type: 'spit', snake: a, ...at, power: 4 }, { type: 'spat', snake: a, ...at, fx: 2, fy: 1, power: 4, hit: 1, lx: null, ly: null }, { type: 'spat', snake: a, ...at, fx: 2, fy: 1, power: 5, hit: -1, lx: 3, ly: 6 }, { type: 'crash', snake: a, ...at, cause: 'hit the edge', killer: 'wall', killerId: null, lost: 5, failed: 1 }, { type: 'crash', snake: a, ...at, cause: 'bumped into B in mid-air', killer: 'B', killerId: 1, lost: 3, air: 1 }, { type: 'dig', ...at, until: 30 },
     { type: 'dive', ...at, dug: 1 }, { type: 'knock', kind: 'pellet', ...at, tx: 4, ty: 4, gold: 0, color: '#f00' }, { type: 'burrow', ...at, dug: 1 },
     { type: 'shut', ...at, at: 9900 }, { type: 'heal', ...at }, { type: 'portal', snake: a, ...at, tx: 4, ty: 3 }, { type: 'through', snake: a, ...at, tx: 4, ty: 3, owner: 1 }, { type: 'portalShut', ...at, tx: 4, ty: 3 }, { type: 'spawn', kind: 'food', ...at, gold: 0 }, { type: 'weather', kind: 'rain' }, { type: 'ember', ...at, fx: 4, fy: 4 },
     { type: 'woodpecker' }, { type: 'peck', ...at, cells: [10, 11], under: [0] }, { type: 'rot', ...at, kind: 'pellet', color: '#f00' }, { type: 'flown', ...at },
@@ -438,7 +441,7 @@ for (const msg of SAMPLES) {
   if (msg.t === 'tick') {
     SHAPES['tick s'] = shapeOf(msg.s[2]); // (a rival's: its memory says all it can)
     SHAPES['tick f beetle'] = shapeOf(msg.f[0]); SHAPES['tick f meal'] = shapeOf(msg.f[1]);
-    for (const k of ['un', 'bu', 'fi']) SHAPES[`tick ${k}`] = shapeOf(msg[k][0]);
+    for (const k of ['un', 'bu', 'sp', 'fi']) SHAPES[`tick ${k}`] = shapeOf(msg[k][0]);
     SHAPES['tick w'] = shapeOf(msg.w); SHAPES['tick sky'] = shapeOf(msg.sky);
     for (const e of msg.e) SHAPES[`tick e ${e[0]}`] = shapeOf(e);
   }

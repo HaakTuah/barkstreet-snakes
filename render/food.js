@@ -822,15 +822,15 @@ function drawSpitsInAir(alpha, now) {
   const u = reduced ? 1 : Math.min(1, alpha);
   for (const m of game.spits) {
     const fx = m.x - m.dir.x * T.SPIT_SPEED, fy = m.y - m.dir.y * T.SPIT_SPEED, over = fx < 0 || fy < 0 || fx >= GRID || fy >= GRID; // (over: through the wrapped edge, drawn there)
-    spitAt(over ? m.x : fx + (m.x - fx) * u, over ? m.y : fy + (m.y - fy) * u, m.power, now);
+    drawSpitAt(over ? m.x : fx + (m.x - fx) * u, over ? m.y : fy + (m.y - fy) * u, m.power, now);
   }
   for (let i = lastLegs.length - 1; i >= 0; i--) {
     const l = lastLegs[i], v = reduced ? 1 : (now - l.at) / l.ms;
     if (v >= 1) { lastLegs.splice(i, 1); continue; }
-    spitAt(l.fx + (l.x - l.fx) * v, l.fy + (l.y - l.fy) * v, l.power, now);
+    drawSpitAt(l.fx + (l.x - l.fx) * v, l.fy + (l.y - l.fy) * v, l.power, now);
   }
 }
-function spitAt(x, y, power, now) {
+function drawSpitAt(x, y, power, now) {
   const px = (x + 0.5) * CELL, py = (y + 0.5) * CELL;
   shadowAt(px + 1, py + CELL * 0.36, 0.7);
   blitAbout(mushroomSprite(power), px, py - CELL * 0.3, 0, CELL * 0.2, 0.8, 0.8, reduced ? 0 : now / 90);

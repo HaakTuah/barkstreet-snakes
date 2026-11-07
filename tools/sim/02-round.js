@@ -17,7 +17,7 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
     for (const s of g.snakes) {
       per[s.name] ||= {
         rounds: 0, wins: 0, placeSum: 0, eaten: 0, pellets: 0, beetles: 0, kills: 0, aliveMs: 0, deaths: {},
-        flashes: 0, jumps: 0, dashes: 0, leaps: 0, golden: 0, chokes: 0, crashes: 0, shrooms: 0, hits: 0, hitBy: 0, now: 0, bumps: 0, flown: 0, flights: 0, ringGo: 0, follows: 0, followOut: 0, // (round six B: mushrooms eaten, spits that hit a head, and taken; (for --census: plain flashes and jumps, golden dashes and leaps, golden power food, own beads squashed (chokes before round six B), crashes survived)
+        flashes: 0, jumps: 0, dashes: 0, leaps: 0, golden: 0, chokes: 0, crashes: 0, shrooms: 0, spits: 0, hits: 0, hitBy: 0, now: 0, bumps: 0, flown: 0, flights: 0, ringGo: 0, follows: 0, followOut: 0, // (round six B: mushrooms eaten, spat, spits that hit a head, and taken; (for --census: plain flashes and jumps, golden dashes and leaps, golden power food, own beads squashed (chokes before round six B), crashes survived)
         ...(signs ? { sig: Object.fromEntries(SIGNS.map(k => [k, 0])) } : {}),
       };
       per[s.name].rounds++;
@@ -122,7 +122,8 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
       if (e.type === 'crash' && e.air) { c.bumps++; per[e.snake.name].bumps++; }
       if (e.type === 'death' && /^came down on/.test(e.snake.cause || '')) c.downOnBody++;
       if (e.type === 'dash') { if (e.plain) { c.flashes++; per[e.snake.name].flashes++; } else { c.dashes++; per[e.snake.name].dashes++; } }
-      if (e.type === 'spit') { c.spits++; if (e.hit >= 0) { c.spitHits++; per[e.snake.name].hits++; per[g.snakes[e.hit].name].hitBy++; } else if (e.lx != null) c.spitLies++; }
+      if (e.type === 'spit') { c.spits++; per[e.snake.name].spits++; }
+      if (e.type === 'spat') { if (e.hit >= 0) { c.spitHits++; per[e.snake.name].hits++; per[g.snakes[e.hit].name].hitBy++; } else if (e.lx != null) c.spitLies++; }
       if (e.type === 'squash') { c.chokes++; per[e.snake.name].chokes++; seen.add('choke'); } // (round six B: its own bead squashed, counted where the chokes were)
       if (e.type === 'eat') {
         if (e.kind === 'pellet') { c.beads++; if (e.own) c.ownBeads++; }

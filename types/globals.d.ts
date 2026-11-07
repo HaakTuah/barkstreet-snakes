@@ -165,7 +165,7 @@ interface Window {
   Peer?: PeerJS.PeerClass;
   SnakeAI: { PERSONAS: Record<string, unknown> };
   SnakeRecords: { cleanName(text: unknown): string };
-  TUNING: { GRID: number; SHRINK_MAX: number };
+  TUNING: { GRID: number; SHRINK_MAX: number; SPIT_REACH: number };
   // Made by these two files (their shapes are the files themselves).
   SnakeNet: unknown;
   SnakeOnline: unknown;
