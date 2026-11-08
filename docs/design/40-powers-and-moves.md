@@ -365,12 +365,14 @@ them where its head fell, one golden pickup anyone can grab (a bump it lives thr
   what you now hold ("Spilled powers: now 2 golden jumps and 1 golden dash."); Star crows over a grab as over a golden beetle. Its Field guide row is "Spilled powers".
 - *The rivals* want it through the same food search as anything else: each charge they could still hold worth what one
   from a golden leaf is (`spillWorth` in `ai/food.js`); with no room, only a meal. No persona weights of its own.
-- **Measured** (PR #584): about 0.4 spills a round, in a third of rounds, 1.7 charges each; 40% grabbed, the grabbers
-  out within 3 s 6% of the time (no refuge). Per use (`tools/dev/fork-moves.js --move grab`, seeds 921–923, 158
-  spills, the nearest rival wanting it against ignoring spills): it grabs 31% against 14%, but places no better
-  (−0.01 ± 0.04 a spill); head to head (seeds 811/813, 1,000 paired rounds, against rivals that ignore spills),
-  0.05 grabs a snake against 0.02, every side row and trademark the same. The move doesn't matter to places, a design finding for the owner (#587); kept as built
-  until he answers.
+- **Measured** (PR #584): about 0.4 spills a round, in about a third of rounds, 1.7 charges each; a third to 40%
+  grabbed, the grabbers out within 3 s 0 to 6% of the time (no refuge). Too rare to move whole rounds (head to head,
+  seeds 811/813, 1,000 paired rounds against rivals that ignore spills: 0.05 grabs a snake against 0.02, every side
+  row and trademark the same), so it is judged per use (`tools/dev/fork-moves.js --move charges`, seeds 931–934): a
+  grab's charges are worth +0.20 ± 0.07 place and +10 ± 5 points of wins to the grabber, against the same meal
+  without them, as a golden leaf's are (+0.29 ± 0.05, 616 leaves). Of the spills the nearest rival misses (`--move
+  grab`, seeds 924–926), four in five lie far off (11 cells, against 4 for those grabbed) and fade or outlast it,
+  one in five another takes, almost none it has no room for: how far a charge is worth going is part 7's pricing.
 
 ### Mushrooms come back up
 
