@@ -14,13 +14,14 @@ sudden elimination"). Each act starts at a time drawn in its window after the on
 `ACT_PECKS_MS`, `ACT_FRENZY_MS` in `tuning.js`; `game.acts`, drawn by the host), so a round is never quite predictable;
 `E.actOf` gives the act. A playtest pins them in the address: `?acts=70,140,200` (seconds, three rising times).
 - **0. Calm,** from the start: food, weather, beetles, the meal clock from 0:45.
-- **1. The watcher** (60–90 s in): it lands outside the board and scouts it. No pecks. It watches a spot on the log
+- **1. The watcher** (50–75 s in; the owner's starting point, 60–90 s, then 50–80 s and 50–80 s, made rounds of
+  246 s at the median, against the draft's 3 to 3.5 minutes): it lands outside the board and scouts it. No pecks. It watches a spot on the log
   (`w.gaze`, anywhere that isn't a hole), then moves to a new vantage 2 to 4 times (`WATCH_LOOKS`), its last look
   `WATCH_LAST` (1.6) times as long as each of the others. **Its gaze is a tell:** act 2's first patch starts within
   `GAZE_NEAR` (4) cells of where it looked last, while any patch there keeps the fairness tries below.
-- **2. The first pecks** (50–80 s after it came): a patch of `FIRST_CHUNK` (8) cells, then a rest of
+- **2. The first pecks** (40–60 s after it came): a patch of `FIRST_CHUNK` (8) cells, then a rest of
   `FIRST_REST_TICKS` (90, about 9 s), over and over, while food still grows.
-- **3. The frenzy, sudden death** (50–80 s after act 2): nothing new grows but the last apples, the weather clears, and
+- **3. The frenzy, sudden death** (40–60 s after act 2): nothing new grows but the last apples, the weather clears, and
   the meal clock is `HUNGER_MS` again. Its first rest is `PECK_REST_TICKS` (30) from its last strike; each patch is
   `PECK_CHUNK` (12) cells, a cell bigger each strike of the frenzy (`w.fury`) up to `PECK_CHUNK_MAX` (20), and each
   rest `PECK_REST_TICKS` times `PECK_HUNGRIER` (0.85) for every strike of the frenzy, never under `PECK_REST_MIN` (10).
@@ -31,6 +32,10 @@ sudden elimination"). Each act starts at a time drawn in its window after the on
 - **The music** has a stage for each act (`audio/music.js`): the watcher adds a low, slow drone under the mid-round
   loop; the first pecks add its own drum, a quick roll of light knocks at each bar's end; the frenzy is faster (116 bpm),
   in a minor key with wood-block knocks and toms, the drum at every half bar.
+- **Measured** (seeds 3 and 11, 200 rounds each, against the woodpecker at 2:00 before): rounds of 214 and 211 s at the
+  median (181 and 182 before); deaths spread over the acts, calm 7 and 6%, the watcher 19 and 18%, the first pecks 16
+  and 21%, the frenzy 58 and 54% (before, about four in five came after 2:00); sudden death lasts 54 and 50 s (61 before);
+  sealed deaths 9.1 and 6.1% of sudden death's (6.2% before).
 
 ### How it picks a patch
 
