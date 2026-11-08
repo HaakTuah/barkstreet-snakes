@@ -76,7 +76,9 @@ what each changes: `SEASONS` in `tuning.js`).
   one's; a lean round's middle half runs 169 to 187 s and a plentiful one's 164 to 187 (normal 172 to 186), and
   every round but one in 200 still reaches the woodpecker. A plentiful round's snakes use their powers 15% more a minute
   than a normal round's (5.0 against 4.4), since meals put stamina back (2u+), against 27% more meals: more, not spam.
-  A lean round's use them 22% less (3.4).
+  A lean round's use them 22% less (3.4). Rivals that play the season, head to head against ones blind to it (600
+  paired rounds, seeds 21 and 22): even in wins, place, time alive and kills, eating 2 less a snake a round (70 to
+  68, the plentiful round's weighing), so the play is a matter of character, not an edge.
 
 ### Apples rot
 
