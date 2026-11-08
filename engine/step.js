@@ -358,7 +358,7 @@ function step(game) {
   singe(game, dying, drops);
 
   crawl(game);
-  peck(game, dying);
+  peck(game, dying, drops);
   fallIn(game, dying);
 
   // Dead snakes fall to beads (every other segment: see leavesBead), and

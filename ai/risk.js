@@ -75,6 +75,9 @@ function readRisk() {
   // The woodpecker watching a spot (entry 6, act 1): its first patch will
   // grow there, so it's ground I'd rather not linger in, the nearer its
   // middle the more (as a person reads its gaze).
+  // The piece the woodpecker's outline cuts round (part 2): ground to get
+  // off before it falls, as a person sees its dotted cut close.
+  for (const k of view.piece || EMPTY) risk[k] += w.zoneRisk * TUNE.AI_CUT_RISK;
   if (view.gaze >= 0) {
     const gx = view.gaze % N, gy = (view.gaze - gx) / N, r = TUNE.GAZE_NEAR;
     for (let y = Math.max(0, gy - r); y <= Math.min(N - 1, gy + r); y++) for (let x = Math.max(0, gx - r); x <= Math.min(N - 1, gx + r); x++) {

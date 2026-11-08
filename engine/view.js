@@ -13,6 +13,7 @@ function snapshot(game) {
     // (Fire, crackling, smouldering or burning, and the woodpecker's next patch: keep out.)
     fires: game.fires.size ? [...game.fires.keys()] : NO_FIRES,
     pecks: game.woodpecker?.target.length ? [...game.woodpecker.target] : NO_FIRES,
+    zone: game.woodpecker?.zone ? [...game.woodpecker.zone] : NO_FIRES, // (part 2: a fight's plus, as its reticle shows: keep out)
     spits: game.spits.length ? game.spits.map(m => ({ x: m.x, y: m.y, dir: m.dir, left: m.left, by: m.by, wrap: m.wrap })) : NO_SPITS, // (3b+: mushrooms in the air, where they were after the tick's moves)
   });
   if (game.history.length > T.HISTORY) game.history.shift();
@@ -22,11 +23,12 @@ const NO_FIRES = [], NO_SPITS = [];
 // walls). Worked out once per snapshot, shared by every AI.
 function blockedSeen(game, snap) {
   const holes = holesSeen(game, snap.holes);
-  if (!snap.fires.length && !snap.pecks.length) return holes;
+  if (!snap.fires.length && !snap.pecks.length && !snap.zone.length) return holes;
   if (snap.blocked?.n !== holes.size) {
     const set = new Set(holes);
     for (const k of snap.fires) set.add(k);
     for (const k of snap.pecks) set.add(k);
+    for (const k of snap.zone) set.add(k);
     snap.blocked = { n: holes.size, set };
   }
   return snap.blocked.set;
@@ -118,6 +120,7 @@ function aiView(game, snake) {
     fire: fireCellsSeen(snap), // (among the holes: the cells that are only fire, which it can go through, at a price)
     spits: snap.spits, // (3b+: mushrooms in the air, as of `age` ago, as a person would see them fly: [{ x, y, dir, left, by, wrap }])
     pecks: snap.pecks.length ? (snap.peckSet ||= new Set(snap.pecks)) : NO_CELLS, // (among them too: the woodpecker's mark, not a hole yet: nothing to hop)
+    zone: snap.zone.length ? (snap.zoneSet ||= new Set(snap.zone)) : NO_CELLS, // (among them too: a fight's plus, part 2: a crash for a head in it at the strike, never a hole)
     // (When its strike comes, as anyone sees the bird drum it (its last blow
     // lands on the strike), and in the aim's last PECK_PROMISE_TICKS moves
     // where it promised each piece in its mark would land: the rings show
@@ -135,6 +138,7 @@ function aiView(game, snake) {
     season: game.season, // (2i: and the round's food season, named in its start banner)
     act: actOf(game), // (entry 6: the woodpecker's act, as anyone sees it: it comes, it pecks, it rages)
     gaze: game.woodpecker && actOf(game) === 1 ? game.woodpecker.gaze : -1, // (act 1: the spot it watches, as anyone sees its eye on it)
+    piece: game.woodpecker?.plan ? game.woodpecker.plan.piece : NO_FIRES, // (part 2: the piece its outline cuts round, as its dotted cut shows anyone)
   };
 }
 // The game can let an AI think ahead of the tick (spread over the frames in

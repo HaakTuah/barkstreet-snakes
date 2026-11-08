@@ -33,7 +33,7 @@ function seeBoard() {
   // Bridges (round six B): a rival's body over a pit (behind its head) I
   // may crawl onto while it's still there: till it leaves, as I'd see it
   // (less the time since I saw it, the soonest it could be gone).
-  pitHole = i => holes.has(i) && !(view.fire || EMPTY).has(i) && !(view.pecks || EMPTY).has(i); // (a hole, not fire nor the woodpecker's mark)
+  pitHole = i => holes.has(i) && !(view.fire || EMPTY).has(i) && !(view.pecks || EMPTY).has(i) && !(view.zone || EMPTY).has(i); // (a hole, not fire nor the woodpecker's mark or its fight's plus)
   bridgeUntil.fill(0); bridgeF.fill(0);
   for (const o of others) {
     if (o.air || pitHole(o.body[0].y * N + o.body[0].x)) continue; // (its own head over a pit: its body holds nobody up)

@@ -1,12 +1,14 @@
 // Never shut anyone in: would this patch leave a snake less room than its
 // length (pending growth too), where it has that much now? Room is timed,
 // as a snake really has it (see timedRoom). room.now: each snake's room
-// without the patch, worked out the first time it's asked.
+// without the patch, worked out the first time it's asked. until: moves
+// a snake may still cross the patch's cells (entry 6: the severing peck's
+// warning, to get off a piece it cuts loose); 0, never.
 const SHUT = 1 << 30;
 const openAt = new Int32Array(CELLS), roomSeen = new Int32Array(CELLS), roomQ = new Int32Array(CELLS);
 let roomStamp = 0;
 const roomNeed = s => s.body.length + Math.max(0, s.grow);
-function shutsIn(game, patch, room) {
+function shutsIn(game, patch, room, until = 0) {
   if (!room.now) {
     timedGrid(game);
     room.now = new Map();
@@ -17,7 +19,7 @@ function shutsIn(game, patch, room) {
     if (!s.alive) continue;
     const need = roomNeed(s);
     if (room.now.get(s) < need) continue; // (shut in already: not the patch's doing)
-    if (timedRoom(game, s, set, need) < need) return true;
+    if (timedRoom(game, s, set, need, until) < need) return true;
   }
   return false;
 }
@@ -34,8 +36,9 @@ function timedGrid(game) {
   }
 }
 // A snake's room: the cells its head can reach, each by the time it's
-// open (see timedGrid), never through `shut` (a patch), counted up to `need`.
-function timedRoom(game, s, shut, need) {
+// open (see timedGrid), through `shut` (a patch) only within its first
+// `until` moves and never counting it, counted up to `need`.
+function timedRoom(game, s, shut, need, until = 0) {
   const st = ++roomStamp, h0 = key(s.body[0].x, s.body[0].y);
   roomSeen[h0] = st; roomQ[0] = h0;
   let read = 0, write = 1, room = 0;
@@ -47,8 +50,10 @@ function timedRoom(game, s, shut, need) {
         const nx = x + dd.x, ny = y + dd.y;
         if (!inside(nx, ny)) continue;
         const ni = key(nx, ny);
-        if (roomSeen[ni] === st || openAt[ni] > d || (shut && shut.has(ni))) continue;
-        roomSeen[ni] = st; room++; roomQ[write++] = ni;
+        if (roomSeen[ni] === st || openAt[ni] > d) continue;
+        const inShut = shut && shut.has(ni);
+        if (inShut && d >= until) continue;
+        roomSeen[ni] = st; if (!inShut) room++; roomQ[write++] = ni;
       }
     }
   }

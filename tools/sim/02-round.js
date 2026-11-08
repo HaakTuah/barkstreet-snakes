@@ -109,7 +109,7 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
       if (e.type === 'spawn' && e.kind === 'beetle') { total.beetles++; if (e.gold) { c.goldBeetles++; seen.add('goldBeetle'); } }
       else if (e.type === 'eat' && e.kind === 'beetle') { total.caught++; per[e.snake.name].beetles++; }
       else if (e.type === 'flown') total.flown++;
-      else if (e.type === 'crash') { total.crashes++; per[e.snake.name].crashes++; if (e.snake.landing) c.hopFail++; if (e.failed) c.failed++; }
+      else if (e.type === 'crash') { total.crashes++; per[e.snake.name].crashes++; if (e.cause === 'got pecked by the woodpecker') c.fightHits++; if (e.snake.landing) c.hopFail++; if (e.failed) c.failed++; }
       else if (e.type === 'alight') total.alight++;
       else if (e.type === 'cut') { total.cuts++; if (e.by === e.snake.id) c.cutsOwn++; if (g.events.some(d => d.type === 'dash' && d.snake.id === e.by && d.plain)) c.cutsPlain++; else c.cutsGold++; }
       else if (e.type === 'baked') total.baked++;
@@ -202,6 +202,7 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
   }
   total.actReached[E.actOf(g)]++; // (entry 6: the act each round ended in)
   if (E.suddenDeath(g)) { total.sudden++; c.sdTimes.push(g.time - g.acts.frenzy); c.holes += g.holes.size; }
+  if (st.bigFall) c.bigFalls.push(st.bigFall); // (part 2: the biggest piece that fell this round)
   if (st.split && alive.length === 1 && g.time < MAX_TIME) { // (the last snakes on islands of their own: did the biggest island's win?)
     const sizes = Object.entries(st.split.size), most = Math.max(...sizes.map(([, n]) => n)), top = sizes.filter(([, n]) => n === most).map(([id]) => +id);
     c.split++;

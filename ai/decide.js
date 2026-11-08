@@ -23,7 +23,8 @@ function decide(viewIn, personaIn, memoryIn = {}) {
   // A hole the woodpecker made, as I see it (among the holes I keep out
   // of, fire and its mark aren't pits).
   fire = view.fire || EMPTY, mark = view.pecks || EMPTY;
-  pitAt = i => holes.has(i) && !fire.has(i) && !mark.has(i), pit = (x, y) => pitAt(y * N + x);
+  const zone = view.zone || EMPTY;
+  pitAt = i => holes.has(i) && !fire.has(i) && !mark.has(i) && !zone.has(i), pit = (x, y) => pitAt(y * N + x);
 
   all = others.map((_, k) => k);
 
@@ -64,6 +65,12 @@ function decide(viewIn, personaIn, memoryIn = {}) {
     s += Math.random() * 1e-3; // tie-break
     if (s > bestScore) { bestScore = s; bestDir = d; }
   }
+  // Off a doomed piece (part 2): my head in the woodpecker's mark (on the
+  // piece it cuts loose, or its cut), the shortest way off it, if I can
+  // make it before the strike, whatever the search made of it (it reads
+  // the mark as walls, so from inside it sees no way at all).
+  const off = view.strikeAt != null && mark.has(myHead.y * N + myHead.x) ? escapeMark() : null;
+  if (off) return off;
   // Powers: each weighed as a move. The same search as crawling, from
   // where the power leaves me and to the same horizon, plus what it eats on
   // the way, less the risk where it lands and a price in apples (what an
@@ -79,3 +86,29 @@ function decide(viewIn, personaIn, memoryIn = {}) {
 }
 
 window.SnakeAI = { DIRS, PERSONAS, POOL, decide, watchStyles, traitsOf, styleOf, STYLE_TRAITS };
+
+// The first step of the shortest crawl out of the woodpecker's mark, to a
+// cell off it that's no hole and no body (bodies as seen, a tail as it
+// leaves), within the moves left before its strike; null if none.
+function escapeMark() {
+  const left = view.strikeAt - view.tick, start = myHead.y * N + myHead.x, from = new Map([[start, null]]);
+  const occupied = (x, y, t) => [me, ...others].some(o => o.body.some((c, j) => c.x === x && c.y === y && o.body.length - j > t)); // (a body's cell till its tail has passed)
+  let level = [start];
+  for (let t = 1; t <= left && level.length; t++) {
+    const next = [];
+    for (const k of level) {
+      const x = k % N, y = (k - x) / N;
+      for (const d of DIR_LIST) {
+        const nx = x + d.x, ny = y + d.y;
+        if (!inGrid(nx, ny)) continue;
+        const nk = ny * N + nx;
+        if (from.has(nk) || pitAt(nk) || fire.has(nk) || (view.zone || EMPTY).has(nk) || occupied(nx, ny, t)) continue;
+        from.set(nk, k);
+        if (!mark.has(nk)) { let c = nk; while (from.get(c) !== start) c = from.get(c); const cx = c % N, cy = (c - cx) / N; return DIR_LIST.find(q => q.x === cx - myHead.x && q.y === cy - myHead.y); }
+        next.push(nk);
+      }
+    }
+    level = next;
+  }
+  return null;
+}
