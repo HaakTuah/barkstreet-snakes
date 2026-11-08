@@ -86,7 +86,7 @@ design's words for each are in `docs/design/40-powers-and-moves.md` (as first de
 7. **One pricing model for every power,** as above, last, and built afresh on top of 2u's one stamina, not resumed from the parked pass (the owner, 2 November 2026); the parked pass on `round6b/pricing` is a reference for its findings only (*a first pass is parked* on `round6b/pricing`: the tail tip at length's worth now, rests cheaper while idle with a floor, risk by `headRisk`; on seeds 51/53 the seat-split already shows powers on beating off, 33.6% to 16.4%, with the island hop alone, and this pass did no better, 33.3% to 16.7%, flashing more; a direct head-to-head against today's AI was stopped at look 4, its rounds cached), so it prices every move together, with **each rival's power
    style** ("Every rival has a power style"); the design's "Balance targets" are its measure.
    Part 7 also prices how far a rival goes for spilled charges (part 6, PR #584: four in five of the spills it misses
-   lie about 11 cells off; a grab's charges are worth what a leaf's are).
+   lie about 12 cells off; a grab's charges are worth what a leaf's are).
    Part 7 also takes two of the improvement audit's finds (31 October 2026; the owner: "Agreed to all, expertly!"): **the trademarks
    that never show** (Mute's boxing and Joker's lures level with the field, Mason's body beside itself below it) get
    measures that catch the behaviour first (Mute's boxing counting the kills it gets by boxing; it leads the kills at

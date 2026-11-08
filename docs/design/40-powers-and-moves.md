@@ -371,8 +371,9 @@ them where its head fell, one golden pickup anyone can grab (a bump it lives thr
   row and trademark the same), so it is judged per use (`tools/dev/fork-moves.js --move charges`, seeds 931–934): a
   grab's charges are worth +0.20 ± 0.07 place and +10 ± 5 points of wins to the grabber, against the same meal
   without them, as a golden leaf's are (+0.29 ± 0.05, 616 leaves). Of the spills the nearest rival misses (`--move
-  grab`, seeds 924–926), four in five lie far off (11 cells, against 4 for those grabbed) and fade or outlast it,
-  one in five another takes, almost none it has no room for: how far a charge is worth going is part 7's pricing.
+  grab`, seeds 921–926, 341 spills: it grabs 33% wanting them, 15% ignoring them), four in five lie far off (12
+  cells, against 5 for those grabbed) and fade or outlast it, one in five another takes, almost none it has no room
+  for: how far a charge is worth going is part 7's pricing.
 
 ### Mushrooms come back up
 
