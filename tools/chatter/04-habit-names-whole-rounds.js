@@ -123,7 +123,7 @@
   const board = (personas, spots) => {
     rng = seeded(31);
     const g = E.createGame({ withPlayer: false, personas });
-    g.food = []; g.tick = 100; g.time = T.SUDDEN_DEATH_MS;
+    g.food = []; g.tick = 100; g.time = g.acts.frenzy;
     g.snakes.forEach((s, i) => { lay(s, ...spots[i]); s.lastAte = g.time; s.nextStarve = g.time + T.HUNGER_MS; });
     C.reset(g);
     return g;

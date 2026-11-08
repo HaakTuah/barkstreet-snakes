@@ -22,7 +22,7 @@ await ev(STAGE);
 const BIRD = n => `
   seeds(${n});
   const g = show(stage(['gobbler', 'ghost', 'mason'])), N = TUNING.GRID;
-  g.time = TUNING.SUDDEN_DEATH_MS + 5000; g.tick = 2000;
+  g.time = g.acts.frenzy + 5000; g.tick = 2000;
   g.snakes.forEach((s, i) => setBody(s, [[4 + 4 * i, 23], [3 + 4 * i, 23], [2 + 4 * i, 23]], 'right'));
   const ms = E.tickMs(g), L = document.getElementById('bird-layer');
   // (drawn m ms before its strike, or with after, m ms after it: the tick and how far through it)
@@ -187,7 +187,7 @@ const promise = await ev(`(() => {
 // The sound, in a real round on a virtual 60 Hz clock: the drum the game
 // starts (when, how late, how fast) and its last knock against the moment
 // the drawing reaches the strike; the "kik!" against the bird's landing.
-await round('TUNING.SUDDEN_DEATH_MS + 5000');
+await round('g.acts.frenzy + 5000', true);
 const heard = await ev(`(() => {
   const g = SnakeDebug.game(), N = TUNING.GRID, me = g.snakes[0];
   me.stunUntil = 1e9; me.body = [{ x: 3, y: 21 }, { x: 3, y: 22 }, { x: 3, y: 23 }]; me.prev = null;
@@ -285,3 +285,21 @@ const calm = await ev(`(() => {
 check(calm.lively.beats >= 3 && calm.calm.beats === 0 && calm.lively.bob > 3 && calm.calm.bob === 1 && calm.calm.blows < calm.lively.blows && calm.calm.gap > 2 * calm.lively.gap && calm.calm.last === 0,
   'with reduced motion, the woodpecker glides with its wings still (no wingbeats) and doesn’t bob, and its blows are fewer and slower, the last still on the strike',
   `wingbeats turning ${calm.lively.beats} times in a flight, ${calm.calm.beats} with reduced motion; ${calm.lively.bob} and ${calm.calm.bob} crouches resting; ${calm.lively.blows} blows ${calm.lively.gap} ms apart at the fastest, ${calm.calm.blows} at ${calm.calm.gap}`);
+
+// Entry 6, act 1: where the woodpecker watches, a pale diamond lies on the
+// log, eased in and then steady; none once it starts pecking (act 2).
+const pool = await ev(`(() => {
+  seeds(90);
+  const g = show(stage(['gobbler', 'ghost', 'mason'])), N = TUNING.GRID;
+  g.snakes.forEach((s, i) => setBody(s, [[4 + 4 * i, 23], [3 + 4 * i, 23], [2 + 4 * i, 23]], 'right'));
+  g.acts = { watch: 0, pecks: 1e9, frenzy: 2e9 }; g.time = 5000;
+  const light = () => { const d = pixels(11, 11, 3, 3).data; let n = 0; for (let i = 0; i < d.length; i += 4) n += d[i] + d[i + 1] + d[i + 2]; return n / (d.length / 4); };
+  g.woodpecker = null; drawN(5); const bare = light();
+  g.woodpecker = { x: 12, y: 12, at: g.time, came: g.tick - 200, target: [], strikeAt: -1, last: [], struckAt: -1, restUntil: -1, gaze: 12 * N + 12, lookAt: g.tick - 100, looks: 1, unit: 9000, lookUntil: 1e9 };
+  drawN(40); const lit = light(); drawN(9); const later = light();
+  g.time = 1.5e9; drawN(5); const pecking = light(); // (act 2)
+  g.woodpecker = null; g.time = 5000;
+  return { bare: +bare.toFixed(1), lit: +lit.toFixed(1), later: +later.toFixed(1), pecking: +pecking.toFixed(1) };
+})()`);
+check(pool.lit > pool.bare + 8 && Math.abs(pool.later - pool.lit) < 0.5 && Math.abs(pool.pecking - pool.bare) < 2,
+  'act 1: a pale diamond lies where the woodpecker watches, steady once in; none once it pecks (act 2)', JSON.stringify(pool));

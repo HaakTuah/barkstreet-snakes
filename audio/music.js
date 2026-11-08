@@ -19,7 +19,9 @@ window.SnakeAudioMusic = k => {
   //   stage: 'title'   a slow, calm marimba loop (start screen, countdown, round over)
   //          'early'   the loop plus a soft bass
   //          'mid'     a light shaker joins, and the tempo creeps up with the game
-  //          'sudden'  the woodpecker is here: a minor key, wood-block knocks
+  //          'watch'   the woodpecker has come and watches (act 1): a low, slow drone underneath
+  //          'pecks'   its first pecks (act 2): its own drum joins, a roll at each bar's end
+  //          'sudden'  its frenzy (act 3, sudden death): faster, a minor key, wood-block knocks, its drum woven in
   //          'duel'    the last two snakes: faster, tense, a heartbeat kick
   //          'off'     silence
   //   mood:  { intensity: 0..1, watching: bool, paused: bool, danger: 0..1 }
@@ -39,9 +41,11 @@ window.SnakeAudioMusic = k => {
     title: { bpm: 84, roots: [48, 45, 41, 43], minor: false, arp: 'quarter', bass: false, shaker: false, knocks: false, kick: false, pad: true, answers: true },
     early: { bpm: 94, roots: [48, 45, 41, 43], minor: false, arp: 'eighth', bass: true, shaker: false, knocks: false, kick: false, pad: true },
     mid: { bpm: 102, roots: [48, 45, 41, 43], minor: false, arp: 'eighth', bass: true, shaker: true, knocks: false, kick: false, pad: true, bells: true },
-    sudden: { bpm: 108, roots: [45, 41, 48, 40], minor: true, arp: 'eighth', bass: true, shaker: true, knocks: true, kick: false, pad: true, toms: true },
+    pecks: { bpm: 104, roots: [48, 45, 41, 43], minor: false, arp: 'eighth', bass: true, shaker: true, knocks: false, kick: false, pad: true, drone: true, drum: 1 },
+    sudden: { bpm: 116, roots: [45, 41, 48, 40], minor: true, arp: 'eighth', bass: true, shaker: true, knocks: true, kick: false, pad: true, toms: true, drone: true, drum: 2 },
     duel: { bpm: 124, roots: [45, 41, 43, 40], minor: true, arp: 'sixteenth', bass: true, shaker: true, knocks: true, kick: true, hats: true },
   };
+  ARRANGEMENTS.watch = { ...ARRANGEMENTS.mid, drone: true }; // (the woodpecker watching: mid's, and the drone under it)
   // Chord shapes over each root: major-ish for the calm loops, minor for the tense ones.
   const SHAPE_MAJOR = [[0, 4, 7, 12], [0, 3, 7, 12], [0, 4, 7, 12], [0, 4, 7, 10]]; // C  Am  F  G7
   const SHAPE_MINOR = [[0, 3, 7, 12], [0, 4, 7, 12], [0, 4, 7, 12], [0, 4, 7, 10]]; // Am F  C  E7
@@ -141,6 +145,8 @@ window.SnakeAudioMusic = k => {
     }
     // ...and when it answers, a high note echoes the end of every other bar.
     if (answer && bar % 2 === 1 && inBar === 14) mmallet(t, root + 24 + shape[1], 0.6, 0.03 * quiet);
+    // The woodpecker's acts: a low, slow drone, a note held two bars and swelling in.
+    if (a.drone && s % 32 === 0) mtone(t, 'sine', mtof(root - 24), 32 * 15 / tempo, 0.07 * quiet, 32 * 15 / tempo * 0.4);
     // A long, low note on the downbeat of each bar under the calm loop.
     if (!a.bass && inBar === 0) mtone(t, 'sine', mtof(root - 12), 1.8, 0.05 * quiet, 0.08);
 
@@ -157,6 +163,8 @@ window.SnakeAudioMusic = k => {
     if (a.knocks && (inBar === 4 || inBar === 12 || inBar === 15)) {
       mtone(t, 'triangle', inBar === 15 ? 1500 : 1150, 0.06, 0.07, 0.001, inBar === 15 ? 1100 : 820, 3000);
     }
+    // Its own drum: a quick roll of light knocks, quickening, at the end of each bar (in the frenzy, each half bar).
+    if (a.drum && (inBar === 12 || (a.drum > 1 && inBar === 4))) for (let i = 0; i < 6; i++) mtone(t + i * (0.05 - 0.004 * i), 'triangle', 1700 + 40 * i, 0.03, 0.03 + 0.004 * i, 0.001, 1300, 3600);
     // A soft heartbeat kick for the duel (and its beater, for small speakers).
     if (a.kick && (inBar === 0 || inBar === 3 || inBar === 8 || inBar === 11)) {
       mtone(t, 'sine', 110, 0.16, 0.16, 0.004, 48);
@@ -264,7 +272,7 @@ window.SnakeAudioMusic = k => {
         if (stageNow === 'off') return;
       }
       const a = ARRANGEMENTS[stageNow] || ARRANGEMENTS.title;
-      tempo = a.bpm * (stageNow === 'early' || stageNow === 'mid' ? 1 + 0.15 * intensity : 1);
+      tempo = a.bpm * (stageNow === 'early' || stageNow === 'mid' || stageNow === 'watch' || stageNow === 'pecks' ? 1 + 0.15 * intensity : 1);
       try {
         scheduleStep(a, step, nextAt, watching);
         schedulePad(a, step, nextAt, watching);

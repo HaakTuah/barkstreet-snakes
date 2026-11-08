@@ -44,7 +44,7 @@ function pieces2s(g, mark) {
 
 { // The strike: the piece falls with it. A head still on it falls too ("Down the hole!"); food on it is gone with it, never
   // knocked; the neck's own food is knocked aside as ever; and the log is one piece after.
-  const g = board([[[[15, 10], [14, 10], [14, 11]], 'up'], [[[5, 5], [4, 5], [3, 5]], 'right']], { food: [[16, 9], [13, 10]], time: T.SUDDEN_DEATH_MS });
+  const g = board([[[[15, 10], [14, 10], [14, 11]], 'up'], [[[5, 5], [4, 5], [3, 5]], 'right']], { food: [[16, 9], [13, 10]], time: FRENZY });
   for (let k = 0; k < T.GRID * T.GRID; k++) if (!land2s.some(([x, y]) => K(x, y) === k)) g.holes.add(k);
   g.snakes[0].stunUntil = 1e9;
   feed(g);
@@ -70,7 +70,7 @@ function pieces2s(g, mark) {
     r.body = [[7, 10], [6, 10], [5, 10], [4, 10]].map(([x, y]) => ({ x, y })); r.dir = D.right; r.restedAt = 1e9;
     g.food = [{ x: 15, y: 10, kind: 'food' }]; g.given = new Set([K(15, 10)]);
     for (let k = 0; k < T.GRID * T.GRID; k++) if (!land3.some(([x, y]) => K(x, y) === k)) g.holes.add(k);
-    g.time = T.SUDDEN_DEATH_MS;
+    g.time = FRENZY;
     g.woodpecker = marked
       ? { x: 13, y: 10, at: g.time, target: [...neck3, ...piece3].map(([x, y]) => K(x, y)), fall: piece3.map(([x, y]) => K(x, y)), strikeAt: g.tick + 20, last: [], struckAt: -1, restUntil: 0 }
       : { x: 3, y: 4, at: g.time, target: [K(3, 4)], strikeAt: g.tick + 20, last: [], struckAt: -1, restUntil: 0 };
@@ -86,7 +86,7 @@ function pieces2s(g, mark) {
 { // The rivals are shown which cells fall (aiView's fall, the same for everyone), and the knock rule they work landings out
   // with (E.knocks, as the strike does) says food on a falling piece falls with it: no landing for it to chase, and the
   // patch's own food still flies to its ring.
-  const g = board([[[[5, 5], [4, 5], [3, 5]], 'right'], [[[5, 12], [4, 12], [3, 12]], 'right']], { food: [[16, 9], [13, 10]], time: T.SUDDEN_DEATH_MS });
+  const g = board([[[[5, 5], [4, 5], [3, 5]], 'right'], [[[5, 12], [4, 12], [3, 12]], 'right']], { food: [[16, 9], [13, 10]], time: FRENZY });
   for (let k = 0; k < T.GRID * T.GRID; k++) if (!land2s.some(([x, y]) => K(x, y) === k)) g.holes.add(k);
   g.woodpecker = { x: 13, y: 10, at: g.time, target: [K(...neck2s), ...peninK], fall: [...peninK], strikeAt: g.tick + 10, last: [], struckAt: -1, restUntil: 0 };
   const view = E.aiView(g, g.snakes[0]);

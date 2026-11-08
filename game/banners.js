@@ -54,11 +54,26 @@ function news(dying) {
   }
   const me = player();
   const once = key => !theGame.told?.[key] && ((theGame.told ||= {})[key] = true); // (the first time this round)
+  // The woodpecker's acts (entry 6), each news as it starts, with its lesson
+  // after it: it comes and watches (its gaze, the tell), its first mark
+  // (food there flies to its ring), and the frenzy (sudden death).
   for (const e of theGame.events) if (e.type === 'woodpecker') {
     flashFrame('bird', true);
     toast(lineFor('woodpecker'), 2800, 'bird', 'round');
-    if (me?.alive && once('fairPecks')) toast(FLAVOR.youWoodpecker, 3000, 'bird', 'lesson', { still: () => me.alive, follows: true }); // (its rule: it waits its turn, after the news, its moment the news's)
+    if (me?.alive && once('watched')) toast(FLAVOR.youWatched, 3000, 'bird', 'lesson', { still: () => me.alive, follows: true }); // (its rule: it waits its turn, after the news, its moment the news's)
     return;
+  }
+  if (theGame.events.some(e => e.type === 'aim') && once('firstPecks')) {
+    flashFrame('bird', true);
+    toast(pick(FLAVOR.woodpeckerPecks), 2800, 'bird', 'round');
+    if (me?.alive && once('fairPecks')) toast(FLAVOR.youWoodpecker, 3000, 'bird', 'lesson', { still: () => me.alive, follows: true });
+    return;
+  }
+  if (Engine.suddenDeath(theGame) && once('frenzy')) {
+    flashFrame('bird', true);
+    updateControls(); // (the sky dims: html.frenzy, set there)
+    Sound.play('stinger');
+    return toast(pick(FLAVOR.woodpeckerFrenzy), 2800, 'bird', 'round');
   }
   if (dying.length && alive.length === 2) {
     const [a, b] = isMe(alive[0]) ? [alive[1], alive[0]] : alive;

@@ -20,7 +20,7 @@ const { launch, serve, sleep } = require(path.join(root, 'tools', 'browser.js'))
       await b.eval(`SnakeDebug.frames(80); window.__autoRaf = false; 'ok'`);
       await sleep(300);
       for (const x of [1, 6, 12, 17, 22]) {
-        const on = await b.eval(`(() => { const g = SnakeDebug.game(); g.time = Math.max(g.time, TUNING.SUDDEN_DEATH_MS + 1000); g.woodpecker = null; SnakeDebug.draw();
+        const on = await b.eval(`(() => { const g = SnakeDebug.game(); g.time = Math.max(g.time, g.acts.frenzy + 1000); g.woodpecker = null; SnakeDebug.draw();
           g.woodpecker = { x: ${x}, y: 22, at: g.time, target: [], strikeAt: -1, last: [], struckAt: -1, restUntil: g.tick + 1e6, pecks: 0 };
           let now = performance.now(); for (let i = 0; i < 6; i++) SnakeRender.frame(0.5, now += 16);
           const P = SnakeRender.birdPose(), sc = boardRect.w / SIZE, f = P.flip > 0, s = P.s * BU * sc;

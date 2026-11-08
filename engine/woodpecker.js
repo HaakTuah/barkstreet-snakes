@@ -33,13 +33,19 @@ function beakDepth(target, isHole) {
   depthFor = target; depthHoles = holes; depthOf = out;
   return out;
 }
-// Sudden death: the woodpecker takes the log away a patch at a time. It
-// lands, then over and over (hungrier each time: a shorter rest, a patch a
-// cell bigger): picks a patch of PECK_CHUNK cells somewhere on the log
+// The woodpecker, in three acts (entry 6; see actOf). Act 1, the watcher:
+// it lands outside the board and scouts it, no pecks: a look at a spot on
+// the log (w.gaze), then 2 to 4 more from new vantage points (WATCH_LOOKS),
+// the last the longest (WATCH_LAST); act 2's first patch grows from where it
+// looked last (GAZE_NEAR, see pickPatch), so its gaze is a tell. Act 2, the
+// first pecks: now and then (FIRST_REST_TICKS) a small patch (FIRST_CHUNK).
+// Act 3, the frenzy, sudden death: it takes the log away a patch at a time,
+// hungrier each time (a shorter rest, a patch a cell bigger). Each patch:
+// picked somewhere on the log
 // (PECK_CLEARANCE cells from every head, shutting nobody in, while there's
-// such a spot: see pickPatch), eyes it for PECK_AIM_TICKS (everyone sees
-// where, and the AIs keep out of it, like a hole), hammers it all out at
-// once, and rests a good while. Food in the patch when it strikes is
+// such a spot: see pickPatch), eyed for PECK_AIM_TICKS (everyone sees
+// where, and the AIs keep out of it, like a hole), hammered out at
+// once, and a rest. Food in the patch when it strikes is
 // knocked aside (see knockTo), or eaten if there's nowhere to knock it (a
 // beetle still there is eaten: it had the rings' warning to run, see crawl); fire and a burrow there go. A head on the ground
 // there, and that snake's out; a body lying across it bridges the new hole
@@ -47,16 +53,28 @@ function beakDepth(target, isHole) {
 // once its tail has passed. Where knocked food lands is a promise: the
 // rings through the aim's last PECK_PROMISE_TICKS moves (see
 // promiseLandings) are kept while their cells are still free.
-// game.woodpecker: { at (time it came), target: [cells it's aiming at],
+// game.woodpecker: { at (time it came), came (the tick it came), target: [cells it's aiming at],
 //   strikeAt (tick), last: [cells it took out last], struckAt (tick), restUntil (tick), x, y (where it's busy),
-//   pecks (strikes so far), landings (from PECK_PROMISE_TICKS moves before a strike: [[from, to], ...] cells, to -1 for none),
-//   fall (2s: the cells of target on pieces it cuts loose, which fall with the strike, food and all) }
+//   pecks (strikes so far), fury (strikes in the frenzy), landings (from PECK_PROMISE_TICKS moves before a strike: [[from, to], ...] cells, to -1 for none),
+//   fall (2s: the cells of target on pieces it cuts loose, which fall with the strike, food and all),
+//   gaze (act 1: the cell it watches; where it looked last, after), lookAt (the tick that look began), looks (looks left after it), lookUntil (ms: when it moves on), unit (ms: a look's length) }
 function peck(game, dying) {
-  if (!suddenDeath(game)) return;
+  const act = actOf(game);
+  if (!act) return;
   let w = game.woodpecker;
   if (!w) {
-    w = game.woodpecker = { x: GRID / 2, y: 0, at: game.time, target: [], strikeAt: -1, last: [], struckAt: -1, restUntil: game.tick + T.PECK_ARRIVE_TICKS };
+    const changes = Math.floor(between(T.WATCH_LOOKS[0], T.WATCH_LOOKS[1] + 1)), unit = Math.max(0, game.acts.pecks - game.time) / (changes + T.WATCH_LAST);
+    w = game.woodpecker = { x: GRID / 2, y: 0, at: game.time, came: game.tick, target: [], strikeAt: -1, last: [], struckAt: -1, restUntil: -1, gaze: -1, lookAt: game.tick, looks: changes, unit, lookUntil: game.time + unit };
+    if (act === 1) watchSpot(game, w);
     game.events.push({ type: 'woodpecker' });
+    return;
+  }
+  if (act === 1) {
+    if (game.time >= w.lookUntil && w.looks > 0) {
+      w.looks--;
+      w.lookAt = game.tick; w.lookUntil = game.time + w.unit * (w.looks ? 1 : T.WATCH_LAST);
+      watchSpot(game, w);
+    }
     return;
   }
   if (w.target.length && game.tick >= w.strikeAt) {
@@ -92,14 +110,16 @@ function peck(game, dying) {
     game.burrows = game.burrows.filter(b => !zone.has(key(b.x, b.y))); // (a burrow pecked open is a hole now)
     const hit = [...zone];
     game.events.push({ type: 'peck', x: w.x, y: w.y, cells: hit, under, ...(w.fall ? { fall: w.fall } : {}) }); // (fall: the cells of the pieces cut loose, 2s)
-    w.pecks = (w.pecks || 0) + 1; // (it gets hungrier: shorter rests, bigger patches)
+    w.pecks = (w.pecks || 0) + 1;
+    if (act === 3) w.fury = (w.fury || 0) + 1; // (in the frenzy it gets hungrier: shorter rests, bigger patches)
     delete w.landings;
     delete w.fall;
-    w.last = hit; w.struckAt = game.tick; w.target = []; w.restUntil = game.tick + Math.max(T.PECK_REST_MIN, Math.round(T.PECK_REST_TICKS * Math.pow(T.PECK_HUNGRIER, w.pecks)));
+    w.last = hit; w.struckAt = game.tick; w.target = [];
+    w.restUntil = game.tick + (act === 3 ? Math.max(T.PECK_REST_MIN, Math.round(T.PECK_REST_TICKS * Math.pow(T.PECK_HUNGRIER, w.fury))) : T.FIRST_REST_TICKS);
     return;
   }
-  if (!w.target.length && game.tick >= w.restUntil) {
-    const { patch, fall } = pickPatch(game);
+  if (!w.target.length && (game.tick >= w.restUntil || (act === 3 && !w.fury && game.tick >= w.struckAt + T.PECK_REST_TICKS))) { // (the frenzy's first rest is its own, not act 2's long one)
+    const { patch, fall } = pickPatch(game, w.pecks ? -1 : w.gaze); // (act 2's first grows where it looked last)
     if (!patch.length) return;
     w.target = patch;
     if (fall.length) w.fall = fall; else delete w.fall; // (2s: the pieces it cuts loose, in the mark too: they fall with the strike)
@@ -126,8 +146,9 @@ function peck(game, dying) {
 // nobody in, aim small].)
 const PATCH_TRIES = [[true, T.PECK_CLEARANCE, true, true], [true, 0, true, true], [true, T.PECK_CLEARANCE, true, false], [true, 0, true, false],
   [true, T.PECK_CLEARANCE, false, false], [true, 0, false, false], [false, -1, false, false]];
-function pickPatch(game) {
-  const roll = Math.random();
+function pickPatch(game, gaze = -1) {
+  const roll = Math.random(), w = game.woodpecker;
+  const chunk = actOf(game) === 3 ? Math.min(T.PECK_CHUNK_MAX, T.PECK_CHUNK + (w?.fury || 0)) : T.FIRST_CHUNK; // (in the frenzy a cell bigger each time)
   const nearHole = k => CRAWL.some(d => { const x = k % GRID + d.x, y = Math.floor(k / GRID) + d.y; return inside(x, y) && game.holes.has(key(x, y)); });
   const room = { now: null }; // (each snake's room as things stand: worked out once, if a try asks)
   for (const [clear, gap, fair, small] of PATCH_TRIES) {
@@ -138,7 +159,10 @@ function pickPatch(game) {
     };
     // Where it'd like to start this time (tried first, then anywhere).
     const pool = [];
-    if (roll < T.PECK_UNDER_BODY) {
+    if (gaze >= 0) { // (act 2's first: where it looked last, entry 6)
+      const gx = gaze % GRID, gy = (gaze - gx) / GRID;
+      for (let y = gy - T.GAZE_NEAR; y <= gy + T.GAZE_NEAR; y++) for (let x = gx - T.GAZE_NEAR; x <= gx + T.GAZE_NEAR; x++) if (inside(x, y) && Math.abs(x - gx) + Math.abs(y - gy) <= T.GAZE_NEAR && ok(key(x, y))) pool.push(key(x, y));
+    } else if (roll < T.PECK_UNDER_BODY) {
       for (const s of game.snakes) if (s.alive) for (let j = 1; j < s.body.length; j++) { const k = key(s.body[j].x, s.body[j].y); if (ok(k)) pool.push(k); }
     } else if (roll < T.PECK_UNDER_BODY + T.PECK_WIDEN && game.holes.size) {
       for (let k = 0; k < CELLS; k++) if (ok(k) && nearHole(k)) pool.push(k);
@@ -147,7 +171,6 @@ function pickPatch(game) {
       const seed = t < 0 ? pool[Math.floor(Math.random() * pool.length)] : Math.floor(Math.random() * CELLS);
       if (!ok(seed)) continue;
       const patch = [seed], edge = [seed], inPatch = new Set(patch);
-      const chunk = Math.min(T.PECK_CHUNK_MAX, T.PECK_CHUNK + (game.woodpecker?.pecks || 0)); // (a cell bigger each time)
       while (patch.length < chunk && edge.length) {
         const from = edge[Math.floor(Math.random() * edge.length)], x = from % GRID, y = Math.floor(from / GRID);
         const opts = CRAWL.map(d => [x + d.x, y + d.y]).filter(([nx, ny]) => inside(nx, ny) && !inPatch.has(key(nx, ny)) && ok(key(nx, ny)));
@@ -180,6 +203,18 @@ function pickPatch(game) {
     }
   }
   return { patch: [], fall: [] };
+}
+// Act 1: where the woodpecker looks next (w.gaze), and from where (x, y:
+// the spot it's busy with, which the bird's perch follows). Somewhere on
+// the log, anywhere: its first patch will grow there, and nobody can tell
+// where before it looks.
+function watchSpot(game, w) {
+  for (let t = 0; t < 50; t++) {
+    const k = Math.floor(Math.random() * CELLS);
+    if (game.holes.has(k)) continue;
+    w.gaze = k; w.x = k % GRID; w.y = (k - w.x) / GRID;
+    return;
+  }
 }
 // Rounder hollows: after it grows, a patch takes any cell beside it with
 // three or more of its four neighbours in the patch, an old hole or off the

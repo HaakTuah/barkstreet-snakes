@@ -4,7 +4,7 @@
 // burrow in the mark); one still there at the strike is the bird's. None comes up under the beak. (The burrows keeping up,
 // and the bird eating one too late to run, are in 10-beetles.js and 09-woodpecker.js.)
 const beakBoard = (mark, ahead, { burrows = [] } = {}) => {
-  const g = board([[line(3, 3, 4), 'right'], [line(20, 22, 4), 'right']], { time: T.SUDDEN_DEATH_MS + 5000 });
+  const g = board([[line(3, 3, 4), 'right'], [line(20, 22, 4), 'right']], { time: FRENZY + 5000 });
   for (const o of g.snakes) o.stunUntil = 1e9; // (nobody moves: only the beak scares it)
   g.burrows = burrows.map(([x, y]) => ({ x, y, at: 0, used: 0 }));
   g.unders = [{ until: 1e9, expires: 1e9, from: -1, gold: false }]; // (no more come out meanwhile)
@@ -58,7 +58,7 @@ const throughStrike = (g, bug) => {
 { // The rivals read it: a beetle under the beak with a burrow beyond is read as gone down it (not worth the chase: Drab
   // takes the apple up the board); with none, it runs off the mark toward Drab's side, and Drab goes for it.
   const MARK2 = rect(12, 11, 14, 13).map(([x, y]) => K(x, y));
-  const view = burrows => () => aiView({ me: aiMe(line(8, 12, 5), 'right'), others: [aiRival(1, line(20, 2, 5), 'right')], tick: 10, timeMs: T.SUDDEN_DEATH_MS + 5000,
+  const view = burrows => () => aiView({ me: aiMe(line(8, 12, 5), 'right'), others: [aiRival(1, line(20, 2, 5), 'right')], tick: 10, timeMs: FRENZY + 5000, act: 3,
     holes: new Set(MARK2), pecks: new Set(MARK2), strikeAt: 20, burrows,
     food: [{ x: 12, y: 12, kind: 'beetle', expires: 999, dir: D.left, movedAt: 0 }, { x: 8, y: 7, kind: 'food', expires: 999 }] });
   const home = picks(view([{ x: 16, y: 12, at: 0 }]), 'drab', 20), off = picks(view([]), 'drab', 20);

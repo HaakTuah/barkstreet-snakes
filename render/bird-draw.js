@@ -135,9 +135,26 @@ const PARTS = {
 };
 const partsFull = new Map(), partsHalf = new Map();
 let partsK = 0; // (device px a unit they were drawn for: the bird at 1.12, a touch bigger than it ever flies)
+// The frenzy's darker feathers (entry 6): each part darkened once into a
+// copy of its own (a filter on every draw cost a CPU canvas too much), in
+// place of the plain one from halfway through the frenzy's coming over it
+// (birdDark, 0 to 1; laid one over the other, their soft edges thickened).
+let birdDark = 0;
+const DARK = 'brightness(0.68) saturate(1.3)';
 function layPart(g, name, half) {
-  const cache = half ? partsHalf : partsFull, [x0, y0, x1, y1, draw] = PARTS[name];
-  let c = cache.get(name);
+  partOf(name, half, birdDark >= 0.5, g);
+}
+// A part's bitmap (dark: the frenzy's copy), made once; with g, laid there.
+function partOf(name, half, dark, g = null) {
+  const cache = half ? partsHalf : partsFull, [x0, y0, x1, y1, draw] = PARTS[name], id = dark ? name + '~dark' : name;
+  let c = cache.get(id);
+  if (!c && dark) {
+    const plain = partOf(name, half, false);
+    c = makeLayer(plain.width, plain.height);
+    const pg = c.getContext('2d');
+    pg.filter = DARK; pg.drawImage(plain, 0, 0);
+    cache.set(id, c);
+  }
   if (!c) {
     const k = partsK * (half ? 0.5 : 1);
     c = makeLayer((x1 - x0) * k, (y1 - y0) * k);
@@ -145,9 +162,10 @@ function layPart(g, name, half) {
     pg.setTransform(sx, 0, 0, sy, -x0 * sx, -y0 * sy);
     pg.lineJoin = pg.lineCap = 'round';
     draw(pg);
-    cache.set(name, c);
+    cache.set(id, c);
   }
-  g.drawImage(c, x0, y0, x1 - x0, y1 - y0);
+  if (g) g.drawImage(c, x0, y0, x1 - x0, y1 - y0);
+  return c;
 }
 // Its beak, a chisel (its lower half opening by gape), as a path.
 function beakPath(g, gape) {
@@ -171,6 +189,7 @@ function drawBird(g, P, half) {
   g.restore();
   g.globalAlpha = P.alpha;
   g.lineJoin = g.lineCap = 'round';
+  birdDark = P.fury; // (the frenzy, entry 6: its feathers darken, see layPart)
   if (P.wing > 0.02) { wingMat(P, true); useM(g, WM); layPart(g, 'farWing', half); }
   // Its ink, then its colours.
   useM(g, BM); layPart(g, P.feet ? 'inkPerch' : 'inkFly', half);
@@ -185,6 +204,19 @@ function drawBird(g, P, half) {
   birdRim(g, -0.1, 0.3, 0.95, 1.55, 0.08, sun);
   if (P.blur > 0) { ghostHead(P); g.globalAlpha = P.alpha * 0.4 * P.blur; useM(g, TM); layPart(g, 'head', half); g.fillStyle = '#71717a'; beakPath(g, 0); g.fill(); g.globalAlpha = P.alpha; }
   useM(g, HM); layPart(g, 'head', half);
+  // Its crest (entry 6): raised while it watches the log (its red nape),
+  // ruffled up dark in the frenzy; flat otherwise.
+  if (P.crest > 0) {
+    g.fillStyle = P.fury > 0.5 ? '#7f1d1d' : '#b91c1c';
+    g.beginPath();
+    for (let i = 0; i < 4; i++) {
+      const a0 = Math.PI * (1.02 + 0.13 * i), a1 = a0 + 0.13, am = (a0 + a1) / 2, out = (0.13 + 0.07 * (i % 2)) * P.crest; // (its tips inside the head's box, PARTS.head, which keeps the perched bird off the cells)
+      g.moveTo(0.45 + 0.66 * Math.cos(a0), -1.75 + 0.64 * Math.sin(a0));
+      g.lineTo(0.45 + (0.7 + out) * Math.cos(am), -1.75 + (0.68 + out) * Math.sin(am));
+      g.lineTo(0.45 + 0.66 * Math.cos(a1), -1.75 + 0.64 * Math.sin(a1));
+    }
+    g.fill();
+  }
   g.strokeStyle = BIRD_RIM; g.lineWidth = 0.11;
   birdRim(g, 0.45, -1.75, 0.72, 0.7, 0, sun - P.turn);
   g.fillStyle = '#71717a'; beakPath(g, P.gape); g.fill(); // (the chisel beak, darker along its top)
@@ -192,16 +224,20 @@ function drawBird(g, P, half) {
   // Its eye: a pupil turned to what it looks at (the way it looks, turned into its head's frame), with a glint; or shut.
   const c = Math.cos(P.rot), s = Math.sin(P.rot), x1 = (bird.gx * c + bird.gy * s) * P.flip, y1 = -bird.gx * s + bird.gy * c;
   const ct = Math.cos(P.turn), st = Math.sin(P.turn), ex = x1 * ct + y1 * st, ey = -x1 * st + y1 * ct;
-  g.fillStyle = '#fffbea';
+  birdDark = 0; // (its eye undimmed: in the frenzy, it glows red)
+  if (P.fury > 0 && !P.blink) { g.fillStyle = `rgba(239, 68, 68, ${0.35 * P.fury})`; oval(g, 0.75, -1.9, 0.34, 0.34); g.fill(); }
+  g.fillStyle = P.fury > 0.5 ? '#fecaca' : '#fffbea';
   if (P.blink) { oval(g, 0.75, -1.9, 0.21, 0.05); g.fill(); }
   else {
     oval(g, 0.75, -1.9, 0.21, 0.21); g.fill();
     const px = 0.75 + ex * 0.094, py = -1.9 + ey * 0.094;
-    g.fillStyle = '#0a0a0a'; oval(g, px, py, 0.1, 0.1); g.fill();
+    g.fillStyle = P.fury > 0.5 ? '#2a0606' : '#0a0a0a'; oval(g, px, py, 0.1, 0.1); g.fill();
     g.fillStyle = '#ffffff'; oval(g, px + 0.035, py - 0.035, 0.035, 0.035); g.fill();
   }
   if (P.wing > 0.02) {
+    birdDark = P.fury;
     wingMat(P, false); useM(g, WM); layPart(g, 'wing', half);
+    birdDark = 0;
     g.strokeStyle = BIRD_RIM; g.lineWidth = 0.11;
     birdRim(g, 1.5, 0, 1.6, 0.55, 0, sun - (Math.PI / 2 + Math.PI / 2 * P.stroke + P.sweep));
   }

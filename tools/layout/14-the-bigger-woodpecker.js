@@ -37,7 +37,7 @@ const HIDES = `(() => {
     const near = () => { for (;;) { const x = tx + ri(9) - 4, y = ty + ri(9) - 4; if (x >= 0 && y >= 0 && x < N && y < N && (Math.abs(x - tx) > 1 || y < ty - 1 || y > ty + 2)) return [x, y]; } }; // (round the patch, off it)
     g.snakes.forEach(s => { const [x, y] = near(); s.body = [{ x, y }, { x, y }, { x, y }]; });
     g.food = [0, 1, 2].map(() => { const [x, y] = near(); return { x, y, kind: 'food', expires: g.tick + 9000 }; });
-    g.time = Math.max(g.time, TUNING.SUDDEN_DEATH_MS + 1000); g.woodpecker = null; SnakeDebug.draw();
+    g.time = Math.max(g.time, g.acts.frenzy + 1000); g.woodpecker = null; SnakeDebug.draw();
     const t0 = g.tick, S = t0 + 40; let now = performance.now();
     const mark = []; for (let y = Math.max(0, ty - 1); y <= Math.min(N - 1, ty + 2); y++) for (let x = Math.max(0, tx - 1); x <= Math.min(N - 1, tx + 1); x++) mark.push(y * N + x); // (a patch round its spot, 3 by 4 where the board allows, as the game's are 12 tiles and more)
     g.woodpecker = { x: tx, y: ty, at: g.time, target: mark, strikeAt: S, last: [], struckAt: -1, restUntil: t0, pecks: 1 };
@@ -67,7 +67,7 @@ for (const d of [CALLS, sized(844, 390), sized(768, 1024), sized(1024, 768), siz
   const perched = (await ev(PERCH(12, 22, false))) && await ev(PAGE);
   const hid = await ev(HIDES);
   const drumming = await ev(`(() => { const g = SnakeDebug.game(), R = SnakeRender, t0 = g.tick, S = t0 + 40; let now = performance.now();
-    g.time = Math.max(g.time, TUNING.SUDDEN_DEATH_MS + 1000); g.woodpecker = { x: 12, y: 18, at: g.time, target: [18 * GRID + 12], strikeAt: S, last: [], struckAt: -1, restUntil: t0, pecks: 1 };
+    g.time = Math.max(g.time, g.acts.frenzy + 1000); g.woodpecker = { x: 12, y: 18, at: g.time, target: [18 * GRID + 12], strikeAt: S, last: [], struckAt: -1, restUntil: t0, pecks: 1 };
     for (let t = t0; t < S + 2; t++) { g.tick = t; for (const u of [0, 0.5]) { R.frame(u, now += 16); if (pose.phase === 'drum') return 'drum'; } }
     return pose.phase; })()`) === 'drum' && await ev(PAGE);
   const moved = [['perched', perched], ['drumming', drumming]].flatMap(([w, at]) => (at ? Object.keys(away).filter(k => JSON.stringify(away[k]) !== JSON.stringify(at[k])).map(k => `${k} ${w}`) : [`${w}: not staged`]));

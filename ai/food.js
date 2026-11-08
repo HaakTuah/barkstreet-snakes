@@ -41,7 +41,7 @@ function readAppetite() {
   const ramp = me.hungerLeft == null ? 0 : Math.max(0, (TUNE.AI_HUNGRY_MS - me.hungerLeft) / TUNE.AI_HUNGRY_MS);
   hunger = Math.min(1, ramp);
   // (Once the woodpecker's here nothing new grows: nobody can afford to be picky.)
-  endgame = view.timeMs >= TUNE.SUDDEN_DEATH_MS;
+  endgame = view.act === 3;
   // (2i: in a lean season, no one is ever fed enough to pass food up; in a
   // plentiful one, the log fills, and growth is weighed against the room it
   // costs before the woodpecker too, as in the endgame below, past

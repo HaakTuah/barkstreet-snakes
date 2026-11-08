@@ -116,6 +116,7 @@ function counted(msg, last, events) {
   for (const f of msg.fi) cross(`fire ${FIRES[f[3]]}`);
   cross(`weather ${msg.sky[0]}`);
   cross(`season ${msg.sky[3]}`); // (2i)
+  if (Array.isArray(msg.ac)) cross('acts'); // (entry 6)
   for (const e of events) {
     cross(e.type);
     for (const [k, v] of Object.entries(e)) if (k !== 'type' && !blank(v)) cross(`${e.type} ${k === 'snake' ? 'snake' : k}`);
@@ -158,6 +159,7 @@ function matched(r, host, guest, dyingHost, dyingGuest) {
   check(r, k, 'food', food(host), food(guest));
   check(r, k, 'holes', [...host.holes], [...guest.holes]);
   check(r, k, 'woodpecker', host.woodpecker, guest.woodpecker);
+  check(r, k, 'acts', host.acts, guest.acts); // (entry 6: when the woodpecker's acts start, as the host drew them)
   check(r, k, 'burrows', host.burrows, guest.burrows);
   check(r, k, 'beetles underground', host.unders || [], guest.unders);
   check(r, k, 'mushrooms in the air', host.spits.map(m => [m.x, m.y, m.dir, m.left, m.power, m.by]), guest.spits.map(m => [m.x, m.y, m.dir, m.left, m.power, m.by]));
@@ -352,7 +354,7 @@ const want = [...KINDS, ...says, ...['snake', 'cause', 'killer', 'diedAt', 'fata
   ...['food', 'golden', 'mushroom', 'pellet', 'beetle', 'leaf', 'goldcap', 'spill'].flatMap(k => [`food ${k}`, `food ${k} 3`]), // (each kind, and when it goes)
   'food food 5', 'food food 6', 'food pellet 4', 'food pellet 7', 'food spill 8', 'food spill 9', ...[5, 6, 7, 8, 9, 10, 11].map(j => `food beetle ${j}`), // (warming and baked; a bead's colour and whose; a beetle's way, where from, when it moved, scared, golden, digging in)
   ...FIRES.map(k => `fire ${k}`),
-  ...WEATHER.map((w, k) => `weather ${k}`), ...Object.keys(T.SEASONS).map((w, k) => `season ${k}`), ...Array.from({ length: 11 }, (_, j) => `woodpecker ${j}`), ...['way', 'jump', 'flash'].flatMap(k => [`plan rival ${k}`, `plan person ${k}`])];
+  ...WEATHER.map((w, k) => `weather ${k}`), ...Object.keys(T.SEASONS).map((w, k) => `season ${k}`), ...Array.from({ length: 18 }, (_, j) => `woodpecker ${j}`), 'acts', ...['way', 'jump', 'flash'].flatMap(k => [`plan rival ${k}`, `plan person ${k}`])];
 const lacking = [...new Set(want)].filter(short).map(k => `${k} (${seen.get(k) || 0})`);
 if (process.env.ONLINE_SEEN) console.log([...seen].sort().map(([k, v]) => `${k}: ${v}`).join('\n'));
 if (lacking.length) { console.error(`seen too few times (fewer than ${MIN}; a death's, never), the test lost its point there: ${lacking.join(', ')}`); process.exit(1); }
@@ -381,7 +383,7 @@ function protocolSamples() {
   a.cheek = { power: 3, spitAt: 18, left: 90 };
   host.unders = [{ until: 50, expires: 90, from: 41, gold: true }];
   host.holes.add(123);
-  host.woodpecker = { x: 1, y: 2, at: 3, target: [10, 11], strikeAt: 20, last: [9], struckAt: 4, restUntil: 5, pecks: 2, landings: [[10, 12], [11, -1]] };
+  host.woodpecker = { x: 1, y: 2, at: 3, came: 1, target: [10, 11], strikeAt: 20, last: [9], struckAt: 4, restUntil: 5, gaze: 30, lookAt: 2, looks: 1, unit: 900, lookUntil: 1200, pecks: 2, fury: 1, landings: [[10, 12], [11, -1]] };
   host.burrows = [{ x: 2, y: 3, at: 4, used: 8, dug: 1, shutFrom: 900, shutAt: 9900 }];
   host.portals = [{ x: 2, y: 3, dx: 1, dy: 0, tx: 4, ty: 3, owner: 0, shutAt: 0 }];
   host.spits = [{ x: 5, y: 3, dir: D.right, left: 3, power: 4, wilt: 0, by: 0, wrap: false }];

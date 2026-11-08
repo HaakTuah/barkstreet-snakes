@@ -68,7 +68,7 @@
   });
   check(`up to ${T.BEETLE_MAX} beetles out at once, never more`, most.most === T.BEETLE_MAX && most.two > 50, JSON.stringify(most));
   const sd = seededWhile(632, () => {
-    const g = board([[line(3, 2, 4), 'right'], [line(3, 21, 4), 'right']], { time: T.SUDDEN_DEATH_MS });
+    const g = board([[line(3, 2, 4), 'right'], [line(3, 21, 4), 'right']], { time: FRENZY });
     for (const o of g.snakes) o.stunUntil = 1e9;
     g.burrows = [{ x: 12, y: 12, at: 0 }];
     g.unders = [{ until: 1, expires: 9999, from: -1, gold: false }];

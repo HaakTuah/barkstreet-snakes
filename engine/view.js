@@ -133,6 +133,8 @@ function aiView(game, snake) {
     timeMs: game.time,
     weather: game.weather.kind, // (everyone sees the weather: in winter, apples rot twice as fast)
     season: game.season, // (2i: and the round's food season, named in its start banner)
+    act: actOf(game), // (entry 6: the woodpecker's act, as anyone sees it: it comes, it pecks, it rages)
+    gaze: game.woodpecker && actOf(game) === 1 ? game.woodpecker.gaze : -1, // (act 1: the spot it watches, as anyone sees its eye on it)
   };
 }
 // The game can let an AI think ahead of the tick (spread over the frames in

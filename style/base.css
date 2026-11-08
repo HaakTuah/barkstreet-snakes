@@ -64,6 +64,9 @@ html, body {
     var(--night-moss);
   overscroll-behavior: none; /* no pull-to-refresh mid-round */
 }
+/* The woodpecker's frenzy (entry 6): the sky dims round the log, and the canopy's light goes. */
+html.frenzy { --night-moss: #0c110e; --night-moss-2: #171c1a; }
+html.frenzy, html.frenzy body { background: radial-gradient(ellipse at top, var(--night-moss-2), var(--night-moss) 70%) fixed, var(--night-moss); }
 /* During a round, swipes steer anywhere on the page, so nothing scrolls or zooms. */
 html.playing, html.playing body { touch-action: none; }
 

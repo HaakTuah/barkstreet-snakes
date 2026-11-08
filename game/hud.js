@@ -279,6 +279,7 @@ function updateControls() {
   // During a round the page holds still under your fingers (see the swipes).
   document.documentElement.classList.toggle('playing', (state === 'running' || state === 'countdown') && playerAlive());
   document.documentElement.classList.toggle('in-round', state === 'running' || state === 'countdown');
+  document.documentElement.classList.toggle('frenzy', (state === 'running' || state === 'paused') && !!theGame && Engine.suddenDeath(theGame)); // (entry 6: the sky dims through the frenzy; set as it starts by the news)
   if (helpEl) updateHelp(); // (watching or playing: the help says what you can do)
   fitColumn(); // (on its side, watching: the help may give the chatter its room)
   keepAwake();

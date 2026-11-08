@@ -61,6 +61,7 @@
 //   bird-drum.js  how it clings to drum, and what of the board it hides
 //   bird-draw.js  the woodpecker drawn
 //   holes.js      its aim and patch on the board, and the holes and pits it leaves
+//   watch.js      the spot it watches in act 1, a pale pool on the log
 //   portals.js    the gold portals a wrapping snake opens going off an edge
 //   blasts.js     a snake going out with a pop: the starburst, its ring and pieces
 //   edges.js      the wrap seam round the board and a dash's speed-line streaks
