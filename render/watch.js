@@ -10,7 +10,7 @@ const WATCH_EASE_MS = 1000;
 let watchSince = -1, watchFrom = 0;
 function drawWatch(now) {
   const w = game.woodpecker;
-  if (!w || w.gaze < 0 || SnakeEngine.actOf(game) !== 1) { watchSince = -1; return; }
+  if (!w || !(w.gaze >= 0) || SnakeEngine.actOf(game) !== 1) { watchSince = -1; return; }
   if (watchSince !== w.lookAt) { watchSince = w.lookAt; watchFrom = now; }
   const k = reduced ? 1 : Math.min(1, (now - watchFrom) / WATCH_EASE_MS), r = T.GAZE_NEAR;
   const gx = w.gaze % GRID, gy = (w.gaze - gx) / GRID;
