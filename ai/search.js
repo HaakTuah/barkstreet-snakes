@@ -37,7 +37,7 @@ function move(body, len, grow, d, depth, t, bonus) {
   const was = foodValue[i], muted = t + 1 <= mute, late = foodFrom[i] > t + 1, here = late ? 0 : was;
   let caught = -1;
   if (!muted) for (let b = 0; b < bugCount; b++) if (bugCell[b * BUG_SLOTS + t] === i) { caught = b; break; }
-  const meal = here > 0 && ateAt > -HOLE && len + grow >= keepLen ? Math.max(here * roomy, denyValue[i]) : here; // (2h: a second meal on this line, past my length worth keeping: the first stopped my hunger; but one a starving rival needs, still)
+  const meal = here > 0 && ateAt > -HOLE && len + grow >= keepLen ? here * roomy : here; // (2h: a second meal on this line, past my length worth keeping: the first stopped my hunger)
   const v = muted ? 0 : meal + (caught >= 0 ? bugV[caught] : 0);
   const change = muted ? 0 : (late ? 0 : foodGrow[i]) + (caught >= 0 ? TUNE.BEETLE_GROWTH : 0);
   const muteWas = mute;

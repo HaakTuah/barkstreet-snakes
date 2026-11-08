@@ -7,9 +7,9 @@ when it is merged into `develop`; add the owner's new tasks where he places them
 
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
-**The main lane is 2h** (the endgame), the first open entry that waits on nothing: item 5's part 7 (one pricing
+**The main lane is 2i** (food seasons), the first open entry that waits on nothing: item 5's part 7 (one pricing
 model, built afresh) waits on 2ab, which is blocked on #574, and 2y++'s last step waits on part 7, so both are skipped
-until #574 is answered. 2b (PR #593), part 4 (#198,
+until #574 is answered. 2h (PR #596), 2b (PR #593), part 4 (#198,
 merged as it stands), 2y, 2y+, part 5, 2x, 2z, 2u, 2u+, 2q, 2y++ steps 1 to 3 (PRs #550, #588, #591), 3b+ (PR #580; its finding, that spitters come out even, is
 #583) and part 6 (PR #584) before it are done. The polish lane and the workshop lane run beside it, each claimed by a draft PR.
 
@@ -145,12 +145,6 @@ The golden jump that flies, leap now, gold portals, dropped charges, the spit al
 ### 2r. No hop onto a doomed island (30 October 2026; part of item 5's part 4)
 
 Before a hop or a flight a rival weighs where it lands, above all whether it can jump off again; built into part 4 (#198). Spec: `docs/handoff/queue-specs.md`, "2r. No hop onto a doomed island".
-
-### 2h. The endgame: eat what keeps you alive, not what boxes you in (the owner, 29 October 2026; an AI entry, after 2b)
-
-Grown on 31 October 2026: the tail drop planned ahead, a length target (a crash and hunger buffer, no more), and the denial play where it pays; the reasoning now, its numbers again after entry 6.
-
-In the endgame a meal is worth the life it buys against the room it costs: a rival eats when hunger would end it before room would. Spec: `docs/handoff/queue-specs.md`, "2h. The endgame: eat what keeps you alive, not what boxes you in".
 
 ### 2i. Food seasons: lean, normal and plentiful rounds (the owner, 29 October 2026; an engine-rules entry, after 2h)
 

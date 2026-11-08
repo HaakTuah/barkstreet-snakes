@@ -183,8 +183,7 @@ function readFood() {
   // bead, nothing). foodCells lists the cells worth something, and goldCells
   // the golden power food among them, for a craving that counts it even
   // where a rival may get there first. (Beetles are worked out apart: they move.)
-  foodValue.fill(0); foodGrow.fill(0); denyValue.fill(0);
-  const deny = starvingNear();
+  foodValue.fill(0); foodGrow.fill(0);
   foodCount = 0, goldCount = 0, bugCount = 0;
   bugFood = [];
   for (const f of food) {
@@ -194,7 +193,6 @@ function readFood() {
     if (f.spitBy === me.id && f.slideUntil > view.tick) foodFrom[i] = Math.max(foodFrom[i], f.slideUntil - view.tick + 1); // (what I just spat I slide over, as the engine has it, till then)
     foodGrow[i] = own ? 0 : f.kind === 'mushroom' ? -(f.power || TUNE.SHRINK) : f.kind === 'golden' ? TUNE.GOLDEN_GROWTH : f.kind === 'beetle' ? TUNE.BEETLE_GROWTH : f.cooked ? TUNE.COOKED_GROWTH : 1;
     let v = own ? 0 : f.kind === 'mushroom' ? shroomWorth(f) : f.kind === 'spill' ? spillWorth(f) : worth[f.kind] ?? 0;
-    if (deny && f.kind !== 'mushroom' && v >= 0 && deny(f)) { denyValue[i] = DENY * (0.5 + (w.aggression || 0)); v = Math.max(v, denyValue[i]); }
     if (!v) continue;
     if (f.cooked && v > 0) v *= TUNE.COOKED_GROWTH; // (baked: worth more)
     if (f.gold && v > 0) v *= 1.5 * craving.power; // (a golden beetle: leaps too)
@@ -209,22 +207,4 @@ function readFood() {
   // unless food a rival gets to could still be mine: the rivals' own
   // beads.)
   beadCount = 0;
-}
-
-// The denial play (2h): in the endgame, the rivals I've seen starving (a
-// segment off, as anyone sees one shrink, and no crash), and whether a
-// piece of food is within DENY_NEAR moves of one of their heads; null if
-// none (or before the woodpecker). Remembered from decision to decision
-// (memory.seenLen, memory.shrankAt: by id).
-function starvingNear() {
-  const seenLen = memory.seenLen ||= {}, shrankAt = memory.shrankAt ||= {};
-  for (const o of others) {
-    if (seenLen[o.id] === o.body.length + 1) shrankAt[o.id] = view.tick;
-    seenLen[o.id] = o.body.length;
-  }
-  if (!lean) return null;
-  const tickMs = Math.max(TUNE.MIN_TICK, TUNE.START_TICK - (TUNE.START_TICK - TUNE.MIN_TICK) * view.timeMs / TUNE.RAMP_MS), recent = STARVING_FOR * TUNE.STARVE_EVERY_MS / tickMs;
-  const near = [];
-  others.forEach((o, k) => { if (view.tick - (shrankAt[o.id] ?? -HOLE) <= recent) near.push(heads[k]); });
-  return near.length ? f => near.some(h => manhattan(h, f) <= DENY_NEAR) : null;
 }
