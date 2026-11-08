@@ -3,7 +3,7 @@
 // snakes on it, each stunned for good (they stay put) and fed; more: grow.
 const CELLS = T.GRID * T.GRID;
 function island(bodies, land, { grow = 0 } = {}) {
-  const g = board(bodies, { time: T.SUDDEN_DEATH_MS });
+  const g = board(bodies, { time: FRENZY });
   const keep = new Set([...land.map(([x, y]) => K(x, y)), ...g.snakes.flatMap(s => s.body.map(c => K(c.x, c.y)))]);
   for (let k = 0; k < CELLS; k++) if (!keep.has(k)) g.holes.add(k);
   for (const s of g.snakes) { s.stunUntil = 1e9; s.grow = grow; }
@@ -117,7 +117,7 @@ const heads = g => new Set(g.snakes.filter(s => s.alive).map(s => K(s.body[0].x,
   // At the strike: each piece in the patch knocked, by the same rule, one after another (none lands where another did); a beetle
   // still there (one that couldn't get away: it has only just moved, and its dig won't be done in time) is the bird's, as is
   // anything with nowhere to go (round six B, 2m: no beetle flies off the patch). Each says so.
-  const s = board([[line(3, 3, 4), 'right'], [line(20, 22, 4), 'right']], { time: T.SUDDEN_DEATH_MS });
+  const s = board([[line(3, 3, 4), 'right'], [line(20, 22, 4), 'right']], { time: FRENZY });
   feed(s);
   const apple = { x: 12, y: 12, kind: 'food', expires: 9999 }, bead = { x: 12, y: 13, kind: 'pellet', color: '#abc', owner: 1, expires: 9999 };
   const bug = { x: 13, y: 12, kind: 'beetle', gold: 1, expires: 9999, dir: D.up, movedAt: s.tick, digUntil: 50 };
@@ -133,7 +133,7 @@ const heads = g => new Set(g.snakes.filter(s => s.alive).map(s => K(s.body[0].x,
     JSON.stringify({ where, ahead }));
   check('...each says what, from where to where (a golden beetle, a bead in its colour)', ks.length === 3 && ks.every(e => typeof e.x === 'number' && (e.kind === 'beetle' ? e.tx === null : typeof e.tx === 'number')) && ks.find(e => e.kind === 'beetle').gold === 1 && ks.find(e => e.kind === 'pellet').color === '#abc', JSON.stringify(ks));
   check('...a beetle still under the beak is the bird\'s: gone, never moved off the patch (its dig would have come too late)', !s.food.includes(bug) && at(bug, 13, 12) && !('digUntil' in bug) && s.food.includes(apple) && at(apple, ks[0].tx, ks[0].ty), JSON.stringify(bug));
-  const t = board([[line(3, 3, 4), 'right'], [line(20, 22, 4), 'right']], { time: T.SUDDEN_DEATH_MS });
+  const t = board([[line(3, 3, 4), 'right'], [line(20, 22, 4), 'right']], { time: FRENZY });
   feed(t);
   const lone = { x: 12, y: 12, kind: 'food', expires: 9999 };
   t.food = [lone];
@@ -155,7 +155,7 @@ const heads = g => new Set(g.snakes.filter(s => s.alive).map(s => K(s.body[0].x,
   // kills (its beads lie there).
   const patch = [K(12, 12), K(13, 12), K(12, 13), K(13, 13)];
   const strike = (bodies, stun) => {
-    const g = board(bodies, { time: T.SUDDEN_DEATH_MS });
+    const g = board(bodies, { time: FRENZY });
     feed(g);
     g.food = [{ x: 12, y: 12, kind: 'food', expires: 9999 }]; g.given = new Set([K(12, 12)]);
     g.unders = [{ until: 1e9, expires: 1e9, from: -1, gold: false }, { until: 1e9, expires: 1e9, from: -1, gold: false }]; // (no beetles come out meanwhile)
@@ -179,7 +179,7 @@ const heads = g => new Set(g.snakes.filter(s => s.alive).map(s => K(s.body[0].x,
   // as the body passes (worked out on the board as it stood, it showed two cells off, then hopped as the tail left); the
   // promise is made PECK_PROMISE_TICKS moves before the strike, on that cell, and the apple lands there.
   {
-    const g = board([[[[8, 12], [9, 12], [10, 12], [11, 12]], 'left'], [line(5, 20, 4), 'right']], { time: T.SUDDEN_DEATH_MS });
+    const g = board([[[[8, 12], [9, 12], [10, 12], [11, 12]], 'left'], [line(5, 20, 4), 'right']], { time: FRENZY });
     feed(g);
     g.food = [{ x: 12, y: 12, kind: 'food', expires: 9999 }]; g.given = new Set([K(12, 12)]);
     g.unders = [{ until: 1e9, expires: 1e9, from: -1, gold: false }, { until: 1e9, expires: 1e9, from: -1, gold: false }];
@@ -207,7 +207,7 @@ const heads = g => new Set(g.snakes.filter(s => s.alive).map(s => K(s.body[0].x,
     JSON.stringify({ promised: b.promised, knock: b.knock && [b.knock.tx, b.knock.ty], head: b.g.snakes[0].body[0] }));
   // Two pieces: the first's ring taken by a head, it lands as near that ring as it can, but never onto the second's
   // ring (still kept).
-  const g = board([[[[12, 10], [12, 9], [12, 8], [12, 7]], 'down'], [line(5, 20, 4), 'right']], { time: T.SUDDEN_DEATH_MS });
+  const g = board([[[[12, 10], [12, 9], [12, 8], [12, 7]], 'down'], [line(5, 20, 4), 'right']], { time: FRENZY });
   feed(g);
   g.food = [{ x: 12, y: 12, kind: 'food', expires: 9999 }, { x: 12, y: 13, kind: 'food', expires: 9999 }]; g.given = new Set([K(12, 12), K(12, 13)]);
   g.unders = [{ until: 1e9, expires: 1e9, from: -1, gold: false }, { until: 1e9, expires: 1e9, from: -1, gold: false }];

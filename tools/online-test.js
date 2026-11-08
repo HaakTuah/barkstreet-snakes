@@ -381,7 +381,7 @@ function protocolSamples() {
   a.cheek = { power: 3, spitAt: 18, left: 90 };
   host.unders = [{ until: 50, expires: 90, from: 41, gold: true }];
   host.holes.add(123);
-  host.woodpecker = { x: 1, y: 2, at: 3, target: [10, 11], strikeAt: 20, last: [9], struckAt: 4, restUntil: 5, pecks: 2, landings: [[10, 12], [11, -1]] };
+  host.woodpecker = { x: 1, y: 2, at: 3, came: 1, target: [10, 11], strikeAt: 20, last: [9], struckAt: 4, restUntil: 5, gaze: 30, lookAt: 2, looks: 1, unit: 900, lookUntil: 1200, pecks: 2, fury: 1, landings: [[10, 12], [11, -1]] };
   host.burrows = [{ x: 2, y: 3, at: 4, used: 8, dug: 1, shutFrom: 900, shutAt: 9900 }];
   host.portals = [{ x: 2, y: 3, dx: 1, dy: 0, tx: 4, ty: 3, owner: 0, shutAt: 0 }];
   host.spits = [{ x: 5, y: 3, dir: D.right, left: 3, power: 4, wilt: 0, by: 0, wrap: false }];

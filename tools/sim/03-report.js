@@ -1,9 +1,10 @@
 // Adds rounds' numbers up (in round order, so the table's order and the
 // fingerprint are the same whatever the cores, or the cache, did).
-function merge(results, suddenAt) {
+function merge(results) {
   const per = {}, total = totals();
   for (const r of results) {
     for (const k of ['rounds', 'timeSum', 'sudden', 'draws', 'stalled', 'beetles', 'caught', 'flown', 'crashes', 'alight', 'cuts', 'baked', 'ash', 'rot', 'rotBeads']) total[k] += r.total[k];
+    for (let i = 0; i < 4; i++) { total.actDeaths[i] += r.total.actDeaths[i]; total.actReached[i] += r.total.actReached[i]; }
     total.times.push(...r.total.times);
     total.trace.push(...r.total.trace);
     for (const [c, n] of Object.entries(r.total.causes)) total.causes[c] = (total.causes[c] || 0) + n;
@@ -28,15 +29,17 @@ function merge(results, suddenAt) {
   }
   // One fingerprint for the whole run, in round order.
   total.trace = total.trace.sort((a, b) => a[0] - b[0]).reduce((h, [, t]) => (h * 131 + t) % 1000000007, 7);
-  return { per, total, suddenAt };
+  return { per, total };
 }
 
-function report({ per, total, suddenAt }, withCensus) {
+function report({ per, total }, withCensus) {
   const pct = (a, b) => Math.round(100 * a / Math.max(1, b));
   const times = total.times.sort((a, b) => a - b);
   const sec = ms => `${Math.round(ms / 1000)}s`;
   console.log(`${total.rounds} rounds · length median ${sec(times[times.length >> 1])}, middle half ${sec(times[times.length >> 2])}-${sec(times[(times.length * 3) >> 2])}`
-    + ` · ${pct(total.sudden, total.rounds)}% reached the woodpecker (${sec(suddenAt)}) · draws ${total.draws} · stalled ${total.stalled}`);
+    + ` · ${pct(total.sudden, total.rounds)}% reached the frenzy · draws ${total.draws} · stalled ${total.stalled}`);
+  { const dead = total.actDeaths.reduce((a, b) => a + b, 0), ACTS = ['calm', 'the watcher', 'the first pecks', 'the frenzy']; // (entry 6: how deaths spread over the acts)
+    console.log(`the acts: deaths ${ACTS.map((n, i) => `${n} ${pct(total.actDeaths[i], dead)}%`).join(', ')} · rounds over in ${ACTS.map((n, i) => `${n} ${pct(total.actReached[i], total.rounds)}%`).join(', ')}`); }
   for (const k of Object.keys(total.seasons).sort()) { // (2i: a line for each food season: lean, normal, plentiful)
     const t = total.seasons[k];
     const ts = t.times.sort((a, b) => a - b), dead = Object.values(t.causes).reduce((a, b) => a + b, 0), mins = t.snakeMs / 60000;

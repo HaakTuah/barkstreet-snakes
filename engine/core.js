@@ -99,8 +99,10 @@ function pickOpponents(n) {
 // default). Names are made unique, so a person called "Sniper" can't be
 // mistaken for the rival of that name. season: the round's food season
 // (2i: a key of SEASONS; drawn by SEASON_ODDS if not given, as the host
-// draws it for everyone online).
-function createGame({ humans = null, withPlayer = true, personas = null, season = null } = {}) {
+// draws it for everyone online). acts: when the woodpecker's acts start
+// (entry 6: [watch, pecks, frenzy], ms of game time, as ?acts= pins them;
+// drawn in their windows if not given, as the host draws them).
+function createGame({ humans = null, withPlayer = true, personas = null, season = null, acts = null } = {}) {
   const people = (humans || (withPlayer ? [{ name: 'Green', color: PLAYER_COLOR }] : [])).slice(0, SPAWNS.length);
   const wanted = T.OPPONENTS + 1 - people.length;
   const keys = (personas || pickOpponents(wanted)).filter(k => Object.prototype.hasOwnProperty.call(PERSONAS, k)).slice(0, wanted);
@@ -136,6 +138,7 @@ function createGame({ humans = null, withPlayer = true, personas = null, season 
     weather: { kind: 'clear', since: 0, until: T.WEATHER_FIRST_MS, nextGust: 0, nextStrike: 0 }, weatherBag: [],
     sdApples: 0, sdAppleAt: null,
     season: Object.prototype.hasOwnProperty.call(T.SEASONS, season) ? season : drawSeason(),
+    acts: drawActs(acts),
   };
   fillFood(game);
   snapshot(game);
@@ -148,6 +151,17 @@ function drawSeason() {
   for (const [k, n] of odds) if ((r -= n) < 0) return k;
   return 'normal';
 }
+// When the woodpecker's acts start (entry 6): { watch, pecks, frenzy }, ms
+// of game time, each at a random time inside its window after the one
+// before (ACT_WATCH_MS, ACT_PECKS_MS, ACT_FRENZY_MS), or as pinned (three
+// rising times, ms).
+function drawActs(pinned) {
+  if (Array.isArray(pinned) && pinned.length === 3 && pinned.every((t, i) => Number.isFinite(t) && t >= 0 && (!i || t > pinned[i - 1]))) {
+    return { watch: pinned[0], pecks: pinned[1], frenzy: pinned[2] };
+  }
+  const watch = Math.round(between(...T.ACT_WATCH_MS)), pecks = watch + Math.round(between(...T.ACT_PECKS_MS));
+  return { watch, pecks, frenzy: pecks + Math.round(between(...T.ACT_FRENZY_MS)) };
+}
 // How long the next tick lasts. The opening ticks ease from OPENING_TICK down
 // to START_TICK, then the speed ramps gently toward MIN_TICK.
 function tickLength(game) {
@@ -156,7 +170,10 @@ function tickLength(game) {
   }
   return Math.max(T.MIN_TICK, T.START_TICK - (T.START_TICK - T.MIN_TICK) * game.time / T.RAMP_MS);
 }
-const suddenDeath = game => game.time >= T.SUDDEN_DEATH_MS;
+// The act a round is in (entry 6): 0 calm, 1 the watcher, 2 the first
+// pecks, 3 the frenzy, which is sudden death.
+const actOf = (game, at = game.time) => (at >= game.acts.frenzy ? 3 : at >= game.acts.pecks ? 2 : at >= game.acts.watch ? 1 : 0);
+const suddenDeath = game => game.time >= game.acts.frenzy;
 // Milliseconds until a snake starts starving (negative once it has).
 // (lastAte is when it ate as the clock counts it: a meal that lasts less
 // than HUNGER_MS counts as eaten that much earlier, and winter moves it on.)

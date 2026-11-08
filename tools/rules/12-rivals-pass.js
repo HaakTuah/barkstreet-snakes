@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------- round six A: the rivals' pass (knocked food, beetles that dig in)
 // A mark of 3x3 at (12..14, 10..12), and where the strike knocks what's in it: as the rings show it, by the engine's rule.
 const MARK = rect(12, 10, 14, 12).map(([x, y]) => K(x, y));
-const marked = (more = {}) => aiView({ holes: new Set(MARK), pecks: new Set(MARK), strikeAt: 13, timeMs: T.SUDDEN_DEATH_MS + 5000, ...more });
+const marked = (more = {}) => aiView({ holes: new Set(MARK), pecks: new Set(MARK), strikeAt: 13, timeMs: FRENZY + 5000, act: 3, ...more });
 
 { // Food in the woodpecker's mark is knocked aside at the strike, to where the rule puts it (what the rings show anyone):
   // an AI values it there, from the strike on. Heading right along row 11, the mark 4 ahead with a golden apple in its
@@ -40,7 +40,7 @@ const marked = (more = {}) => aiView({ holes: new Set(MARK), pecks: new Set(MARK
   const g = E.createGame({ withPlayer: false, personas: ['gobbler', 'drab'] });
   g.snakes = g.snakes.slice(0, 2);
   const [a, b] = g.snakes;
-  g.time = T.SUDDEN_DEATH_MS + 5000;
+  g.time = FRENZY + 5000;
   a.body = cellsOf(line(5, 11, 5)); a.dir = D.right;
   b.body = cellsOf(line(20, 22, 4)); b.dir = D.right; b.isPlayer = true; b.persona = null; b.queue = []; b.stunUntil = 1e9;
   const [apple] = lay(g, { x: 13, y: 11, kind: 'food', expires: 9999 });
@@ -63,12 +63,12 @@ const marked = (more = {}) => aiView({ holes: new Set(MARK), pecks: new Set(MARK
 { // A beetle digging in stays put till it's gone: an AI that can get there in time takes it, and one that can't doesn't
   // chase it. Heading right, a beetle digging in 4 ahead (an apple 5 up): gone after the tick 3 on, it's caught on the
   // 4th move, as it goes; gone a tick sooner, the AI takes the apple. (In sudden death, as before it.)
-  for (const timeMs of [30000, T.SUDDEN_DEATH_MS + 5000]) {
-    const view = dig => () => aiView({ me: aiMe(line(10, 12, 5), 'right'), others: [aiRival(1, line(20, 2, 5), 'right')], tick: 10, timeMs,
+  for (const timeMs of [30000, FRENZY + 5000]) {
+    const view = dig => () => aiView({ me: aiMe(line(10, 12, 5), 'right'), others: [aiRival(1, line(20, 2, 5), 'right')], tick: 10, timeMs, act: timeMs > FRENZY ? 3 : 0,
       food: [{ x: 14, y: 12, kind: 'beetle', expires: 999, dir: D.up, movedAt: 5, digUntil: 10 + dig }, { x: 10, y: 7, kind: 'food', expires: 999 }] });
     const inTime = picks(view(3), 'drab', 20), late = picks(view(2), 'drab', 20);
-    check(`an AI goes for a beetle digging in that it can reach before it's gone${timeMs > T.SUDDEN_DEATH_MS ? ' (in sudden death too)' : ''}`, inTime.right === 20, JSON.stringify(inTime));
-    check(`...and doesn't chase one it can't${timeMs > T.SUDDEN_DEATH_MS ? ' (in sudden death too)' : ''}`, late.up === 20, JSON.stringify(late));
+    check(`an AI goes for a beetle digging in that it can reach before it's gone${timeMs > FRENZY ? ' (in sudden death too)' : ''}`, inTime.right === 20, JSON.stringify(inTime));
+    check(`...and doesn't chase one it can't${timeMs > FRENZY ? ' (in sudden death too)' : ''}`, late.up === 20, JSON.stringify(late));
   }
 }
 

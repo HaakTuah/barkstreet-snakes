@@ -281,7 +281,7 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   // size, and takes half or more; from about one start in 700 the sixth
   // came out 7 or 8 cells, not 14, and the bigger patches failed.)
   const pecks = seededWhile(191, () => {
-    const g = board([[line(3, 2, 3), 'right'], [line(3, 21, 3), 'right']], { time: T.SUDDEN_DEATH_MS });
+    const g = board([[line(3, 2, 3), 'right'], [line(3, 21, 3), 'right']], { time: FRENZY });
     for (const o of g.snakes) o.stunUntil = 1e9;
     const pecks = [];
     for (let t = 0; t < 1200 && pecks.length < 6; t++) { feed(g); quiet(g); for (const e of g.events) if (e.type === 'peck') pecks.push({ at: g.tick, n: e.cells.length }); }

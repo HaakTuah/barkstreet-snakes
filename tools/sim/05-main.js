@@ -103,8 +103,7 @@ if (isMainThread && require.main === module) {
       return;
     }
     const results = Array.from({ length: rounds }, (_, r) => parsed(have.get(r) || stored.get(r)));
-    const T = (() => { const ctx = vm.createContext({ window: {} }); vm.runInContext(files.game[GAME_FILES.indexOf('tuning.js')], ctx); return ctx.window.TUNING; })();
-    const merged = merge(results, T.SUDDEN_DEATH_MS);
+    const merged = merge(results);
     if (json) { merged.played = played; if (flag('--per-round')) merged.rounds = results; }
     finish(merged);
   };
