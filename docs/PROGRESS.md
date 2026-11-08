@@ -7,7 +7,8 @@ when it is merged into `develop`; add the owner's new tasks where he places them
 
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
-**The main lane is item 5's part 7** (one pricing model, built afresh; 2ab is blocked on #574); part 4 (#198,
+**The main lane is 2y++, steps 2 and 3** (the flight against fliers who fly like people, then portals with a real cost);
+item 5's part 7 (one pricing model, built afresh) waits on 2ab, which is blocked on #574. Part 4 (#198,
 merged as it stands), 2y, 2y+, part 5, 2x, 2z, 2u, 2u+, 2q, 3b+ (PR #580; its finding, that spitters come out even, is
 #583) and part 6 (PR #584) before it are done. The polish lane and the workshop lane run beside it, each claimed by a draft PR.
 
