@@ -166,14 +166,16 @@ fs.mkdirSync(out, { recursive: true });
         R.onTick([{ type: 'squash', snake: you, x: 11, y: 9 }]); // (your own bead, squashed under your head: the splat)
         drawN(3, 0.5, 40);
       })()`,
-      // Mushrooms come back up (round six B): your cheeks puffed, its ring three ahead; Sniper's too, a shade
-      // stronger; and mushrooms on the log, fresh, once and twice come back up (a shade darker each).
+      // Mushrooms come back up (round six B): your cheeks puffed, its dotted line ahead; Sniper's too, a shade
+      // stronger; Mason's spat a moment ago, flying down its line (3b+); and mushrooms on the log, fresh, once and
+      // twice come back up (a shade darker each).
       spit: `(() => {
         const g = stage(['sniper', 'mason', 'ghost']), [you, sn, ma] = g.snakes;
         setBody(you, Array.from({ length: 8 }, (_, i) => [9 - i, 12]), 'right'); you.cheek = { power: 3, spitAt: g.tick + 5, left: 90 };
         setBody(sn, Array.from({ length: 9 }, (_, i) => [14, 9 - i]), 'down'); sn.cheek = { power: 4, spitAt: g.tick + 2, left: 90 };
         setBody(ma, Array.from({ length: 6 }, (_, i) => [18, 18 - i]), 'down');
         g.food.push({ x: 5, y: 6, kind: 'mushroom', expires: g.tick + 200 }, { x: 7, y: 6, kind: 'mushroom', power: 4, expires: g.tick + 200 }, { x: 9, y: 6, kind: 'mushroom', power: 5, expires: g.tick + 200 });
+        g.spits.push({ x: 18, y: 20, dir: E.DIRS.down, left: 3, power: 4, wilt: 30, by: ma.id, wrap: false });
         show(g); drawN(16, 0.5);
       })()`,
       dig: `(() => {

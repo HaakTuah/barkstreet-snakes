@@ -108,7 +108,7 @@ function news(dying) {
     if (e.type === 'peck' && me?.alive && e.under?.includes(me.id) && once('peckedUnder')) return toast(FLAVOR.youPeckedUnder, 2800, 'bird', 'lesson'); // (struck under your body: a bridge, not a cut)
     if (e.type === 'death' && e.snake.fatal === 'cut' && newsFree() && once('neckCut')) return toast(FLAVOR.neckCut, 2400, 'warn', 'lesson'); // (the first neck cut you see, anyone's)
     if (e.type === 'dig' && me?.alive && Math.abs(me.body[0].x - e.x) + Math.abs(me.body[0].y - e.y) <= DIG_NEAR && newsFree() && once('dig')) return toast(FLAVOR.youDig, 2600, 'beetle', 'lesson'); // (it's over in a second: shown now or kept for the next one, never left waiting)
-    if (e.type === 'spit' && me?.alive && e.hit === me.id && once('spatOn')) { once('mushroom'); return toast(FLAVOR.youSpatOn(who(e.snake, true)), 2800, 'warn', 'lesson'); } // (round six B: hit by one; it teaches the aim, as a first mushroom would)
+    if (e.type === 'spat' && me?.alive && e.hit === me.id && once('spatOn')) { once('mushroom'); return toast(FLAVOR.youSpatOn(who(e.snake, true)), 2800, 'warn', 'lesson'); } // (round six B: hit by one; it teaches the aim, as a first mushroom would)
     if (!me || !isMe(e.snake || {}) && e.by !== me.id) continue; // (the rest is about you)
     if (e.type === 'squash' && once('squash')) return toast(FLAVOR.youSquash, 2600, 'you', 'lesson');
     if (e.type === 'eat' && e.gold) { flashFrame('gold', true); return toast(FLAVOR.youGoldBeetle(e.snake.leaps), 3000, 'gold', 'lesson'); }
@@ -116,7 +116,7 @@ function news(dying) {
     if (e.type === 'eat' && e.kind === 'goldcap') { flashFrame('gold', true); return toast(FLAVOR.youGoldcap(Math.round((me.wrapUntil - theGame.time) / 1000)), 3000, 'gold', 'lesson'); } // (a second one adds to the first: the real total)
     if (e.type === 'eat' && e.kind === 'beetle') flashFrame('beetle');
     if (e.type === 'eat' && e.kind === 'golden') { flashFrame('gold', true); if (TUNE.GOLDEN_SHIELD_MS && once('shield')) return toast(FLAVOR.youShield, 3000, 'gold', 'lesson'); } // (2u+: the bubble shows while you read)
-    if (e.type === 'spit' && e.lx != null && once('spitWet')) return toast(FLAVOR.youSpitWet, 2400, 'warn', 'lesson'); // (2x: your first spit that lies: wet, you slide over it)
+    if (e.type === 'spat' && e.lx != null && once('spitWet')) return toast(FLAVOR.youSpitWet, 2400, 'warn', 'lesson'); // (2x: your first spit that lies: wet, you slide over it)
     if (e.type === 'eat' && e.kind === 'mushroom' && once('mushroom')) return toast(FLAVOR.youMushroomSpit, 2600, 'warn', 'lesson'); // (round six B: it comes back up, aimed by steering)
     if (e.type === 'eat' && e.snake.bank > 0 && once('charged')) return toast(FLAVOR.youCharged, 3000, 'you', 'lesson'); // (2u+: the first meal that banks stamina: you're charged as you read)
     if ((e.type === 'leap' && !e.gold || e.type === 'dash' && e.plain) && Engine.staminaStep(theGame, e.snake) === 0 && once('stamina')) return toast(FLAVOR.youStamina, 3000, 'you', 'lesson'); // (the first plain power that leaves you tired: the look shows while you read, and wakes as the bar comes back)

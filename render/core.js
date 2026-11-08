@@ -53,7 +53,7 @@
 //   stamina.js    stamina on the snake: tired, awake or game on, in its body and eyes
 //   land.js       Sovereign's realm and Colonist's colonies: land on a map
 //   flags.js      land made ahead of a strike, its dashes, banners, flags, ripples and hues
-//   food.js       the food and its pictures, a mushroom's spit rings and cheeks
+//   food.js       the food and its pictures, a mushroom's dotted line, its flight and cheeks
 //   burrows.js    the beetles' burrows, their cracks, growing shut and healing, and the bore
 //   weather.js    fire and scorch, a snake on fire, the sky, rain, lightning, rainbows
 //   bird-perch.js the woodpecker's size and growth, its perch, its aim and its layer

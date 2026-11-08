@@ -36,8 +36,8 @@ function step(game) {
     if (hungerLeft(game, s) > -T.STARVE_EVERY_MS) game.events.push({ type: 'starving', snake: s });
   }
 
-  // Mushrooms in cheeks whose time is up come back up, before anyone moves:
-  // from where the ring has shown it would land all along.
+  // Mushrooms in the air fly on, and those in cheeks whose time is up come
+  // back up, before anyone moves: along the dotted line shown all along.
   spit(game);
 
   const alive = game.snakes.filter(s => s.alive);
@@ -347,6 +347,7 @@ function step(game) {
   }
   for (const s of dying) s.alive = false;
 
+  spitCaught(game);
   eat(game);
   for (const s of starving) {
     if (!s.alive || s.ateTick === game.tick) continue; // crashed anyway, or reached food in time

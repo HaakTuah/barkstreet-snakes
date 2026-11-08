@@ -65,11 +65,8 @@ function move(body, len, grow, d, depth, t, bonus) {
   let gain = v * (foodW * w.foodRange + eatW * (ahead ? SOONER[t] : Math.pow(0.85, t))) - risk[i] * keep * (ahead ? RISK_AHEAD[t] : Math.pow(0.6, t)) - (t <= age ? strikes[i] * keep * RISK_AHEAD[t] : 0);
   if (turning && w.turn) gain -= w.turn * (ahead ? TURN_AHEAD[t] : Math.pow(0.9, t));
   // (A mushroom coming up: mine aimed at a head, as I face after this
-  // move; a rival's ring, my head kept out of it.)
-  if (t + 1 === mySpitAt && aim.length) {
-    const ax = nx + d.x * TUNE.SPIT_REACH, ay = ny + d.y * TUNE.SPIT_REACH;
-    if (inGrid(ax, ay)) { const a = ay * N + ax; for (let n = 0; n < aim.length; n += 2) if (aim[n] === a) gain += aim[n + 1]; }
-  }
+  // move; a rival's line, or one in the air, my head kept out of it.)
+  if (t + 1 === mySpitAt && aim.length) gain += aimGain(nx, ny, d);
   for (let n = 0; n < dodge.length; n += 3) if (dodge[n] === t + 1 && dodge[n + 1] === i) gain -= dodge[n + 2];
   if (rings.length) gain -= ringRisk(i, t + 1);
   if (closeOn.length && t + 1 === steps) { // (on my way to where I'd spit from: there by the time it comes up)
