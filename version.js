@@ -10,6 +10,7 @@
 window.SnakeVersion = {
   build: 'dev',
   news: [
+    { on: '2026-11-08', line: 'The woodpecker comes in acts. Mind its gaze.' },
     { on: '2026-11-08', line: 'Rounds now come lean, normal or plentiful.' },
     { on: '2026-11-08', line: 'Rivals play the endgame smarter: fewer crashes.' },
     { on: '2026-11-08', line: 'Hungry rivals now fight you for the apples.' },
