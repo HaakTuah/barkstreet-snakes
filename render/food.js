@@ -498,21 +498,9 @@ function drawFood(alpha, now) {
         b.next = now + 250 + Math.random() * 300; // (poison spores, puffing off it)
         mote(x + (Math.random() - 0.5) * CELL * 0.5, y - CELL * 0.12, (Math.random() - 0.5) * 8, -12 - Math.random() * 8, 1700, 1.8 + Math.random() * 1.2, 0);
       }
-    } else if (f.kind === 'spill') {
-      // A knocked-out snake's charges (round six B, part 6): a gold coin in
-      // its glow, ringed with the pips it held, turning slowly; it fades as
-      // a leaf does.
-      const left = f.expires != null ? f.expires - game.tick : 999;
-      const fade = left > 20 ? 1 : 0.4 + 0.6 * Math.max(0, left) / 20;
-      const glow = pop * (1.1 + (lively ? 0.16 * Math.sin(t * 4) : 0)), w = SPRITE * CELL * glow;
-      ctx.globalAlpha = fade * (lively ? 0.85 + 0.15 * Math.sin(t * 4) : 1);
-      ctx.drawImage(glowSprite(), x - w / 2, y - w / 2, w, w);
-      ctx.globalAlpha = fade;
-      shadowAt(x + 1, y + CELL * 0.3, pop * 0.7);
-      drawSpill(x, y, pop, f.leaps, f.dashes, lively ? t * 0.8 : 0);
-      ctx.globalAlpha = 1;
-    } else if (f.kind === 'leaf' || f.kind === 'goldcap') {
-      // Golden powers: a glow, a gentle flutter (the leaf) or bob (the mushroom), and glints.
+    } else if (f.kind === 'leaf' || f.kind === 'goldcap' || f.kind === 'spill') {
+      // Golden powers: a glow, a gentle flutter (the leaf), a bob (the mushroom) or a slow turn (a knocked-out
+      // snake's spilled charges, round six B part 6: a gold coin ringed with the pips it held), and glints.
       const left = f.expires != null ? f.expires - game.tick : 999;
       const fade = left > 20 ? 1 : 0.4 + 0.6 * Math.max(0, left) / 20;
       const glow = pop * (1.1 + (lively ? 0.16 * Math.sin(t * 4) : 0)), w = SPRITE * CELL * glow;
@@ -524,6 +512,11 @@ function drawFood(alpha, now) {
         shadowAt(x + 2, y + CELL * 0.3, pop * 0.7);
         ctx.globalAlpha = fade;
         blitAbout(goldLeafSprite(), x, y - CELL * 0.05 + lift, 0, 0, pop, pop * (lively ? 0.94 + 0.06 * Math.cos(t * 2.2) : 1), tilt * 0.5);
+        ctx.globalAlpha = 1;
+      } else if (f.kind === 'spill') {
+        shadowAt(x + 1, y + CELL * 0.3, pop * 0.7);
+        ctx.globalAlpha = fade;
+        drawSpill(x, y, pop, f.leaps, f.dashes, lively ? t * 0.8 : 0);
         ctx.globalAlpha = 1;
       } else {
         const bob = lively ? Math.sin(t * 2.5) * CELL * 0.04 : 0;

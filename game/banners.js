@@ -113,7 +113,7 @@ function news(dying) {
     if (!me || !isMe(e.snake || {}) && e.by !== me.id) continue; // (the rest is about you)
     if (e.type === 'squash' && once('squash')) return toast(FLAVOR.youSquash, 2600, 'you', 'lesson');
     if (e.type === 'eat' && e.gold) { flashFrame('gold', true); return toast(FLAVOR.youGoldBeetle(e.snake.leaps), 3000, 'gold', 'lesson'); }
-    if (e.type === 'eat' && e.kind === 'spill') { flashFrame('gold', true); return toast(FLAVOR.youSpill(e.snake), 2800, 'gold'); }
+    if (e.type === 'eat' && e.kind === 'spill') { flashFrame('gold', true); return toast(FLAVOR.youSpill(e.snake), 2800, 'gold', 'lesson'); }
     if (e.type === 'eat' && e.kind === 'leaf') { flashFrame('gold', true); return toast(FLAVOR.youLeaf(e.snake.dashes), 3200, 'gold', 'lesson'); }
     if (e.type === 'eat' && e.kind === 'goldcap') { flashFrame('gold', true); return toast(FLAVOR.youGoldcap(Math.round((me.wrapUntil - theGame.time) / 1000)), 3000, 'gold', 'lesson'); } // (a second one adds to the first: the real total)
     if (e.type === 'eat' && e.kind === 'beetle') flashFrame('beetle');

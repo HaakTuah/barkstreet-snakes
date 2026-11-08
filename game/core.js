@@ -123,7 +123,7 @@ const FLAVOR = {
   youWoodpecker: 'Food in the woodpecker’s mark flies to its ring.', // (once a round, as it comes, once its own banner has had its time: the one idea you can act on, in one line on a phone; that it won't shut you in if it can help it is the Field guide's)
   birdBeetle: 'The woodpecker eats beetles too.', // (round six B, 2m: the first beetle you see the bird eat, one that didn't get off its mark in time)
   spillFirst: 'A snake knocked out drops its powers. Grab them!', // (round six B, part 6: the first spill anyone sees)
-  youSpill: s => `Grabbed: ${[s.leaps ? `${s.leaps} golden jump${s.leaps === 1 ? '' : 's'}` : '', s.dashes ? `${s.dashes} golden dash${s.dashes === 1 ? '' : 'es'}` : ''].filter(Boolean).join(' and ')} now.`, // (what you hold, after the grab)
+  youSpill: s => `Spilled powers: now ${[s.leaps ? `${s.leaps} golden jump${s.leaps === 1 ? '' : 's'}` : '', s.dashes ? `${s.dashes} golden dash${s.dashes === 1 ? '' : 'es'}` : ''].filter(Boolean).join(' and ')}.`, // (what you hold after the grab, not what it gave: full already, it gives nothing)
   portalFollow: 'Anyone can follow you through a portal, for a moment.', // (round six B, part 5: the first time anyone follows anyone through a gold portal)
   youDig: 'A cornered beetle digs in. Grab it before it’s gone!', // (the first one near enough your head to catch: see DIG_NEAR)
   digBurrow: 'A beetle that digs in leaves a burrow behind.', // (the first burrow a dig leaves in a round, anywhere on the log, once the dig's own lesson is told)

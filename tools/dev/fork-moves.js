@@ -10,11 +10,13 @@
 // move it would have made with the move's price waived)?
 // --rest forbids that rival the move for the rest of the round in the play without it: one tick measures when to use
 // it (the rival still holds it and uses it later), the rest of the round whether having it helps.
-//   node tools/dev/fork-moves.js <root> --move fly|now|dash|portal|spit|power|golden|grab [--rounds 40] [--seed 1] [--per-round 4] [--forced] [--rest] [--json]
+//   node tools/dev/fork-moves.js <root> --move fly|now|dash|portal|spit|power|golden|grab|charges [--rounds 40] [--seed 1] [--per-round 4] [--forced] [--rest] [--json]
 //     fly: a golden flight held past the plain hop (always GOLD_FLY cells); now: a plain leap now; dash: a golden flash;
 //     portal: following someone through a gold portal (no --forced)
 //     grab (part 6): at each spill of dropped charges, the rival whose head is nearest it, played on as it went and
 //       ignoring spills for the rest of the round (chosen before either play, so neither is picked for its luck). No --forced or --rest.
+//     charges (part 6): golden charges a rival eats, from a spill or a golden leaf, played on as it went and with the
+//       charges that meal gave taken back (the meal itself kept): what the charges are worth, a grab against a leaf. No --forced or --rest.
 //     spit (3b+): a mushroom spat along its line, against the same mushroom gone from the cheek unspat (no --forced or --rest)
 //     power (2u+): a plain jump or flash used with both in the bar, played on with the jump, the flash and neither
 //       (which was the more useful, each moment). No --forced or --rest.
@@ -136,6 +138,7 @@ for (let r = 0; r < ROUNDS; r++) {
       continue;
     }
     E.step(g);
+    if (MOVE === 'charges') { const e = g.events.find(e => e.type === 'eat' && (e.kind === 'spill' || e.kind === 'leaf') && !e.snake.isPlayer); if (e) { charges(before, snap(g), e.snake.id, e.kind, e.snake.name); forks++; g = back(snap(g)); } continue; }
     if (MOVE === 'grab') { const e = g.events.find(e => e.type === 'spill'); if (e && grab(snap(g), g, e)) forks++; if (e) g = back(snap(g)); continue; }
     const s0 = g.snakes.find(s => !s.isPlayer && used(g, s));
     if (!s0) continue;
@@ -188,9 +191,22 @@ function grab(after, g, e) {
     ctx.__forbid = empty();
     return { out: out.get(id), got };
   };
-  const A = play(false), B = play(true);
-  diffs.push({ ...d(A.out, B.out), gotA: A.got, gotB: B.got, away: near(s0), persona: s0.name });
+  let other = 0; // (in the play as it went, someone else ate it)
+  const A = play(false);
+  { const x = back(after); playOut(x, 0, y => { if (y.events.some(v => v.type === 'eat' && v.kind === 'spill' && v.snake.id !== id && v.x === e.x && v.y === e.y)) other = 1; }); }
+  const B = play(true);
+  const room = Math.min(e.leaps, T.LEAP_MAX - s0.leaps) + Math.min(e.dashes, T.DASH_MAX - s0.dashes);
+  diffs.push({ ...d(A.out, B.out), gotA: A.got, gotB: B.got, away: near(s0), room, other, persona: s0.name });
   return true;
+}
+// Part 6: snake id ate golden charges this tick (kind: 'spill' or 'leaf'). Played on from after it as it went (A) and
+// with the charges that meal gave taken back (B), the meal itself kept. Diffs: what the charges were worth.
+function charges(before, after, id, kind, persona) {
+  const was = back(before).snakes[id], now = back(after).snakes[id];
+  const gl = Math.max(0, now.leaps - was.leaps), gd = Math.max(0, now.dashes - was.dashes);
+  if (!gl && !gd) return;
+  const play = take => { const x = back(after), s = x.snakes[id]; if (take) { s.leaps -= gl; s.dashes -= gd; } rngState = after.rng; return playOut(x).get(id); };
+  diffs.push({ ...d(play(false), play(true)), kind, gained: gl + gd, persona });
 }
 // 2u+: a plain jump or flash used with both in the bar and no golden ones held, played on three ways from the tick
 // before: with the jump (the flash forbidden, the jump taken wherever it can go, at no price), with the flash (the
@@ -220,6 +236,7 @@ function power(before, g, s0) {
 const mean = k => diffs.reduce((t, d) => t + d[k], 0) / Math.max(1, diffs.length);
 const se = k => { const m = mean(k); return Math.sqrt(diffs.reduce((t, d) => t + (d[k] - m) ** 2, 0) / Math.max(1, diffs.length - 1) / Math.max(1, diffs.length)); };
 const res = { move: MOVE, forced: FORCED, seed: SEED, rounds: ROUNDS, uses: diffs.length, place: mean('place'), placeSE: se('place'), win: mean('win'), winSE: se('win'), alive: mean('alive'), aliveSE: se('alive'), out5: mean('out5'), out5SE: se('out5'), len10: mean('len10'), len10SE: se('len10') };
+if (MOVE === 'charges') for (const k of ['spill', 'leaf']) { const xs = diffs.filter(x => x.kind === k), m = f => xs.reduce((t, x) => t + x[f], 0) / Math.max(1, xs.length), e = f => Math.sqrt(xs.reduce((t, x) => t + (x[f] - m(f)) ** 2, 0) / Math.max(1, xs.length - 1) / Math.max(1, xs.length)); console.log(`charges from a ${k}: ${xs.length} eaten, ${m('gained').toFixed(2)} charges each · place ${m('place').toFixed(3)} ± ${e('place').toFixed(3)} · wins ${(100 * m('win')).toFixed(1)} ± ${(100 * e('win')).toFixed(1)} points · alive ${m('alive').toFixed(1)} ± ${e('alive').toFixed(1)} s`); }
 if (MOVE === 'grab') Object.assign(res, { grabbedA: mean('gotA'), grabbedB: mean('gotB'), away: mean('away') }); // (part 6: how often the nearest grabbed the spill, wanting it and not, and how far it was)
 if (MOVE === 'golden') { // (the three comparisons, each paired over the same eats)
   const row = (name, pick) => { const xs = diffs.map(pick), m = k => xs.reduce((t, d) => t + d[k], 0) / Math.max(1, xs.length), e = k => Math.sqrt(xs.reduce((t, d) => t + (d[k] - m(k)) ** 2, 0) / Math.max(1, xs.length - 1) / Math.max(1, xs.length)); return `${name}: place ${m('place').toFixed(3)} ± ${e('place').toFixed(3)} · wins ${(100 * m('win')).toFixed(1)} ± ${(100 * e('win')).toFixed(1)} points · alive ${m('alive').toFixed(1)} ± ${e('alive').toFixed(1)} s · length at 10 s ${m('len10').toFixed(2)} ± ${e('len10').toFixed(2)}`; };
