@@ -80,7 +80,7 @@ const LAYOUT = `(() => {
 // settling in finished first: it drops 6 px as it comes.)
 const BANNERS = [ // (the widest a phone shows: a lesson with no shorter words, round news in its phone words, Go!)
   ['On fire: 3 bites of tail, and at 3 it ends you. Rain helps.', '', 'lesson'],
-  ['Rat-a-tat. The woodpecker has come for the log, a patch at a time.', 'bird', 'round'],
+  ['Sudden death! Nothing grows now, and the bird’s furious.', 'bird', 'round'],
   ['First out: Capricious got cut in two by Metagamer.', 'kill', 'round', { phone: 'First out: Capricious was cut by Metagamer.' }],
   ['Here they come.', 'go', 'round'],
 ];

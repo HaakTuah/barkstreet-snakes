@@ -166,19 +166,13 @@ function drawBird(g, P, half) {
   g.save();
   useBase(g); g.beginPath(); g.rect(0, 0, SIZE, SIZE); g.clip();
   mThen(TM, BM, 0.35 + 0.6 * P.air, 0.6 + 0.9 * P.air, 0, 1, 1); useM(g, TM);
-  g.globalAlpha = P.alpha * (0.28 - 0.1 * P.air);
+  g.globalAlpha = P.alpha * (0.28 - 0.1 * P.air) * (1 + 0.9 * P.fury); // (in the frenzy a darker shadow hangs about it)
   layPart(g, 'shadow', half);
   g.restore();
   g.globalAlpha = P.alpha;
   g.lineJoin = g.lineCap = 'round';
-  // The frenzy (entry 6): a shadow hangs about it, and its feathers darken (fury: 0 to 1, eased in as it starts).
-  if (P.fury > 0) {
-    useM(g, BM);
-    const haze = g.createRadialGradient(0.2, -0.4, 0.4, 0.2, -0.4, 3.4);
-    haze.addColorStop(0, `rgba(24, 6, 18, ${0.42 * P.fury})`); haze.addColorStop(1, 'rgba(24, 6, 18, 0)');
-    g.fillStyle = haze; g.beginPath(); g.arc(0.2, -0.4, 3.4, 0, TAU); g.fill();
-    g.filter = `brightness(${1 - 0.32 * P.fury}) saturate(${1 + 0.3 * P.fury})`;
-  }
+  // The frenzy (entry 6): its feathers darken (fury: 0 to 1, eased in as it starts; its shadow deepens above).
+  if (P.fury > 0) g.filter = `brightness(${1 - 0.32 * P.fury}) saturate(${1 + 0.3 * P.fury})`;
   if (P.wing > 0.02) { wingMat(P, true); useM(g, WM); layPart(g, 'farWing', half); }
   // Its ink, then its colours.
   useM(g, BM); layPart(g, P.feet ? 'inkPerch' : 'inkFly', half);
@@ -207,7 +201,7 @@ function drawBird(g, P, half) {
   else {
     oval(g, 0.75, -1.9, 0.21, 0.21); g.fill();
     const px = 0.75 + ex * 0.094, py = -1.9 + ey * 0.094;
-    g.fillStyle = P.fury > 0 ? `rgb(${10 + 210 * P.fury}, ${10 + 20 * P.fury}, ${10 + 20 * P.fury})` : '#0a0a0a'; oval(g, px, py, 0.1, 0.1); g.fill();
+    g.fillStyle = P.fury > 0.5 ? '#2a0606' : '#0a0a0a'; oval(g, px, py, 0.1, 0.1); g.fill();
     g.fillStyle = '#ffffff'; oval(g, px + 0.035, py - 0.035, 0.035, 0.035); g.fill();
   }
   if (P.wing > 0.02) {
