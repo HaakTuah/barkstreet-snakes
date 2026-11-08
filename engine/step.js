@@ -360,7 +360,6 @@ function step(game) {
   crawl(game);
   peck(game, dying);
   fallIn(game, dying);
-  portalSnips(game, dying, drops);
 
   // Dead snakes fall to beads (every other segment: see leavesBead), and
   // broken-off pieces too (all of them), never on food, living bodies,
