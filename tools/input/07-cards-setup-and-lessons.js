@@ -106,9 +106,8 @@ const seasonSaid = async season => {
     window.__autoRaf = false; document.getElementById('start').click();
     SnakeDebug.game().season = '${season}';
     for (let i = 0; i < 600 && SnakeDebug.state() !== 'running'; i++) SnakeDebug.frames(1, ${P});
-    for (let i = 0; i < 600; i++) SnakeDebug.frames(1, ${P}); // (ten seconds of the round)
     const F = SnakeDebug.flavor(), mine = t => [...(F.season.lean || []), ...(F.season.plentiful || []), F.seasonRule('lean'), F.seasonRule('plentiful')].includes(t);
-    return SnakeDebug.banners().filter(x => x.fate === 'shown' && mine(x.text)).map(x => x.text);
+    return SnakeDebug.banners().filter(x => (x.fate === 'shown' || x.fate === 'queued') && mine(x.text)).map(x => x.text); // (in line behind Go, on the page's own timers)
   })()`);
 };
 {
