@@ -127,8 +127,8 @@ Every persona fears the cells a rival could strike next (`headRisk`) and where i
 Past a length of its own (`hungryBelow`), a fed rival wants food only `fedFactor` as much. Once the woodpecker's here
 (`SUDDEN_DEATH_MS`) nothing new grows but the last apples, so the "fed" state switches off for everyone. Hunger trumps
 it too: with under 10 s before it starts starving (`AI_HUNGRY_MS`), any rival goes looking for food, harder the closer
-it gets. Ghost, which stays small on purpose, keeps small but not starvation-small: food counts in full for it under 18
-cells (`hungryBelow` 18, `fedFactor` 0.4), and hungry it keeps its distance from heads less (none, desperate), so its
+it gets. Ghost, which stays small on purpose, keeps small but not starvation-small: before the woodpecker food counts
+in full for it under 18 cells (`hungryBelow` 18, `fedFactor` 0.4), and in the endgame it keeps the least (below), and hungry it keeps its distance from heads less (none, desperate), so its
 distance doesn't cost it the meals it needs.
 
 In the endgame a meal is worth the life it buys against the room it costs (2h, the owner, 29 and 31 October 2026).
@@ -139,7 +139,8 @@ room a snake needs to turn in.
   shrinks). Past it a meal is worth only the hunger it stops: one bead to stop hunger, not the whole heap, and along a
   line of moves the meals after the first count for nothing. With room to spare (`ROOMY`: four times its length of free
   log a snake, and more) food counts as before. Gobbler stays the greediest (`keep` 24: its food share is its
-  trademark); Ghost the most sparing (7).
+  trademark), Mason keeps 16 (its walls, two thick, need the length), and Ghost, which keeps small on purpose, is the
+  most sparing (7); the default is already sparing for the rest.
 - **The tail drop planned ahead:** a drop needs the flash rested, a body one thick and a free cell beyond, and a boxed
   snake rarely has all three. So in the endgame a rival weighs dropping its tail as soon as the search sees it boxed in
   (every crawl ends in less room than it needs, or only through a gap a rival could shut), not only once every crawl

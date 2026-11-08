@@ -9,9 +9,9 @@ function endgameCensus(g, c, st, dying, N) {
   for (const s of dying) { if (pocket.has(s.id)) { c.sdPocketDeaths++; if (g.tick - pocket.get(s.id) > 20) c.sdSealedDeaths++; } }
   for (const e of g.events) {
     if (e.type === 'eat' && e.kind !== 'mushroom') { c.sdMeals++; if (pocket.has(e.snake.id)) c.sdBoxedMeals++; }
-    if (e.type === 'cut' && e.by === e.snake.id) { c.sdDrops++; if (!pocket.has(e.snake.id)) c.sdDropsFree++; (st.dropAt ||= new Map()).set(e.snake, g.tick); }
+    if (e.type === 'cut' && e.by === e.snake.id) { c.sdDrops++; const p = st.per[e.snake.name]; p.sdDrops = (p.sdDrops || 0) + 1; if (!pocket.has(e.snake.id)) c.sdDropsFree++; (st.dropAt ||= new Map()).set(e.snake, g.tick); }
   }
-  if (st.dropAt) for (const [s, at] of st.dropAt) if (!s.alive || g.tick - at >= 50) { if (s.alive) c.sdDropsLived++; st.dropAt.delete(s); }
+  if (st.dropAt) for (const [s, at] of st.dropAt) if (!s.alive || g.tick - at >= 50) { if (s.alive) { c.sdDropsLived++; const p = st.per[s.name]; p.sdDropsLived = (p.sdDropsLived || 0) + 1; } st.dropAt.delete(s); }
   timedGrid(g, N);
   const now = new Map();
   for (const s of g.snakes) {
@@ -22,6 +22,7 @@ function endgameCensus(g, c, st, dying, N) {
   }
   st.pocket = now;
 }
-const endgameLine = (c, sdDeaths, sd) => `the endgame (2h): boxed in (a pocket smaller than the snake) ${(c.sdBoxed / sd).toFixed(2)} times a woodpecker round; deaths there ${(100 * c.sdPocketDeaths / Math.max(1, sdDeaths)).toFixed(1)}% of sudden death's, boxed in 2 s or more ${(100 * c.sdSealedDeaths / Math.max(1, sdDeaths)).toFixed(1)}% · a snake ${(c.sdLenSum / Math.max(1, c.sdLenTicks)).toFixed(1)} long on average`
+const endgameLine = (c, sdDeaths, sd, per) => `the endgame (2h): boxed in (a pocket smaller than the snake) ${(c.sdBoxed / sd).toFixed(2)} times a woodpecker round; deaths there ${(100 * c.sdPocketDeaths / Math.max(1, sdDeaths)).toFixed(1)}% of sudden death's, boxed in 2 s or more ${(100 * c.sdSealedDeaths / Math.max(1, sdDeaths)).toFixed(1)}% · a snake ${(c.sdLenSum / Math.max(1, c.sdLenTicks)).toFixed(1)} long on average`
   + ` · meals eaten boxed in ${(100 * c.sdBoxedMeals / Math.max(1, c.sdMeals)).toFixed(1)}% of sudden death's ${(c.sdMeals / sd).toFixed(1)} a round`
-  + ` · own tail dropped ${(c.sdDrops / sd).toFixed(2)} a woodpecker round (before boxed in ${c.sdDropsFree}, alive 5 s on ${c.sdDropsLived} of ${c.sdDrops})`;
+  + ` · own tail dropped ${(c.sdDrops / sd).toFixed(2)} a woodpecker round (before boxed in ${c.sdDropsFree}, alive 5 s on ${c.sdDropsLived} of ${c.sdDrops})`
+  + ` · own tail dropped by rival (alive 5 s on): ${Object.entries(per).filter(([, p]) => p.sdDrops).sort((x, y) => y[1].sdDrops - x[1].sdDrops).map(([n, p]) => `${n} ${p.sdDrops} (${p.sdDropsLived || 0})`).join(', ') || 'none'}`;
