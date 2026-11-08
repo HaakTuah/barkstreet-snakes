@@ -350,6 +350,12 @@ Built in part 5 of round six B (PR #202):
   Per use (`tools/dev/fork-moves.js --move portal --rest`, seeds 902–904, 232 follows): a follower is 3.1 ± 0.8 cells
   longer 10 s later, but places no better (−0.10 ± 0.10 a follow). The move doesn't matter to places, which is a design
   finding for the owner (#447); it is kept as built until he answers. Every trademark is within noise.
+- **A follower that cuts its owner, measured and dropped** (2y++, PR #591; the owner's call is #592): a follower coming
+  out of the exit snipped the owner's body still lying straight in line beyond it, up to 8 cells (a dash's cut; the
+  head reached, the owner out). The rivals were not taught it. It bit in a third of follows (60 of 181 on seeds
+  902–904), about 6 segments each, and put out 1 or 2 owners in 200 rounds. It moved no places: the follower −0.12
+  place a follow (−0.10 ± 0.10 without it), the owner +0.07 ± 0.10; where it bit, −0.13 and −0.12. Reaching 24 cells
+  instead of 8 bit no more owners. A few segments lost behind the owner don't change who wins, so the rule stays out.
 
 ### Dropped charges
 

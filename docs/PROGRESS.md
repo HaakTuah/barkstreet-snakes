@@ -7,9 +7,9 @@ when it is merged into `develop`; add the owner's new tasks where he places them
 
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
-**The main lane is 2y++, steps 2 and 3** (the flight against fliers who fly like people, then portals with a real cost);
-item 5's part 7 (one pricing model, built afresh) waits on 2ab, which is blocked on #574. Part 4 (#198,
-merged as it stands), 2y, 2y+, part 5, 2x, 2z, 2u, 2u+, 2q, 3b+ (PR #580; its finding, that spitters come out even, is
+**The main lane waits on the owner:** item 5's part 7 (one pricing model, built afresh) waits on 2ab, which is blocked on
+#574, and 2y++'s last step waits on part 7. Part 4 (#198,
+merged as it stands), 2y, 2y+, part 5, 2x, 2z, 2u, 2u+, 2q, 2y++ steps 1 to 3 (PRs #550, #588, #591), 3b+ (PR #580; its finding, that spitters come out even, is
 #583) and part 6 (PR #584) before it are done. The polish lane and the workshop lane run beside it, each claimed by a draft PR.
 
 ## For the owner
@@ -124,10 +124,9 @@ landing is almost never contestable. The flight stays as built for now, and no r
    round), but rivals went for one only 0.2 times a round, and fliers came down on a body no more often (0.2 a round).
    Even taking a landing worth ten times as much took no more of them: a ring is almost never reachable in time, so the
    ring costs a flier little.
-3. **Portals with a real cost** (#447; the owner, 3 November 2026): portals stay as built, followed one round in five
-   but never winning places, so the wrap's trade-off is not yet real. A measured experiment: a follower coming out
-   of the portal may cut off its owner. Built only if it makes following matter both ways, with no refuge for owner
-   or follower.
+3. **Portals with a real cost** (#447): done, PR #591; no rule changed. A follower snipping its owner's body out of the
+   exit bit in a third of follows but moved no places either way ("Gold portals for the wrap" in design 40); the
+   owner's call is #592.
 4. **Measured again after 2u and part 7,** whose stamina and pricing change what a flight costs. Only if it is still
    even then does a bigger change go to the owner as a question: a longer flight, or the ring shown before take-off.
 
