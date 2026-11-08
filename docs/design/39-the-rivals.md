@@ -122,14 +122,35 @@ Every persona fears the cells a rival could strike next (`headRisk`) and where i
 - Baked food is worth what it's worth, a golden beetle half again for its leaps, and an apple that'll have rotted before
   the rival gets there isn't chased.
 
-### Nobody's picky in sudden death
+### The endgame: a meal is worth the life it buys
 
 Past a length of its own (`hungryBelow`), a fed rival wants food only `fedFactor` as much. Once the woodpecker's here
-(`SUDDEN_DEATH_MS`) nothing new grows but the last apples, so the "fed" state switches off for everyone and every snake
-eats what it can. Hunger trumps it too: with under 10 s before it starts starving (`AI_HUNGRY_MS`), any rival goes
-looking for food, harder the closer it gets. Ghost, which stays small on purpose, keeps small but not starvation-small:
-food counts in full for it under 18 cells (`hungryBelow` 18, `fedFactor` 0.4), and hungry it keeps its distance from
-heads less (none, desperate), so its distance doesn't cost it the meals it needs.
+(`SUDDEN_DEATH_MS`) nothing new grows but the last apples, so the "fed" state switches off for everyone. Hunger trumps
+it too: with under 10 s before it starts starving (`AI_HUNGRY_MS`), any rival goes looking for food, harder the closer
+it gets. Ghost, which stays small on purpose, keeps small but not starvation-small: food counts in full for it under 18
+cells (`hungryBelow` 18, `fedFactor` 0.4), and hungry it keeps its distance from heads less (none, desperate), so its
+distance doesn't cost it the meals it needs.
+
+In the endgame a meal is worth the life it buys against the room it costs (2h, the owner, 29 and 31 October 2026).
+There's no clock to run out then (the round ends when one snake is left), so length is worth a crash buffer (a crash
+costs 3, and one at the smallest puts a snake out) and a hunger buffer, and no more; beyond that it only fills the
+room a snake needs to turn in.
+- **The length worth keeping:** `keep` segments over the smallest (`KEEP`, 10, by default: two crashes and four
+  shrinks). Past it a meal is worth only the hunger it stops: one bead to stop hunger, not the whole heap, and along a
+  line of moves the meals after the first count for nothing. With room to spare (`ROOMY`: four times its length of free
+  log a snake, and more) food counts as before. Gobbler stays the greediest (`keep` 24: its food share is its
+  trademark); Ghost the most sparing (7).
+- **The tail drop planned ahead:** a drop needs the flash rested, a body one thick and a free cell beyond, and a boxed
+  snake rarely has all three. So in the endgame a rival weighs dropping its tail as soon as the search sees it boxed in
+  (every crawl ends in less room than it needs, or only through a gap a rival could shut), not only once every crawl
+  crashes; what it drops below the length worth keeping costs an apple a segment. Each in its style (`drop`): Creeper
+  readily, all round; Ouroboros late, only out of a crash.
+- **The denial play:** a rival seen starving (a segment off, as anyone sees one shrink, and no crash) needs food, so
+  in the endgame food within 8 moves of its head (`DENY_NEAR`) is worth eating to keep from it, whatever the eater's
+  length, and a bead of the eater's own there worth squashing (`DENY`, an apple, times 0.5 and the eater's aggression).
+- **Measured:** the endgame census (`--census`, "the endgame (2h)": pockets smaller than the snake, the deaths there,
+  meals eaten boxed in, own tail drops), and each part head to head both ways: in PR #596. Its numbers are measured
+  again after the woodpecker's makeover (entry 6), which changes the endgame's timing.
 
 ### A starving rival takes its chances
 
@@ -268,8 +289,8 @@ build (part 7 of round six B, with one pricing model for every power, in `docs/P
 below, is its measure.
 - **Built so far:** Star's habit ("Star"); a style's own price for a leap now and for a flier's ring (`leapNow`,
   `landing`: "Rivals use their powers, when it pays") and for a mushroom shot (`spit`: "Mushrooms, to a rival");
-  everyone's island hop, and a tail dropped only when trapped ("The plain jump hops islands" and "Dropping your tail"
-  in `40-powers-and-moves.md`).
+  everyone's island hop, and a tail dropped when trapped, or planned once boxed in the endgame ("The plain jump hops
+  islands" and "Dropping your tail" in `40-powers-and-moves.md`; "The endgame: a meal is worth the life it buys").
 - **To build, each its own:** Sniper cuts off its target; Mute seals boxes; Gobbler races for food; Vulture flashes to
   beads; Ghost keeps a flash ready to escape. Sovereign and Colonist chase intruders off their land; Mason finishes
   walls; Creeper flashes in behind tails; Desperado for the thrill; Joker springs its lures; Ouroboros jumps its own

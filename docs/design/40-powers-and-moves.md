@@ -308,7 +308,8 @@ behind the cut becomes beads, which others can eat and you squash. A cut of your
 snake gets out of a pocket too small for it, at the price of the length.
 - *The lessons:* the first time you're in a pocket smaller than you, your flash ready and your own body one thick in
   front, "Dash through your own tail to drop it."; your first own cut, "Tail dropped: lighter, and out of the pocket."
-- *The rivals* drop their own tail only when trapped.
+- *The rivals* drop their own tail when trapped, and in the endgame plan it once they see themselves boxed in, each in
+  its style ("The endgame: a meal is worth the life it buys" in `39-the-rivals.md`).
 
 ### The wrap
 
