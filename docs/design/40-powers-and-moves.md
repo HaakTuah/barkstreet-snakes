@@ -418,10 +418,11 @@ air, as over its own lying wet.
   and 1203 (1,200 paired rounds, head to head, against the same AI that never aims nor eats one on purpose, both
   dodging): the spitters win 25.1% to 24.7% (interval −3.7 to +2.8 points), live as long (148 s), kill as often, die of
   the same causes (no refuge); every trademark the same or within noise. In whole rounds (seed 3, 200) 2% of spits hit a
-  head (0.07 a round; Sniper 0.07, Joker 0.10), and still 2% with every rival's dodging off: the rivals keep their heads
-  apart, so a head is seldom five in line from a spitter when the second runs out. Neither a hedged lead nor closing in
-  three times as hard raised it. The spitters come out even, a design finding for the owner (#583); kept as built until
-  he answers.
+  head (0.07 a round; Sniper, with its `aim`, 0.11, Joker 0.08), and still 2% with every rival's dodging off: the rivals
+  keep their heads apart, so a head is seldom five in line from a spitter when the second runs out. Neither a hedged lead
+  nor closing in three times as hard raised it. Per use (`tools/dev/fork-moves.js --move spit`, seeds 1301–1303, 384
+  spits, each against that mushroom gone unspat): place −0.035 ± 0.123, −0.021 ± 0.115 and +0.054 ± 0.103 a spit, about
+  nothing. The spitters come out even, a design finding for the owner (#583); kept as built until he answers.
 
 ### Where it rolls is a rule, never chance
 
