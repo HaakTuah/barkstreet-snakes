@@ -19,10 +19,11 @@ sudden elimination"). Each act starts at a time drawn in its window after the on
   (`w.gaze`, anywhere that isn't a hole), then moves to a new vantage 2 to 4 times (`WATCH_LOOKS`), its last look
   `WATCH_LAST` (1.6) times as long as each of the others. **Its gaze is a tell:** act 2's first patch starts within
   `GAZE_NEAR` (4) cells of where it looked last, while any patch there keeps the fairness tries below.
-  - **Shown on the log:** where its eye settles, a pale pool of its attention lies over the spot, brightest at the
-    middle, its dotted rim at `GAZE_NEAR` (`render/watch.js`), easing in over a second at each new look, steady, under
-    the snakes. Its head alone showed only a row from a side perch, or a column from a phone's ledge, while the rivals
-    read the spot itself: the pool shows anyone what they read.
+  - **Shown on the log:** where its eye settles, a pale diamond of its attention lies over the spot, brightest at the
+    middle, its dotted rim round the cells within `GAZE_NEAR` (`render/watch.js`): where its first patch may start, and
+    the ground the rivals weigh. It eases in over a second at each new look, steady, under the snakes. Its head alone
+    showed only a row from a side perch, or a column from a phone's ledge, while the rivals read the spot itself: the
+    diamond shows anyone what they read.
   - **Its look:** its crest raised while it watches (its red nape, up), its head cocked at the spot, and a soft "kik!"
     as it settles at each new vantage.
 - **2. The first pecks** (40–60 s after it came): a patch of `FIRST_CHUNK` (8) cells, then a rest of

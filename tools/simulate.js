@@ -65,8 +65,8 @@
 //             plays both halves; given this very copy, the rounds come out
 //             exactly as without it (the same fingerprint). Not with
 //             --save-at or --from
-//   --save-at MS  fast-forward: play each round only to game time MS (2:00,
-//             when the woodpecker comes, is 120000) and store it as it stands
+//   --save-at MS  fast-forward: play each round only to game time MS (2:00
+//             is 120000; each round draws its own acts, tuning.js's ACT_*) and store it as it stands
 //             then, the game and where its random numbers had got to (a round
 //             over before then is stored whole). Needs --seed. The rounds are
 //             kept with the cache (its file is printed; again with the same

@@ -82,7 +82,7 @@
 //                 (win and place shown, not waited for, as above). Not with --at
 //   --at MS     fast-forward: store every round at game time MS as A plays it (simulate.js
 //               --save-at), and play both on from there; for questions about the late game
-//               (2:00 is 120000; the woodpecker comes at 0:50 to 1:15 and its frenzy starts at 2:10 to 3:15, each round its own: entry 6). Only what happens after MS can differ
+//               (2:00 is 120000; each round draws its own acts, the woodpecker's and its frenzy's: tuning.js's ACT_*). Only what happens after MS can differ
 //   --alpha P   1 - the confidence, for the whole table (default 0.05: any verdict wrong at most 5% of the time)
 //   --margin ROW=X  a difference smaller than X doesn't matter, for a row (sd, win.Star...) or a group (win=5)
 //   --workers N passed on to simulate.js
