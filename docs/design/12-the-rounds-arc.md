@@ -25,9 +25,9 @@ A round has a shape. Times are the round's game time (`tuning.js`):
 ### Sudden death closes in
 
 **Sudden death closes in.** A round ends with the board closing in, not with long snakes waiting to starve: hunger
-bites no harder in sudden death than in the opening (`HUNGER_MS`), but **the woodpecker gets hungrier**: each rest is
-shorter than the one before and each patch a cell bigger, so the log shrinks faster and faster (`PECK_HUNGRIER`,
-`PECK_REST_MIN` and `PECK_CHUNK_MAX`: "When it comes" and "How it picks a patch" in `38-the-woodpecker.md`). Ghost,
+bites no harder in sudden death than in the opening (`HUNGER_MS`), but **the woodpecker gets hungrier**: with each piece
+that falls in its frenzy each rest is shorter and each peck a cell bigger, so the log shrinks faster, down to a floor
+where it fights ("Its three acts", "It cuts a shape", "The floor" and "Then it fights" in `38-the-woodpecker.md`). Ghost,
 which keeps its distance, eats with a normal appetite up to 18 long so it doesn't starve first, and in the endgame
 keeps the least length of the cast ("The endgame: a meal is worth the life it buys" in `39-the-rivals.md`).
 

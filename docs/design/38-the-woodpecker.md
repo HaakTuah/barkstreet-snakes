@@ -17,8 +17,9 @@ sudden elimination"). Each act starts at a time drawn in its window after the on
 - **1. The watcher** (50–75 s in; the owner's starting point, 60–90 s, then 50–80 s and 50–80 s, made rounds of
   246 s at the median, against the draft's 3 to 3.5 minutes): it lands outside the board and scouts it. No pecks. It watches a spot on the log
   (`w.gaze`, anywhere that isn't a hole), then moves to a new vantage 2 to 4 times (`WATCH_LOOKS`), its last look
-  `WATCH_LAST` (1.6) times as long as each of the others. **Its gaze is a tell:** act 2's first patch starts within
-  `GAZE_NEAR` (4) cells of where it looked last, while any patch there keeps the fairness tries below.
+  `WATCH_LAST` (1.6) times as long as each of the others; each spot one it could start cutting from as things stand
+  (`cutSeeds`: the edge of the most log per snake, see "It cuts a shape"). **Its gaze is a tell:** act 2's first
+  outline starts within `GAZE_NEAR` (4) cells of where it looked last, while it can (measured: 86–89% of rounds).
   - **Shown on the log:** where its eye settles, a pale diamond of its attention lies over the spot, brightest at the
     middle, its dotted rim round the cells within `GAZE_NEAR` (`render/watch.js`): where its first patch may start, and
     the ground the rivals weigh. It eases in over a second at each new look, steady, under the snakes. Its head alone
@@ -26,13 +27,13 @@ sudden elimination"). Each act starts at a time drawn in its window after the on
     diamond shows anyone what they read.
   - **Its look:** its crest raised while it watches (its red nape, up), its head cocked at the spot, and a soft "kik!"
     as it settles at each new vantage.
-- **2. The first pecks** (40–60 s after it came): a patch of `FIRST_CHUNK` (8) cells, then a rest of
-  `FIRST_REST_TICKS` (90, about 9 s), over and over, while food still grows.
-- **3. The frenzy, sudden death** (40–60 s after act 2): nothing new grows but the last apples, the weather clears, and
-  the meal clock is `HUNGER_MS` again. Its first rest is `PECK_REST_TICKS` (30) from its last strike; each patch is
-  `PECK_CHUNK` (12) cells, a cell bigger each strike of the frenzy (`w.fury`) up to `PECK_CHUNK_MAX` (20), and each
-  rest `PECK_REST_TICKS` times `PECK_HUNGRIER` (0.85) for every strike of the frenzy, never under `PECK_REST_MIN` (10).
-- **Each patch:** eyed for `PECK_AIM_TICKS` (17, about 1.6 s), struck, then the rest.
+- **2. The first pecks** (40–60 s after it came): it cuts its outline `CUT_STEP_2` (2) cells a peck, a rest of
+  `FIRST_REST_TICKS` (50, about 5 s) between, while food still grows.
+- **3. The frenzy, sudden death** (35–50 s after act 2): nothing new grows but the last apples, the weather clears, and
+  the meal clock is `HUNGER_MS` again. It cuts `CUT_STEP_3` (3) cells a peck, a cell more for each piece fallen in the
+  frenzy (`w.fury`) up to `CUT_STEP_MAX` (5), each rest `PECK_REST_TICKS` (20) times `PECK_HUNGRIER` (0.85) for each of
+  them, never under `PECK_REST_MIN` (8); down to the floor, where it fights.
+- **Each peck:** eyed for `PECK_AIM_TICKS` (17, about 1.6 s), struck, then the rest.
 - **Its look in the frenzy:** its eyes glow red, its feathers darken, and its crest ruffles up dark red, coming over it in a
   second and a half and then steady (no flicker, with reduced motion too), and the page's sky dims (`html.frenzy` in
   `style/base.css`).
@@ -44,56 +45,70 @@ sudden elimination"). Each act starts at a time drawn in its window after the on
   and 21%, the frenzy 58 and 54% (before, about four in five came after 2:00); sudden death lasts 54 and 50 s (61 before);
   sealed deaths 9.1 and 6.1% of sudden death's (6.2% before).
 
-### How it picks a patch
+### It cuts a shape
 
-- **Its size:** `PECK_CHUNK` (12) cells, a cell bigger each strike up to `PECK_CHUNK_MAX` (20), grown cell by cell from
-  a start, compact (a cell with more of the patch, or old holes, beside it is likelier), then rounded (see "Rounder
-  hollows").
-- **Its start:** a third of the time under a body (`PECK_UNDER_BODY`, any snake's, never a head; see "The strike"),
-  half the time beside an old hollow (see "Fewer, bigger hollows"), else anywhere.
-- **Where it may aim,** in order, taking the first that works (`PATCH_TRIES` in `engine/woodpecker.js`):
-  1. more than `PECK_CLEARANCE` (4) cells from every head, so nobody can be inside a fresh mark before they can see it,
-     shutting nobody in, and cutting loose no piece bigger than `PECK_FALL_SOFT` (see "The log stays one piece");
-  2. clear of the heads themselves, the rest as in 1;
-  3. and 4. as 1 and 2, cutting loose a piece of any size;
-  5. and 6. as 3 and 4, shutting someone in;
-  7. anywhere left.
+Entry 6, part 2 (the owner, 31 October 2026: "what if it takes few chunks at once, but it is cutting out a shape, and
+when that shape is no longer attached to anyhting, it falls?"; "No outline should be banned from falling, but ideally,
+it never takes out half the trunk."). It never melts the log: it plans a piece and cuts round it (`engine/outline.js`).
+- **Where: the most log per snake.** Each snake's region is the log its head reaches first (`regions`: a flood from
+  every head, bodies passable, ties nobody's); it cuts in the biggest (ties: the longer snake's), a rule, never chance,
+  so whose piece goes next never decides a round. Its first, in act 2, from where it looked last.
+- **What:** a piece and its cut (the log cells beside it) `CUT_OF_REGION` (0.25) of that region, at least `CUT_MIN`
+  (8) cells and at most `CUT_SHARE_MAX` (1/8) of the log, grown from a seed on the region's edge with the board or an
+  old hollow more than `PECK_CLEARANCE` (4) from every head, a cell at a time (the one with most solid sides, then
+  nearest the seed): of `CUT_SEEDS` (10) tries, the one whose cut is the least of it, so edges and hollows do the work.
+  Never one with a head on it, and never one that halves the trunk (the rest of the log stays one piece; crumbs of
+  `PECK_NO_ORPHANS` (2) cells or fewer go with the piece). Failing the biggest region: any, then with the cap at a third
+  of the log; failing all, it waits (or, in the frenzy at the floor, fights).
+- **How: a few cells a peck, as a perforation.** It pecks the cut in order along it, every other cell first (dots), then
+  the rest, so the piece hangs on by the cells between until its last peck; each peck takes the next cells it may: more
+  than `PECK_CLEARANCE` from every head, then any off a head, shutting nobody in. A cell it may not take yet waits its
+  turn; with none it may take, it waits, and after `CUT_GIVEUP_TICKS` (100) plans elsewhere (its holes stay).
+- **The last peck cuts the piece loose** (2s's rule, "The log stays one piece"): its mark shows the piece, shaded, the
+  whole aim, and it falls with the strike, food and all. Measured: about ten pieces a woodpecker round, 27 cells each; the
+  biggest in a round 51 cells at the median, 60 at most; none ever left the log in pieces.
 - **It may cover food:** food in the mark is knocked aside at the strike (see "It knocks food aside").
+- **The cue:** each cell its cut has still to go is nicked on the bark, a short dark slit with a pale rim
+  (`render/cut.js`), so you can watch the line close round the piece; the pecked ones are pits.
 
-### Fewer, bigger hollows
+### The floor
 
-Half the strikes (`PECK_WIDEN`) start beside an old hollow, and patches grow compact, so the log ends up with a few big
-hollows instead of a pegboard.
+It cuts only while the log is `CUT_MIN` more than the floor: `FLOOR_PER_LENGTH` (2) times the living snakes' lengths
+together (growth to come too), never under `FLOOR_MIN` (24) cells (`logFloor`). An outline that would go past it is
+given up (its holes stay). The floor falls as snakes starve or go, so it may cut again, a little: a tile here and there
+in the very late game.
 
-### Rounder hollows
+### Then it fights
 
-After a patch grows, two passes fill any cell beside it with 3 or more of its 4 sides patch, old hole or the board's
-edge (never a head), then two passes drop one-cell spurs (cells with only one neighbour in the patch or a hole), while
-at least 3 cells stay. The holes read as hollows pecked on purpose, not scribbles.
+At the floor, in the frenzy, it pecks at the snakes instead (`engine/fight.js`), aimed and warned like any peck:
+- **Whom and where:** the snake with the most log (`regions`, the same rule), a tile `FIGHT_LEAD` (6) moves ahead of its
+  head the way it's going (stopping at the log's end), or as near that as it may, in its region; its plus is the tile and
+  the log cells beside it (`w.zone`), the tile its mark (`w.target`).
+- **Fair:** the whole plus more than `FIGHT_GAP` (2) cells from every head as it aims, shutting nobody in, and never a tile
+  that would cut a piece loose; it has the aim's warning to steer clear. A rest of `FIGHT_REST_TICKS` (30) between.
+- **The strike:** a head on the ground in the plus takes a crash (`CRASH_LOSS` off and stunned, as any crash; a golden
+  apple's shield takes it; at its smallest, out: "Pecked!"), never a fall: the tile under a head isn't taken. Otherwise
+  the tile is a hole, food on it knocked aside.
+- **The cue:** a red ring round its plus, tightening as the strike nears, a tick on each arm, the tile marked as any.
+- **Measured:** the floor is reached in 16–23% of rounds, a fight's strike about one in two of those, and hardly any hit
+  (the rivals read the ring; a person must too).
 
 ### The woodpecker plays fair
 
-It won't shut you in if it can help it: it won't pick a patch that leaves any snake less room than its length, while it
-has another to pick (only the last tries above may). Room is a timed flood of the engine's own (tails leaving, stuns and
-growth counted) against the snake's length plus what it has still to grow; a snake already shut in doesn't count.
-
-### No crumbs
-
-A patch that would cut off an island of one or two cells takes those cells too. They're in the mark from the aim, so you
-see them go, in every try but the last. If a snake is on one, it picks another patch; food on one is knocked aside with
-the rest. A crumb of `PECK_NO_ORPHANS` (2) cells or fewer may lie nearer a head than the clearance (walled in by the mark
-and holes, nobody can step into one), but never under one.
+It won't shut you in: no peck leaves any snake less room than its length (it waits instead). Room is a timed flood of
+the engine's own (tails leaving, stuns and growth counted) against the snake's length plus what it has still to grow; a
+snake already shut in doesn't count. **The peck that cuts a piece loose** counts room as a head could get it: crossing
+the piece and the mark within the aim's warning less `FALL_REACT_TICKS` (5, half a second to see it), and never counting
+them (`shutsIn`'s `until`), so it's aimed only if every head on the piece can get off in time.
 
 ### The log stays one piece
 
-No crumbs, grown to any size (2s). The log is the biggest piece of bark once a patch is out; any other piece the patch
-cuts loose goes into the mark from the aim (`w.fall`) and falls with the strike.
-- **It aims small first:** no piece over `PECK_FALL_SOFT` (12 cells) while it can, then any, so no size is banned (rules
-  tests prove both).
-- **Clear of heads:** a falling piece keeps the patch's clearance (`PECK_CLEARANCE`), so nobody is on it before they can
-  see it; only the last try, when no patch keeps clear of heads at all, can cut loose a piece with a head on it. Then
-  the mark shows it the whole aim: a snake that gets off in time lives, and one still on it at the strike falls with it
-  ("Down the hole!"). A body lying over it bridges the new hole, as over any patch.
+2s. The log is the biggest piece of bark once a peck is out (`cutLoose`); any other piece it cuts loose goes into the mark
+from the aim (`w.fall`) and falls with the strike. No size is banned from falling: what ends up cut loose falls (a rules
+test proves it); it plans small (see "It cuts a shape").
+- **A head on it:** the mark shows it the whole aim; one that gets off in time lives, one still on it at the strike falls
+  with it ("Down the hole!"); it's aimed only if every head on it can get off in time ("The woodpecker plays fair"). A body
+  lying over it bridges the new hole, as over any peck.
 - **What falls:** food and beetles on it go with it.
 - **The cue:** the piece is shaded dark in the mark, with pale streaks sliding down it; at the strike it tips away into
   the pit with a creak and a far-off thud.
@@ -263,9 +278,12 @@ phone's address bar never resizes it.
   counts for little, skims it; in the frenzy every rival not desperate wants `AI_FRENZY_MARGIN` (2) more spare room
   (`ai/decide.js`). Its marks they keep out of as before (below).
 
-- **What they see** (`aiView`): the mark apart from the holes (`view.pecks`), the strike's tick while the bird aims
+- **What they see** (`aiView`): the piece its outline cuts round (`piece`: ground to get off, `AI_CUT_RISK` of each
+  rival's soft zone on it, `ai/risk.js`), a fight's plus (`zone`: walls, never a pit), the mark apart from the holes (`view.pecks`), the strike's tick while the bird aims
   (`strikeAt`: anyone sees it drum the patch, its last blow on the strike), the pieces it cuts loose (`fall`), and, from
   the promise, the promised landings (`landings`: the rings show them to everyone).
+- **Off a doomed piece:** a rival whose head is in the mark walks off it the shortest way that makes it before the strike
+  (`escapeMark` in `ai/decide.js`), since its search reads the mark as walls and sees no way out.
 - **A mark isn't a hole yet.** They keep out of it as out of a hole; a jump of theirs may hop real holes but never a
   mark; a flash, plain or golden, treats a mark as a wall.
 - **Knocked food:** a rival works out each landing with the engine's own `E.knocks`, on the board as it sees it (the
@@ -290,7 +308,9 @@ phone's address bar never resizes it.
   - the first time it pecks under you: "Pecking under you! Only your head can fall in.";
   - the first mark that cuts a piece loose (or as it falls, if the banner was busy): "The shaded piece is cut loose and will fall.
     Get off it!";
-  - the first beetle it eats: "The woodpecker eats beetles too.".
+  - the first beetle it eats: "The woodpecker eats beetles too.";
+  - its first peck along an outline: "It's cutting a piece out: get off before it falls!";
+  - its first fight: "Little log left: now it pecks at snakes. Dodge!".
 - **Death:** the card's title is **Pecked!** (or "Drilled!") for a head in the patch, "Down the hole!" for one on a
   piece cut loose, and "Flattened!" for a hole you hit (`09-voice-and-copy.md`, "Death titles").
 - **The Field guide's** Woodpecker row (`game/friends.js`, with a picture of an apple flying out of the mark to its
@@ -324,6 +344,7 @@ The sound topic is `21-sound.md` ("Round six A's cues", "The woodpecker's drum i
 
 When the acts start crosses with each tick (`ac`, since protocol 30). The woodpecker's row carries where it is, its mark (`target`), the strike's tick, the last patch, when it struck and
 rests, how many it has struck, the promised landings and the pieces cut loose (`WoodpeckerRow` in `online.js`; the
-landings since protocol 10, `fall` since protocol 20). The events `aim`, `peck` (its cells, the bodies it pecked under,
-what fell) and `knock` (the kind, from where to where, or nowhere when the bird ate it; golden; a bead's colour) cross
+landings since protocol 10, `fall` since protocol 20; since protocol 31 its outline, `plan` (the cut's cells left, the
+piece, when it began waiting), and a fight's `zone`, five cells at most, each cell on the board and once). The events `aim`, `peck` (its cells, the bodies it pecked under,
+what fell, a fight's plus) and `knock` (the kind, from where to where, or nowhere when the bird ate it; golden; a bead's colour) cross
 too. Each is checked before it's drawn: a landing a cell and a cell or none.
