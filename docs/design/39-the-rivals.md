@@ -137,7 +137,7 @@ costs 3, and one at the smallest puts a snake out) and a hunger buffer, and no m
 room a snake needs to turn in.
 - **The length worth keeping:** `keep` segments over the smallest (`KEEP`, 10, by default: two crashes and four
   shrinks). Past it a meal is worth only the hunger it stops: one bead to stop hunger, not the whole heap, and along a
-  line of moves the meals after the first count for nothing. With room to spare (`ROOMY`: four times its length of free
+  line of moves the meals after the first count only their stamina or power. With room to spare (`ROOMY`: four times its length of free
   log a snake, and more) food counts as before. Gobbler stays the greediest (`keep` 24: its food share is its
   trademark), Mason keeps 16 (its walls, two thick, need the length), and Ghost, which keeps small on purpose, is the
   most sparing (7); the default is already sparing for the rest.
