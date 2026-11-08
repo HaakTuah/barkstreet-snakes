@@ -80,7 +80,7 @@ lessons too, keeps these rules.
   big leaf-green **Go!**.
 - *Phone words* (`FLAVOR.phone`, and `opts.phone` for lines with names), one line on a 360 px phone: the weather's four
   that took two lines there ("Thunder! Lightning strikes where it crackles.", "Winter. Less food, and hunger comes
-  faster." for both winters, "Snow. Lean times: eat while you can."), the woodpecker's three, the long golden leaf and
+  faster." for both winters, "Snow. Hard times: eat while you can."), the woodpecker's three, the long golden leaf and
   golden mushroom news, the watcher's and the away lines, the friends' lines, and a first out's cause in fewer words
   (`shortCause`: "First out: Capricious was cut by Metagamer."). Where long names (16 characters, the cap) still don't
   fit its line, the first out drops the cause altogether (`opts.short`: "Gran is first out."; several out at once have

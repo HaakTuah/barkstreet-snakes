@@ -97,10 +97,10 @@ const FLAVOR = {
     wind: ['The wind’s up. Apples are falling.', 'A blustery spell: windfall apples.'],
     rain: ['Rain. The mushrooms are sprouting.', 'Here comes the rain, and the mushrooms with it.'],
     storm: ['A storm’s brewing. Watch for the crackle.', 'Thunder on the bark. Lightning strikes where it crackles.'],
-    snow: ['Winter. Less food, and you’ll get hungry faster.', 'Snow on the bark. Lean times: eat while you can.'],
+    snow: ['Winter. Less food, and you’ll get hungry faster.', 'Snow on the bark. Hard times: eat while you can.'],
   },
   // (A line that talks to "you", when you're not in the round: the same news, for everyone.)
-  weatherWatch: { snow: ['Winter. Less food, and everyone gets hungry faster.', 'Snow on the bark. Lean times for everyone.'] },
+  weatherWatch: { snow: ['Winter. Less food, and everyone gets hungry faster.', 'Snow on the bark. Hard times for everyone.'] },
   // The round's food season (2i), after Go (none for a normal one), and its rule, the first time each comes.
   season: {
     lean: ['A lean season. Eat when you can.', 'Lean times on the log. Every bite counts.'],
@@ -108,7 +108,7 @@ const FLAVOR = {
   },
   seasonRule: k => {
     const apples = Math.max(1, TUNE.APPLES + TUNE.SEASONS[k].apples), lean = TUNE.SEASONS[k].beetles < 1;
-    return `${lean ? 'Lean' : 'Plenty'}: ${inWords(apples)} apple${apples === 1 ? '' : 's'} at a time, and ${lean ? 'fewer' : 'more'} beetles. ${lean ? 'Snakes starve in lean rounds.' : 'Snakes grow long, and the log gets crowded.'}`;
+    return `${lean ? 'Lean' : 'Plenty'}: ${inWords(apples)} apple${apples === 1 ? '' : 's'} at a time, ${lean ? 'fewer beetles, and a meal doesn’t keep you as long. Snakes starve in lean rounds.' : 'and more beetles. Snakes grow long, and the log gets crowded.'}`;
   },
   strike: ['Lightning! The bark’s on fire.', 'Crack! Fire on the bark.'],
   rainbow: ['A rainbow! And at its foot, something golden.', 'After the rain, a rainbow. Follow it to the gold.'],
@@ -220,7 +220,7 @@ const FLAVOR = {
   phone: {
     'Thunder on the bark. Lightning strikes where it crackles.': 'Thunder! Lightning strikes where it crackles.',
     'Winter. Less food, and you’ll get hungry faster.': 'Winter. Less food, and hunger comes faster.',
-    'Snow on the bark. Lean times: eat while you can.': 'Snow. Lean times: eat while you can.',
+    'Snow on the bark. Hard times: eat while you can.': 'Snow. Hard times: eat while you can.',
     'Winter. Less food, and everyone gets hungry faster.': 'Winter. Less food, and hunger comes faster.',
     'The woodpecker is here. Keep out of wherever it’s looking.': 'The woodpecker is here. Keep out of its sight.',
     'Rat-a-tat. The woodpecker has come for the log, a patch at a time.': 'Rat-a-tat. The woodpecker has come for the log.',
