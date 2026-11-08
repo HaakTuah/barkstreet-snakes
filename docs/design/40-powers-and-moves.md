@@ -422,7 +422,7 @@ air, as over its own lying wet.
   keep their heads apart, so a head is seldom five in line from a spitter when the second runs out. Neither a hedged lead
   nor closing in three times as hard raised it. Per use (`tools/dev/fork-moves.js --move spit`, seeds 1301–1303, 384
   spits, each against that mushroom gone unspat): place −0.035 ± 0.123, −0.021 ± 0.115 and +0.054 ± 0.103 a spit, about
-  nothing. The spitters come out even, a design finding for the owner (#583); kept as built until he answers.
+  nothing (a spit against none, so aiming it can add no more). The spitters come out even, a design finding for the owner (#583); kept as built until he answers.
 
 ### Where it rolls is a rule, never chance
 
