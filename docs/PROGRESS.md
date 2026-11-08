@@ -7,8 +7,9 @@ when it is merged into `develop`; add the owner's new tasks where he places them
 
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
-**The main lane waits on the owner:** item 5's part 7 (one pricing model, built afresh) waits on 2ab, which is blocked on
-#574, and 2y++'s last step waits on part 7. Part 4 (#198,
+**The main lane is 2b** (hunger's worth at a contested apple), the first open entry that waits on nothing: item 5's part 7
+(one pricing model, built afresh) waits on 2ab, which is blocked on #574, and 2y++'s last step waits on part 7, so both
+are skipped until #574 is answered. Part 4 (#198,
 merged as it stands), 2y, 2y+, part 5, 2x, 2z, 2u, 2u+, 2q, 2y++ steps 1 to 3 (PRs #550, #588, #591), 3b+ (PR #580; its finding, that spitters come out even, is
 #583) and part 6 (PR #584) before it are done. The polish lane and the workshop lane run beside it, each claimed by a draft PR.
 
