@@ -89,8 +89,9 @@ what each changes: `SEASONS` in `tuning.js`).
     `AI_CROWD_KEEP` 2 the weighing cancelled most of the season (meals 7% over a normal round), so it is 3. A lean
     round's use theirs about a fifth less (3.4 to 3.7).
   - **Every trademark** keeps its place against the field (`--signatures`), and per-rival wins move within the noise
-    of about 90 rounds each (at most 13 points either way; Gobbler 20 to 9% and Creeper 19 to 32% are the ones to
-    watch).
+    of about 90 rounds each (at most 13 points either way, as many up as down; Gobbler 20 to 9%, Creeper 19 to 32%,
+    Ghost 34 to 24% and Sniper 39 to 27% are the ones to watch). Ghost's and Sniper's drop isn't their lean play: the
+    same rounds with their fed restraint kept in a lean round give them 0 to 2 points more.
   - **The season play, head to head** (rivals that play it against a copy blind to it, 600 paired rounds on seeds 21
     and 22, at `AI_CROWD_KEEP` 2): even in wins, place, time alive and kills, eating 2 less a snake a round, so the play
     is a matter of character, not an edge (#602 asks the owner whether to keep it).
