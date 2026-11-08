@@ -61,6 +61,6 @@ const seasonTakes = (season, key, len, others = [aiRival(1, [[22, 2], [22, 3], [
 { // Plentiful: on a crowded log a long rival weighs growing against the room it costs (as in the endgame): it passes up an apple it takes in a normal round.
   const row = (y0, n) => { const c = []; for (let i = 0, x = 23, y = y0, d = -1; i < n; i++) { c.push([x, y]); x += d; if (x < 0 || x > 23) { d = -d; x += d; y++; } } return c; };
   const crowd = [aiRival(1, row(0, 60), 'left'), aiRival(2, row(4, 60), 'left'), aiRival(3, row(8, 40), 'left')];
-  const took = ['drab', 'mute'].map(k => [seasonTakes('normal', k, 30, crowd), seasonTakes('plentiful', k, 30, crowd)]);
+  const took = ['drab', 'mute'].map(k => [seasonTakes('normal', k, 40, crowd), seasonTakes('plentiful', k, 40, crowd)]);
   check('in a plentiful season a long rival on a crowded log passes up growth it takes in a normal round (Drab, Mute)', took.every(([n, p]) => n && !p), JSON.stringify(took));
 }
