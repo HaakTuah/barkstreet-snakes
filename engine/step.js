@@ -13,6 +13,7 @@
 // | { type: 'knock', kind, x, y, tx, ty, gold, color } (food the strike knocked from x, y to tx, ty, or eaten: tx, ty null;
 //   gold: 1, a golden beetle; color: a bead's)
 // | { type: 'cut', snake, x, y, lost, by } (a dash (by: who) cut it: its tail fell off) | { type: 'flown', x, y } (a beetle got away)
+// | { type: 'spill', snake, x, y, leaps, dashes } (a snake out spilled the golden jumps and dashes it held: a pickup at x, y)
 // | { type: 'rot', x, y, kind, color } (an apple (kind 'apple') or a bead ('pellet', in its color) rotted away)
 // | { type: 'lastApples', x, y } (sudden death's first apple fell: the last apples come one at a time)
 // | { type: 'baked', x, y, kind } | { type: 'ash', x, y, kind } (food in the fire)
@@ -376,6 +377,7 @@ function step(game) {
       const expires = game.tick + Math.round(T.PELLET_TICKS * (cooked ? T.PELLET_COOKED : 1) * between(0.75, 1.25));
       game.food.push(cooked ? { x, y, kind: 'pellet', color, owner, expires, cooked: 1 } : { x, y, kind: 'pellet', color, owner, expires });
     };
+    for (const s of dying) spill(game, s); // (first: the beads keep off its cell)
     for (const s of dying) {
       s.diedAt = game.tick;
       game.events.push({ type: 'death', snake: s });

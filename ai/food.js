@@ -55,7 +55,7 @@ function readAppetite() {
 // How many ticks something I saw has left before it rots, withers or
 // flies off (in winter an apple rots twice as fast, and has done since I saw it).
 // (readFood() sets these for each decision:)
-let ticksLeft, appleWorth, craving, worth, spitTaste, shroomWorth, mute, stampFood, stampOwn, marksEnd, burrows,
+let ticksLeft, appleWorth, craving, worth, spitTaste, shroomWorth, spillWorth, mute, stampFood, stampOwn, marksEnd, burrows,
   engine, strikeAt, lands, beakOf, knockedTo, peckGame, cellOf, foodCount, goldCount, bugCount, bugFood, beadCount;
 function readFood() {
   ticksLeft = f => winter && f.kind === 'food' && !f.cooked ? (f.expires - view.tick - age) / 2 : f.expires - view.tick; // (baked, it keeps)
@@ -82,6 +82,10 @@ function readFood() {
     leaf: 2 * Math.max(appleWorth, hunger, 0.5) * craving.power, // (golden powers: worth it for what they do)
     goldcap: 1.5 * Math.max(appleWorth, hunger, 0.5) * craving.power,
   };
+  // A knocked-out snake's spilled charges (round six B, dropped charges):
+  // each golden jump or dash I could still hold worth what one from a
+  // golden leaf is; with no room for any, a meal still.
+  spillWorth = f => Math.max(worth.food, (Math.min(f.leaps, TUNE.LEAP_MAX - me.leaps) + Math.min(f.dashes, TUNE.DASH_MAX - me.dashes)) * Math.max(appleWorth, hunger, 0.5) * craving.power);
   // A mushroom (round six B): it costs me as many apples as it's strong;
   // but with a shot, each segment's worth less the longer I am (a whole
   // apple up to 10 long), against the shot: as many segments off the nearest rival I could reach
@@ -163,7 +167,7 @@ function readFood() {
     if (i < 0) continue; // (nowhere to knock it: the bird eats it)
     if (f.spitBy === me.id && f.slideUntil > view.tick) foodFrom[i] = Math.max(foodFrom[i], f.slideUntil - view.tick + 1); // (what I just spat I slide over, as the engine has it, till then)
     foodGrow[i] = own ? 0 : f.kind === 'mushroom' ? -(f.power || TUNE.SHRINK) : f.kind === 'golden' ? TUNE.GOLDEN_GROWTH : f.kind === 'beetle' ? TUNE.BEETLE_GROWTH : f.cooked ? TUNE.COOKED_GROWTH : 1;
-    let v = own ? 0 : f.kind === 'mushroom' ? shroomWorth(f) : worth[f.kind] ?? 0;
+    let v = own ? 0 : f.kind === 'mushroom' ? shroomWorth(f) : f.kind === 'spill' ? spillWorth(f) : worth[f.kind] ?? 0;
     if (!v) continue;
     if (f.cooked && v > 0) v *= TUNE.COOKED_GROWTH; // (baked: worth more)
     if (f.gold && v > 0) v *= 1.5 * craving.power; // (a golden beetle: leaps too)
@@ -172,7 +176,7 @@ function readFood() {
     if (desperate && v > 0 && away > lifeTicks + 1) continue; // (I'd starve on the way)
     foodValue[i] += v;
     foodCells[foodCount++] = i;
-    if (craving.contested && v > 0 && (f.gold || f.kind === 'leaf' || f.kind === 'goldcap')) goldCells[goldCount++] = i;
+    if (craving.contested && v > 0 && (f.gold || f.kind === 'leaf' || f.kind === 'goldcap' || f.kind === 'spill' && v > worth.food)) goldCells[goldCount++] = i;
   }
   // (For the territory search, which can stop once I claim nothing more
   // unless food a rival gets to could still be mine: the rivals' own

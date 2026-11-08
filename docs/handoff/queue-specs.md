@@ -47,8 +47,7 @@ and 3c. A playable draft PR as early as it can be, so the owner can try it.
 
 *Done so far:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195); their words and detail are in `docs/archive/progress-done/item-5-parts.md`, "Item 5, its done parts".
 
-*Where it stands:* the parts left and their order are in `docs/PROGRESS.md`, item 5 (part 6 is *built and reviewed*
-on `round6b/dropped-charges`: merge `develop` into it, renumber its protocol after part 4's, run its A/B; part 7 is
+*Where it stands:* the parts left and their order are in `docs/PROGRESS.md`, item 5 (part 6 is done, PR #584; part 7 is
 *parked* on `round6b/pricing`; part 3's numbers to watch there: Joker and Sovereign low on single seeds, Gobbler's and
 Vulture's shares a little lower). Mason's double walls are kept (the owner, 29 October 2026). The 29 October status this
 replaced is in git history (the file-by-file review, 2 November 2026).
@@ -83,9 +82,11 @@ design's words for each are in `docs/design/40-powers-and-moves.md` (as first de
    **bumps in the air** (a crash's cost, and you drop where you are: over fire you catch alight too, over a hole you
    fall in, onto a snake you're out, trapped). Its A/B came out even with leap now and the flight measured together, so (the owner, 31 October 2026: "Yes, please, expertly!", to splitting it): the flight and leap now are measured apart; the rivals learn the flight's uses (out of a box, across to food, cutting off, steering planned in the air) until fliers come out ahead; the golden flash is measured on its own in the same pass and its use taught where it falls short; if the flight pays and leap now doesn't, the flight merges without leap now, and leap now comes back to the owner. "The rivals fly it as a person would" and "The golden flash cuts deeper" in `docs/design/29-round-six-b-the-new-moves.md`.
 5. **Gold portals for the wrap:** anyone may follow through for about a second after your body passes. In six test rounds nobody followed, so the time it stays open is lengthened step by step until following makes a gameplay difference from time to time (the owner, 31 October 2026: "Then we can increase the time it is open, until it actually makes a gameplay difference from time to time."), after checking that the rivals see the chance at all: "Open long enough to matter" in `docs/design/29-round-six-b-the-new-moves.md`.
-6. **Dropped charges** on a knockout, as above. *Built and reviewed* on `round6b/dropped-charges` (a spilled gold coin ringed with the pips; rules tests; review fixes in; protocol to renumber when it merges); still to do: the A/B against rivals that ignore spills (a copy is easy: zero the spill's worth in `ai.js`), pictures, the PR.
+6. **Dropped charges** on a knockout, as above (done, PR #584: "Dropped charges" in `docs/design/40-powers-and-moves.md`).
 7. **One pricing model for every power,** as above, last, and built afresh on top of 2u's one stamina, not resumed from the parked pass (the owner, 2 November 2026); the parked pass on `round6b/pricing` is a reference for its findings only (*a first pass is parked* on `round6b/pricing`: the tail tip at length's worth now, rests cheaper while idle with a floor, risk by `headRisk`; on seeds 51/53 the seat-split already shows powers on beating off, 33.6% to 16.4%, with the island hop alone, and this pass did no better, 33.3% to 16.7%, flashing more; a direct head-to-head against today's AI was stopped at look 4, its rounds cached), so it prices every move together, with **each rival's power
    style** ("Every rival has a power style"); the design's "Balance targets" are its measure.
+   Part 7 also prices how far a rival goes for spilled charges (part 6, PR #584: four in five of the spills it misses
+   lie about 12 cells off; a grab's charges are worth what a leaf's are).
    Part 7 also takes two of the improvement audit's finds (31 October 2026; the owner: "Agreed to all, expertly!"): **the trademarks
    that never show** (Mute's boxing and Joker's lures level with the field, Mason's body beside itself below it) get
    measures that catch the behaviour first (Mute's boxing counting the kills it gets by boxing; it leads the kills at

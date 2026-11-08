@@ -327,7 +327,7 @@ Chatter.onBubble((s, text) => {
   Sound.play('babble', { voice: s.personaKey, chars: text.length, tight: state === 'running' ? dangerNow : 0, ...at(s.body[0].x) });
 });
 // The sound of each thing you eat (anything else is an apple).
-const EAT_CUES = { goldcap: 'wrap', golden: 'golden', leaf: 'leaf', pellet: 'meat', mushroom: 'mushroom', beetle: 'crunch' };
+const EAT_CUES = { goldcap: 'wrap', golden: 'golden', leaf: 'leaf', spill: 'golden', pellet: 'meat', mushroom: 'mushroom', beetle: 'crunch' };
 // Apples eaten in quick succession climb a scale: a streak you can hear.
 let streak = 0, streakAt = -1e9;
 // The snake whose head is nearest a cell (the one a beetle there is fleeing, as the engine reckons it).

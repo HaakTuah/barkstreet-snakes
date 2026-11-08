@@ -10,9 +10,13 @@
 // move it would have made with the move's price waived)?
 // --rest forbids that rival the move for the rest of the round in the play without it: one tick measures when to use
 // it (the rival still holds it and uses it later), the rest of the round whether having it helps.
-//   node tools/dev/fork-moves.js <root> --move fly|now|dash|portal|spit|power|golden [--rounds 40] [--seed 1] [--per-round 4] [--forced] [--rest] [--json]
+//   node tools/dev/fork-moves.js <root> --move fly|now|dash|portal|spit|power|golden|grab|charges [--rounds 40] [--seed 1] [--per-round 4] [--forced] [--rest] [--json]
 //     fly: a golden flight held past the plain hop (always GOLD_FLY cells); now: a plain leap now; dash: a golden flash;
 //     portal: following someone through a gold portal (no --forced)
+//     grab (part 6): at each spill of dropped charges, the rival whose head is nearest it, played on as it went and
+//       ignoring spills for the rest of the round (chosen before either play, so neither is picked for its luck). No --forced or --rest.
+//     charges (part 6): golden charges a rival eats, from a spill or a golden leaf, played on as it went and with the
+//       charges that meal gave taken back (the meal itself kept): what the charges are worth, a grab against a leaf. No --forced or --rest.
 //     spit (3b+): a mushroom spat along its line, against the same mushroom gone from the cheek unspat (no --forced or --rest)
 //     power (2u+): a plain jump or flash used with both in the bar, played on with the jump, the flash and neither
 //       (which was the more useful, each moment). No --forced or --rest.
@@ -41,6 +45,7 @@ function patchAI(text) {
   swap('    for (let n = 0; n < portalIn.length; n++) {\n      const e = portalIn[n], q = portalEx[n];', '    for (let n = 0; n < (globalThis.__forbid.portal.has(me.id) ? 0 : portalIn.length); n++) {\n      const e = portalIn[n], q = portalEx[n];'); // (nor plans room through one: the A/B's B side)
   swap('if (se < CLAIMED || !tag || portalLeft', 'if (se < CLAIMED || (globalThis.__forbid.portal.has(me.id) ? tag <= 1 : !tag) || portalLeft');
   swap('!portalOut(sx, sy, d, 1)) return -1;', '!portalOut(sx, sy, d, 1) || globalThis.__forbid.portal.has(me.id)) return -1;');
+  swap('spillWorth = f => Math.max(', 'spillWorth = f => globalThis.__forbid.grab.has(me.id) ? 0 : Math.max('); // (grab: dropped charges worth nothing to me)
   swap('if (me.dashes > 0) { const v', 'if (me.dashes > 0 && !globalThis.__forbid.dash.has(me.id)) { const v');
   // (--forced: the move's price waived, so it's taken wherever it scores above the crawl)
   swap('v += extra - (price * (full ? 1 : habit.price) + wait) * cheap * U;', 'v += extra - (globalThis.__force.any.has(me.id) && (flash ? globalThis.__force.dash.has(me.id) : (globalThis.__force.fly.has(me.id) && leapFly) || (globalThis.__force.now.has(me.id) && leapNow)) ? 0 : (price * (full ? 1 : habit.price) + wait) * cheap * U);');
@@ -55,7 +60,7 @@ let rngState = 0;
 const rng = () => { rngState = (rngState + 0x6d2b79f5) >>> 0; let t = rngState; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 const M = Object.create(Math); M.random = rng;
 const ctx = vm.createContext({ window: {}, console, Math: M });
-const empty = () => ({ fly: new Set(), now: new Set(), dash: new Set(), portal: new Set(), spit: new Set(), any: new Set(), pjump: new Set(), pdash: new Set() });
+const empty = () => ({ fly: new Set(), now: new Set(), dash: new Set(), portal: new Set(), spit: new Set(), grab: new Set(), any: new Set(), pjump: new Set(), pdash: new Set() });
 ctx.__forbid = empty(); ctx.__force = empty();
 const gameFiles = require('../game-files.js'), files = gameFiles(root), read = f => fs.readFileSync(path.join(root, f), 'utf8');
 vm.runInContext(read('tuning.js'), ctx, { filename: 'tuning.js' });
@@ -86,11 +91,12 @@ const could = s => s.alive && !s.flight && (MOVE === 'dash' ? s.dashes > 0 : MOV
 let currentGame = null;
 
 // Play g on to the end of its round; the order snakes went out in. ({ id: place, alive ms after the fork })
-function playOut(g, from) {
+function playOut(g, from, seen) {
   const out = new Map(), t0 = g.time, len10 = new Map();
   let left = g.snakes.filter(s => s.alive).length;
   while (g.snakes.filter(s => s.alive).length > 1 && g.time < MAX_TIME) {
     const dying = E.step(g);
+    seen?.(g);
     if (g.time - t0 >= 10000 && !len10.size) for (const s of g.snakes) len10.set(s.id, s.alive ? s.body.length + Math.max(0, s.grow) : 0);
     for (const s of dying) out.set(s.id, { place: left, alive: g.time - t0, len10: 0, cause: s.cause });
     left -= dying.length;
@@ -132,6 +138,8 @@ for (let r = 0; r < ROUNDS; r++) {
       continue;
     }
     E.step(g);
+    if (MOVE === 'charges') { const e = g.events.find(e => e.type === 'eat' && (e.kind === 'spill' || e.kind === 'leaf') && !e.snake.isPlayer); if (e) { charges(before, snap(g), e.snake.id, e.kind, e.snake.name, g.events); forks++; g = back(snap(g)); } continue; }
+    if (MOVE === 'grab') { const e = g.events.find(e => e.type === 'spill'); if (e && grab(snap(g), g, e)) forks++; if (e) g = back(snap(g)); continue; }
     const s0 = g.snakes.find(s => !s.isPlayer && used(g, s));
     if (!s0) continue;
     const id = s0.id, after = snap(g);
@@ -168,6 +176,47 @@ function golden(before, after, id, persona, otherMeal) {
   const S = play((x, s) => { bare(s); s.restedAt = Math.min(s.restedAt, x.time); s.shieldUntil = x.time + SHIELD_MS; });
   diffs.push({ ...d(A, B), plain: d(N, P), vigour: d(F, N), shield: d(S, F), rested: was.restedAt > then.time ? 1 : 0, persona });
 }
+// Part 6: a spill of dropped charges, e. The living rival whose head is nearest it plays on as it went (A) and
+// ignoring spills for the rest of the round (B), from the same random numbers. Diffs: what wanting them gave it,
+// with whether it grabbed them in each play.
+function grab(after, g, e) {
+  const near = s => Math.abs(s.body[0].x - e.x) + Math.abs(s.body[0].y - e.y);
+  const s0 = g.snakes.filter(s => s.alive && !s.isPlayer).sort((a, b) => near(a) - near(b) || a.id - b.id)[0];
+  if (!s0) return false;
+  const id = s0.id;
+  // (This spill and no other, followed where the woodpecker knocks it, until someone eats it or it's gone: who ate it, or -1.)
+  const play = forbid => {
+    const x = back(after); let at = { x: e.x, y: e.y }, eater = -1;
+    if (forbid) ctx.__forbid.grab.add(id);
+    const out = playOut(x, 0, y => {
+      if (!at) return;
+      for (const v of y.events) {
+        if (v.type === 'knock' && v.kind === 'spill' && v.x === at.x && v.y === at.y) { at = v.tx == null ? null : { x: v.tx, y: v.ty }; if (!at) return; }
+        else if (v.type === 'eat' && v.kind === 'spill' && v.x === at.x && v.y === at.y) { eater = v.snake.id; at = null; return; }
+      }
+      if (!y.food.some(f => f.kind === 'spill' && f.x === at.x && f.y === at.y)) at = null; // (faded)
+    });
+    ctx.__forbid = empty();
+    return { out: out.get(id), got: eater === id ? 1 : 0, other: eater >= 0 && eater !== id ? 1 : 0 };
+  };
+  const A = play(false), other = A.other; // (in the play as it went, someone else ate it)
+  const B = play(true);
+  const room = Math.min(e.leaps, T.LEAP_MAX - s0.leaps) + Math.min(e.dashes, T.DASH_MAX - s0.dashes);
+  diffs.push({ ...d(A.out, B.out), gotA: A.got, gotB: B.got, away: near(s0), room, other, persona: s0.name });
+  return true;
+}
+// Part 6: snake id ate golden charges this tick (kind: 'spill' or 'leaf'). Played on from after it as it went (A) and
+// with the charges that meal gave taken back (B), the meal itself kept. Diffs: what the charges were worth.
+// (What the meal gave: what it holds now, less what it held before the tick and didn't spend in it: a golden leap or
+// dash the same tick goes before the meal.)
+function charges(before, after, id, kind, persona, events) {
+  const was = back(before).snakes[id], now = back(after).snakes[id];
+  const spentL = events.filter(v => v.type === 'leap' && v.gold && v.snake.id === id).length, spentD = events.filter(v => v.type === 'dash' && !v.plain && v.snake.id === id).length;
+  const gl = Math.min(now.leaps, Math.max(0, now.leaps - (was.leaps - spentL))), gd = Math.min(now.dashes, Math.max(0, now.dashes - (was.dashes - spentD)));
+  if (!gl && !gd) return;
+  const play = take => { const x = back(after), s = x.snakes[id]; if (take) { s.leaps -= gl; s.dashes -= gd; } rngState = after.rng; return playOut(x).get(id); };
+  diffs.push({ ...d(play(false), play(true)), kind, gained: gl + gd, persona });
+}
 // 2u+: a plain jump or flash used with both in the bar and no golden ones held, played on three ways from the tick
 // before: with the jump (the flash forbidden, the jump taken wherever it can go, at no price), with the flash (the
 // other way round) and with neither. Kept only where both could go. Diffs: the jump against the flash, and each
@@ -196,6 +245,8 @@ function power(before, g, s0) {
 const mean = k => diffs.reduce((t, d) => t + d[k], 0) / Math.max(1, diffs.length);
 const se = k => { const m = mean(k); return Math.sqrt(diffs.reduce((t, d) => t + (d[k] - m) ** 2, 0) / Math.max(1, diffs.length - 1) / Math.max(1, diffs.length)); };
 const res = { move: MOVE, forced: FORCED, seed: SEED, rounds: ROUNDS, uses: diffs.length, place: mean('place'), placeSE: se('place'), win: mean('win'), winSE: se('win'), alive: mean('alive'), aliveSE: se('alive'), out5: mean('out5'), out5SE: se('out5'), len10: mean('len10'), len10SE: se('len10') };
+if (MOVE === 'charges') for (const k of ['spill', 'leaf']) { const xs = diffs.filter(x => x.kind === k), m = f => xs.reduce((t, x) => t + x[f], 0) / Math.max(1, xs.length), e = f => Math.sqrt(xs.reduce((t, x) => t + (x[f] - m(f)) ** 2, 0) / Math.max(1, xs.length - 1) / Math.max(1, xs.length)); console.log(`charges from a ${k}: ${xs.length} eaten, ${m('gained').toFixed(2)} charges each · place ${m('place').toFixed(3)} ± ${e('place').toFixed(3)} · wins ${(100 * m('win')).toFixed(1)} ± ${(100 * e('win')).toFixed(1)} points · alive ${m('alive').toFixed(1)} ± ${e('alive').toFixed(1)} s`); }
+if (MOVE === 'grab') Object.assign(res, { grabbedA: mean('gotA'), grabbedB: mean('gotB'), away: mean('away') }); // (part 6: how often the nearest grabbed the spill, wanting it and not, and how far it was)
 if (MOVE === 'golden') { // (the three comparisons, each paired over the same eats)
   const row = (name, pick) => { const xs = diffs.map(pick), m = k => xs.reduce((t, d) => t + d[k], 0) / Math.max(1, xs.length), e = k => Math.sqrt(xs.reduce((t, d) => t + (d[k] - m(k)) ** 2, 0) / Math.max(1, xs.length - 1) / Math.max(1, xs.length)); return `${name}: place ${m('place').toFixed(3)} ± ${e('place').toFixed(3)} · wins ${(100 * m('win')).toFixed(1)} ± ${(100 * e('win')).toFixed(1)} points · alive ${m('alive').toFixed(1)} ± ${e('alive').toFixed(1)} s · length at 10 s ${m('len10').toFixed(2)} ± ${e('len10').toFixed(2)}`; };
   console.log(`golden apples: ${diffs.length} eaten in ${ROUNDS} rounds (seed ${SEED}); bar not full when eaten: ${(diffs.reduce((t, d) => t + d.rested, 0) / Math.max(1, diffs.length)).toFixed(2)}`);
@@ -215,4 +266,4 @@ if (MOVE === 'golden') { // (the three comparisons, each paired over the same ea
   for (const p of Object.keys(by).sort()) console.log(`  ${p}: ${share(by[p])}`);
   if (JSON_OUT) console.log(JSON.stringify({ seed: SEED, rounds: ROUNDS, diffs }));
 } else if (JSON_OUT) console.log(JSON.stringify({ ...res, diffs }));
-else console.log(`${FORCED ? 'forced ' : ''}${MOVE}: ${diffs.length} uses in ${ROUNDS} rounds (seed ${SEED}) · place gained a use ${res.place.toFixed(3)} ± ${res.placeSE.toFixed(3)} · wins ${(100 * res.win).toFixed(1)} ± ${(100 * res.winSE).toFixed(1)} points · alive ${res.alive.toFixed(1)} ± ${res.aliveSE.toFixed(1)} s · out within 5 s saved ${(100 * res.out5).toFixed(1)} ± ${(100 * res.out5SE).toFixed(1)} points · length at 10 s ${res.len10.toFixed(2)} ± ${res.len10SE.toFixed(2)}`);
+else console.log(`${FORCED ? 'forced ' : ''}${MOVE}: ${diffs.length} uses in ${ROUNDS} rounds (seed ${SEED}) · place gained a use ${res.place.toFixed(3)} ± ${res.placeSE.toFixed(3)} · wins ${(100 * res.win).toFixed(1)} ± ${(100 * res.winSE).toFixed(1)} points · alive ${res.alive.toFixed(1)} ± ${res.aliveSE.toFixed(1)} s · out within 5 s saved ${(100 * res.out5).toFixed(1)} ± ${(100 * res.out5SE).toFixed(1)} points · length at 10 s ${res.len10.toFixed(2)} ± ${res.len10SE.toFixed(2)}${MOVE === 'grab' ? ` · the nearest grabbed it ${(100 * res.grabbedA).toFixed(0)}% wanting it, ${(100 * res.grabbedB).toFixed(0)}% not (${res.away.toFixed(1)} cells away)` : ''}`);

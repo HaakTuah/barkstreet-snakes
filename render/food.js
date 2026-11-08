@@ -82,6 +82,7 @@ function flyingSprite(f, b) {
   if (f.kind === 'mushroom') return mushroomSprite(f.power);
   if (f.kind === 'leaf') return goldLeafSprite();
   if (f.kind === 'goldcap') return goldcapSprite();
+  if (f.kind === 'spill') return goldenSprite(); // (spilled charges knocked aside: a glint of gold in the air)
   const left = f.expires != null ? f.expires - game.tick : 999;
   return appleSprite(f.cooked ? 'baked' : left > 50 ? 'fresh' : left > 22 ? 'bruised' : 'rotten');
 }
@@ -497,8 +498,9 @@ function drawFood(alpha, now) {
         b.next = now + 250 + Math.random() * 300; // (poison spores, puffing off it)
         mote(x + (Math.random() - 0.5) * CELL * 0.5, y - CELL * 0.12, (Math.random() - 0.5) * 8, -12 - Math.random() * 8, 1700, 1.8 + Math.random() * 1.2, 0);
       }
-    } else if (f.kind === 'leaf' || f.kind === 'goldcap') {
-      // Golden powers: a glow, a gentle flutter (the leaf) or bob (the mushroom), and glints.
+    } else if (f.kind === 'leaf' || f.kind === 'goldcap' || f.kind === 'spill') {
+      // Golden powers: a glow, a gentle flutter (the leaf), a bob (the mushroom) or a slow turn (a knocked-out
+      // snake's spilled charges, round six B part 6: a gold coin ringed with the pips it held), and glints.
       const left = f.expires != null ? f.expires - game.tick : 999;
       const fade = left > 20 ? 1 : 0.4 + 0.6 * Math.max(0, left) / 20;
       const glow = pop * (1.1 + (lively ? 0.16 * Math.sin(t * 4) : 0)), w = SPRITE * CELL * glow;
@@ -510,6 +512,11 @@ function drawFood(alpha, now) {
         shadowAt(x + 2, y + CELL * 0.3, pop * 0.7);
         ctx.globalAlpha = fade;
         blitAbout(goldLeafSprite(), x, y - CELL * 0.05 + lift, 0, 0, pop, pop * (lively ? 0.94 + 0.06 * Math.cos(t * 2.2) : 1), tilt * 0.5);
+        ctx.globalAlpha = 1;
+      } else if (f.kind === 'spill') {
+        shadowAt(x + 1, y + CELL * 0.3, pop * 0.7);
+        ctx.globalAlpha = fade;
+        drawSpill(x, y, pop, f.leaps, f.dashes, lively ? t * 0.8 : 0);
         ctx.globalAlpha = 1;
       } else {
         const bob = lively ? Math.sin(t * 2.5) * CELL * 0.04 : 0;
@@ -653,6 +660,22 @@ const drawGoldLeaf = g => {
 // its cap in the golden leaf's Honey and inked like it, with white spots
 // (ringed, so they show on the pale gold) and a shine.
 const goldcapSprite = () => sprite('goldcap', '', drawGoldcap);
+// Spilled charges at x, y, scaled by k: a gold coin ringed with a sky pip
+// for each golden jump and an ember one for each dash, as they were on the
+// head that held them, turned by `turn`. (The Field guide draws it too.)
+function drawSpill(x, y, k, leaps, dashes, turn) {
+  const r = CELL * 0.3 * k;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, TAU);
+  ctx.fillStyle = '#facc15'; ctx.fill(); // (the crown's gold)
+  ctx.strokeStyle = INK; ctx.lineWidth = CELL * 0.07 * k; ctx.stroke();
+  ctx.beginPath(); ctx.arc(x, y, r * 0.6, 0, TAU); ctx.strokeStyle = HONEY; ctx.lineWidth = CELL * 0.05 * k; ctx.stroke(); // (its rim)
+  ctx.beginPath(); ctx.arc(x - r * 0.35, y - r * 0.35, r * 0.18, 0, TAU); ctx.fillStyle = GLINT; ctx.fill();
+  const n = leaps + dashes;
+  for (let i = 0; i < n; i++) {
+    const a = turn + TAU * i / n - Math.PI / 2;
+    drawPip(x + Math.cos(a) * CELL * 0.46 * k, y + Math.sin(a) * CELL * 0.46 * k, a, CELL * 0.09 * k, i < leaps);
+  }
+}
 const drawGoldcap = g => {
   const c = CELL;
   g.lineJoin = 'round';
