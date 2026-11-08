@@ -1,7 +1,9 @@
 // An apple: it rots away after a while (and another drops somewhere else).
 const apple = game => ({ kind: 'food', expires: game.tick + Math.round(T.APPLE_TICKS * between(0.75, 1.25)) });
-// How many apples the board keeps: two; in winter, one.
-const applesWanted = game => game.weather.kind === 'snow' ? T.SNOW_APPLES : T.APPLES;
+// How many apples the board keeps: two; in winter, one; one fewer in a lean
+// season and one more in a plentiful one (2i), never none.
+const seasonApples = (season, snow = false) => Math.max(1, (snow ? T.SNOW_APPLES : T.APPLES) + T.SEASONS[season].apples); // (the Field guide and the lesson count them here too)
+const applesWanted = game => seasonApples(game.season, game.weather.kind === 'snow');
 function fillFood(game) {
   // Apples, golden apples and beads rot, mushrooms wither, and beetles nobody caught fly off.
   if (game.food.some(f => f.expires != null && f.expires <= game.tick)) {

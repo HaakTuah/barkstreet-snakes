@@ -124,6 +124,8 @@ declare namespace Engine {
     /** By cell. */
     fires: Map<number, Fire>;
     weather: Weather;
+    /** The round's food season (2i): a key of TUNING.SEASONS. */
+    season: 'lean' | 'normal' | 'plentiful';
     events: Event[];
     /** Whether any rival was chosen, not dealt (set by the game, not the engine). */
     chosen?: boolean;
@@ -168,7 +170,7 @@ interface Window {
   Peer?: PeerJS.PeerClass;
   SnakeAI: { PERSONAS: Record<string, unknown> };
   SnakeRecords: { cleanName(text: unknown): string };
-  TUNING: { GRID: number; SHRINK_MAX: number; SPIT_REACH: number; LEAP_MAX: number; DASH_MAX: number };
+  TUNING: { GRID: number; SHRINK_MAX: number; SPIT_REACH: number; LEAP_MAX: number; DASH_MAX: number; SEASONS: Record<string, unknown> };
   // Made by these two files (their shapes are the files themselves).
   SnakeNet: unknown;
   SnakeOnline: unknown;

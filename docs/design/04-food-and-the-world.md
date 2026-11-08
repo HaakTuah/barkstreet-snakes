@@ -19,8 +19,9 @@
 How much food there is and how long a meal keeps you, as round four and round six A settled it (their text, with what
 was tried and measured, is in `docs/archive/design-food.md`).
 
-- **Two apples all round** (`APPLES`; one in winter, `SNOW_APPLES`: see "Weather"): eaten or rotted, another drops
-  somewhere. Beetles carry more of the food (see "Less fruit, more beetles").
+- **Two apples all round** (`APPLES`; one in winter, `SNOW_APPLES`: see "Weather"; a food season adds or takes one:
+  see "Food seasons"): eaten or rotted, another drops somewhere. Beetles carry more of the food (see "Less fruit, more
+  beetles").
 - **A meal keeps you 20 s** (`HUNGER_MS`) in the opening and once the woodpecker has come, and **12 s mid-round**
   (`HUNGER_MID_MS`, from 0:45, `HUNGER_MID_FROM_MS`), so hunger matters in the middle of the round too. Each snake keeps
   how long its last meal keeps it (`mealMs`, carried online), and its tag's bar is measured against that, so it's full
@@ -52,6 +53,48 @@ was tried and measured, is in `docs/archive/design-food.md`).
   owner, its heat and whether it's cooked, and a spat mushroom's strength (`MealRow` in `online.js`), and each snake's
   row its `mealMs`; the events say what was eaten, what rotted (an apple or a bead, and the bead's colour), what baked
   or burned to ash, what came, and where the last apples started to fall (`lastApples`).
+
+### Food seasons
+
+Each round draws its food season, as it draws its weather, so rounds don't feel alike (the owner, 29 October 2026, in
+`docs/handoff/queue-specs.md`, "2i"): lean one round in four, normal one in two, plentiful one in four (`SEASON_ODDS`;
+what each changes: `SEASONS` in `tuning.js`).
+- **Lean:** one apple fewer (never none: in winter it stays one), beetles half as often, and a meal keeps you 70% as
+  long (12 s mid-round becomes 8.4).
+- **Plentiful:** one apple more and beetles half again as often (winter keeps two). Snakes grow long, and the log crowds.
+- **Seen and taught:** a lean or plentiful round says so in a banner after Go ("A lean season…", "A season of
+  plenty!"), its colour dry bark or fresh leaves, and the first time each comes in a visit a lesson follows with its
+  rule; a normal round says nothing. The Field guide's "Seasons" row (after the apple) holds the rule. Everyone, the
+  rivals included, sees the season (`aiView().season`).
+- **The rivals play it** (`readAppetite` in `ai/food.js`): in a lean round none is ever too fed to eat (Ghost's and
+  Sniper's `hungryBelow` doesn't apply), and in a plentiful one each weighs growth past `AI_CROWD_KEEP` times its
+  endgame keep against the room it costs, as everyone does from the woodpecker on ("The endgame: a meal is worth the
+  life it buys", `39-the-rivals.md`). A lean round's sparing needs no rule of its own: with fewer meals less stamina
+  comes back (2u+), and its snakes use their powers about a fifth less.
+- **Online** the host draws the season and sends it with the weather (`sky`, protocol 29).
+- **Measured** (the shipped build, 200 rounds each on seeds 3 and 11; develop had 3% of deaths starved, and every
+  round's middle half ran about 172 to 187 s):
+  - **Starving** is 5 to 6% of all deaths: 15 to 18% of a lean round's, 3% of a normal one's, 1 to 2% of a plentiful
+    one's. Fewer apples and beetles alone moved a lean round only to 8% (beads are most of the food), hence the
+    shorter meal.
+  - **Length:** snakes are about 28 long when the woodpecker comes in a lean round, 38 in a normal one and 40 to 42 in a
+    plentiful one. Meals (bites, not growth) run about 19, 26 and 29 to 32 a snake-minute.
+  - **Deaths by cause** shift by season: a lean round has fewer deaths against bodies (30 to 33% against 45 to 49%)
+    and more neck cuts (15 to 16% against 7 to 8%) besides the starving; a plentiful one has 19 to 26% self-crashes (a normal
+    one 21%).
+  - **Round lengths** barely move (medians 180 to 184 s each): the woodpecker at 2:00 and sudden death set them, and
+    every round but one or two in 200 reaches the woodpecker. A lean round's middle half runs 170 to 189 s.
+  - **Powers:** a plentiful round's snakes use theirs 4 to 12% more a minute than a normal round's (4.7 to 4.9 against
+    4.4 to 4.5): more, not spam, since meals put stamina back (2u+). Rivals blind to the season used 15% more, and at
+    `AI_CROWD_KEEP` 2 the weighing cancelled most of the season (meals 7% over a normal round), so it is 3. A lean
+    round's use theirs about a fifth less (3.4 to 3.7).
+  - **Every trademark** keeps its place against the field (`--signatures`), and per-rival wins move within the noise
+    of about 90 rounds each (at most 13 points either way, as many up as down; Gobbler 20 to 9%, Creeper 19 to 32%,
+    Ghost 34 to 24% and Sniper 39 to 27% are the ones to watch). Ghost's and Sniper's drop isn't their lean play: the
+    same rounds with their fed restraint kept in a lean round give them 0 to 2 points more.
+  - **The season play, head to head** (rivals that play it against a copy blind to it, 600 paired rounds on seeds 21
+    and 22, at `AI_CROWD_KEEP` 2): even in wins, place, time alive and kills, eating 2 less a snake a round, so the play
+    is a matter of character, not an edge (#602 asks the owner whether to keep it).
 
 ### Apples rot
 

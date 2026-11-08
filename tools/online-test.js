@@ -115,6 +115,7 @@ function counted(msg, last, events) {
   if (msg.un.some(u => u[3])) cross('unders gold');
   for (const f of msg.fi) cross(`fire ${FIRES[f[3]]}`);
   cross(`weather ${msg.sky[0]}`);
+  cross(`season ${msg.sky[3]}`); // (2i)
   for (const e of events) {
     cross(e.type);
     for (const [k, v] of Object.entries(e)) if (k !== 'type' && !blank(v)) cross(`${e.type} ${k === 'snake' ? 'snake' : k}`);
@@ -161,7 +162,7 @@ function matched(r, host, guest, dyingHost, dyingGuest) {
   check(r, k, 'beetles underground', host.unders || [], guest.unders);
   check(r, k, 'mushrooms in the air', host.spits.map(m => [m.x, m.y, m.dir, m.left, m.power, m.by]), guest.spits.map(m => [m.x, m.y, m.dir, m.left, m.power, m.by]));
   check(r, k, 'fire', [...host.fires].map(([c, f]) => [c, f.from, f.until, f.strike, f.group, !!f.ember]), [...guest.fires].map(([c, f]) => [c, f.from, f.until, f.strike, f.group, !!f.ember]));
-  check(r, k, 'weather', [host.weather.kind, host.weather.since, host.weather.until], [guest.weather.kind, guest.weather.since, guest.weather.until]);
+  check(r, k, 'weather and season', [host.weather.kind, host.weather.since, host.weather.until, host.season], [guest.weather.kind, guest.weather.since, guest.weather.until, guest.season]);
   check(r, k, 'deaths', dyingHost.map(s => [s.id, s.cause, s.killer, s.killerId, s.diedAt, s.fatal || null]), dyingGuest.map(s => [s.id, s.cause, s.killer, s.killerId, s.diedAt, s.fatal || null]));
   check(r, k, 'events', host.events.map(said), guest.events.map(said));
   const look = g => g.snakes.map(s => LOOKS.map(f => s.memory[f] ?? null));
@@ -255,7 +256,7 @@ for (let r = 0; r < rounds; r++) {
   // Two to four people, the rest AI; names that clash with rivals get numbered.
   const line = LINEUPS[r] || { people: 2 + (r % 3), rivals: null, pilots: [] };
   const humans = Array.from({ length: line.people }, (_, i) => ({ name: i === 1 ? 'Sniper' : `Friend ${i}`, color: O.HUMAN_COLORS[i], peer: `p${i}` }));
-  const host = E.createGame({ humans, personas: line.rivals });
+  const host = E.createGame({ humans, personas: line.rivals, season: Object.keys(T.SEASONS)[r % 3] }); // (each food season in turn, 2i)
   // People steer like an AI would (so rounds last): the first by queueing
   // turns, as a person's presses do; the others with an AI at the wheel.
   for (const s of host.snakes) if (s.isPlayer && s.id > 0) s.autopilot = E.PERSONAS[line.pilots[s.id - 1] || 'drab'];
@@ -351,7 +352,7 @@ const want = [...KINDS, ...says, ...['snake', 'cause', 'killer', 'diedAt', 'fata
   ...['food', 'golden', 'mushroom', 'pellet', 'beetle', 'leaf', 'goldcap', 'spill'].flatMap(k => [`food ${k}`, `food ${k} 3`]), // (each kind, and when it goes)
   'food food 5', 'food food 6', 'food pellet 4', 'food pellet 7', 'food spill 8', 'food spill 9', ...[5, 6, 7, 8, 9, 10, 11].map(j => `food beetle ${j}`), // (warming and baked; a bead's colour and whose; a beetle's way, where from, when it moved, scared, golden, digging in)
   ...FIRES.map(k => `fire ${k}`),
-  ...WEATHER.map((w, k) => `weather ${k}`), ...Array.from({ length: 11 }, (_, j) => `woodpecker ${j}`), ...['way', 'jump', 'flash'].flatMap(k => [`plan rival ${k}`, `plan person ${k}`])];
+  ...WEATHER.map((w, k) => `weather ${k}`), ...Object.keys(T.SEASONS).map((w, k) => `season ${k}`), ...Array.from({ length: 11 }, (_, j) => `woodpecker ${j}`), ...['way', 'jump', 'flash'].flatMap(k => [`plan rival ${k}`, `plan person ${k}`])];
 const lacking = [...new Set(want)].filter(short).map(k => `${k} (${seen.get(k) || 0})`);
 if (process.env.ONLINE_SEEN) console.log([...seen].sort().map(([k, v]) => `${k}: ${v}`).join('\n'));
 if (lacking.length) { console.error(`seen too few times (fewer than ${MIN}; a death's, never), the test lost its point there: ${lacking.join(', ')}`); process.exit(1); }

@@ -132,6 +132,7 @@ function aiView(game, snake) {
     tick: game.tick,
     timeMs: game.time,
     weather: game.weather.kind, // (everyone sees the weather: in winter, apples rot twice as fast)
+    season: game.season, // (2i: and the round's food season, named in its start banner)
   };
 }
 // The game can let an AI think ahead of the tick (spread over the frames in
