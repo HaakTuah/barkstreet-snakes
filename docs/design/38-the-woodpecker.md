@@ -33,7 +33,7 @@ sudden elimination"). Each act starts at a time drawn in its window after the on
   `PECK_CHUNK` (12) cells, a cell bigger each strike of the frenzy (`w.fury`) up to `PECK_CHUNK_MAX` (20), and each
   rest `PECK_REST_TICKS` times `PECK_HUNGRIER` (0.85) for every strike of the frenzy, never under `PECK_REST_MIN` (10).
 - **Each patch:** eyed for `PECK_AIM_TICKS` (17, about 1.6 s), struck, then the rest.
-- **Its look in the frenzy:** its eyes glow red, its feathers darken, its crest ruffles up dark red and its shadow deepens, coming over it in a
+- **Its look in the frenzy:** its eyes glow red, its feathers darken, and its crest ruffles up dark red, coming over it in a
   second and a half and then steady (no flicker, with reduced motion too), and the page's sky dims (`html.frenzy` in
   `style/base.css`).
 - **The music** has a stage for each act (`audio/music.js`): the watcher adds a low, slow drone under the mid-round

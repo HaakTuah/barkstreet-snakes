@@ -192,12 +192,12 @@ function drawBird(g, P, half) {
   g.save();
   useBase(g); g.beginPath(); g.rect(0, 0, SIZE, SIZE); g.clip();
   mThen(TM, BM, 0.35 + 0.6 * P.air, 0.6 + 0.9 * P.air, 0, 1, 1); useM(g, TM);
-  g.globalAlpha = P.alpha * (0.28 - 0.1 * P.air) * (1 + 0.9 * P.fury); // (in the frenzy a darker shadow hangs about it)
+  g.globalAlpha = P.alpha * (0.28 - 0.1 * P.air);
   layPart(g, 'shadow', half);
   g.restore();
   g.globalAlpha = P.alpha;
   g.lineJoin = g.lineCap = 'round';
-  birdDark = P.fury; // (the frenzy, entry 6: its feathers darken, see layPart; its shadow deepens above)
+  birdDark = P.fury; // (the frenzy, entry 6: its feathers darken, see layPart)
   if (P.wing > 0.02) { wingMat(P, true); useM(g, WM); layPart(g, 'farWing', half); }
   // Its ink, then its colours.
   useM(g, BM); layPart(g, P.feet ? 'inkPerch' : 'inkFly', half);
