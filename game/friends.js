@@ -106,7 +106,7 @@ const GUIDE_ROWS = [
   ]],
   ['The log', [
     ['fire', 'Fire', 'Lightning lights it. Crawl in and it takes 3 bites of tail; rain puts it out.'],
-    ['knock', 'Woodpecker', 'It comes in three acts. From about 1:00 it watches the log, a pale pool where it looks: where it looks last, its first patch grows. Then it pecks small patches now and then, and at last, in a frenzy, it pecks the log away (sudden death). It won’t shut you in if it can help it. A piece it cuts loose from the log is shaded in its mark, and falls with the strike: the log stays one piece. Food in its mark is knocked to the nearest free cell, shown by a ring; a beetle still in its mark gets eaten.'],
+    ['knock', 'Woodpecker', 'It comes in three acts. From about 1:00 it watches the log, a pale pool where it looks: where it looks last, it starts cutting. Then it cuts a piece out a few cells a peck, along a nicked line; the piece, shaded once cut loose, falls with the strike, so get off it. In its frenzy (sudden death) it cuts faster, down to the room the snakes need, then pecks at you: a head in its red ring at the strike crashes. It won’t shut you in if it can help it. Food in its mark flies to a ring; a beetle still in it gets eaten.'],
     ['hole', 'Holes', 'The woodpecker’s, once it starts pecking. Bumping one is a crash, like the edge; a peck right under your head is the end.'],
     ['bridge', 'Bridges', 'A snake lying across a pit is a bridge: crawl onto its back there, or land on it from a jump. Get off onto bark before its tail passes, or you fall in.'],
     ['land', 'Borders', 'Sovereign’s realm and Colonist’s colonies. Cross one and its owner notices, and says so.'],

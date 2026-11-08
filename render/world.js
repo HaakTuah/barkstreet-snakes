@@ -50,6 +50,7 @@ function frame(alpha, now) {
 
   drawBurrows(now);
   drawWatch(now); // (entry 6: the spot the woodpecker watches, its first patch to come)
+  drawCut(alpha); // (part 2: the outline it's cutting, and a fight's ring)
   drawPatch(alpha, now); // (the woodpecker's next patch, on the bark under the snakes)
   drawFalls(now); // (2s: pieces cut loose, falling away)
   if (fallenFlags.length) drawFallenFlags(now); // (flags falling into the pit, some on those pieces)

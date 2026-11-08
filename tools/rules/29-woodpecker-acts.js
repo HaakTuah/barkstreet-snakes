@@ -16,17 +16,16 @@
   check('...but times out of order, or not numbers, or too few, are ignored', odd.every(a => a.watch >= T.ACT_WATCH_MS[0] && a.watch <= T.ACT_WATCH_MS[1]), JSON.stringify(odd));
 }
 
-// Two snakes far from the middle; the round run on to `until`, fed, starting at `from`.
+// Two snakes far from the middle, held still (stunned) and fed; the round run on to `until`, starting at `from`.
 const actsBoard = from => {
   const g = board([[line(4, 2, 4), 'right'], [line(4, 21, 4), 'right']], { time: from });
   g.weather = { kind: 'clear', since: 0, until: 1e9, nextGust: 0, nextStrike: 0 };
+  for (const s of g.snakes) s.stunUntil = 1e9;
   return g;
 };
 const runTo = (g, until, each = () => {}) => {
   for (let n = 0; g.time < until && n < 2000; n++) {
-    for (const s of g.snakes) { s.lastAte = g.time; s.nextStarve = g.time + T.HUNGER_MS; s.body = s.body.slice(0, 4); } // (fed, and short)
-    const h = g.snakes[0].body[0]; g.snakes[0].dir = D[h.x > 18 ? 'left' : h.x < 5 ? 'right' : g.snakes[0].dir === D.left ? 'left' : 'right'];
-    const k = g.snakes[1].body[0]; g.snakes[1].dir = D[k.x > 18 ? 'left' : k.x < 5 ? 'right' : g.snakes[1].dir === D.left ? 'left' : 'right'];
+    for (const s of g.snakes) { s.lastAte = g.time; s.nextStarve = g.time + T.HUNGER_MS; }
     E.step(g);
     each(g);
   }
@@ -55,13 +54,13 @@ const runTo = (g, until, each = () => {}) => {
   runTo(g, ACTS[2] - 100, g => {
     if (g.time > ACTS[1] + 10000 && !grows) { g.food = g.food.filter(f => f.kind !== 'food'); E.step(g); grows = g.food.some(f => f.kind === 'food'); }
     if (g.time < ACTS[1] && g.woodpecker) gaze = g.woodpecker.gaze;
-    for (const e of g.events) if (e.type === 'peck') { sizes.push(e.cells.length); if (rest === null && first) rest = g.woodpecker.restUntil - g.woodpecker.struckAt; first ||= e.cells; }
+    for (const e of g.events) if (e.type === 'peck') { sizes.push(e.cells.length - (e.fall || []).length); if (rest === null && first) rest = g.woodpecker.restUntil - g.woodpecker.struckAt; first ||= e.cells; }
   });
   check('...and food still grows', grows);
   const gx = gaze % T.GRID, gy = Math.floor(gaze / T.GRID);
   const near = first && first.some(k => Math.abs(k % T.GRID - gx) + Math.abs(Math.floor(k / T.GRID) - gy) <= T.GAZE_NEAR);
   check('act 2: its first patch grows where it looked last (its gaze is a tell)', near, `gaze ${gx},${gy}; patch ${first}`);
-  check('...each patch small, and a long rest between', sizes.length >= 2 && sizes.every(n => n <= T.FIRST_CHUNK + 4) && rest === T.FIRST_REST_TICKS, `${sizes} rest ${rest}`);
+  check('...each peck a few cells of its outline (the piece it cuts loose aside), and a long rest between', sizes.length >= 2 && sizes.every(n => n <= T.CUT_STEP_2) && rest === T.FIRST_REST_TICKS, `${sizes} rest ${rest}`);
 }
 
 { // Act 3, the frenzy: sudden death, nothing new grows, and it gets hungrier from its first strike in the frenzy.
@@ -70,7 +69,7 @@ const runTo = (g, until, each = () => {}) => {
   check('act 3: the frenzy is sudden death', E.actOf(g) === 3 && E.suddenDeath(g) && E.aiView(g, g.snakes[0]).act === 3);
   const w = g.woodpecker, rests = [];
   runTo(g, ACTS[2] + 15000, g => { if (g.events.some(e => e.type === 'peck')) rests.push(g.woodpecker.restUntil - g.woodpecker.struckAt); });
-  check('...its rests from the frenzy\'s own, shortening', rests[0] === Math.round(T.PECK_REST_TICKS * T.PECK_HUNGRIER) && rests.every((r, i) => !i || r <= rests[i - 1]) && w.fury === rests.length, `${rests} fury ${w.fury}`);
+  check('...its rests from the frenzy\'s own, shorter with each piece that falls', rests.length >= 2 && rests.every((r, i) => !i || r <= rests[i - 1]) && rests.every(r => r === T.FIGHT_REST_TICKS || r <= T.PECK_REST_TICKS) && (!(w.fury > 0) || rests[rests.length - 1] < T.PECK_REST_TICKS), `${rests} fury ${w.fury}`);
 }
 
 { // The rivals read it as a person does: the spot it watches is ground to linger in later. Heading right on row 12, a

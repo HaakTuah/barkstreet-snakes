@@ -23,12 +23,12 @@ const NO_FIRES = [], NO_SPITS = [];
 // walls). Worked out once per snapshot, shared by every AI.
 function blockedSeen(game, snap) {
   const holes = holesSeen(game, snap.holes);
-  if (!snap.fires.length && !snap.pecks.length && !snap.zone.length) return holes;
+  if (!snap.fires.length && !snap.pecks.length && !snap.zone?.length) return holes;
   if (snap.blocked?.n !== holes.size) {
     const set = new Set(holes);
     for (const k of snap.fires) set.add(k);
     for (const k of snap.pecks) set.add(k);
-    for (const k of snap.zone) set.add(k);
+    for (const k of snap.zone || NO_FIRES) set.add(k);
     snap.blocked = { n: holes.size, set };
   }
   return snap.blocked.set;
@@ -120,7 +120,7 @@ function aiView(game, snake) {
     fire: fireCellsSeen(snap), // (among the holes: the cells that are only fire, which it can go through, at a price)
     spits: snap.spits, // (3b+: mushrooms in the air, as of `age` ago, as a person would see them fly: [{ x, y, dir, left, by, wrap }])
     pecks: snap.pecks.length ? (snap.peckSet ||= new Set(snap.pecks)) : NO_CELLS, // (among them too: the woodpecker's mark, not a hole yet: nothing to hop)
-    zone: snap.zone.length ? (snap.zoneSet ||= new Set(snap.zone)) : NO_CELLS, // (among them too: a fight's plus, part 2: a crash for a head in it at the strike, never a hole)
+    zone: snap.zone?.length ? (snap.zoneSet ||= new Set(snap.zone)) : NO_CELLS, // (among them too: a fight's plus, part 2: a crash for a head in it at the strike, never a hole)
     // (When its strike comes, as anyone sees the bird drum it (its last blow
     // lands on the strike), and in the aim's last PECK_PROMISE_TICKS moves
     // where it promised each piece in its mark would land: the rings show
