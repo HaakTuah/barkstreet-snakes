@@ -109,7 +109,7 @@ function powerPick(crawlIn, crawlDirIn) {
   for (const d of DIR_LIST) {
     if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
     const extra = (intent.mimicDir && sameDir(d, intent.mimicDir) ? w.mimic : 0) - (w.turn && !sameDir(d, me.dir) ? w.turn : 0);
-    if (me.dashes > 0) { const v = flashOpt(d, true); if (trapped || cutKills || habit.dashSpend) consider(d, true, v, 0.6, extra); } // (a golden dash, held: out of a trap, or for a cut that puts a rival out; spent so, it gains (see part 4's chosen numbers); spent as it came, −0.11 ± 0.09 place a use; Star (dashSpend), its trademark, spends them as they come)
+    if (me.dashes > 0) { const v = flashOpt(d, true); if (trapped || cutKills || habit.dashSpend || (dropping && ownCut >= 0)) consider(d, true, v, 0.6, extra); } // (a golden dash, held: out of a trap, or for a cut that puts a rival out; spent so, it gains (see part 4's chosen numbers); spent as it came, −0.11 ± 0.09 place a use; Star (dashSpend), its trademark, spends them as they come)
     else if (me.flashIn === 0 && (dropping || d === crawlDir || habit.everyWay || (cutter && bodyNear(d)) || coverNear(d))) consider(d, true, flashOpt(d, false), STAMINA_PRICE * TUNE.DASH_STAMINA_MS / TUNE.STAMINA_MS * (trapped || cutTarget || race(d) ? 0.5 : 1), extra, waitPrice(TUNE.DASH_STAMINA_MS, true));
     if (jump) { const v = leapOpt(d); consider(d, false, v, (me.leaps > 0 ? 0.35 : STAMINA_PRICE * TUNE.JUMP_STAMINA_MS / TUNE.STAMINA_MS) * (leapNow ? (w.leapNow ?? 1) : 1), extra, me.leaps > 0 ? 0 : waitPrice(TUNE.JUMP_STAMINA_MS, false)); } // (leap now, at the jump's price times my style's: only out of a trap, see leapOpt)
   }
@@ -152,7 +152,7 @@ function eatOn(a, b, c, L, g, soon, step) {
     const late = foodFrom[i] > step, here = late ? 0 : foodValue[i];
     let caught = -1;
     for (let q = 0; q < bugCount; q++) if (bugCell[q * BUG_SLOTS + step - 1] === i) { caught = q; break; }
-    const v = here + (caught >= 0 ? bugV[caught] : 0), change = (late ? 0 : foodGrow[i]) + (caught >= 0 ? TUNE.BEETLE_GROWTH : 0);
+    const v = mealAfter(i, here, L + g) + (caught >= 0 ? bugV[caught] : 0), change = (late ? 0 : foodGrow[i]) + (caught >= 0 ? TUNE.BEETLE_GROWTH : 0);
     if (change < 0) { // (a mushroom: my mouth is full after it, the rest of the way too)
       mute = Math.max(mute, step + TUNE.CHEEK_TICKS);
       let n = -change;
