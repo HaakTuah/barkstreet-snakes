@@ -95,6 +95,7 @@ window.SnakeOnline = (() => {
   const VERSION = 27; // 2: burrows, fire and weather; 3: the woodpecker's chunks, winter; 4: crashes, burning snakes, cooking, rot; 5: golden beetles and leaps, Ouroboros; 6: powers (everyone leaps; golden leaves, dashes; golden mushrooms, wrap); 7: jump and flash apart (everyone flashes), beads' owners and rot, holes under bodies, the last apples; 8: plans, so friends draw everyone ahead the way they're going, and a held jump taken back; 9: choking on your own beads (each snake's cough; chokes and nudges, and where each piece rolled); 10: beetles that dig in (each one's digUntil; digs, and dives that were digs), several beetles underground, and food the woodpecker knocks aside (where each piece flew, and a bead's colour; where its strike promised each would land); burrows as the engine keeps them (when each was last used, and whether a dig left it), a dug burrow opening and one closing over; 11: burrows grow shut (when each started and will close over, and one starting to); 12: rivals chosen (a round's, and a shared best round's, chosen flag); 13: the lobby shows the line-up (the host's rivals, seat by seat, and which were chosen); 14: Capricious does every rival (its mood any of them, worn as a costume); 15: Copycat plays as its model plays (the style it reads, for its note); 16: round six B's island hop (a jump in the air: where it comes down, how many cells it still flies over, golden); 17: round six B's bridges (no message changed: a rule both sides must play by); 18: round six B's cuts (a failed flash's crash says so; the plain flash cuts, its own tail too: a rule both sides play by) and your own beads squashed (no choke, cough or nudge: each snake's cough gone; a squash where each went); 19: round six B's mushrooms come back up (each snake's cheek, and when it's spat; a spat mushroom's strength; a spit, where it came down, whom it hit, where it lies); 20: 2s, a piece cut loose falls (the woodpecker's mark says which of its cells fall, and its strike which fell); 21: round six B's golden flight, leap now and bumps in the air (a jump let go, a crash in the air); 22: 2y, the held golden flight always flies 5 (where each jump's ring is); 23: part 5, gold portals (each open portal in the tick; portal, through, portalShut); 24: 2x, the spitter slides over its own mushroom (a spat one's slideUntil, so it shows wet while it does); 25: 2u, one stamina for jump and flash (each snake's restedAt, in place of its two rests); 26: 2u+, stamina banks above the full bar, and a golden apple's shield (each snake's bank and shieldUntil; a crash it took says so); 27: 3b+, the spit flies along the line (each mushroom in the air; a spit where it left, a spat where it stopped)
   const POWERS = ['leap', 'flash', 'unleap', 'letgo'];
   const MAX_PEOPLE = 4;
+  const PORTALS_MAX = 512; // (open at once: a pair a crossing of a wrapped edge, each for PORTAL_MS; every snake crossing every tick stays under it)
   // Seat colors for people: the host is green; friends get colors no rival wears.
   const HUMAN_COLORS = ['#4ade80', '#fde047', '#c4b5fd', '#7dd3fc'];
   // Room codes avoid look-alikes (no 0/O, 1/I/L).
@@ -306,6 +307,13 @@ window.SnakeOnline = (() => {
     game.time = msg.ms;
     /** @param {unknown} v */
     const num = v => Number.isFinite(v);
+    /** @param {any} v */
+    const cell = v => Number.isInteger(v) && v >= 0 && v < window.TUNING.GRID; // (an x or y on the board: the renderer draws or rolls a thing there)
+    /** @param {any} v */
+    const way = v => v === -1 || v === 0 || v === 1;
+    // The gold portals, checked once and at most PORTALS_MAX (a flight's path below reads them, then the board).
+    const portals = (Array.isArray(msg.po) ? msg.po.slice(0, PORTALS_MAX) : []).filter(p => Array.isArray(p) && p.length === 8 && p.every(num) && cell(p[0]) && cell(p[1]) && way(p[2]) && way(p[3]) && Math.abs(p[2]) + Math.abs(p[3]) === 1 && cell(p[4]) && cell(p[5]))
+      .map(([x, y, dx, dy, tx, ty, owner, shutAt]) => ({ x, y, dx, dy, tx, ty, owner, shutAt }));
     msg.s.forEach(([alive, dir, eaten, lastAte, nextStarve, cells, memory, autopilot, stunUntil, burnUntil, burnFrom, leaps, leapArmed, dashes, restedAt, bank, shieldUntil, wrapUntil, flight, flashArmed, mealMs, land, airLeft, airGold, cheek, spitAt, ring, ringIn], id) => {
       const s = game.snakes[id];
       if (!s) return;
@@ -330,7 +338,7 @@ window.SnakeOnline = (() => {
       // (Over the wrapped edge, or through a gold portal, as the host has it: it keeps one open while a flight's through it.)
       const G = window.TUNING.GRID, over = [];
       for (let i = 0, x = head % 1000, y = Math.floor(head / 1000); fd && i < left; i++) {
-        const through = s.wrapUntil > msg.ms || (Array.isArray(msg.po) && msg.po.some(p => Array.isArray(p) && p[0] === x && p[1] === y && p[2] === fd.x && p[3] === fd.y));
+        const through = s.wrapUntil > msg.ms || portals.some(p => p.x === x && p.y === y && p.dx === fd.x && p.dy === fd.y);
         x += fd.x; y += fd.y;
         if (through) { x = (x + G) % G; y = (y + G) % G; }
         over.push({ x, y });
@@ -375,19 +383,14 @@ window.SnakeOnline = (() => {
     /** @param {unknown} v */
     const cellsOf = v => (Array.isArray(v) ? v : []).filter(k => Number.isInteger(k) && k >= 0 && k < 10000);
     /** @param {any} v */
-    const cell = v => Number.isInteger(v) && v >= 0 && v < window.TUNING.GRID; // (an x or y on the board: the renderer draws or rolls a thing there)
-    /** @param {any} v */
     const square = v => Number.isInteger(v) && v >= 0 && v < window.TUNING.GRID * window.TUNING.GRID; // (a cell on the board, as one number)
     const w = /** @type {any} */ (msg.w); // (from outside: checked here)
     const landings = Array.isArray(w?.[9]) ? w[9].filter(p => Array.isArray(p) && p.length === 2 && square(p[0]) && (p[1] === -1 || square(p[1]))) : []; // ([from, to]; to -1: the bird eats it)
     game.woodpecker = msg.w ? { x: w[0], y: w[1], at: w[2], target: cellsOf(w[3]), strikeAt: w[4], last: cellsOf(w[5]), struckAt: w[6], restUntil: w[7], ...(Number(w[8]) > 0 ? { pecks: Number(w[8]) } : {}), ...(cellsOf(w[10]).length ? { fall: cellsOf(w[10]) } : {}), ...(landings.length ? { landings } : {}) } : null;
     game.burrows = (Array.isArray(msg.bu) ? msg.bu : []).filter(b => Array.isArray(b) && b.length >= 3 && b.every(num) && cell(b[0]) && cell(b[1]) && Number.isInteger(b[2])) // (on the board, opened on a tick)
       .map(([x, y, at, used, dug, shutFrom, shutAt]) => ({ x, y, at, ...(used >= 0 ? { used } : {}), ...(dug ? { dug: 1 } : {}), ...(shutAt > 0 && shutFrom >= 0 && shutFrom < shutAt ? { shutFrom, shutAt } : {}) })); // (the renderer draws a dug one freshly bored, and one growing shut closing)
-    /** @param {any} v */
-    const way = v => v === -1 || v === 0 || v === 1;
-    game.portals = (Array.isArray(msg.po) ? msg.po : []).filter(p => Array.isArray(p) && p.length === 8 && p.every(num) && cell(p[0]) && cell(p[1]) && way(p[2]) && way(p[3]) && Math.abs(p[2]) + Math.abs(p[3]) === 1 && cell(p[4]) && cell(p[5]))
-      .map(([x, y, dx, dy, tx, ty, owner, shutAt]) => ({ x, y, dx, dy, tx, ty, owner, shutAt }));
-    game.spits = (Array.isArray(msg.sp) ? msg.sp : []).filter(m => Array.isArray(m) && m.length === 6 && m.every(Number.isInteger) && cell(m[0]) && cell(m[1]) && DIRS[DIR_NAMES[m[2]]] && m[3] > 0 && m[4] > 0 && game.snakes[m[5]]) // (in the air: on the board, flying a way, whose)
+    game.portals = portals;
+    game.spits = (Array.isArray(msg.sp) ? msg.sp.slice(0, 2 * game.snakes.length) : []).filter(m => Array.isArray(m) && m.length === 6 && m.every(Number.isInteger) && cell(m[0]) && cell(m[1]) && DIRS[DIR_NAMES[m[2]]] && m[3] > 0 && m[4] > 0 && game.snakes[m[5]]) // (in the air: on the board, flying a way, whose; a snake spits one a cheek, so at most two each at once)
       .map(([x, y, dir, left, power, by]) => ({ x, y, dir: DIRS[DIR_NAMES[dir]], left: Math.min(window.TUNING.SPIT_REACH, left), power: Math.min(window.TUNING.SHRINK_MAX, power), wilt: 0, by, wrap: false }));
     game.unders = (Array.isArray(msg.un) ? msg.un : []).filter(u => Array.isArray(u) && u.every(num) && Number.isInteger(u[2]) && u[2] >= 0 && u[2] < window.TUNING.GRID * window.TUNING.GRID)
       .map(([until, expires, from, gold]) => ({ until, expires, from, gold: !!gold }));

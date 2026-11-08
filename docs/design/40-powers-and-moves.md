@@ -413,6 +413,14 @@ air, as over its own lying wet.
   guesses, where they reckon it and a move further on (they may have noticed it late, 2q), so a line the target walks
   into is the surest shot (`aimGain`). Each in its style: a weight for turning keeps Mason on its straight runs, a shot
   or not; Sniper's and Joker's taste for a shot makes them eat one on purpose most.
+- **The chosen numbers** (PR #580): `SPIT_REACH` 5, `SPIT_SPEED` 2, as first guessed. *Measured* on fresh seeds 1201
+  and 1203 (1,200 paired rounds, head to head, against the same AI that never aims nor eats one on purpose, both
+  dodging): the spitters win 25.1% to 24.7% (interval −3.7 to +2.8 points), live as long (148 s), kill as often, die of
+  the same causes (no refuge); every trademark the same or within noise. In whole rounds (seed 3, 200) 2% of spits hit a
+  head (0.07 a round; Sniper 0.07, Joker 0.10), and still 2% with every rival's dodging off: the rivals keep their heads
+  apart, so a head is seldom five in line from a spitter when the second runs out. Neither a hedged lead nor closing in
+  three times as hard raised it. The spitters come out even, a design finding for the owner (#583); kept as built until
+  he answers.
 
 ### Where it rolls is a rule, never chance
 
