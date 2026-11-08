@@ -133,12 +133,31 @@ function eat(game) {
 function foodRoom(game, x, y) {
   return foodPast(game, x, y) && !game.food.some(f => f.x === x && f.y === y) && !burrowAt(game, x, y);
 }
+// Round six B, dropped charges: a snake out with golden jumps or dashes
+// held spills them where its head fell, one golden pickup anyone can grab:
+// on the nearest cell with nothing on it (bodies, food and burrows are
+// stamped by the caller), within SPILL_NEAR, never a hole or fire; none,
+// and they're lost. Only a knockout: a bump keeps them.
+function spill(game, s) {
+  if (!(s.leaps > 0) && !(s.dashes > 0)) return;
+  const h = s.body[0], leaps = s.leaps, dashes = s.dashes;
+  s.leaps = 0; s.dashes = 0;
+  for (let r = 0; r <= T.SPILL_NEAR; r++) for (let dx = -r; dx <= r; dx++) for (const dy of r - Math.abs(dx) ? [Math.abs(dx) - r, r - Math.abs(dx)] : [0]) {
+    const x = h.x + dx, y = h.y + dy, k = key(x, y);
+    if (!inside(x, y) || bodyStamp[k] === stamp || game.holes.has(k) || game.fires.has(k)) continue;
+    bodyStamp[k] = stamp;
+    game.food.push({ x, y, kind: 'spill', leaps, dashes, expires: game.tick + T.SPILL_TICKS });
+    game.events.push({ type: 'spill', snake: s, x, y, leaps, dashes });
+    return;
+  }
+}
 // A head eats food.
 function consume(game, s, f, x, y) {
   game.events.push({ type: 'eat', snake: s, kind: f.kind, x, y, color: f.color, cooked: !!f.cooked, gold: !!f.gold });
   // Golden powers add up: each kind on top of what's held, any kinds at once.
   if (f.gold) s.leaps = Math.min(T.LEAP_MAX, s.leaps + T.LEAP_CHARGES); // (a golden beetle: golden jumps)
   if (f.kind === 'leaf') s.dashes = Math.min(T.DASH_MAX, s.dashes + T.DASH_CHARGES); // (a golden leaf: golden flashes, dashes)
+  if (f.kind === 'spill') { s.leaps = Math.min(T.LEAP_MAX, s.leaps + f.leaps); s.dashes = Math.min(T.DASH_MAX, s.dashes + f.dashes); } // (a knocked-out snake's charges: all it held)
   if (f.kind === 'goldcap') s.wrapUntil = Math.min(Math.max(s.wrapUntil, game.time) + T.WRAP_MS, game.time + T.WRAP_MAX_MS); // (a golden mushroom: the edges wrap, a while longer)
   if (f.kind === 'mushroom') {
     // It shrinks you by its strength, and sits in your cheek, to come back up (see spit).

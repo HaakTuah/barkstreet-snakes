@@ -13,7 +13,7 @@ addVoice('star', {
   leap: ['Up and over, sonny!', 'Hup! Old star, new tricks!', 'Look at me! A shooting star!', 'Over we go! Ho ho!', 'These old springs still work!'],
   dash: ['Golden zoom! Oh, that’s the good stuff!', 'Out of my way, I’m golden!'], // (and for a golden leaf: it spends its flashes there and then)
   flash: { first: ['Early star gets the apple, {who}!', 'Beat you to it, {who}!'], past: ['Mind the mustache, {who}!', 'Feel that breeze, {who}? That was me.'] },
-  stash: ['Golden! Straight in the tank.', 'More gold for the old star!', 'Ooh, gold. Don’t tell the young’uns.'], // (a golden beetle)
+  stash: ['Golden! Straight in the tank.', 'More gold for the old star!', 'Ooh, gold. Don’t tell the young’uns.'], // (a golden beetle, or spilled charges)
   golden: ['Golden! Matches my trophies.'],
   caught: ['Gotcha, bug! Nothing gets past me.'],
   goldbug: ['A golden bug! Come to Grandpa!', 'A golden beetle! Oh, I need that.'],

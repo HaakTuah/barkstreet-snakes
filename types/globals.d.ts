@@ -52,8 +52,10 @@ declare namespace Engine {
     dir: Dir; px?: number; py?: number; movedAt: number; scared?: boolean; gold?: Flag; digUntil?: number;
   }
   interface Meal {
-    x: number; y: number; kind: 'food' | 'golden' | 'mushroom' | 'pellet' | 'leaf' | 'goldcap'; expires?: number;
+    x: number; y: number; kind: 'food' | 'golden' | 'mushroom' | 'pellet' | 'leaf' | 'goldcap' | 'spill'; expires?: number;
     color?: string; heat?: number; cooked?: Flag; owner?: number;
+    /** Spilled charges (round six B, part 6): the golden jumps and dashes a knocked-out snake held. */
+    leaps?: number; dashes?: number;
     /** A mushroom come back up: the segments it takes (SHRINK when not set). */
     power?: number;
     /** Who spat it, and the tick from which that snake can swallow it again (before, it slides over it). */
@@ -102,6 +104,7 @@ declare namespace Engine {
     | { type: 'woodpecker' }
     | { type: 'peck'; x: number; y: number; cells?: number[]; under?: number[]; fall?: number[] }
     | { type: 'rot'; x: number; y: number; kind: string; color?: string }
+    | { type: 'spill'; snake: Snake; x: number; y: number; leaps: number; dashes: number }
     | { type: 'starving' | 'alight' | 'singe'; snake: Snake }
     | { type: 'baked' | 'ash'; x: number; y: number; kind: string }
     | { type: 'heal' | 'flown' | 'emerge' | 'gust' | 'charge' | 'strike' | 'rainbow' | 'aim' | 'douse' | 'lastApples'; x: number; y: number };
@@ -165,7 +168,7 @@ interface Window {
   Peer?: PeerJS.PeerClass;
   SnakeAI: { PERSONAS: Record<string, unknown> };
   SnakeRecords: { cleanName(text: unknown): string };
-  TUNING: { GRID: number; SHRINK_MAX: number; SPIT_REACH: number };
+  TUNING: { GRID: number; SHRINK_MAX: number; SPIT_REACH: number; LEAP_MAX: number; DASH_MAX: number };
   // Made by these two files (their shapes are the files themselves).
   SnakeNet: unknown;
   SnakeOnline: unknown;

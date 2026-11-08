@@ -351,6 +351,30 @@ Built in part 5 of round six B (PR #202):
   longer 10 s later, but places no better (−0.10 ± 0.10 a follow). The move doesn't matter to places, which is a design
   finding for the owner (#447); it is kept as built until he answers. Every trademark is within noise.
 
+### Dropped charges
+
+Built in part 6 of round six B. Not on every bump: a snake **knocked out** while holding golden jumps or dashes spills
+them where its head fell, one golden pickup anyone can grab (a bump it lives through keeps them).
+- It lands on the nearest free cell within `SPILL_NEAR` (3) of the head: never a hole, fire, a body or other food (out
+  down a hole, it lands on the rim). With none free, the charges are lost. It fades after `SPILL_TICKS` (90).
+- Whoever eats it takes them all, up to what anyone can hold (`LEAP_MAX`, `DASH_MAX`), and it is a meal too (+1 length),
+  as a golden leaf is.
+- *The look:* a gold coin in a golden glow, ringed with the pips it held, as they were on the head (sky dots for golden
+  jumps, ember diamonds for dashes), turning slowly; it fades as a leaf does. The golden sound when eaten.
+- *The lesson:* the first spill anyone sees, "A snake knocked out drops its powers. Grab them!"; grabbing one,
+  what you now hold ("Spilled powers: now 2 golden jumps and 1 golden dash."); Star crows over a grab as over a golden beetle. Its Field guide row is "Spilled powers".
+- *The rivals* want it through the same food search as anything else: each charge they could still hold worth what one
+  from a golden leaf is (`spillWorth` in `ai/food.js`); with no room, only a meal. No persona weights of its own.
+- **Measured** (PR #584): about 0.4 spills a round, in about a third of rounds, 1.7 charges each; a third to 40%
+  grabbed, the grabbers out within 3 s 0 to 6% of the time (no refuge). Too rare to move whole rounds (head to head,
+  seeds 811/813, 1,000 paired rounds against rivals that ignore spills: 0.05 grabs a snake against 0.02, every side
+  row and trademark the same), so it is judged per use (`tools/dev/fork-moves.js --move charges`, seeds 931–934): a
+  grab's charges are worth +0.20 ± 0.07 place and +10 ± 5 points of wins to the grabber, against the same meal
+  without them, as a golden leaf's are (+0.29 ± 0.05, 616 leaves). Of the spills the nearest rival misses (`--move
+  grab`, seeds 921–926, 341 spills: it grabs 33% wanting them, 15% ignoring them), four in five lie far off (12
+  cells, against 5 for those grabbed) and fade or outlast it, one in five another takes, almost none it has no room
+  for: how far a charge is worth going is part 7's pricing.
+
 ### Mushrooms come back up
 
 A mushroom is a weapon you aim:
@@ -441,12 +465,12 @@ else is pushed aside by a head.
 
 ### Online
 
-Everything here crosses to a friend's screen (protocol 27; `VERSION` in `online.js` lists each bump): a power press is its own message
+Everything here crosses to a friend's screen (protocol 28; `VERSION` in `online.js` lists each bump): a power press is its own message
 (`{t:'pow', k}`: `'leap'`, `'flash'`, `'unleap'`, a jump a finger held still asked for, taken back, and `'letgo'`, a
 jump let go); each snake's row carries its golden charges (`leaps`, `dashes`), its stamina (`restedAt`, protocol
 25), a waiting press (`leapArmed`, `flashArmed`), its wrap (`wrapUntil`), its stun and burn, its flight
 (`flight`, `land`, `airLeft`, `airGold`, and the ring, `ring` and `ringIn`) and its cheek (`cheek`, `spitAt`); and the
 events carry leaps (golden, how far, a leap now), dashes (plain or golden), fizzles (a press that couldn't go), cuts,
 douses, crashes (a failed flash's, and one in the air, say so), squashes, spits (where each left from) and where each
-stopped (whom it hit, where it lies); each tick carries the mushrooms in the air. Bridges and cuts changed no message: they're rules both sides
+stopped (whom it hit, where it lies); each tick carries the mushrooms in the air, and spilled charges (protocol 28) say how many of each they hold, with a `spill` event where they fell. Bridges and cuts changed no message: they're rules both sides
 play by.

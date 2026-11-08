@@ -70,7 +70,7 @@ function flashOpt(d, gold) {
       run = r;
     }
     if (run) run--;
-    if (gold) for (const f of food) if (f.y * N + f.x === c && (f.kind === 'golden' || f.kind === 'leaf' || f.kind === 'goldcap' || f.gold)) got = true;
+    if (gold) for (const f of food) if (f.y * N + f.x === c && (f.kind === 'golden' || f.kind === 'leaf' || f.kind === 'goldcap' || f.kind === 'spill' || f.gold)) got = true;
   }
   if (covered & sureCover) cutKills = true; // (it's out, near enough sure)
   if (gold && !cut && !got && !trapped && ownCut < 0) { // (just for speed: only a habit's, and at anyone's price, so only for a real gain; free, it spent both at once, a zig-zag that got it nothing)

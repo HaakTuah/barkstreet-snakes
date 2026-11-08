@@ -123,7 +123,7 @@ function drawPatch(alpha, now) {
 // strike, the piece tips away about its middle, shrinking and darkening
 // into the pit, as the log's bark drops out of sight (PIECE_FALL_MS).
 const PIECE_FALL_MS = 750, pieceFalls = [];
-const FALL_FOOD = { food: '#65a30d', golden: '#facc15', beetle: '#3f2a14', pellet: '#d6b480', mushroom: '#b91c1c', goldcap: '#facc15', leaf: '#facc15' };
+const FALL_FOOD = { food: '#65a30d', golden: '#facc15', beetle: '#3f2a14', pellet: '#d6b480', mushroom: '#b91c1c', goldcap: '#facc15', leaf: '#facc15', spill: '#facc15' };
 function fallShade(cells, prog, now) {
   ctx.save();
   ctx.beginPath();

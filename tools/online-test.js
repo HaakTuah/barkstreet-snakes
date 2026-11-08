@@ -104,7 +104,7 @@ function counted(msg, last, events) {
     if (last ? !same(v, was) : !blank(v)) cross(`snake ${FIELDS[j] ?? j}`);
     if (j === 6) for (const k of new Set([...Object.keys(v || {}), ...Object.keys(was || {})])) if (!same(v?.[k], was?.[k])) cross(`memory ${k}`);
   }));
-  for (const f of msg.f) { const kind = ['food', 'golden', 'mushroom', 'pellet', 'beetle', 'leaf', 'goldcap'][f[2]] ?? f[2]; cross(`food ${kind}`); f.forEach((v, j) => { if (j > 2 && !blank(v)) cross(`food ${kind} ${j}`); }); }
+  for (const f of msg.f) { const kind = ['food', 'golden', 'mushroom', 'pellet', 'beetle', 'leaf', 'goldcap', 'spill'][f[2]] ?? f[2]; cross(`food ${kind}`); f.forEach((v, j) => { if (j > 2 && !blank(v)) cross(`food ${kind} ${j}`); }); }
   if (msg.h.length) cross('holes');
   if (msg.w) msg.w.forEach((v, j) => { if (!blank(v)) cross(`woodpecker ${j}`); });
   if (!same(msg.bu, last?.bu)) cross('burrows');
@@ -190,6 +190,7 @@ const EVENTS = (s, o, h, k) => {
     dig: [{ ...at, until: k + 8 }], dive: [{ ...at }, { ...at, dug: 1 }],
     knock: [{ kind: 'food', ...at, tx: Math.min(E.GRID - 1, h.x + 2), ty: h.y }, { kind: 'beetle', ...at, tx: h.x, ty: Math.max(0, h.y - 2), gold: 1 }, { kind: 'pellet', ...at, tx: null, ty: null, color: o.color }], // (knocked aside, a golden beetle scurrying, and a bead in its colour with nowhere to go)
     burrow: [{ ...at }, { ...at, dug: 1 }], shut: [{ ...at, at: 9000 + k }], heal: [{ ...at }], // (one cracked open, or left by a dig; one starting to grow shut; one closing over)
+    spill: [{ snake: s, ...at, leaps: 2, dashes: 1 }, { snake: s, ...at, leaps: 0, dashes: 3 }], // (round six B, part 6: dropped charges)
     portal: [{ snake: s, x: E.GRID - 1, y: h.y, tx: 0, ty: h.y }], through: [{ snake: s, x: 0, y: h.y, tx: E.GRID - 1, ty: h.y, owner: o.id }], portalShut: [{ x: h.x, y: 0, tx: h.x, ty: E.GRID - 1 }], // (round six B, part 5: gold portals)
   };
 };
@@ -223,8 +224,8 @@ function stage(game) {
   const looks = { home: { x: h.x, y: h.y, radius: 3 }, colonies: [{ x: h.x, y: h.y, radius: 3, n: 1 }], site: { x: h.x, y: h.y }, mood: 'drab', moodChangedAt: game.time, modelId: o.id, victimId: o.id, lureId: o.id, desperate: !s.memory.desperate };
   const look = LOOKS.find(f => short(`memory ${f}`));
   if (look) { s.memory[look] = looks[look]; return; } // (a look its brain might have: whose realm, mood or model)
-  const ripe = { leaf: T.LEAF_TICKS, goldcap: T.GOLDCAP_TICKS, golden: T.APPLE_TICKS, mushroom: T.APPLE_TICKS }, grow = Object.keys(ripe).find(f => short(`food ${f}`)), c = grow && free(game);
-  if (c) { game.food.push({ ...c, kind: grow, expires: k + ripe[grow] }); return; } // (one of the rarer things come up, where things come up)
+  const ripe = { leaf: T.LEAF_TICKS, goldcap: T.GOLDCAP_TICKS, golden: T.APPLE_TICKS, mushroom: T.APPLE_TICKS, spill: T.SPILL_TICKS }, grow = Object.keys(ripe).find(f => short(`food ${f}`) || f === 'spill' && (short('food spill 8') || short('food spill 9'))), c = grow && free(game);
+  if (c) { game.food.push({ ...c, kind: grow, expires: k + ripe[grow], ...(grow === 'spill' ? { leaps: 1 + k % 2, dashes: 1 + k % 3 } : {}) }); return; } // (one of the rarer things come up, where things come up)
   const bug = game.food.find(f => f.kind === 'beetle' && !f.gold);
   if (bug && short('food beetle 10')) { bug.gold = 1; return; } // (a golden one)
   if (bug && short('food beetle 9')) { bug.scared = true; return; } // (a scared one)
@@ -347,8 +348,8 @@ for (const fatal of FATAL.filter(k => short(`death fatal ${k}`))) {
 const ways = EVENTS({ id: 1, color: '#fff', name: 'S' }, { id: 2, color: '#000', name: 'O' }, { x: 1, y: 1 }, 1);
 const says = KINDS.filter(k => k !== 'death').flatMap(k => [...new Set((ways[k] || [{ x: 1, y: 1 }]).flatMap(w => Object.keys(w).filter(f => !blank(w[f]))))].map(f => `${k} ${f}`));
 const want = [...KINDS, ...says, ...['snake', 'cause', 'killer', 'diedAt', 'fatal'].map(f => `death ${f}`), ...FATAL.map(k => `death fatal ${k}`), ...FIELDS.map(f => `snake ${f}`), ...LOOKS.map(f => `memory ${f}`), 'holes', 'burrows', 'burrows dug', 'burrows shut', 'unders', 'unders gold', 'spits',
-  ...['food', 'golden', 'mushroom', 'pellet', 'beetle', 'leaf', 'goldcap'].flatMap(k => [`food ${k}`, `food ${k} 3`]), // (each kind, and when it goes)
-  'food food 5', 'food food 6', 'food pellet 4', 'food pellet 7', ...[5, 6, 7, 8, 9, 10, 11].map(j => `food beetle ${j}`), // (warming and baked; a bead's colour and whose; a beetle's way, where from, when it moved, scared, golden, digging in)
+  ...['food', 'golden', 'mushroom', 'pellet', 'beetle', 'leaf', 'goldcap', 'spill'].flatMap(k => [`food ${k}`, `food ${k} 3`]), // (each kind, and when it goes)
+  'food food 5', 'food food 6', 'food pellet 4', 'food pellet 7', 'food spill 8', 'food spill 9', ...[5, 6, 7, 8, 9, 10, 11].map(j => `food beetle ${j}`), // (warming and baked; a bead's colour and whose; a beetle's way, where from, when it moved, scared, golden, digging in)
   ...FIRES.map(k => `fire ${k}`),
   ...WEATHER.map((w, k) => `weather ${k}`), ...Array.from({ length: 11 }, (_, j) => `woodpecker ${j}`), ...['way', 'jump', 'flash'].flatMap(k => [`plan rival ${k}`, `plan person ${k}`])];
 const lacking = [...new Set(want)].filter(short).map(k => `${k} (${seen.get(k) || 0})`);
@@ -393,7 +394,7 @@ function protocolSamples() {
     { type: 'squash', snake: a, ...at }, { type: 'spit', snake: a, ...at, power: 4 }, { type: 'spat', snake: a, ...at, fx: 2, fy: 1, power: 4, hit: 1, lx: null, ly: null }, { type: 'spat', snake: a, ...at, fx: 2, fy: 1, power: 5, hit: -1, lx: 3, ly: 6 }, { type: 'crash', snake: a, ...at, cause: 'hit the edge', killer: 'wall', killerId: null, lost: 5, failed: 1 }, { type: 'crash', snake: a, ...at, cause: 'bumped into B in mid-air', killer: 'B', killerId: 1, lost: 3, air: 1 }, { type: 'dig', ...at, until: 30 },
     { type: 'dive', ...at, dug: 1 }, { type: 'knock', kind: 'pellet', ...at, tx: 4, ty: 4, gold: 0, color: '#f00' }, { type: 'burrow', ...at, dug: 1 },
     { type: 'shut', ...at, at: 9900 }, { type: 'heal', ...at }, { type: 'portal', snake: a, ...at, tx: 4, ty: 3 }, { type: 'through', snake: a, ...at, tx: 4, ty: 3, owner: 1 }, { type: 'portalShut', ...at, tx: 4, ty: 3 }, { type: 'spawn', kind: 'food', ...at, gold: 0 }, { type: 'weather', kind: 'rain' }, { type: 'ember', ...at, fx: 4, fy: 4 },
-    { type: 'woodpecker' }, { type: 'peck', ...at, cells: [10, 11], under: [0] }, { type: 'rot', ...at, kind: 'pellet', color: '#f00' }, { type: 'flown', ...at },
+    { type: 'woodpecker' }, { type: 'peck', ...at, cells: [10, 11], under: [0] }, { type: 'rot', ...at, kind: 'pellet', color: '#f00' }, { type: 'flown', ...at }, { type: 'spill', snake: a, ...at, leaps: 2, dashes: 1 },
     { type: 'starving', snake: a }, { type: 'alight', snake: a }, { type: 'singe', snake: a }, { type: 'baked', ...at, kind: 'food' }, { type: 'ash', ...at, kind: 'food' },
     ...['emerge', 'gust', 'charge', 'strike', 'rainbow', 'aim', 'douse', 'lastApples'].map(type => ({ type, ...at })),
   ];

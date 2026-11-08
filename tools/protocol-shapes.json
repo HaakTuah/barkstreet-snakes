@@ -1,6 +1,6 @@
 {
-  "version": 27,
-  "fingerprint": "276789d2c1028c06",
+  "version": 28,
+  "fingerprint": "9782a12e01f86df3",
   "kinds": {
     "away": "{1} t: string",
     "back": "{1} t: string",
@@ -59,6 +59,7 @@
     "tick e singe": "[2] string number",
     "tick e spat": "[10] string number number number number number number number number number",
     "tick e spawn": "[5] string string number number number",
+    "tick e spill": "[6] string number number number number number",
     "tick e spit": "[5] string number number number number",
     "tick e squash": "[4] string number number number",
     "tick e starving": "[2] string number",
