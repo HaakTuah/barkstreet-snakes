@@ -79,6 +79,7 @@ for (let n = 0; n < ROUNDS; n++) {
         near.delete(f);
       }
     }
+    for (const f of near.keys()) if (!g.food.includes(f)) near.delete(f); // (eaten, or rotted and counted: a later apple on its cell is another)
     for (const s of g.snakes) if (!s.alive && s.cause === 'starved' && !s.counted) { s.counted = true; row(s.personaKey).starved++; }
     for (const e of g.events) if (e.type === 'eat') open = open.filter(w => {
       if (w.x !== e.x || w.y !== e.y) return true;
