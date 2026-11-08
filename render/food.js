@@ -671,13 +671,16 @@ const goldcapSprite = () => sprite('goldcap', '', drawGoldcap);
 // for each golden jump and an ember one for each dash, as they were on the
 // head that held them, turned by `turn`. (The Field guide draws it too.)
 function drawSpill(x, y, k, leaps, dashes, turn) {
-  ctx.beginPath(); ctx.arc(x, y, CELL * 0.24 * k, 0, TAU);
-  ctx.fillStyle = HONEY; ctx.fill();
+  const r = CELL * 0.3 * k;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, TAU);
+  ctx.fillStyle = '#facc15'; ctx.fill(); // (the crown's gold)
   ctx.strokeStyle = INK; ctx.lineWidth = CELL * 0.07 * k; ctx.stroke();
+  ctx.beginPath(); ctx.arc(x, y, r * 0.6, 0, TAU); ctx.strokeStyle = HONEY; ctx.lineWidth = CELL * 0.05 * k; ctx.stroke(); // (its rim)
+  ctx.beginPath(); ctx.arc(x - r * 0.35, y - r * 0.35, r * 0.18, 0, TAU); ctx.fillStyle = GLINT; ctx.fill();
   const n = leaps + dashes;
   for (let i = 0; i < n; i++) {
     const a = turn + TAU * i / n - Math.PI / 2;
-    drawPip(x + Math.cos(a) * CELL * 0.32 * k, y + Math.sin(a) * CELL * 0.32 * k, a, CELL * 0.08 * k, i < leaps);
+    drawPip(x + Math.cos(a) * CELL * 0.46 * k, y + Math.sin(a) * CELL * 0.46 * k, a, CELL * 0.09 * k, i < leaps);
   }
 }
 const drawGoldcap = g => {
