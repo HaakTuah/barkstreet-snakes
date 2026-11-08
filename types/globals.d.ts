@@ -74,7 +74,7 @@ declare namespace Engine {
   interface Woodpecker {
     x: number; y: number; at: number; target: number[]; strikeAt: number; last: number[];
     struckAt: number; restUntil: number; pecks?: number;
-    /** Entry 6: the tick it came; strikes in the frenzy; act 1's look (the cell it watches, -1 once it aims; the tick that look began; looks left; when it moves on, and a look's length, ms). */
+    /** Entry 6: the tick it came; strikes in the frenzy; act 1's look (the cell it watches, and where it looked last after; the tick that look began; looks left; when it moves on, and a look's length, ms). */
     came: number; fury?: number; gaze: number; lookAt: number; looks: number; lookUntil: number; unit: number;
     /** [from, to] cells; to -1: the bird eats it. */
     landings?: [number, number][];

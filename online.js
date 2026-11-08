@@ -42,7 +42,7 @@
  * @typedef {[until: number, expires: number, from: number, gold: Flag]} UnderRow
  * @typedef {[x: number, y: number, at: number, target: number[], strikeAt: number, last: number[], struckAt: number, restUntil: number,
  *   pecks: number, landings: [from: number, to: number][] | 0, fall: number[] | 0, came: number, fury: number, gaze: number, lookAt: number, looks: number, lookUntil: number, unit: number]} WoodpeckerRow  fall: the pieces its patch cuts loose (2s);
- *   came: the tick it came; fury: its strikes in the frenzy; gaze: the cell it watches in act 1 (-1: none), lookAt: the tick that look began, looks: the looks left after it, lookUntil: when it moves on, unit: a look's length (ms) (entry 6)
+ *   came: the tick it came; fury: its strikes in the frenzy; gaze: the cell it watches in act 1, where it looked last after (-1: none), lookAt: the tick that look began, looks: the looks left after it, lookUntil: when it moves on, unit: a look's length (ms) (entry 6)
  * @typedef {[x: number, y: number, at: number, used: number, dug: Flag, shutFrom: number, shutAt: number]} BurrowRow
  * @typedef {[x: number, y: number, dx: number, dy: number, tx: number, ty: number, owner: number, shutAt: number]} PortalRow  a gold portal: its entry and the way through, its exit, whose, when it shuts (0: its owner's body is still through it)
  * @typedef {[x: number, y: number, dir: number, left: number, power: number, by: number]} SpitRow  a mushroom in the air (3b+): where it is, which way it flies, the cells it has left, its strength, whose

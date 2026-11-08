@@ -14,7 +14,7 @@ function newGame({ personas, aiOnly = false, humans = null, chosen = false } = {
   const unplayed = theGame && !theGame.spent ? theGame.dealt || [] : [];
   if (!personas) Records.undeal(SnakeAI.POOL, unplayed);
   const dealt = personas ? null : dealLineUp(Math.max(0, TUNE.OPPONENTS + 1 - people.length));
-  theGame = Engine.createGame({ personas: personas || dealt.keys, humans: people });
+  theGame = Engine.createGame({ personas: personas || dealt.keys, humans: people, acts: pinnedActs });
   theGame.chosen = dealt ? dealt.chosen : !!chosen;
   const keys = theGame.snakes.filter(s => s.persona).map(s => s.personaKey);
   if (personas) Records.undeal(SnakeAI.POOL, unplayed.filter(k => !keys.includes(k)));

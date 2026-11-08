@@ -57,7 +57,7 @@ function beakDepth(target, isHole) {
 //   strikeAt (tick), last: [cells it took out last], struckAt (tick), restUntil (tick), x, y (where it's busy),
 //   pecks (strikes so far), fury (strikes in the frenzy), landings (from PECK_PROMISE_TICKS moves before a strike: [[from, to], ...] cells, to -1 for none),
 //   fall (2s: the cells of target on pieces it cuts loose, which fall with the strike, food and all),
-//   gaze (act 1: the cell it watches, -1 once it aims), lookAt (the tick that look began), looks (looks left after it), lookUntil (ms: when it moves on), unit (ms: a look's length) }
+//   gaze (act 1: the cell it watches; where it looked last, after), lookAt (the tick that look began), looks (looks left after it), lookUntil (ms: when it moves on), unit (ms: a look's length) }
 function peck(game, dying) {
   const act = actOf(game);
   if (!act) return;
@@ -119,8 +119,7 @@ function peck(game, dying) {
     return;
   }
   if (!w.target.length && (game.tick >= w.restUntil || (act === 3 && !w.fury && game.tick >= w.struckAt + T.PECK_REST_TICKS))) { // (the frenzy's first rest is its own, not act 2's long one)
-    const { patch, fall } = pickPatch(game, w.gaze);
-    w.gaze = -1;
+    const { patch, fall } = pickPatch(game, w.pecks ? -1 : w.gaze); // (act 2's first grows where it looked last)
     if (!patch.length) return;
     w.target = patch;
     if (fall.length) w.fall = fall; else delete w.fall; // (2s: the pieces it cuts loose, in the mark too: they fall with the strike)
