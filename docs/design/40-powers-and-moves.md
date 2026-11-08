@@ -365,6 +365,11 @@ them where its head fell, one golden pickup anyone can grab (a bump it lives thr
   what you now hold ("Grabbed: 2 golden jumps and 1 golden dash now."). Its Field guide row is "Spilled powers".
 - *The rivals* want it through the same food search as anything else: each charge they could still hold worth what one
   from a golden leaf is (`spillWorth` in `ai/food.js`); with no room, only a meal. No persona weights of its own.
+- **Measured** (PR #584): about 0.4 spills a round, in a third of rounds, 1.7 charges each; 40% grabbed, the grabbers
+  out within 3 s 6% of the time (no refuge). Per use (`tools/dev/fork-moves.js --move grab`, seeds 921–923, 158
+  spills, the nearest rival wanting it against ignoring spills): it grabs 31% against 14%, but places no better
+  (−0.01 ± 0.04 a spill). The move doesn't matter to places, a design finding for the owner (#587); kept as built
+  until he answers.
 
 ### Mushrooms come back up
 
