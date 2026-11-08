@@ -84,6 +84,27 @@ const column = (x, y, n, dy = -1) => Array.from({ length: n }, (_, i) => [x, y +
   check('...and one that steps out of the line in time isn\'t: it flies on past', d && d.hit === -1 && !out.snakes[1].cheek, JSON.stringify(d));
 }
 
+{ // A golden dash straight through where one hangs is hit by it too (nothing passes through a mushroom), but the
+  // spitter's own head dashing past its own goes over it, and it flies on.
+  const g = loaded([[line(6, 10, 5), 'right'], [column(8, 12, 4, 1), 'up']]);
+  const o = g.snakes[1];
+  o.dashes = 2; E.flash(g, o);
+  calm(g);
+  const e = spatOf(g);
+  check('a head that dashes over a mushroom where it hangs is hit by it', e && e.hit === o.id && !!o.cheek, JSON.stringify(e && [e.x, e.y, e.hit]));
+  const own = loaded([[line(6, 10, 5), 'right'], [line(4, 25, 4), 'right']]), s = own.snakes[0];
+  s.dashes = 2; E.flash(own, s);
+  calm(own); calm(own);
+  check('...while the spitter dashing past its own goes over it: no hit, no bounce off its own head', !spatOf(own) && !s.cheek && s.body.length === 5, JSON.stringify(own.events.filter(e => e.type === 'spat')));
+}
+
+{ // Over the edge where the edges wrap for the spitter: it flies on from the far side.
+  const g = loaded([[line(T.GRID - 2, 10, 5), 'right'], [line(4, 25, 4), 'right']]);
+  g.snakes[0].wrapUntil = g.time + 5000;
+  const e = untilSpat(g, 4);
+  check('where the edges wrap for the spitter, it flies on over the edge from the far side', e && e.hit === -1 && e.lx === T.SPIT_REACH - 2 && e.ly === 10, JSON.stringify(e && [e.lx, e.ly]));
+}
+
 { // Never stronger than SHRINK_MAX, and it never kills: it shrinks you no further than MIN_LENGTH.
   const g = loaded([[line(6, 10, 5), 'right'], [column(8, 10, 4), 'down']], T.SHRINK_MAX);
   const o = g.snakes[1];

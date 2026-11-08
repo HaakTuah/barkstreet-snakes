@@ -406,13 +406,14 @@ once, four out the tick after, and a target has the second of the dotted line, a
 a body between the spitter and it is a shield. Over the edge it flies on only where the edges wrapped for the spitter as
 it left; a gold portal is a way through for snakes, not for what they spit. The spitter's own head goes over it in the
 air, as over its own lying wet.
-- *The rivals* (`ai/spit.js`): each line is the engine's, cell by cell and tick by tick (`spitLine`), stopped at a hole,
-  the edge or a body still there as they'd see it. Dodging: from a rival's cheek, every way it might face (straight on
+- *The rivals* (`ai/spit.js`): each line is the engine's, cell by cell and tick by tick (`spitLine`), on over the edge
+  where it wraps for the spitter as they'd see it, and stopped at a hole, the edge or a body still there. Dodging: from a rival's cheek, every way it might face (straight on
   the likeliest), and from any mushroom in the air as seen a reaction time ago (2q), and from a cheek whose time has run
   out though they haven't yet seen it fly. Aiming: the head where it'll be when the mushroom gets there, by two even
   guesses, where they reckon it and a move further on (they may have noticed it late, 2q), so a line the target walks
-  into is the surest shot (`aimGain`). Each in its style: a weight for turning keeps Mason on its straight runs, a shot
-  or not; Sniper's and Joker's taste for a shot makes them eat one on purpose most.
+  into is the surest shot (`aimGain`). Each in its style: Sniper's head shots are its own (`aim` 3: it works three
+  times as hard as anyone to get in line with a head and lead it); Joker eats one on purpose most, for the laugh; a
+  weight for turning keeps Mason on its straight runs, a shot or not.
 - **The chosen numbers** (PR #580): `SPIT_REACH` 5, `SPIT_SPEED` 2, as first guessed. *Measured* on fresh seeds 1201
   and 1203 (1,200 paired rounds, head to head, against the same AI that never aims nor eats one on purpose, both
   dodging): the spitters win 25.1% to 24.7% (interval −3.7 to +2.8 points), live as long (148 s), kill as often, die of
@@ -437,12 +438,12 @@ else is pushed aside by a head.
 
 ### Online
 
-Everything here crosses to a friend's screen (protocol 22; `VERSION` in `online.js` lists each bump): a power press is its own message
+Everything here crosses to a friend's screen (protocol 27; `VERSION` in `online.js` lists each bump): a power press is its own message
 (`{t:'pow', k}`: `'leap'`, `'flash'`, `'unleap'`, a jump a finger held still asked for, taken back, and `'letgo'`, a
 jump let go); each snake's row carries its golden charges (`leaps`, `dashes`), its stamina (`restedAt`, protocol
 25), a waiting press (`leapArmed`, `flashArmed`), its wrap (`wrapUntil`), its stun and burn, its flight
 (`flight`, `land`, `airLeft`, `airGold`, and the ring, `ring` and `ringIn`) and its cheek (`cheek`, `spitAt`); and the
 events carry leaps (golden, how far, a leap now), dashes (plain or golden), fizzles (a press that couldn't go), cuts,
 douses, crashes (a failed flash's, and one in the air, say so), squashes, spits (where each left from) and where each
-stopped (whom it hit, where it lies); each tick carries the mushrooms in the air (protocol 27). Bridges and cuts changed no message: they're rules both sides
+stopped (whom it hit, where it lies); each tick carries the mushrooms in the air. Bridges and cuts changed no message: they're rules both sides
 play by.

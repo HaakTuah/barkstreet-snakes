@@ -1,6 +1,6 @@
 // The renderer (see render/core.js): the food (tossed, knocked, the dust
-// and steam about it) and its pictures, and the spit rings and cheeks of a
-// mushroom. The beetles' burrows and their bore are in burrows.js.
+// and steam about it) and its pictures, and a spat mushroom's dotted line,
+// flight and cheeks. The beetles' burrows and their bore are in burrows.js.
 
 // ------------------------------------------------------------ the food
 
@@ -44,40 +44,17 @@ function trackFood(now) {
   fresh = false;
 }
 
-// Food moved aside (see onTick): something spat from (x, y) to (tx, ty)
-// in a little arc (or, with nowhere to go, tossed up where it was: since
-// round six B nothing is, until a mushroom comes back up); or food
-// the woodpecker's strike knocked out of its patch, flying there in an
-// arc, higher and longer the further it goes. Its look goes with it (a
-// bead keeps its markings), and it's drawn going there (see drawFood); a
+// Food moved aside (see onTick): a mushroom in the air coming down where
+// it stopped, or off what it hit, in a little arc (SPAT_MS); or food the
+// woodpecker's strike knocked out of its patch, flying there in an arc,
+// higher and longer the further it goes. Its look goes with it (a bead
+// keeps its markings), and it's drawn going there (see drawFood); a
 // beetle scurries there (see drawBeetle). With reduced motion it's simply
 // there.
-// Something spat is in its mouth while its cheeks puff (so
-// the face shows the gag: on a phone a bead over it was the whole head),
-// and it's spat out on the "ptoo" (SPIT_WAIT), out of its cheek on the
-// side it lands (its head has gone on by then, and the bead lands beside
-// its neck: from the front of its mouth it flew back over its face),
-// small at first, full size as it clears the head, landing on the tok
-// (SPAT_MS from the spit, as the sound has it).
-const SPAT_MS = 320, ROLL_MS = 280, FLY_CELL_MS = 70, FLY_MAX_MS = 620, SPIT_WAIT = 120, SPIT_SIDE = 0.7, SPIT_AHEAD = 0.25;
-// How far on its way a piece moved aside is (0..1; -1 while it's still in
-// the mouth that spat it), and, as it leaves, where from.
-function movedU(b, now) {
-  const t = now - b.movedAt - b.wait;
-  if (t < 0) return -1;
-  if (b.by) { // (its cheek on that side, as drawn: or, landing straight ahead or behind, the front of its mouth)
-    const a = anim.get(b.by);
-    if (a && a.n) {
-      const hx = a.pts[0], hy = a.pts[1], c = a.hc, s = a.hs, side = Math.sign(Math.round(c * ((b.ty + 0.5) * CELL - hy) - s * ((b.tx + 0.5) * CELL - hx)));
-      const ox = side ? SPIT_AHEAD * c - SPIT_SIDE * side * s : SPIT_SIDE * c, oy = side ? SPIT_AHEAD * s + SPIT_SIDE * side * c : SPIT_SIDE * s;
-      b.fx = hx / CELL + ox - 0.5; b.fy = hy / CELL + oy - 0.5;
-    }
-    b.by = null;
-  }
-  return t / ((b.spat ? b.fly : ROLL_MS) - b.wait);
-}
-// Up in the air: over the snakes (a bead's spat over its own head; food
-// flies over whatever's in the way), bigger the higher it is (its shadow's
+const SPAT_MS = 320, ROLL_MS = 280, FLY_CELL_MS = 70, FLY_MAX_MS = 620;
+// How far on its way a piece moved aside is (0..1).
+const movedU = (b, now) => (now - b.movedAt) / (b.spat ? b.fly : ROLL_MS);
+// Up in the air: over the snakes (food flies over whatever's in the way), bigger the higher it is (its shadow's
 // on the ground: see drawFood). A bead is rimmed in ink and parchment in
 // the air, so one in your own colour reads against your body under it.
 function drawTossed(now) {
@@ -89,7 +66,7 @@ function drawTossed(now) {
     if (!b || !b.spat || !b.movedAt) continue;
     const u = movedU(b, now);
     if (u <= 0 || u >= 1) continue;
-    const e = 1 - (1 - u) * (1 - u), up = Math.sin(u * Math.PI), sz = (1 + 0.3 * up) * (b.wait ? Math.min(1, 0.5 + 2 * u) : 1);
+    const e = 1 - (1 - u) * (1 - u), up = Math.sin(u * Math.PI), sz = 1 + 0.3 * up;
     const x = (b.fx + (f.x - b.fx) * e + 0.5) * CELL, y = (b.fy + (f.y - b.fy) * e + 0.5) * CELL - up * b.hop;
     if (f.kind === 'pellet') {
       ctx.fillStyle = 'rgba(28,16,6,0.85)'; circle(x, y, CELL * 0.43 * sz);
@@ -115,13 +92,13 @@ function flyingSprite(f, b) {
 // way, made a throw over two bodies a flat zip, and one beside the patch
 // a slow toss.) The game's knock sound lands with it (knockFlight).
 const knockFly = d => Math.min(FLY_MAX_MS, SPAT_MS + FLY_CELL_MS * d), knockHop = d => Math.min(1.5, 0.6 + 0.22 * d);
-function moveFood(x, y, tx, ty, now, spat, knocked = false, by = null) {
+function moveFood(x, y, tx, ty, now, spat, knocked = false) {
   const from = y * GRID + x, to = ty * GRID + tx, f = game.food.find(o => o.x === tx && o.y === ty && o.kind !== 'beetle');
   if (!f) return;
   const b = born.get(from), d = Math.hypot(tx - x, ty - y);
   if (from !== to) born.delete(from);
   born.set(to, { kind: f.kind, at: now - POP_MS, i: 0, next: 0, gen: bornGen, v: b && b.kind === f.kind ? b.v : (f.color || '#a16207') + '|', fell: false, fx: x, fy: y, movedAt: now, spat,
-    fly: knocked ? knockFly(d) : SPAT_MS, hop: CELL * (knocked ? knockHop(d) : 0.6), by, wait: by ? SPIT_WAIT : 0, tx, ty }); // (by: the snake that spat it)
+    fly: knocked ? knockFly(d) : SPAT_MS, hop: CELL * (knocked ? knockHop(d) : 0.6) });
 }
 
 // Through the woodpecker's aim, the food in its mark trembles (see
@@ -474,7 +451,6 @@ function drawFood(alpha, now) {
     let x = f.x * CELL + CELL / 2, y = f.y * CELL + CELL / 2;
     if (b && b.movedAt) { // (spat, knocked or nudged aside: on its way from where it was, see moveFood)
       const u = reduced ? 1 : movedU(b, now);
-      if (u < 0) continue; // (still in the mouth that spat it)
       if (u >= 1) b.movedAt = 0;
       else {
         const e = 1 - (1 - u) * (1 - u);
@@ -791,7 +767,7 @@ const drawBead = (g, v) => {
 // second runs out, for everyone to see and step out of; and its cheeks
 // puffed green (see drawCheeks), a shade darker the stronger it was
 // swallowed (as the mushroom's own shade).
-const SPIT_RING = '#a3e635', CHEEKS = ['#84cc16', '#65a30d', '#4d7c0f'];
+const SPIT_DOTS = '#a3e635', CHEEKS = ['#84cc16', '#65a30d', '#4d7c0f'];
 function drawSpitLines(now) {
   if (!game) return;
   const t = reduced ? 0 : now / 1000;
@@ -807,7 +783,7 @@ function drawSpitLines(now) {
       const r = CELL * (0.07 + 0.06 * (1 - left) + 0.015 * Math.sin(t * 12 - n));
       ctx.beginPath();
       ctx.arc((x + 0.5) * CELL, (y + 0.5) * CELL, r, 0, Math.PI * 2);
-      ctx.fillStyle = SPIT_RING; ctx.fill();
+      ctx.fillStyle = SPIT_DOTS; ctx.fill();
       ctx.strokeStyle = INK; ctx.lineWidth = CELL * 0.05; ctx.stroke();
     }
   }

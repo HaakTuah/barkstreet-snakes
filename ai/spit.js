@@ -3,7 +3,7 @@
 // Mushrooms come back up (round six B). A segment off a rival's length,
 // hit with a spat mushroom, is worth SPIT_SEG of an apple to me (my own
 // segment, lost to one, a whole apple); AIM: how much I aim mine (0: I
-// spit it wherever I'm facing); SPIT_HIT: the chance I'd guess a shot has
+// spit it wherever I'm facing; times w.aim, my own); SPIT_HIT: the chance I'd guess a shot has
 // of landing on a head, when I weigh eating one on purpose (w.spit: how
 // much a shot is worth to me; SPIT: anyone's).
 // A shot is weighed only at a mushroom within SPIT_NEAR of my head, with a
@@ -57,9 +57,9 @@ function readSpit() {
     const m = (o.spitIn || 0) - age, v = loss(o.spitPower);
     if (!o.spitIn || m <= -flightMoves(TUNE.SPIT_REACH) - 1 || m > steps || v <= 0) return;
     const p = m >= 0 ? headAfter(k, m) : { x: heads[k].x + o.dir.x * m, y: heads[k].y + o.dir.y * m }; // (gone already, as I reckon it: from where its head was then)
-    for (const d of DIR_LIST) if (d.x !== -o.dir.x || d.y !== -o.dir.y) spitLine(p.x, p.y, d, TUNE.SPIT_REACH, m, v * appleW * (sameDir(d, o.dir) ? 1 : 0.5));
+    for (const d of DIR_LIST) if (d.x !== -o.dir.x || d.y !== -o.dir.y) spitLine(p.x, p.y, d, TUNE.SPIT_REACH, m, v * appleW * (sameDir(d, o.dir) ? 1 : 0.5), o.wrap > 0);
   });
-  for (const f of view.spits || EMPTY_SPITS) if (f.by !== me.id && !f.wrap) spitLine(f.x, f.y, f.dir, f.left, -age, loss(TUNE.SHRINK) * appleW);
+  for (const f of view.spits || EMPTY_SPITS) if (f.by !== me.id) spitLine(f.x, f.y, f.dir, f.left, -age, loss(TUNE.SHRINK) * appleW, f.wrap);
   // Mine: after me.spitIn moves it flies from my head, the way I face then.
   // aim: [moves, cell, worth, guess] for each rival head I might hit, where I
   // guess it'll be after as many moves as the mushroom takes to get there (a
@@ -81,11 +81,11 @@ function readSpit() {
       const v = Math.min(me.spitPower || TUNE.SHRINK, o.body.length - TUNE.MIN_LENGTH), p = v > bestV && firingAt(k, mySpitAt, myHead, mySpitAt);
       if (p) { bestV = v; bx = p.x; by = p.y; }
     });
-    if (bestV > 0) closeOn.push(bx, by, AIM * SPIT_SEG * appleW * bestV / 2);
+    if (bestV > 0) closeOn.push(bx, by, AIM * (w.aim ?? 1) * SPIT_SEG * appleW * bestV / 2);
   }
   if (AIM && mySpitAt >= 1 && mySpitAt <= steps) others.forEach((o, k) => {
     if ((o.spitIn || 0) - age >= mySpitAt) return;
-    const v = AIM * SPIT_SEG * appleW * Math.min(me.spitPower || TUNE.SHRINK, o.body.length - TUNE.MIN_LENGTH);
+    const v = AIM * (w.aim ?? 1) * SPIT_SEG * appleW * Math.min(me.spitPower || TUNE.SHRINK, o.body.length - TUNE.MIN_LENGTH);
     if (v <= 0) return;
     for (let n = mySpitAt; n <= mySpitAt + flightMoves(TUNE.SPIT_REACH) + 1; n++) for (let guess = 0; guess < 2; guess++) {
       const q = headAfter(k, n + guess);
@@ -99,12 +99,14 @@ const EMPTY_SPITS = [];
 // moves: the cell j out is reached after this many more moves (and a head
 // that moves onto it where it hangs, one more).
 const flightMoves = j => Math.ceil(j / TUNE.SPIT_SPEED) - 1;
+// The cell j out from (x, y) the way d, over the edge if it wraps there for the spitter (else off the board).
+const lineCell = (x, y, d, j, wrap) => wrap ? [((x + d.x * j) % N + N) % N, ((y + d.y * j) % N + N) % N] : [x + d.x * j, y + d.y * j];
 // A mushroom's line, from (x, y) the way d, `left` cells, leaving after m
 // moves of mine: where my head would be hit, and when, into dodge (worth v
 // to keep out of), till something's in its way.
-function spitLine(x, y, d, left, m, v) {
+function spitLine(x, y, d, left, m, v, wrap) {
   for (let j = 1; j <= left; j++) {
-    const n = m + flightMoves(j), cx = x + d.x * j, cy = y + d.y * j;
+    const n = m + flightMoves(j), [cx, cy] = lineCell(x, y, d, j, wrap);
     if (!inGrid(cx, cy) || otherFree[cy * N + cx] - age > n) return; // (off the board, a hole or fire, or a body still there: it stops)
     if (n >= 1 && n >= (me.spitIn || 0)) dodge.push(n, cy * N + cx, v);
     if (j % TUNE.SPIT_SPEED === 0 && j < left && n + 1 >= Math.max(1, me.spitIn || 0)) dodge.push(n + 1, cy * N + cx, v); // (hanging there between ticks)
@@ -116,7 +118,7 @@ function spitLine(x, y, d, left, m, v) {
 function aimGain(x, y, d) {
   let gain = 0, open = 3; // (bit g: guess g not yet settled)
   for (let j = 1; j <= TUNE.SPIT_REACH && open; j++) {
-    const n = mySpitAt + flightMoves(j), cx = x + d.x * j, cy = y + d.y * j, c = cy * N + cx, hangs = j % TUNE.SPIT_SPEED === 0 && j < TUNE.SPIT_REACH;
+    const n = mySpitAt + flightMoves(j), [cx, cy] = lineCell(x, y, d, j, me.wrap > 0), c = cy * N + cx, hangs = j % TUNE.SPIT_SPEED === 0 && j < TUNE.SPIT_REACH;
     if (!inGrid(cx, cy)) break;
     const best = [0, 0];
     for (let i = 0; i < aim.length; i += 4) if (aim[i + 1] === c && (aim[i] === n || (hangs && aim[i] === n + 1))) best[aim[i + 3]] = Math.max(best[aim[i + 3]], aim[i + 2]);

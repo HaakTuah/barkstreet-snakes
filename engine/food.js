@@ -214,17 +214,19 @@ function spitFly(game, m) {
   spat(game, m, -1, m);
 }
 // What a mushroom in the air meets in its cell, if anything: a head (not
-// the spitter's), a body, food or a burrow (moved: only a head that's just
-// come there, after everyone moved). True if it stopped there.
+// the spitter's: that goes over it), a body, food or a burrow (moved: only
+// a head that's just come there, or dashed over it, after everyone moved).
+// True if it stopped there.
 function spitHits(game, m, moved) {
-  const o = game.snakes.find(o => o.id !== m.by && o.alive && o.body[0].x === m.x && o.body[0].y === m.y);
+  const here = c => c.x === m.x && c.y === m.y;
+  const o = game.snakes.find(o => o.id !== m.by && o.alive && (here(o.body[0]) || (moved && o.passed?.some(here))));
   if (o && !o.cheek) { // (swallowed)
     shrink(o, m.power);
     o.cheek = { power: m.power, spitAt: game.tick + T.CHEEK_TICKS, left: m.wilt };
     spat(game, m, o.id, null);
     return true;
   }
-  if (moved ? !o : foodRoom(game, m.x, m.y)) return false;
+  if (moved ? !o : foodRoom(game, m.x, m.y) || (!o && game.snakes[m.by]?.alive && here(game.snakes[m.by].body[0]))) return false;
   // (a body, food or a burrow there: it rolls off, as off the body it hit, or the way it flew)
   const b = game.snakes.find(b => b.alive && b.body.some(p => p.x === m.x && p.y === m.y));
   const j = b ? b.body.findIndex(p => p.x === m.x && p.y === m.y) : -1;

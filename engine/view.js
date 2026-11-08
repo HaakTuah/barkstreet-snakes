@@ -7,7 +7,7 @@ function snapshot(game) {
       step: staminaStep(game, s), // (2u: tired, awake or game on, as its look shows: never its stamina itself)
       shield: s.shieldUntil > game.time ? 1 : 0, // (2u+: a golden apple's shield, as its ring shows)
       dashes: s.dashes, wrap: Math.max(0, s.wrapUntil - game.time), air: s.flight ? s.flight.ring.n : 0, land: s.flight ? key(s.flight.ring.x, s.flight.ring.y) : -1, // (in the air: how many ticks till it's down, and where: its ring)
-      spitIn: s.cheek ? s.cheek.spitAt - game.tick : 0, spitPower: s.cheek ? Math.min(T.SHRINK_MAX, s.cheek.power + 1) : 0, // (a green bulge, and its ring: it's spat after this many more moves, this strong)
+      spitIn: s.cheek ? s.cheek.spitAt - game.tick : 0, spitPower: s.cheek ? Math.min(T.SHRINK_MAX, s.cheek.power + 1) : 0, // (a green bulge, and its dotted line: it's spat after this many more moves, this strong)
     })),
     holes: game.holes.size,
     // (Fire, crackling, smouldering or burning, and the woodpecker's next patch: keep out.)

@@ -346,7 +346,7 @@ window.SnakeOnline = (() => {
       s.flight = fd ? { dir: fd, over, land: { x: land % 1000, y: (land - land % 1000) / 1000 }, gold: airGold ? 1 : 0, ...(num(ring) && ring >= 0 ? { ring: { x: ring % 1000, y: (ring - ring % 1000) / 1000, n: num(ringIn) ? Math.max(0, Math.min(8, ringIn)) : 1 } } : {}) } : null;
       s.flashArmed = num(flashArmed) ? flashArmed : -1;
       s.mealMs = num(mealMs) && mealMs > 0 ? mealMs : s.mealMs; // (for the hunger bar)
-      s.cheek = Number.isInteger(cheek) && cheek > 0 && Number.isInteger(spitAt) ? { power: Math.min(window.TUNING.SHRINK_MAX, cheek), spitAt, left: 0 } : null; // (the bulge and its ring)
+      s.cheek = Number.isInteger(cheek) && cheek > 0 && Number.isInteger(spitAt) ? { power: Math.min(window.TUNING.SHRINK_MAX, cheek), spitAt, left: 0 } : null; // (the bulge and its dotted line)
       s.planned = null; s.plannedTick = -1; s.queue.length = 0; // (the last tick's plan is spent: this one's follows, see applyPlan)
       const body = s.body;
       body.length = cells.length;
