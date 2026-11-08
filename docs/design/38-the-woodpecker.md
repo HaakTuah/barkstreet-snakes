@@ -19,6 +19,12 @@ sudden elimination"). Each act starts at a time drawn in its window after the on
   (`w.gaze`, anywhere that isn't a hole), then moves to a new vantage 2 to 4 times (`WATCH_LOOKS`), its last look
   `WATCH_LAST` (1.6) times as long as each of the others. **Its gaze is a tell:** act 2's first patch starts within
   `GAZE_NEAR` (4) cells of where it looked last, while any patch there keeps the fairness tries below.
+  - **Shown on the log:** where its eye settles, a pale pool of its attention lies over the spot, brightest at the
+    middle, its dotted rim at `GAZE_NEAR` (`render/watch.js`), easing in over a second at each new look, steady, under
+    the snakes. Its head alone showed only a row from a side perch, or a column from a phone's ledge, while the rivals
+    read the spot itself: the pool shows anyone what they read.
+  - **Its look:** its crest raised while it watches (its red nape, up), its head cocked at the spot, and a soft "kik!"
+    as it settles at each new vantage.
 - **2. The first pecks** (40–60 s after it came): a patch of `FIRST_CHUNK` (8) cells, then a rest of
   `FIRST_REST_TICKS` (90, about 9 s), over and over, while food still grows.
 - **3. The frenzy, sudden death** (40–60 s after act 2): nothing new grows but the last apples, the weather clears, and
@@ -26,7 +32,7 @@ sudden elimination"). Each act starts at a time drawn in its window after the on
   `PECK_CHUNK` (12) cells, a cell bigger each strike of the frenzy (`w.fury`) up to `PECK_CHUNK_MAX` (20), and each
   rest `PECK_REST_TICKS` times `PECK_HUNGRIER` (0.85) for every strike of the frenzy, never under `PECK_REST_MIN` (10).
 - **Each patch:** eyed for `PECK_AIM_TICKS` (17, about 1.6 s), struck, then the rest.
-- **Its look in the frenzy:** its eyes glow red, its feathers darken and a shadow hangs about it, coming over it in a
+- **Its look in the frenzy:** its eyes glow red, its feathers darken, its crest ruffles up dark red and its shadow deepens, coming over it in a
   second and a half and then steady (no flicker, with reduced motion too), and the page's sky dims (`html.frenzy` in
   `style/base.css`).
 - **The music** has a stage for each act (`audio/music.js`): the watcher adds a low, slow drone under the mid-round
