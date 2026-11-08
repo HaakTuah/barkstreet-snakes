@@ -13,7 +13,11 @@
 // one more, I ate it (won), or crashed head-on (a bounce, segments lost and
 // a stun), or a rival ate it, or none of these; and within 20 ticks, who ate
 // it in the end. Every snake's AI, in a field of the same copy's AIs, as
-// simulate.js plays it.
+// simulate.js plays it. And what hunger costs each (2b): segments lost to it
+// a minute alive, and the share of its rounds it starved to death in; and
+// the apples it let rot (#324): those its head came within 2 of while they
+// lay there, a minute alive, all and by the edge (the edge row or one in).
+// (2b measured it A against B: --root each copy in turn.)
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const arg = (k, d) => process.argv.includes(k) ? process.argv[process.argv.indexOf(k) + 1] : d;
 const ROUNDS = Number(process.argv[2]) || 100, SEED = Number(arg('--seed', 1)), ROOT = arg('--root', path.join(__dirname, '../../..'));
@@ -25,7 +29,7 @@ const gameFiles = require('../../game-files.js'), GAME = gameFiles(ROOT), AI_FIL
 for (const f of ['tuning.js', ...AI_FILES]) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
 const AI = ctx.window.SnakeAI;
 const keyOf = new Map(Object.entries(AI.PERSONAS).map(([k, p]) => [p, k])), mineKey = new WeakMap();
-const per = {}, row = k => (per[k] ||= { ate: 0, headOns: 0, decisions: 0, apples: 0, won: 0, headOn: 0, lost: 0, mine: 0, theirs: 0, nobody: 0 });
+const per = {}, row = k => (per[k] ||= { ate: 0, headOns: 0, decisions: 0, apples: 0, won: 0, headOn: 0, lost: 0, mine: 0, theirs: 0, nobody: 0, ms: 0, rounds: 0, shrunk: 0, starved: 0, rot: 0, rotEdge: 0 });
 let open = [], seen = new Set();
 const decide = AI.decide;
 ctx.window.SnakeAI = { ...AI, decide: (view, brain, memory) => {
@@ -50,11 +54,18 @@ let rounds = 0, ticks = 0;
 for (let n = 0; n < ROUNDS; n++) {
   state = (SEED + n * 7919) >>> 0;
   const g = E.createGame({ withPlayer: false });
-  for (const s of g.snakes) mineKey.set(s.memory, s.personaKey);
+  for (const s of g.snakes) { mineKey.set(s.memory, s.personaKey); row(s.personaKey).rounds++; }
   rounds++;
+  const near = new Map(); // (an apple: the rivals whose heads came within 2 of it)
   while (g.snakes.filter(s => s.alive).length > 1 && g.time < 600000) {
+    const before = g.time;
+    for (const s of g.snakes) if (s.alive && g.time >= s.nextStarve) row(s.personaKey).shrunk++; // (a segment, or growth to come, lost to hunger this tick: or its death)
     E.step(g);
     ticks++;
+    for (const s of g.snakes) if (s.alive) row(s.personaKey).ms += g.time - before;
+    for (const f of g.food) if (f.kind === 'food') for (const s of g.snakes) {
+      if (s.alive && Math.abs(s.body[0].x - f.x) + Math.abs(s.body[0].y - f.y) <= 2) { let set = near.get(f); if (!set) near.set(f, set = new Set()); set.add(s.personaKey); }
+    }
     for (const w of open) {
       if (!w.done && g.tick <= w.by && g.events.some(e => e.type === 'crash' && e.snake.id === w.id && /head-on/.test(e.cause))) { w.r.headOn++; w.done = true; }
     }
@@ -62,7 +73,13 @@ for (let n = 0; n < ROUNDS; n++) {
       const k = e.snake && e.snake.personaKey;
       if (e.type === 'eat' && (e.kind === 'food' || e.kind === 'golden')) row(k).ate++;
       if (e.type === 'crash' && /head-on/.test(e.cause)) row(k).headOns++;
+      if (e.type === 'rot' && e.kind === 'apple') for (const [f, set] of near) if (f.x === e.x && f.y === e.y && !g.food.includes(f)) {
+        const edge = Math.min(e.x, e.y, E.GRID - 1 - e.x, E.GRID - 1 - e.y) <= 1;
+        for (const q of set) { row(q).rot++; if (edge) row(q).rotEdge++; }
+        near.delete(f);
+      }
     }
+    for (const s of g.snakes) if (!s.alive && s.cause === 'starved' && !s.counted) { s.counted = true; row(s.personaKey).starved++; }
     for (const e of g.events) if (e.type === 'eat') open = open.filter(w => {
       if (w.x !== e.x || w.y !== e.y) return true;
       const me = e.snake.id === w.id;
@@ -82,3 +99,8 @@ const line = (k, r) => console.log(`${k.padEnd(12)} ${String(r.decisions).padSta
 const tot = { ate: 0, headOns: 0, decisions: 0, apples: 0, won: 0, headOn: 0, lost: 0, mine: 0, theirs: 0, nobody: 0 };
 for (const [k, r] of Object.entries(per).sort((a, b) => a[0] < b[0] ? -1 : 1)) { for (const f in tot) tot[f] += r[f]; line(k, r); }
 line('all', tot);
+console.log('persona       segments lost to hunger /min   starved (of its rounds)   apples left to rot /min: all, by the edge');
+for (const [k, r] of Object.entries(per).sort((a, b) => a[0] < b[0] ? -1 : 1)) {
+  const min = Math.max(1, r.ms) / 60000;
+  console.log(`${k.padEnd(12)} ${(r.shrunk / min).toFixed(2).padStart(14)} ${pc(r.starved, r.rounds).padStart(26)} ${(r.rot / min).toFixed(3).padStart(28)} ${(r.rotEdge / min).toFixed(3).padStart(8)}`);
+}

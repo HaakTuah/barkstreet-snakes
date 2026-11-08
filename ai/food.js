@@ -35,7 +35,7 @@ function readDesperation() {
 // looking for food, harder the closer it gets (and food a rival may
 // reach first counts for more); desperate, harder still.
 // (readAppetite() sets these for each decision:)
-let hunger, lean, fed, foodW0, eatW0, foodW, eatW, contested, starved, nerveKeep;
+let hunger, lean, fed, foodW0, eatW0, foodW, eatW, contested, starved, saves, nerveKeep;
 function readAppetite() {
   hunger = me.hungerLeft == null ? 0 : Math.min(1, Math.max(0, (TUNE.AI_HUNGRY_MS - me.hungerLeft) / TUNE.AI_HUNGRY_MS));
   // (Once the woodpecker's here nothing new grows: nobody can afford to be picky.)
@@ -49,7 +49,13 @@ function readAppetite() {
   // head-on and where it may be by now (my persona's gamble at a contested
   // apple, not a reading of the risk: the maps stay as they are).
   starved = me.hungerLeft == null ? 0 : Math.min(1, Math.max(0, 1 - me.hungerLeft / TUNE.HUNGER_MS));
-  nerveKeep = w.nerve ? 1 - Math.min(NERVE_MAX, (w.nerve.base || 0) + (w.nerve.hungry || 0) * starved) : 1;
+  // And a meal is worth what it saves (2b): the length it adds, and, hungry,
+  // the length it stops me losing, from nothing AI_HUNGRY_MS before my first
+  // shrink to one more at it and two, a while into starving. Weighed against
+  // the risk of taking it, that's the risk counted over its worth: a hungry
+  // snake contests an apple because it's worth more, each in its own weights.
+  saves = me.hungerLeft == null ? 0 : Math.min(2, Math.max(0, (TUNE.AI_HUNGRY_MS - me.hungerLeft) / TUNE.AI_HUNGRY_MS));
+  nerveKeep = (w.nerve ? 1 - Math.min(NERVE_MAX, (w.nerve.base || 0) + (w.nerve.hungry || 0) * starved) : 1) / (1 + saves);
 }
 
 // How many ticks something I saw has left before it rots, withers or
