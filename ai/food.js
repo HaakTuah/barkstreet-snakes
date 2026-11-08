@@ -37,7 +37,9 @@ function readDesperation() {
 // (readAppetite() sets these for each decision:)
 let hunger, lean, fed, foodW0, eatW0, foodW, eatW, contested, starved, saves, nerveKeep;
 function readAppetite() {
-  hunger = me.hungerLeft == null ? 0 : Math.min(1, Math.max(0, (TUNE.AI_HUNGRY_MS - me.hungerLeft) / TUNE.AI_HUNGRY_MS));
+  // (the hunger clock, from 0 AI_HUNGRY_MS before my first shrink, 1 at it, and on past it while I starve)
+  const ramp = me.hungerLeft == null ? 0 : Math.max(0, (TUNE.AI_HUNGRY_MS - me.hungerLeft) / TUNE.AI_HUNGRY_MS);
+  hunger = Math.min(1, ramp);
   // (Once the woodpecker's here nothing new grows: nobody can afford to be picky.)
   lean = view.timeMs >= TUNE.SUDDEN_DEATH_MS;
   fed = !hunger && !lean && myLen >= (w.hungryBelow ?? Infinity);
@@ -45,16 +47,17 @@ function readAppetite() {
   eatW0 = fed ? w.eat * w.fedFactor : Math.max(w.eat, 150 * hunger) * (1 + 2 * hunger);
   foodW = desperate ? Math.max(60, foodW0) : foodW0, eatW = desperate ? Math.max(600, eatW0) : eatW0;
   contested = Math.max(Number(w.contested || 0), hunger);
-  // Nerve: over food, the share of a rival's threat still counted, both its
-  // head-on and where it may be by now (my persona's gamble at a contested
-  // apple, not a reading of the risk: the maps stay as they are).
+  // Over food, the share of a rival's threat still counted, both its head-on
+  // and where it may be by now: my persona's nerve (its gamble at a contested
+  // apple, not a reading of the risk: the maps stay as they are), over what
+  // the meal is worth to me (below), for every rival.
   starved = me.hungerLeft == null ? 0 : Math.min(1, Math.max(0, 1 - me.hungerLeft / TUNE.HUNGER_MS));
   // And a meal is worth what it saves (2b): the length it adds, and, hungry,
   // the length it stops me losing, from nothing AI_HUNGRY_MS before my first
   // shrink to one more at it and two, a while into starving. Weighed against
   // the risk of taking it, that's the risk counted over its worth: a hungry
   // snake contests an apple because it's worth more, each in its own weights.
-  saves = me.hungerLeft == null ? 0 : Math.min(2, Math.max(0, (TUNE.AI_HUNGRY_MS - me.hungerLeft) / TUNE.AI_HUNGRY_MS));
+  saves = Math.min(2, ramp);
   nerveKeep = (w.nerve ? 1 - Math.min(NERVE_MAX, (w.nerve.base || 0) + (w.nerve.hungry || 0) * starved) : 1) / (1 + saves);
 }
 

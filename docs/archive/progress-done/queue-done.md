@@ -355,5 +355,6 @@ cloth's side, so it shows beside the body. Drawing only: no simulation. See "Fla
 
 Done (PR #593): a meal is worth what it saves, for every rival, so a hungry rival contests an apple by its worth;
 Gobbler's nerve is 0.5 at any hunger; Desperado fears heads less everywhere; hungry, Ghost keeps less of its distance
-(#325); a line that has just eaten wants no spare room (#324). What it measured is in the PR; the rules are in
-`docs/design/39-the-rivals.md`, "Nerve at a contested apple" and "A meal isn't a pin".
+(#325). Apples by the edge (#324) were measured both ways, and no change was kept; what is left is #595. What it
+measured is in the PR; the rules are in `docs/design/39-the-rivals.md`, "Nerve at a contested apple" and "A meal isn't
+a pin".

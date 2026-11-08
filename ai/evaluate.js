@@ -91,11 +91,7 @@ function evaluate(body, len, grow, t) {
   terr.set(terrFree);
   for (let j = 0; j < len; j++) { const p = framed[body[j].y * N + body[j].x], b = terrFree[p], m = len - j + grow + t; terr[p] = b > m ? b : m; inBody[p] = bodyMark; }
   const cap = L * 2 + 20;
-  // (A line that has just eaten is where it is only because the food was
-  // there, and leaves on its next move: for MEAL_PLIES it wants no room to
-  // spare beyond its length, as its necks get MEAL_DAWDLE: "A meal isn't a pin",
-  // docs/design/39-the-rivals.md.)
-  const need = L + (t - ateAt <= MEAL_PLIES ? 0 : w.margin);
+  const need = L + w.margin;
   const stampF = ++markStamp;
   // A contested-food eater keeps searching past the room cap until it sees
   // food, so it looks for food as it goes; anyone else, once it's done.
