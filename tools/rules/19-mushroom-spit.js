@@ -105,6 +105,13 @@ const column = (x, y, n, dy = -1) => Array.from({ length: n }, (_, i) => [x, y +
   check('where the edges wrap for the spitter, it flies on over the edge from the far side', e && e.hit === -1 && e.lx === T.SPIT_REACH - 2 && e.ly === 10, JSON.stringify(e && [e.lx, e.ly]));
 }
 
+{ // A mushroom in the air still counts toward the board's mushrooms, as one in a cheek does: none grows meanwhile.
+  const g = loaded([[line(6, 10, 5), 'right'], [line(4, 25, 4), 'right']]);
+  g.food = Array.from({ length: T.MUSHROOMS - 1 }, (_, i) => ({ x: 2 + i, y: 2, kind: 'mushroom', expires: 9999 }));
+  E.step(g);
+  check('while one is in the air, no new mushroom grows in its place', g.spits.length === 1 && g.food.filter(f => f.kind === 'mushroom').length === T.MUSHROOMS - 1, JSON.stringify([g.spits.length, g.food.filter(f => f.kind === 'mushroom').length]));
+}
+
 { // Never stronger than SHRINK_MAX, and it never kills: it shrinks you no further than MIN_LENGTH.
   const g = loaded([[line(6, 10, 5), 'right'], [column(8, 10, 4), 'down']], T.SHRINK_MAX);
   const o = g.snakes[1];

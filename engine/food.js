@@ -39,6 +39,7 @@ function fillFood(game) {
     else if (f.kind === 'beetle') beetles++;
   }
   for (const s of game.snakes) if (s.alive && s.cheek) mushrooms++; // (one in a cheek is still about: it comes back up)
+  mushrooms += game.spits.length; // (and one in the air: it comes down, 3b+)
 
   const place = foodPlacer(game);
   const raining = game.weather.kind === 'rain', winter = game.weather.kind === 'snow';
