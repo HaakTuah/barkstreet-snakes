@@ -361,7 +361,7 @@ them where its head fell, one golden pickup anyone can grab (a bump it lives thr
   as a golden leaf is.
 - *The look:* a gold coin in a golden glow, ringed with the pips it held, as they were on the head (sky dots for golden
   jumps, ember diamonds for dashes), turning slowly; it fades as a leaf does. The golden sound when eaten.
-- *The lesson:* the first spill anyone sees, "Knocked out, a snake drops its golden powers. Grab them!"; grabbing one,
+- *The lesson:* the first spill anyone sees, "A snake knocked out drops its powers. Grab them!"; grabbing one,
   what you now hold ("Grabbed: 2 golden jumps and 1 golden dash now."). Its Field guide row is "Spilled powers".
 - *The rivals* want it through the same food search as anything else: each charge they could still hold worth what one
   from a golden leaf is (`spillWorth` in `ai/food.js`); with no room, only a meal. No persona weights of its own.
