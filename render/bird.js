@@ -10,7 +10,7 @@
 // drums too fast to see), its beak open (gape), how high in the air (for
 // its shadow), and what it's doing (phase) and looking at (fx, fy).
 const pose = { x: 0, y: 0, s: 1, flip: 1, rot: 0, crouch: 0, wing: 0, stroke: 1, sweep: 0, near: 1, far: 1, feet: 1, turn: 0, thrust: 0, blur: 0, gape: 0, alpha: 1, air: 0, blink: false,
-  phase: '', free: false, up: 1.2, fury: 0, fx: 0, fy: 0, drum: null, blows: 0, t: 0, tp: 0, u: 0 };
+  phase: '', free: false, up: 1.2, fury: 0, crest: 0, fx: 0, fy: 0, drum: null, blows: 0, t: 0, tp: 0, u: 0 };
 // What it keeps between frames: its head's jerks and tilts, what it's
 // watching, its eye, its blinks, its grip; where it was drawn (to clear).
 const bird = { turn: 0, turnTo: 0, hold: 0, cock: 0, cockAt: 0, gx: 1, gy: 0, focus: null, focusUntil: 0, spot: { x: 0, y: 0 },
@@ -110,6 +110,7 @@ function posture(w, tp, now) {
   P.alpha = 1; P.thrust = 0; P.blur = 0; P.gape = 0; P.air = 0; P.wing = 0; P.stroke = 1; P.sweep = 0; P.near = P.far = 1; P.feet = 1; P.crouch = 0; P.rot = 0;
   P.free = false; P.up = 1.2; P.drum = null; P.blows = 0; P.blink = false; P.rim = false;
   P.fury = clamp01((game.time - game.acts.frenzy) / 1500); // (entry 6: its frenzy's look, coming over it in a second and a half; steady, never flickering)
+  P.crest = Math.max(P.fury, w.gaze >= 0 && SnakeEngine.actOf(game) === 1 ? 1 : 0); // (raised while it watches, ruffled in the frenzy)
   AX = AY = 0; AFREE = Infinity;
   if (w.target.length) {
     const to = (w.strikeAt - tp) * ms, A = aimPlan(w, ms, to), into = A.aimMs - to;

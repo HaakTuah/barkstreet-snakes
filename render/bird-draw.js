@@ -187,6 +187,19 @@ function drawBird(g, P, half) {
   birdRim(g, -0.1, 0.3, 0.95, 1.55, 0.08, sun);
   if (P.blur > 0) { ghostHead(P); g.globalAlpha = P.alpha * 0.4 * P.blur; useM(g, TM); layPart(g, 'head', half); g.fillStyle = '#71717a'; beakPath(g, 0); g.fill(); g.globalAlpha = P.alpha; }
   useM(g, HM); layPart(g, 'head', half);
+  // Its crest (entry 6): raised while it watches the log (its red nape),
+  // ruffled up dark in the frenzy; flat otherwise.
+  if (P.crest > 0) {
+    g.fillStyle = P.fury > 0.5 ? '#7f1d1d' : '#b91c1c';
+    g.beginPath();
+    for (let i = 0; i < 4; i++) {
+      const a0 = Math.PI * (1.02 + 0.13 * i), a1 = a0 + 0.13, am = (a0 + a1) / 2, out = (0.28 + 0.16 * (i % 2)) * P.crest;
+      g.moveTo(0.45 + 0.66 * Math.cos(a0), -1.75 + 0.64 * Math.sin(a0));
+      g.lineTo(0.45 + (0.7 + out) * Math.cos(am), -1.75 + (0.68 + out) * Math.sin(am));
+      g.lineTo(0.45 + 0.66 * Math.cos(a1), -1.75 + 0.64 * Math.sin(a1));
+    }
+    g.fill();
+  }
   g.strokeStyle = BIRD_RIM; g.lineWidth = 0.11;
   birdRim(g, 0.45, -1.75, 0.72, 0.7, 0, sun - P.turn);
   g.fillStyle = '#71717a'; beakPath(g, P.gape); g.fill(); // (the chisel beak, darker along its top)
