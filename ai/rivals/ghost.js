@@ -8,6 +8,7 @@ PERSONAS.ghost = {
   w: {
     space: 2, territory: 0.6,
     food: 3, eat: 30, pellet: 1, foodRange: 15, hungryBelow: 18, fedFactor: 0.4,
+    keep: 7, // (2h: the most sparing in the endgame)
     margin: 6, headRisk: 900, zoneRisk: 150, distance: 5, spit: 0.2, leapNow: 0.8, // (a leap now out of a trap, a little cheaper) // (at 6, once the rivals read knocked food and digging beetles, it won 39 / 31%)
   },
 };

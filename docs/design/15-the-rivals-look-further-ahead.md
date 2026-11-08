@@ -1,6 +1,6 @@
 ## The rivals look further ahead
 
-Its rules are in `39-the-rivals.md` ("The rivals look further ahead", with "Nobody's picky in sudden death" and "Stuns,
+Its rules are in `39-the-rivals.md` ("The rivals look further ahead", with "The endgame: a meal is worth the life it buys" and "Stuns,
 head-ons and food that won't keep"), and its text as it was, with how the look ahead was chosen and measured, in
 `docs/archive/design-rivals.md`.
 

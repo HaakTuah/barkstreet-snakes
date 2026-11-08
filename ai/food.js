@@ -35,7 +35,7 @@ function readDesperation() {
 // looking for food, harder the closer it gets (and food a rival may
 // reach first counts for more); desperate, harder still.
 // (readAppetite() sets these for each decision:)
-let hunger, lean, fed, foodW0, eatW0, foodW, eatW, contested, starved, saves, nerveKeep;
+let hunger, lean, fed, foodW0, eatW0, foodW, eatW, contested, starved, saves, nerveKeep, keepLen, roomy, growShare;
 function readAppetite() {
   // (the hunger clock, from 0 AI_HUNGRY_MS before my first shrink, 1 at it, and on past it while I starve)
   const ramp = me.hungerLeft == null ? 0 : Math.max(0, (TUNE.AI_HUNGRY_MS - me.hungerLeft) / TUNE.AI_HUNGRY_MS);
@@ -59,12 +59,28 @@ function readAppetite() {
   // snake contests an apple because it's worth more, each in its own weights.
   saves = Math.min(2, ramp);
   nerveKeep = (w.nerve ? 1 - Math.min(NERVE_MAX, (w.nerve.base || 0) + (w.nerve.hungry || 0) * starved) : 1) / (1 + saves);
+  // The endgame (2h): a meal is worth the life it buys against the room it
+  // costs. From the woodpecker on there's no clock to run out (the round ends
+  // when one snake is left), so length is worth a crash and hunger buffer
+  // (keepLen) and no more: beyond it, it only fills the room I need to turn
+  // in. So past keepLen a meal is worth only the hunger it stops (one bead,
+  // not the heap), unless the log is roomy (ROOMY times my length free a
+  // snake: then as before). growShare: the share of a meal's growth that
+  // counts, at my length now; along a line, a meal after one is worth only
+  // roomy past keepLen (see move).
+  keepLen = lean ? TUNE.MIN_LENGTH + (w.keep ?? KEEP) : Infinity;
+  if (lean) {
+    let free = N * N - holes.size - myLen;
+    for (const o of others) free -= o.body.length;
+    roomy = Math.min(1, Math.max(0, free / (others.length + 1) / (ROOMY * myLen) - 1) * 2);
+  } else roomy = 1;
+  growShare = myLen < keepLen ? 1 : Math.max(hunger, roomy);
 }
 
 // How many ticks something I saw has left before it rots, withers or
 // flies off (in winter an apple rots twice as fast, and has done since I saw it).
 // (readFood() sets these for each decision:)
-let ticksLeft, appleWorth, craving, worth, spitTaste, shroomWorth, spillWorth, mute, stampFood, stampOwn, marksEnd, burrows,
+let ticksLeft, appleWorth, craving, meals, worth, spitTaste, shroomWorth, spillWorth, mute, stampFood, stampOwn, marksEnd, burrows,
   engine, strikeAt, lands, beakOf, knockedTo, peckGame, cellOf, foodCount, goldCount, bugCount, bugFood, beadCount;
 function readFood() {
   ticksLeft = f => winter && f.kind === 'food' && !f.cooked ? (f.expires - view.tick - age) / 2 : f.expires - view.tick; // (baked, it keeps)
@@ -82,11 +98,15 @@ function readFood() {
     const low = me.stamina < Math.min(TUNE.JUMP_STAMINA_MS, TUNE.DASH_STAMINA_MS) ? 2 : 1;
     return STAMINA_PRICE * low * Math.min(ms, gap) / TUNE.STAMINA_MS;
   };
+  // (meals: the growth and hunger part of each, times growShare, past my
+  // length worth keeping, in the endgame, only the hunger it stops; the rest
+  // of its worth, stamina, counts as it is. A beetle's, in full.)
+  meals = { food: Math.max(appleWorth, hunger) * growShare, golden: TUNE.GOLDEN_GROWTH * Math.max(appleWorth, hunger) * craving.apple * growShare, pellet: (w.pellet ?? 1) * growShare };
   worth = {
-    food: Math.max(appleWorth, hunger) + lift(TUNE.STAMINA_FOOD_MS),
-    golden: TUNE.GOLDEN_GROWTH * Math.max(appleWorth, hunger) * craving.apple + lift(TUNE.STAMINA_MS), // (it fills my bar)
-    beetle: TUNE.BEETLE_GROWTH * Math.max(appleWorth, hunger) + lift(TUNE.BEETLE_GROWTH * TUNE.STAMINA_FOOD_MS), // it moves, but it's worth what it's worth
-    pellet: (w.pellet ?? 1) + lift(TUNE.STAMINA_FOOD_MS),
+    food: meals.food + lift(TUNE.STAMINA_FOOD_MS),
+    golden: meals.golden + lift(TUNE.STAMINA_MS), // (it fills my bar)
+    beetle: TUNE.BEETLE_GROWTH * Math.max(appleWorth, hunger) + lift(TUNE.BEETLE_GROWTH * TUNE.STAMINA_FOOD_MS), // it moves, but it's worth what it's worth (in the endgame too: a chase half-meant let a half of them get away, past the beetles' band)
+    pellet: meals.pellet + lift(TUNE.STAMINA_FOOD_MS),
     mushroom: Math.min(-TUNE.SHRINK, w.mushroom ?? -TUNE.SHRINK), // (it takes SHRINK segments off, and it isn't a meal: as many apples lost, hungry or not)
     leaf: 2 * Math.max(appleWorth, hunger, 0.5) * craving.power, // (golden powers: worth it for what they do)
     goldcap: 1.5 * Math.max(appleWorth, hunger, 0.5) * craving.power,
@@ -167,7 +187,7 @@ function readFood() {
   // bead, nothing). foodCells lists the cells worth something, and goldCells
   // the golden power food among them, for a craving that counts it even
   // where a rival may get there first. (Beetles are worked out apart: they move.)
-  foodValue.fill(0); foodGrow.fill(0);
+  foodValue.fill(0); foodGrow.fill(0); foodMeal.fill(0);
   foodCount = 0, goldCount = 0, bugCount = 0;
   bugFood = [];
   for (const f of food) {
@@ -184,6 +204,7 @@ function readFood() {
     if (f.expires != null && ticksLeft(f) < away) continue; // (it'll be gone before I get there)
     if (desperate && v > 0 && away > lifeTicks + 1) continue; // (I'd starve on the way)
     foodValue[i] += v;
+    if (!own && meals[f.kind]) foodMeal[i] += meals[f.kind] * v / worth[f.kind]; // (its meal's share of what it's worth, baked or golden as it is)
     foodCells[foodCount++] = i;
     if (craving.contested && v > 0 && (f.gold || f.kind === 'leaf' || f.kind === 'goldcap' || f.kind === 'spill' && v > worth.food)) goldCells[goldCount++] = i;
   }
@@ -192,3 +213,9 @@ function readFood() {
   // beads.)
   beadCount = 0;
 }
+
+// A meal along a line of moves (2h): past my length worth keeping in the
+// endgame, a meal after the first on the line is worth only roomy of its
+// meal's part (the first stopped my hunger), its stamina or power in full.
+// (len: my length and growth as I come to it.)
+const mealAfter = (i, here, len) => here > 0 && ateAt > -HOLE && len >= keepLen ? here - foodMeal[i] * (1 - roomy) : here;

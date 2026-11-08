@@ -8,6 +8,6 @@ PERSONAS.creeper = {
   w: {
     space: 1, territory: 0.5,
     food: 3, eat: 50, pellet: 1, foodRange: 30,
-    margin: 5, headRisk: 900, zoneRisk: 150, tail: 45,
+    margin: 5, headRisk: 900, zoneRisk: 150, tail: 45, drop: 'ready', // (2h: its tail dropped once it sees itself boxed in, all round)
   },
 };

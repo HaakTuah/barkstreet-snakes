@@ -37,7 +37,7 @@ function move(body, len, grow, d, depth, t, bonus) {
   const was = foodValue[i], muted = t + 1 <= mute, late = foodFrom[i] > t + 1, here = late ? 0 : was;
   let caught = -1;
   if (!muted) for (let b = 0; b < bugCount; b++) if (bugCell[b * BUG_SLOTS + t] === i) { caught = b; break; }
-  const v = muted ? 0 : here + (caught >= 0 ? bugV[caught] : 0);
+  const v = muted ? 0 : mealAfter(i, here, len + grow) + (caught >= 0 ? bugV[caught] : 0); // (2h: a second meal on this line, past my length worth keeping)
   const change = muted ? 0 : (late ? 0 : foodGrow[i]) + (caught >= 0 ? TUNE.BEETLE_GROWTH : 0);
   const muteWas = mute;
   if (change < 0) { // a mushroom: pending growth goes first, then the tail (and my mouth is full a while)

@@ -37,7 +37,7 @@ const STAMINA_PRICE = 2; // (apples, a full bar of stamina: each power costs its
 const RESERVE_PRICE = 2.4; // (apples, a full bar's worth of waiting below my reserve)
 const RESERVE_MARGIN = DRAB.margin; // (the margin, spare room wanted, of a snake that keeps all the other power needs: the default's; less cautious, less; more, more)
 // (powerPick() sets these for each call:)
-let crawlScore, crawlDir, air, jump, U, habit, safe, cheap, keep, stampM, trapped, boxed, roomsHere, foodHere, hereFree,
+let crawlScore, crawlDir, air, jump, U, habit, safe, cheap, keep, stampM, trapped, boxed, dropping, roomsHere, foodHere, hereFree,
   hereFood, landFood, landCells, pecks, cellAt, freeSoon, inTheWay, path, straight, leapNow, leapFly, leapTurn, ate, ateV,
   ateL, ateG, ateGain, endRisk, idle, muteWas, ateBug, ateWas, meal, bugsOn, cutter, bestPower, ownCut, cutKills, cutTarget, consider,
   waitPrice;
@@ -60,6 +60,12 @@ function powerPick(crawlIn, crawlDirIn) {
   keep = me.grow > 0 ? me.body.length : me.body.length - 1, stampM = ++markStamp;
   for (let j = 0; j < keep; j++) myCells[me.body[j].y * N + me.body[j].x] = stampM;
   trapped = crawlScore < DEAD / 2, boxed = crawlScore < -NECK_COST;
+  // (2h: my own tail dropped while I still can, once the search sees me
+  // boxed in, not only when every crawl crashes: in the endgame, and all
+  // round for a snake that drops readily (Creeper); a late one (Ouroboros)
+  // waits for the crash. A boxed snake rarely still has its flash rested,
+  // a body one thick and a free cell beyond, so it plans the drop.)
+  dropping = trapped || (boxed && (w.drop === 'ready' || (lean && w.drop !== 'late')));
   roomsHere = new Int32Array(others.length).fill(-1), foodHere = new Int32Array(others.length); // (each rival's room and moves to food as I am, once asked: see shutIn)
   hereFree = -1, hereFood = false, landFood = false, landCells = 0; // (the free log round me, and whether there's food on it: see islandGain) // (boxed: the crawl leaves me less room than I need, or only through a gap a rival could shut)
   pecks = view.pecks; // (the woodpecker's mark, if I'm shown it apart from the holes)
@@ -103,8 +109,8 @@ function powerPick(crawlIn, crawlDirIn) {
   for (const d of DIR_LIST) {
     if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
     const extra = (intent.mimicDir && sameDir(d, intent.mimicDir) ? w.mimic : 0) - (w.turn && !sameDir(d, me.dir) ? w.turn : 0);
-    if (me.dashes > 0) { const v = flashOpt(d, true); if (trapped || cutKills || habit.dashSpend) consider(d, true, v, 0.6, extra); } // (a golden dash, held: out of a trap, or for a cut that puts a rival out; spent so, it gains (see part 4's chosen numbers); spent as it came, −0.11 ± 0.09 place a use; Star (dashSpend), its trademark, spends them as they come)
-    else if (me.flashIn === 0 && (trapped || d === crawlDir || habit.everyWay || (cutter && bodyNear(d)) || coverNear(d))) consider(d, true, flashOpt(d, false), STAMINA_PRICE * TUNE.DASH_STAMINA_MS / TUNE.STAMINA_MS * (trapped || cutTarget || race(d) ? 0.5 : 1), extra, waitPrice(TUNE.DASH_STAMINA_MS, true));
+    if (me.dashes > 0) { const v = flashOpt(d, true); if (trapped || cutKills || habit.dashSpend || (dropping && ownCut >= 0)) consider(d, true, v, 0.6, extra); } // (a golden dash, held: out of a trap, or for a cut that puts a rival out; spent so, it gains (see part 4's chosen numbers); spent as it came, −0.11 ± 0.09 place a use; Star (dashSpend), its trademark, spends them as they come)
+    else if (me.flashIn === 0 && (dropping || d === crawlDir || habit.everyWay || (cutter && bodyNear(d)) || coverNear(d))) consider(d, true, flashOpt(d, false), STAMINA_PRICE * TUNE.DASH_STAMINA_MS / TUNE.STAMINA_MS * (trapped || cutTarget || race(d) ? 0.5 : 1), extra, waitPrice(TUNE.DASH_STAMINA_MS, true));
     if (jump) { const v = leapOpt(d); consider(d, false, v, (me.leaps > 0 ? 0.35 : STAMINA_PRICE * TUNE.JUMP_STAMINA_MS / TUNE.STAMINA_MS) * (leapNow ? (w.leapNow ?? 1) : 1), extra, me.leaps > 0 ? 0 : waitPrice(TUNE.JUMP_STAMINA_MS, false)); } // (leap now, at the jump's price times my style's: only out of a trap, see leapOpt)
   }
   return bestPower;
@@ -146,7 +152,7 @@ function eatOn(a, b, c, L, g, soon, step) {
     const late = foodFrom[i] > step, here = late ? 0 : foodValue[i];
     let caught = -1;
     for (let q = 0; q < bugCount; q++) if (bugCell[q * BUG_SLOTS + step - 1] === i) { caught = q; break; }
-    const v = here + (caught >= 0 ? bugV[caught] : 0), change = (late ? 0 : foodGrow[i]) + (caught >= 0 ? TUNE.BEETLE_GROWTH : 0);
+    const v = mealAfter(i, here, L + g) + (caught >= 0 ? bugV[caught] : 0), change = (late ? 0 : foodGrow[i]) + (caught >= 0 ? TUNE.BEETLE_GROWTH : 0);
     if (change < 0) { // (a mushroom: my mouth is full after it, the rest of the way too)
       mute = Math.max(mute, step + TUNE.CHEEK_TICKS);
       let n = -change;
