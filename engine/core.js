@@ -97,8 +97,10 @@ function pickOpponents(n) {
 // an input queue): one by default, none for an AI-only round, up to four
 // online. AI snakes fill the other seats, from persona keys (random by
 // default). Names are made unique, so a person called "Sniper" can't be
-// mistaken for the rival of that name.
-function createGame({ humans = null, withPlayer = true, personas = null } = {}) {
+// mistaken for the rival of that name. season: the round's food season
+// (2i: a key of SEASONS; drawn by SEASON_ODDS if not given, as the host
+// draws it for everyone online).
+function createGame({ humans = null, withPlayer = true, personas = null, season = null } = {}) {
   const people = (humans || (withPlayer ? [{ name: 'Green', color: PLAYER_COLOR }] : [])).slice(0, SPAWNS.length);
   const wanted = T.OPPONENTS + 1 - people.length;
   const keys = (personas || pickOpponents(wanted)).filter(k => Object.prototype.hasOwnProperty.call(PERSONAS, k)).slice(0, wanted);
@@ -133,10 +135,18 @@ function createGame({ humans = null, withPlayer = true, personas = null } = {}) 
     portals: [], spits: [], burrows: [], unders: [], fires: new Map(), fireGroups: new Map(), fireTotals: new Map(), fireGroup: 0,
     weather: { kind: 'clear', since: 0, until: T.WEATHER_FIRST_MS, nextGust: 0, nextStrike: 0 }, weatherBag: [],
     sdApples: 0, sdAppleAt: null,
+    season: Object.prototype.hasOwnProperty.call(T.SEASONS, season) ? season : drawSeason(),
   };
   fillFood(game);
   snapshot(game);
   return game;
+}
+// A round's food season, SEASON_ODDS of each.
+function drawSeason() {
+  const odds = Object.entries(T.SEASON_ODDS);
+  let r = Math.random() * odds.reduce((a, [, n]) => a + n, 0);
+  for (const [k, n] of odds) if ((r -= n) < 0) return k;
+  return 'normal';
 }
 // How long the next tick lasts. The opening ticks ease from OPENING_TICK down
 // to START_TICK, then the speed ramps gently toward MIN_TICK.

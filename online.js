@@ -28,7 +28,7 @@
  * @typedef {{ t: 'closed' }} ClosedMsg  the host closed the room
  *
  * @typedef {{ t: 'tick', k: number, ms: number, len: number, s: SnakeRow[], f: FoodRow[], un: UnderRow[], h: number[],
- *   w: WoodpeckerRow | 0, bu: BurrowRow[], po: PortalRow[], sp: SpitRow[], fi: FireRow[], sky: [kind: number, since: number, until: number], e: EventRow[] }} TickMsg
+ *   w: WoodpeckerRow | 0, bu: BurrowRow[], po: PortalRow[], sp: SpitRow[], fi: FireRow[], sky: [kind: number, since: number, until: number, season: number], e: EventRow[] }} TickMsg
  *   one tick as the host saw it (see tick())
  * @typedef {0 | 1} Flag
  * @typedef {[alive: Flag, dir: number, eaten: number, lastAte: number, nextStarve: number, cells: number[], memory: Engine.Memory | 0,
@@ -93,7 +93,7 @@
  * @typedef {{ t: 'away' | 'back' }} AwayMsg  the page went out of sight, and came back
  */
 window.SnakeOnline = (() => {
-  const VERSION = 28; // 2: burrows, fire and weather; 3: the woodpecker's chunks, winter; 4: crashes, burning snakes, cooking, rot; 5: golden beetles and leaps, Ouroboros; 6: powers (everyone leaps; golden leaves, dashes; golden mushrooms, wrap); 7: jump and flash apart (everyone flashes), beads' owners and rot, holes under bodies, the last apples; 8: plans, so friends draw everyone ahead the way they're going, and a held jump taken back; 9: choking on your own beads (each snake's cough; chokes and nudges, and where each piece rolled); 10: beetles that dig in (each one's digUntil; digs, and dives that were digs), several beetles underground, and food the woodpecker knocks aside (where each piece flew, and a bead's colour; where its strike promised each would land); burrows as the engine keeps them (when each was last used, and whether a dig left it), a dug burrow opening and one closing over; 11: burrows grow shut (when each started and will close over, and one starting to); 12: rivals chosen (a round's, and a shared best round's, chosen flag); 13: the lobby shows the line-up (the host's rivals, seat by seat, and which were chosen); 14: Capricious does every rival (its mood any of them, worn as a costume); 15: Copycat plays as its model plays (the style it reads, for its note); 16: round six B's island hop (a jump in the air: where it comes down, how many cells it still flies over, golden); 17: round six B's bridges (no message changed: a rule both sides must play by); 18: round six B's cuts (a failed flash's crash says so; the plain flash cuts, its own tail too: a rule both sides play by) and your own beads squashed (no choke, cough or nudge: each snake's cough gone; a squash where each went); 19: round six B's mushrooms come back up (each snake's cheek, and when it's spat; a spat mushroom's strength; a spit, where it came down, whom it hit, where it lies); 20: 2s, a piece cut loose falls (the woodpecker's mark says which of its cells fall, and its strike which fell); 21: round six B's golden flight, leap now and bumps in the air (a jump let go, a crash in the air); 22: 2y, the held golden flight always flies 5 (where each jump's ring is); 23: part 5, gold portals (each open portal in the tick; portal, through, portalShut); 24: 2x, the spitter slides over its own mushroom (a spat one's slideUntil, so it shows wet while it does); 25: 2u, one stamina for jump and flash (each snake's restedAt, in place of its two rests); 26: 2u+, stamina banks above the full bar, and a golden apple's shield (each snake's bank and shieldUntil; a crash it took says so); 27: 3b+, the spit flies along the line (each mushroom in the air; a spit where it left, a spat where it stopped); 28: round six B's dropped charges (a knocked-out snake's golden jumps and dashes, spilled as a pickup, and the spill)
+  const VERSION = 29; // 2: burrows, fire and weather; 3: the woodpecker's chunks, winter; 4: crashes, burning snakes, cooking, rot; 5: golden beetles and leaps, Ouroboros; 6: powers (everyone leaps; golden leaves, dashes; golden mushrooms, wrap); 7: jump and flash apart (everyone flashes), beads' owners and rot, holes under bodies, the last apples; 8: plans, so friends draw everyone ahead the way they're going, and a held jump taken back; 9: choking on your own beads (each snake's cough; chokes and nudges, and where each piece rolled); 10: beetles that dig in (each one's digUntil; digs, and dives that were digs), several beetles underground, and food the woodpecker knocks aside (where each piece flew, and a bead's colour; where its strike promised each would land); burrows as the engine keeps them (when each was last used, and whether a dig left it), a dug burrow opening and one closing over; 11: burrows grow shut (when each started and will close over, and one starting to); 12: rivals chosen (a round's, and a shared best round's, chosen flag); 13: the lobby shows the line-up (the host's rivals, seat by seat, and which were chosen); 14: Capricious does every rival (its mood any of them, worn as a costume); 15: Copycat plays as its model plays (the style it reads, for its note); 16: round six B's island hop (a jump in the air: where it comes down, how many cells it still flies over, golden); 17: round six B's bridges (no message changed: a rule both sides must play by); 18: round six B's cuts (a failed flash's crash says so; the plain flash cuts, its own tail too: a rule both sides play by) and your own beads squashed (no choke, cough or nudge: each snake's cough gone; a squash where each went); 19: round six B's mushrooms come back up (each snake's cheek, and when it's spat; a spat mushroom's strength; a spit, where it came down, whom it hit, where it lies); 20: 2s, a piece cut loose falls (the woodpecker's mark says which of its cells fall, and its strike which fell); 21: round six B's golden flight, leap now and bumps in the air (a jump let go, a crash in the air); 22: 2y, the held golden flight always flies 5 (where each jump's ring is); 23: part 5, gold portals (each open portal in the tick; portal, through, portalShut); 24: 2x, the spitter slides over its own mushroom (a spat one's slideUntil, so it shows wet while it does); 25: 2u, one stamina for jump and flash (each snake's restedAt, in place of its two rests); 26: 2u+, stamina banks above the full bar, and a golden apple's shield (each snake's bank and shieldUntil; a crash it took says so); 27: 3b+, the spit flies along the line (each mushroom in the air; a spit where it left, a spat where it stopped); 28: round six B's dropped charges (a knocked-out snake's golden jumps and dashes, spilled as a pickup, and the spill); 29: 2i, food seasons (the round's season, drawn by the host, with the weather)
   const POWERS = ['leap', 'flash', 'unleap', 'letgo'];
   const MAX_PEOPLE = 4;
   const PORTALS_MAX = 512; // (open at once: a pair a crossing of a wrapped edge, each for PORTAL_MS; every snake crossing every tick stays under it)
@@ -105,6 +105,7 @@ window.SnakeOnline = (() => {
   const DIR_NAMES = ['up', 'down', 'left', 'right'];
   const KINDS = ['food', 'golden', 'mushroom', 'pellet', 'beetle', 'leaf', 'goldcap', 'spill'];
   const WEATHER = ['clear', 'sun', 'wind', 'rain', 'storm', 'snow']; // (the engine's order)
+  const SEASONS = Object.keys(window.TUNING.SEASONS); // (2i: lean, normal, plentiful)
   // Events that only say where something happened (and, for food, what).
   const AT = ['emerge', 'gust', 'charge', 'strike', 'rainbow', 'aim', 'douse', 'lastApples'];
   const FOOD_AT = ['baked', 'ash'];
@@ -182,7 +183,7 @@ window.SnakeOnline = (() => {
       // Mushrooms in the air (3b+): where, which way, the cells left, how strong, whose.
       sp: game.spits.map(m => [m.x, m.y, DIR_NAMES.indexOf(dirName(m.dir)), m.left, m.power, m.by]),
       fi: [...game.fires].map(([k, f]) => [k, f.from, f.until, f.strike ? 1 : f.ember ? 2 : 0, f.group]),
-      sky: [WEATHER.indexOf(game.weather.kind), game.weather.since, game.weather.until],
+      sky: [WEATHER.indexOf(game.weather.kind), game.weather.since, game.weather.until, SEASONS.indexOf(game.season)], // (and the round's food season, 2i)
       e: /** @type {EventRow[]} */ (game.events.map(encodeEvent).filter(Boolean)),
     };
   }
@@ -399,7 +400,10 @@ window.SnakeOnline = (() => {
       .map(([until, expires, from, gold]) => ({ until, expires, from, gold: !!gold }));
     game.fires = new Map((Array.isArray(msg.fi) ? msg.fi : []).filter(f => Array.isArray(f) && f.every(num))
       .map(([k, from, until, strike, group]) => [k, strike === 2 ? { from, until, group, strike: false, ember: true } : { from, until, strike: !!strike, group }]));
-    if (Array.isArray(msg.sky) && msg.sky.every(num)) game.weather = { kind: WEATHER[msg.sky[0]] || 'clear', since: msg.sky[1], until: msg.sky[2] };
+    if (Array.isArray(msg.sky) && msg.sky.every(num)) {
+      game.weather = { kind: WEATHER[msg.sky[0]] || 'clear', since: msg.sky[1], until: msg.sky[2] };
+      game.season = /** @type {Engine.Game['season']} */ (SEASONS[msg.sky[3]] || 'normal');
+    }
 
     /** @type {Engine.Snake[]} */
     const dying = [];

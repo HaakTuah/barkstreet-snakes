@@ -101,6 +101,15 @@ const FLAVOR = {
   },
   // (A line that talks to "you", when you're not in the round: the same news, for everyone.)
   weatherWatch: { snow: ['Winter. Less food, and everyone gets hungry faster.', 'Snow on the bark. Lean times for everyone.'] },
+  // The round's food season (2i), after Go (none for a normal one), and its rule, the first time each comes.
+  season: {
+    lean: ['A lean season. Eat when you can.', 'Lean times on the log. Every bite counts.'],
+    plentiful: ['A season of plenty!', 'Plenty on the log this round.'],
+  },
+  seasonRule: k => {
+    const apples = Math.max(1, TUNE.APPLES + TUNE.SEASONS[k].apples), lean = TUNE.SEASONS[k].beetles < 1;
+    return `${lean ? 'Lean' : 'Plenty'}: ${inWords(apples)} apple${apples === 1 ? '' : 's'} at a time, and ${lean ? 'fewer' : 'more'} beetles. ${lean ? 'Snakes starve in lean rounds.' : 'Snakes grow long, and the log gets crowded.'}`;
+  },
   strike: ['Lightning! The bark’s on fire.', 'Crack! Fire on the bark.'],
   rainbow: ['A rainbow! And at its foot, something golden.', 'After the rain, a rainbow. Follow it to the gold.'],
   rainbowWatch: ['A rainbow! And at its foot, something golden.', 'After the rain, a rainbow. Gold at its foot.'],
@@ -273,6 +282,7 @@ let acc = 0, tickLen = TUNE.OPENING_TICK, lastFrame = 0, drawAlpha = 1, dirty = 
 // weather): the frame clock, but at 2x or 4x when you're watching that fast.
 let boardClock = performance.now();
 let helpText = ''; // (the help under the board, as last written)
+const seasonsTold = new Set(); // (the food seasons whose rule a Go has told, 2i: once each a visit)
 let powersTold = false; // (the first Go on a short phone has said how to jump and flash)
 let flashedEver = false; // (you've flashed, or pressed to: the flash's key needn't be told again this visit)
 let beatsLeft = 0, beatTimer = 0, waking = false; // (waking: the one beat back from a nap)

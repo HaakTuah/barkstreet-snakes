@@ -141,6 +141,11 @@ function go() {
   if (guesting() && online.seat < 0) toast(FLAVOR.watchingFirst, 3000);
   else if (touchFirst && theGame.withPlayer && !powersTold && (!helpEl.getClientRects().length || helpEl.getBoundingClientRect().bottom > innerHeight + 0.5)) { powersTold = true; toast(FLAVOR.powersFirst, 3000, 'you', 'lesson'); } // (the help under the board isn't shown, or isn't wholly on the screen; how to steer is beside YOU. A lesson's banner, not Go!'s big one: it fits, and keeps out of the heads' way)
   else toast(pick(theGame.withPlayer && online?.seat !== -1 ? FLAVOR.go : FLAVOR.goWatch), 1300, 'go');
+  const season = theGame.season; // (2i: a lean or plentiful round says so, and its rule the first time)
+  if (FLAVOR.season[season]) {
+    toast(pick(FLAVOR.season[season]), 2800, season, 'round');
+    if (!seasonsTold.has(season)) { seasonsTold.add(season); toast(FLAVOR.seasonRule(season), 3200, season, 'lesson', { follows: true }); }
+  }
   flashFrame('go');
   acc = 0;
   lastFrame = 0;

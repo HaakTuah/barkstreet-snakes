@@ -8,6 +8,15 @@ window.TUNING = Object.freeze({
 
   // ------------------------------------------------------------------ food
   APPLES: 2,                // green apples on the board at all times (eaten or rotted, another drops somewhere): two since round six A, with beetles carrying more of the food (three was "a bit too plentiful")
+  // Each round's food season (2i), drawn at the start (SEASON_ODDS of each) and shown in a banner: apples on top of
+  // APPLES (or SNOW_APPLES; never below one) and beetles coming out at this many times BEETLE_CHANCE. Lean rounds
+  // starve snakes now and then; plentiful ones grow them long, and crowd the log.
+  SEASON_ODDS: Object.freeze({ lean: 1, normal: 2, plentiful: 1 }),
+  SEASONS: Object.freeze({
+    lean: Object.freeze({ apples: -1, beetles: 0.5 }),
+    normal: Object.freeze({ apples: 0, beetles: 1 }),
+    plentiful: Object.freeze({ apples: 1, beetles: 1.5 }),
+  }),
   APPLE_TICKS: 110,         // an apple rots away after about this many ticks (give or take a quarter: about 8-16 s), and another drops somewhere
   MUSHROOMS: 2,             // red mushrooms on the board at all times
   MUSHROOM_TICKS: 180,      // a mushroom withers (and regrows elsewhere) after this many ticks

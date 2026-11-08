@@ -187,6 +187,12 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
   }
   total.timeSum += g.time;
   total.times.push(g.time);
+  { // (2i: the round's food season: its length, deaths by cause, and its snakes' meals and powers, for a line each)
+    const t = (total.seasons[g.season] ||= { rounds: 0, times: [], causes: {}, snakeMs: 0, eaten: 0, powers: 0 });
+    t.rounds++; t.times.push(g.time);
+    for (const [k, n] of Object.entries(total.causes)) t.causes[k] = (t.causes[k] || 0) + n;
+    for (const p of Object.values(per)) { t.snakeMs += p.aliveMs; t.eaten += p.eaten; t.powers += p.flashes + p.jumps + p.dashes + p.leaps; }
+  }
   if (E.suddenDeath(g)) { total.sudden++; c.sdTimes.push(g.time - T.SUDDEN_DEATH_MS); c.holes += g.holes.size; }
   if (st.split && alive.length === 1 && g.time < MAX_TIME) { // (the last snakes on islands of their own: did the biggest island's win?)
     const sizes = Object.entries(st.split.size), most = Math.max(...sizes.map(([, n]) => n)), top = sizes.filter(([, n]) => n === most).map(([id]) => +id);

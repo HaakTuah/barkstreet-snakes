@@ -3,7 +3,7 @@
 // The first cracks a burrow open where it's quiet; later ones come out of
 // a free burrow, or now and then open another.
 function beetleOut(game, place, beetles) {
-  if (beetles + game.unders.length >= T.BEETLE_MAX || game.time < T.BEETLE_FIRST_MS || Math.random() >= T.BEETLE_CHANCE) return;
+  if (beetles + game.unders.length >= T.BEETLE_MAX || game.time < T.BEETLE_FIRST_MS || Math.random() >= T.BEETLE_CHANCE * T.SEASONS[game.season].beetles) return; // (fewer in a lean season, more in plenty: 2i)
   let b = freeBurrow(game, -1);
   if (openBurrows(game) < T.BURROW_MAX && (!b || Math.random() < T.BURROW_NEW_CHANCE)) {
     const at = place(null, true, -1, T.BURROW_SPACING); // (quiet, and apart from the other burrows: burrows keep apart)
