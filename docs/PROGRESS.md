@@ -7,9 +7,9 @@ when it is merged into `develop`; add the owner's new tasks where he places them
 
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
-**The main lane is 2b** (hunger's worth at a contested apple), the first open entry that waits on nothing: item 5's part 7
-(one pricing model, built afresh) waits on 2ab, which is blocked on #574, and 2y++'s last step waits on part 7, so both
-are skipped until #574 is answered. Part 4 (#198,
+**The main lane is 2h** (the endgame), the first open entry that waits on nothing: item 5's part 7 (one pricing
+model, built afresh) waits on 2ab, which is blocked on #574, and 2y++'s last step waits on part 7, so both are skipped
+until #574 is answered. 2b (PR #593), part 4 (#198,
 merged as it stands), 2y, 2y+, part 5, 2x, 2z, 2u, 2u+, 2q, 2y++ steps 1 to 3 (PRs #550, #588, #591), 3b+ (PR #580; its finding, that spitters come out even, is
 #583) and part 6 (PR #584) before it are done. The polish lane and the workshop lane run beside it, each claimed by a draft PR.
 
@@ -108,11 +108,6 @@ and the owner's notes of 2 November, among them).
 
 **Done:** every finished entry, 1 to 2w, with its PR, is in `docs/archive/progress-done/queue-done.md`, "The queue, done".
 
-**From the issues** (the owner, 2 November 2026): Ghost starving most (#325) is measured in the next AI entry, as its
-trademark (distance) or a fault; in the same entry, apples by the edge rotting (#324): 80% of the apples that rot lie on
-the edge row or one in, passed up by rivals whose room and margin weights count a safe edge cell against them, so it
-tests a safe-meal exception like the one by the neck (`MEAL_DAWDLE`), measured both ways; the snake that starved 4 s after its warning (#327) was a snake of 4 in snow, warned on the hunger clock: fixed in the warning (PR #397).
-
 ### 2y++. The golden flight, followed up (the owner, 2 November 2026; #399 and #401; side lanes now, the last step after part 7)
 
 2y left the flight even both ways (24.9% against 25.1% head to head; +0.10 ± 0.15 place a use): between rivals a
@@ -150,10 +145,6 @@ The golden jump that flies, leap now, gold portals, dropped charges, the spit al
 ### 2r. No hop onto a doomed island (30 October 2026; part of item 5's part 4)
 
 Before a hop or a flight a rival weighs where it lands, above all whether it can jump off again; built into part 4 (#198). Spec: `docs/handoff/queue-specs.md`, "2r. No hop onto a doomed island".
-
-### 2b. Hunger's worth at a contested apple, for every rival (the owner, 29 October 2026; an AI entry)
-
-A contested apple is worth what it saves: a starving rival contests it because it is worth more; Gobbler contests even when fed; Desperado is less risk-averse everywhere. Spec: `docs/handoff/queue-specs.md`, "2b. Hunger's worth at a contested apple, for every rival".
 
 ### 2h. The endgame: eat what keeps you alive, not what boxes you in (the owner, 29 October 2026; an AI entry, after 2b)
 

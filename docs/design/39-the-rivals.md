@@ -55,7 +55,10 @@ to the frame rate.
 A line against the edge, a hole or a body only because the food was there leaves on its next move. So for 3 moves after
 a line eats (`MEAL_PLIES`), a neck's allowance is 2 ticks (`MEAL_DAWDLE`): only a head that could get to the gap about as
 soon as the snake (one that could cut it off) makes it a trap. A jump or a flash that eats on its way counts as a meal
-too. Everywhere else the neck test is as above.
+too. Nor does it want room to spare beyond its length then (`margin`): apples by the edge rotted six times as often
+as the rest, and this left about a sixth fewer to rot (entry 2b, #324). Everywhere else the neck test is as above.
+What still turns rivals from an apple on the edge row is territory: from the edge, more of the board is nearer a
+rival's head. A floor under it for a line that has just eaten made rivals contest every apple more, so it stays.
 
 ### Hunters close easy pins
 

@@ -351,3 +351,9 @@ Done (PR #186): bent flags are drawn over the snakes while they lean, and a nort
 cloth's side, so it shows beside the body. Drawing only: no simulation. See "Flags that bend under a snake" in
 `docs/design/32-the-owners-playtest.md`.
 
+### 2b. Hunger's worth at a contested apple, for every rival (the owner, 29 October 2026; an AI entry)
+
+Done (PR #593): a meal is worth what it saves, for every rival, so a hungry rival contests an apple by its worth;
+Gobbler's nerve is 0.5 at any hunger; Desperado fears heads less everywhere; hungry, Ghost keeps less of its distance
+(#325); a line that has just eaten wants no spare room (#324). What it measured is in the PR; the rules are in
+`docs/design/39-the-rivals.md`, "Nerve at a contested apple" and "A meal isn't a pin".
