@@ -65,7 +65,7 @@ function peck(game, dying) {
   if (!w) {
     const changes = Math.floor(between(T.WATCH_LOOKS[0], T.WATCH_LOOKS[1] + 1)), unit = Math.max(0, game.acts.pecks - game.time) / (changes + T.WATCH_LAST);
     w = game.woodpecker = { x: GRID / 2, y: 0, at: game.time, came: game.tick, target: [], strikeAt: -1, last: [], struckAt: -1, restUntil: -1, gaze: -1, lookAt: game.tick, looks: changes, unit, lookUntil: game.time + unit };
-    if (act === 1) look(game, w);
+    if (act === 1) watchSpot(game, w);
     game.events.push({ type: 'woodpecker' });
     return;
   }
@@ -73,7 +73,7 @@ function peck(game, dying) {
     if (game.time >= w.lookUntil && w.looks > 0) {
       w.looks--;
       w.lookAt = game.tick; w.lookUntil = game.time + w.unit * (w.looks ? 1 : T.WATCH_LAST);
-      look(game, w);
+      watchSpot(game, w);
     }
     return;
   }
@@ -208,7 +208,7 @@ function pickPatch(game, gaze = -1) {
 // the spot it's busy with, which the bird's perch follows). Somewhere on
 // the log, anywhere: its first patch will grow there, and nobody can tell
 // where before it looks.
-function look(game, w) {
+function watchSpot(game, w) {
   for (let t = 0; t < 50; t++) {
     const k = Math.floor(Math.random() * CELLS);
     if (game.holes.has(k)) continue;

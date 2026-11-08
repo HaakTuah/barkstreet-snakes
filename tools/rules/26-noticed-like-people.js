@@ -5,6 +5,7 @@
 // How many ticks late snake 0 sees each other snake, read off the board's snapshots, over many ticks.
 {
   const g = board([[line(3, 3, 4), 'right'], [line(3, 5, 4), 'right'], [line(12, 21, 4), 'right']], { time: 60000 });
+  g.weather = { kind: 'clear', since: 0, until: 1e9, nextGust: 0, nextStrike: 0 }; // (no snow starving them early, whatever the weather draws)
   const lags = { near: [], far: [] }, seenAt = {};
   let tick = 0, back = 0;
   for (let t = 0; t < 80 && g.snakes.every(s => s.alive); t++) {

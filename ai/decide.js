@@ -30,6 +30,7 @@ function decide(viewIn, personaIn, memoryIn = {}) {
   if (persona.driver && others.length) DRIVERS[persona.driver]();
   readDesperation();
   w = weighed(intent.w);
+  if (view.act === 3 && !desperate) w.margin += TUNE.AI_FRENZY_MARGIN; // (entry 6: in the frenzy, caution rises: room counted more, so long ways round are shunned)
   readRisk();
   readSpit();
   readReach();

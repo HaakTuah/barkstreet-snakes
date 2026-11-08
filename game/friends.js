@@ -106,8 +106,8 @@ const GUIDE_ROWS = [
   ]],
   ['The log', [
     ['fire', 'Fire', 'Lightning lights it. Crawl in and it takes 3 bites of tail; rain puts it out.'],
-    ['knock', 'Woodpecker', 'From 2:00 it pecks out patches, and won’t shut you in if it can help it. A piece it cuts loose from the log is shaded in its mark, and falls with the strike: the log stays one piece. Food in its mark is knocked to the nearest free cell, shown by a ring; a beetle still in its mark gets eaten.'],
-    ['hole', 'Holes', 'The woodpecker’s, from 2:00. Bumping one is a crash, like the edge; a peck right under your head is the end.'],
+    ['knock', 'Woodpecker', 'It comes in three acts. From about 1:00 it watches the log: where it looks last, its first patch grows. Then it pecks small patches now and then, and at last, in a frenzy, it pecks the log away (sudden death). It won’t shut you in if it can help it. A piece it cuts loose from the log is shaded in its mark, and falls with the strike: the log stays one piece. Food in its mark is knocked to the nearest free cell, shown by a ring; a beetle still in its mark gets eaten.'],
+    ['hole', 'Holes', 'The woodpecker’s, once it starts pecking. Bumping one is a crash, like the edge; a peck right under your head is the end.'],
     ['bridge', 'Bridges', 'A snake lying across a pit is a bridge: crawl onto its back there, or land on it from a jump. Get off onto bark before its tail passes, or you fall in.'],
     ['land', 'Borders', 'Sovereign’s realm and Colonist’s colonies. Cross one and its owner notices, and says so.'],
     ['lostflag', 'Lost flags', 'A flag the woodpecker pecks out is lost: the colony goes, and a capital moves.'],
