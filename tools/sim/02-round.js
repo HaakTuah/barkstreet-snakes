@@ -104,6 +104,7 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
         (st.hopReach ||= new Map()).set(e.snake, e.reach); // (how far the hop would have gone: a golden flight past it is a flight)
         const from = e.snake.body[1]; (st.isleFrom ||= new Map()).set(e.snake, from ? from.y * N + from.x : -1); // (2r: the cell it took off from)
       }
+      if (e.type === 'eat' && e.kind !== 'mushroom') st.meals = (st.meals || 0) + 1; // (2i: meals, each one bite whatever it's worth, for the season's line)
       if (e.type === 'spawn' && e.kind === 'beetle') { total.beetles++; if (e.gold) { c.goldBeetles++; seen.add('goldBeetle'); } }
       else if (e.type === 'eat' && e.kind === 'beetle') { total.caught++; per[e.snake.name].beetles++; }
       else if (e.type === 'flown') total.flown++;
@@ -188,10 +189,10 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
   total.timeSum += g.time;
   total.times.push(g.time);
   { // (2i: the round's food season: its length, deaths by cause, and its snakes' meals and powers, for a line each)
-    const t = (total.seasons[g.season] ||= { rounds: 0, times: [], causes: {}, snakeMs: 0, eaten: 0, powers: 0 });
-    t.rounds++; t.times.push(g.time);
+    const t = (total.seasons[g.season] ||= { rounds: 0, times: [], causes: {}, snakeMs: 0, meals: 0, powers: 0 });
+    t.rounds++; t.times.push(g.time); t.meals += st.meals || 0;
     for (const [k, n] of Object.entries(total.causes)) t.causes[k] = (t.causes[k] || 0) + n;
-    for (const p of Object.values(per)) { t.snakeMs += p.aliveMs; t.eaten += p.eaten; t.powers += p.flashes + p.jumps + p.dashes + p.leaps; }
+    for (const p of Object.values(per)) { t.snakeMs += p.aliveMs; t.powers += p.flashes + p.jumps + p.dashes + p.leaps; }
   }
   if (E.suddenDeath(g)) { total.sudden++; c.sdTimes.push(g.time - T.SUDDEN_DEATH_MS); c.holes += g.holes.size; }
   if (st.split && alive.length === 1 && g.time < MAX_TIME) { // (the last snakes on islands of their own: did the biggest island's win?)
