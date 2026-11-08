@@ -28,6 +28,7 @@ const census = () => ({
   // underground due up with no burrow to come out of; beetles under the beak
   // when it aims, and how each got away (ran off, down a burrow, dug in) or
   // was eaten by it (or caught, or flew off).
+  spills: 0, spillCharges: 0, spillGrabs: 0, spillOut: 0, spillRounds: 0, // (round six B, part 6: spilled charges dropped, the charges in them, those grabbed, grabbers out within 3 s of it, rounds with a spill)
   portals: 0, portalChances: 0, throughs: 0, throughOut: 0, followRounds: 0, ownerOut: 0, // (round six B, part 5: gold portals opened, those a rival could have followed (its head within reach of the entry while it was open), followers through, followers out within 3 s of it, rounds with anyone following, and portals' owners out within 3 s of being followed)
   burrowsOpened: 0, sdTicks: 0, sdBurrowTicks: 0, underWait: 0,
   beakBugs: 0, beakRan: 0, beakCaught: 0, beakDived: 0, beakDug: 0, beakFlown: 0, beakPecked: 0,

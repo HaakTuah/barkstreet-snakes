@@ -117,7 +117,7 @@ function valuesOf(res) {
 // even seats, then the odd), as A's snakes' values and B's, each with its
 // snakes' numbers added up (per: by personality, as in a plain round).
 function sidesOf(...plays) {
-  const side = () => ({ h2h: true, per: {}, snakes: 0, wins: 0, placeSum: 0, aliveMs: 0, eaten: 0, kills: 0, causes: {}, flashes: 0, jumps: 0, leaps: 0, dashes: 0, golden: 0 });
+  const side = () => ({ h2h: true, per: {}, snakes: 0, wins: 0, placeSum: 0, aliveMs: 0, eaten: 0, kills: 0, causes: {}, flashes: 0, jumps: 0, leaps: 0, dashes: 0, golden: 0, grabs: 0 });
   const out = { A: side(), B: side() };
   for (const res of plays) {
     for (const [name, p] of Object.entries(res.per)) {
@@ -127,7 +127,7 @@ function sidesOf(...plays) {
         else t[k] = (t[k] || 0) + x;
       }
       v.snakes += p.rounds; v.aliveMs += p.aliveMs; // (whole ms: the same AI on both sides sums to exactly the same)
-      for (const k of ['wins', 'placeSum', 'eaten', 'kills', 'flashes', 'jumps', 'leaps', 'dashes', 'golden']) v[k] += p[k];
+      for (const k of ['wins', 'placeSum', 'eaten', 'kills', 'flashes', 'jumps', 'leaps', 'dashes', 'golden', 'grabs']) v[k] += p[k] || 0;
       for (const [c, n] of Object.entries(p.deaths)) v.causes[c] = (v.causes[c] || 0) + n;
     }
   }
@@ -152,6 +152,7 @@ function rowsFor(As, Bs, groups = USUAL, margins = new Map()) {
     add('powers', 'leaps', 'golden leaps a snake', '', { num: v => v.leaps, den: snakes }, 0.05);
     add('powers', 'dashes', 'golden dashes a snake', '', { num: v => v.dashes, den: snakes }, 0.05);
     add('powers', 'golden', 'golden power food a snake', '', { num: v => v.golden, den: snakes }, 0.05);
+    add('powers', 'grabs', 'spilled charges grabbed a snake', '', { num: v => v.grabs, den: snakes }, 0.02);
   } else {
   add('length', 'length', 'round length, median', 's', { median: v => v.length }, 3);
   add('sd', 'sd', 'sudden death length, median', 's', { median: v => v.sd }, 4);

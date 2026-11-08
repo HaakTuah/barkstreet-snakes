@@ -58,7 +58,7 @@ function shadowAt(x, y, scale) {
 // once a kind and size. Kinds: apple, golden, mushroom, goldcap, leaf,
 // beetle, goldbeetle, pellet, roast (a roasted bead), baked (a baked
 // apple), jump, flash, wrap, hole, fire, land, held (a snake holding
-// golden powers: its gold line and a pip of each kind), rests (stamina: a
+// golden powers: its gold line and a pip of each kind), spill (a knocked-out snake's spilled charges), rests (stamina: a
 // tired snake and an awake one, wearing your ring: see guideStamina), squash (your own bead
 // squashed flat behind you), cut (a body cut through), failflash (a
 // failed flash's burst and stars),
@@ -90,6 +90,7 @@ const GUIDE = {
   mushroom: g => { g.scale(1.2, 1.2); drawHaze(g); g.translate(0, CELL * 0.04); drawMushroom(g); }, // (on bark, as on the log: its cream stem vanished on the card; and the purple haze its rule mentions)
   goldcap: g => { guideGlow(g); g.translate(0, CELL * 0.04); drawGoldcap(g); },
   leaf: g => { guideGlow(g); drawGoldLeaf(g); },
+  spill: g => { guideGlow(g); const was = ctx; ctx = g; try { drawSpill(0, 0, 1, 2, 1, 0); } finally { ctx = was; } }, // (spilled charges: two golden jumps and a dash)
   beetle: g => drawGuideBeetle(g, false),
   goldbeetle: g => { guideGlow(g); drawGuideBeetle(g, true); },
   pellet: g => { g.scale(1.5, 1.5); drawBead(g, '#fb923c|'); },
