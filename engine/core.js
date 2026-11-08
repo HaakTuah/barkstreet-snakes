@@ -179,7 +179,7 @@ const hungerWarning = (game, s, now = game.time) => {
 // How long a meal keeps a snake from shrinking: HUNGER_MS in the opening
 // and once the woodpecker's here, HUNGER_MID_MS between, when food is
 // everywhere (with a long clock, hunger hardly ever mattered then).
-const mealLasts = game => game.time >= T.HUNGER_MID_FROM_MS && !suddenDeath(game) ? T.HUNGER_MID_MS : T.HUNGER_MS;
+const mealLasts = game => (game.time >= T.HUNGER_MID_FROM_MS && !suddenDeath(game) ? T.HUNGER_MID_MS : T.HUNGER_MS) * T.SEASONS[game.season].meal; // (shorter in a lean season: 2i)
 // Mark every living body cell in the occupancy grid (with a fresh stamp).
 function markBodies(game) {
   stamp++;

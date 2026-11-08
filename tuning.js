@@ -9,13 +9,14 @@ window.TUNING = Object.freeze({
   // ------------------------------------------------------------------ food
   APPLES: 2,                // green apples on the board at all times (eaten or rotted, another drops somewhere): two since round six A, with beetles carrying more of the food (three was "a bit too plentiful")
   // Each round's food season (2i), drawn at the start (SEASON_ODDS of each) and shown in a banner: apples on top of
-  // APPLES (or SNOW_APPLES; never below one) and beetles coming out at this many times BEETLE_CHANCE. Lean rounds
-  // starve snakes now and then; plentiful ones grow them long, and crowd the log.
+  // APPLES (or SNOW_APPLES; never below one), beetles coming out at this many times BEETLE_CHANCE, and a meal
+  // keeping a snake this many times as long (meal). Lean rounds starve snakes now and then; plentiful ones grow
+  // them long, and crowd the log.
   SEASON_ODDS: Object.freeze({ lean: 1, normal: 2, plentiful: 1 }),
   SEASONS: Object.freeze({
-    lean: Object.freeze({ apples: -1, beetles: 0.5 }),
-    normal: Object.freeze({ apples: 0, beetles: 1 }),
-    plentiful: Object.freeze({ apples: 1, beetles: 1.5 }),
+    lean: Object.freeze({ apples: -1, beetles: 0.5, meal: 0.7 }),
+    normal: Object.freeze({ apples: 0, beetles: 1, meal: 1 }),
+    plentiful: Object.freeze({ apples: 1, beetles: 1.5, meal: 1 }),
   }),
   APPLE_TICKS: 110,         // an apple rots away after about this many ticks (give or take a quarter: about 8-16 s), and another drops somewhere
   MUSHROOMS: 2,             // red mushrooms on the board at all times
@@ -210,6 +211,7 @@ window.TUNING = Object.freeze({
   HISTORY: 8,               // board snapshots kept for those delays
   AI_HUNGRY_MS: 10000,      // with this long left before starving, an AI starts looking for food, harder as it gets closer
   AI_DESPERATE_MS: 11000,   // with less than this much life left by hunger (its own clock, shrinking included), an AI drops its errands and takes its chances for food
+  AI_CROWD_KEEP: 2,         // in a plentiful season (2i), an AI weighs growth past MIN_LENGTH + this many times its endgame keep against the room it costs, as it does from the woodpecker on
   LAND_REACH: 0.5,          // a cell is Sovereign's or a colony's land when its centre is within the field's radius plus this of the field's centre (one rule: AI, chatter, HUD, borders)
 
   // ------------------------------------------------------------- the round

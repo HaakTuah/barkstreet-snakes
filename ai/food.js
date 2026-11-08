@@ -42,7 +42,12 @@ function readAppetite() {
   hunger = Math.min(1, ramp);
   // (Once the woodpecker's here nothing new grows: nobody can afford to be picky.)
   lean = view.timeMs >= TUNE.SUDDEN_DEATH_MS;
-  fed = !hunger && !lean && myLen >= (w.hungryBelow ?? Infinity);
+  // (2i: in a lean season, no one is ever fed enough to pass food up; in a
+  // plentiful one, the log fills, and growth is weighed against the room it
+  // costs before the woodpecker too, as in the endgame below, past twice the
+  // length worth keeping there: AI_CROWD_KEEP)
+  const scarce = view.season === 'lean', crowded = !lean && view.season === 'plentiful';
+  fed = !hunger && !lean && !scarce && myLen >= (w.hungryBelow ?? Infinity);
   foodW0 = fed ? w.food * w.fedFactor : Math.max(w.food, 8 * hunger) * (1 + 2 * hunger);
   eatW0 = fed ? w.eat * w.fedFactor : Math.max(w.eat, 150 * hunger) * (1 + 2 * hunger);
   foodW = desperate ? Math.max(60, foodW0) : foodW0, eatW = desperate ? Math.max(600, eatW0) : eatW0;
@@ -68,8 +73,8 @@ function readAppetite() {
   // snake: then as before). growShare: the share of a meal's growth that
   // counts, at my length now; along a line, a meal after one is worth only
   // roomy past keepLen (see move).
-  keepLen = lean ? TUNE.MIN_LENGTH + (w.keep ?? KEEP) : Infinity;
-  if (lean) {
+  keepLen = lean ? TUNE.MIN_LENGTH + (w.keep ?? KEEP) : crowded ? TUNE.MIN_LENGTH + TUNE.AI_CROWD_KEEP * (w.keep ?? KEEP) : Infinity;
+  if (lean || crowded) {
     let free = N * N - holes.size - myLen;
     for (const o of others) free -= o.body.length;
     roomy = Math.min(1, Math.max(0, free / (others.length + 1) / (ROOMY * myLen) - 1) * 2);
