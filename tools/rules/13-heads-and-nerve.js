@@ -37,10 +37,12 @@
     for (let i = 0; i < 4; i++) { const d = AI.decide(view, AI.PERSONAS[key], {}); if (d.x === 1 && d.y === 0) on++; }
     return on >= 3;
   });
-  const fed = takers(99999), half = takers(8000), hungry = takers(4000), starving = takers(2000);
+  seededWhile(1, () => { // (seeded on its own: Wildcard's draw of the moment can make it bold too, as the run's randomness falls)
+    const fed = takers(99999), half = takers(8000), hungry = takers(4000), starving = takers(2000);
   check('at a contested apple, fed, only Desperado takes the gamble', fed.join() === 'desperado', fed.join(' '));
   check('...Gobbler too from half-way hungry (8 s left; 2b: it contests even fed, but this head-on is a sure one); nobody else at 4 s', half.sort().join() === 'desperado,gobbler' && hungry.sort().join() === 'desperado,gobbler', `8 s: ${half.join(' ')}; 4 s: ${hungry.join(' ')}`);
   // (2b: an apple is worth what it saves. Nearly starving, the bolder ones contest it too, since it's worth more
   // to them; the cautious still give way, Ghost the first)
   check('...nearly starving (2 s left), bolder rivals too, never Ghost', starving.length > 2 && starving.includes('gobbler') && !starving.includes('ghost'), starving.join(' '));
+  });
 }
