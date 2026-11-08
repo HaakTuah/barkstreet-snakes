@@ -98,10 +98,10 @@ function readFood() {
     const low = me.stamina < Math.min(TUNE.JUMP_STAMINA_MS, TUNE.DASH_STAMINA_MS) ? 2 : 1;
     return STAMINA_PRICE * low * Math.min(ms, gap) / TUNE.STAMINA_MS;
   };
-  worth = { // (the growth part times growShare: past my length worth keeping, in the endgame, only the hunger it stops)
+  worth = { // (the growth part times growShare, but a beetle's: past my length worth keeping, in the endgame, only the hunger it stops)
     food: Math.max(appleWorth, hunger) * growShare + lift(TUNE.STAMINA_FOOD_MS),
     golden: TUNE.GOLDEN_GROWTH * Math.max(appleWorth, hunger) * craving.apple * growShare + lift(TUNE.STAMINA_MS), // (it fills my bar)
-    beetle: TUNE.BEETLE_GROWTH * Math.max(appleWorth, hunger) * growShare + lift(TUNE.BEETLE_GROWTH * TUNE.STAMINA_FOOD_MS), // it moves, but it's worth what it's worth
+    beetle: TUNE.BEETLE_GROWTH * Math.max(appleWorth, hunger) + lift(TUNE.BEETLE_GROWTH * TUNE.STAMINA_FOOD_MS), // it moves, but it's worth what it's worth (in the endgame too: a chase half-meant let a half of them get away, past the beetles' band)
     pellet: (w.pellet ?? 1) * growShare + lift(TUNE.STAMINA_FOOD_MS),
     mushroom: Math.min(-TUNE.SHRINK, w.mushroom ?? -TUNE.SHRINK), // (it takes SHRINK segments off, and it isn't a meal: as many apples lost, hungry or not)
     leaf: 2 * Math.max(appleWorth, hunger, 0.5) * craving.power, // (golden powers: worth it for what they do)
