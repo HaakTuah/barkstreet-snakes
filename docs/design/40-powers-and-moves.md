@@ -411,14 +411,16 @@ air, as over its own lying wet.
   the likeliest), and from any mushroom in the air as seen a reaction time ago (2q), and from a cheek whose time has run
   out though they haven't yet seen it fly. Aiming: the head where it'll be when the mushroom gets there, by two even
   guesses, where they reckon it and a move further on (they may have noticed it late, 2q), so a line the target walks
-  into is the surest shot (`aimGain`). Each in its style: Sniper's head shots are its own (`aim` 3: it works three
-  times as hard as anyone to get in line with a head and lead it); Joker eats one on purpose most, for the laugh; a
-  weight for turning keeps Mason on its straight runs, a shot or not.
-- **The chosen numbers** (PR #580): `SPIT_REACH` 5, `SPIT_SPEED` 2, as first guessed. *Measured* on fresh seeds 1201
-  and 1203 (1,200 paired rounds, head to head, against the same AI that never aims nor eats one on purpose, both
-  dodging): the spitters win 25.1% to 24.7% (interval −3.7 to +2.8 points), live as long (148 s), kill as often, die of
-  the same causes (no refuge); every trademark the same or within noise. In whole rounds (seed 3, 200) 2% of spits hit a
-  head (0.07 a round; Sniper, with its `aim`, 0.11, Joker 0.08), and still 2% with every rival's dodging off: the rivals
+  into is the surest shot (`aimGain`). Each in its style: Sniper works three times as hard as anyone to get in line
+  with a head and lead it (`aim` 3), for the head shot; Joker eats one on purpose most, for the laugh; a weight for
+  turning keeps Mason on its straight runs, a shot or not.
+- **The chosen numbers** (PR #580): `SPIT_REACH` 5, `SPIT_SPEED` 2, as first guessed. *Measured* on fresh seeds 1401
+  and 1403 (1,200 paired rounds, head to head, against the same AI that never aims nor eats one on purpose, both
+  dodging): the spitters win 24.3% to 25.4% (interval −2.1 to +4.3 points), place the same (2.49 to 2.51), live as long
+  (148 s), kill as often, die of the same causes (no refuge); every trademark the same or within noise (as on seeds
+  1201 and 1203 before the review's fixes, 25.1% to 24.7%). In whole rounds 2% of spits hit a head (0.07 a round on
+  seeds 3 and 11; Sniper 0.11 and 0.06, Joker 0.08 and 0.14: too few to tell its head shots from Joker's), and still 2%
+  with every rival's dodging off: the rivals
   keep their heads apart, so a head is seldom five in line from a spitter when the second runs out. Neither a hedged lead
   nor closing in three times as hard raised it. Per use (`tools/dev/fork-moves.js --move spit`, seeds 1301–1303, 384
   spits, each against that mushroom gone unspat): place −0.035 ± 0.123, −0.021 ± 0.115 and +0.054 ± 0.103 a spit, about
