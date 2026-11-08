@@ -138,7 +138,7 @@ for (let r = 0; r < ROUNDS; r++) {
       continue;
     }
     E.step(g);
-    if (MOVE === 'charges') { const e = g.events.find(e => e.type === 'eat' && (e.kind === 'spill' || e.kind === 'leaf') && !e.snake.isPlayer); if (e) { charges(before, snap(g), e.snake.id, e.kind, e.snake.name); forks++; g = back(snap(g)); } continue; }
+    if (MOVE === 'charges') { const e = g.events.find(e => e.type === 'eat' && (e.kind === 'spill' || e.kind === 'leaf') && !e.snake.isPlayer); if (e) { charges(before, snap(g), e.snake.id, e.kind, e.snake.name, g.events); forks++; g = back(snap(g)); } continue; }
     if (MOVE === 'grab') { const e = g.events.find(e => e.type === 'spill'); if (e && grab(snap(g), g, e)) forks++; if (e) g = back(snap(g)); continue; }
     const s0 = g.snakes.find(s => !s.isPlayer && used(g, s));
     if (!s0) continue;
@@ -184,16 +184,22 @@ function grab(after, g, e) {
   const s0 = g.snakes.filter(s => s.alive && !s.isPlayer).sort((a, b) => near(a) - near(b) || a.id - b.id)[0];
   if (!s0) return false;
   const id = s0.id;
+  // (This spill and no other, followed where the woodpecker knocks it, until someone eats it or it's gone: who ate it, or -1.)
   const play = forbid => {
-    const x = back(after); let got = 0;
+    const x = back(after); let at = { x: e.x, y: e.y }, eater = -1;
     if (forbid) ctx.__forbid.grab.add(id);
-    const out = playOut(x, 0, y => { if (y.events.some(v => v.type === 'eat' && v.kind === 'spill' && v.snake.id === id)) got = 1; });
+    const out = playOut(x, 0, y => {
+      if (!at) return;
+      for (const v of y.events) {
+        if (v.type === 'knock' && v.kind === 'spill' && v.x === at.x && v.y === at.y) { at = v.tx == null ? null : { x: v.tx, y: v.ty }; if (!at) return; }
+        else if (v.type === 'eat' && v.kind === 'spill' && v.x === at.x && v.y === at.y) { eater = v.snake.id; at = null; return; }
+      }
+      if (!y.food.some(f => f.kind === 'spill' && f.x === at.x && f.y === at.y)) at = null; // (faded)
+    });
     ctx.__forbid = empty();
-    return { out: out.get(id), got };
+    return { out: out.get(id), got: eater === id ? 1 : 0, other: eater >= 0 && eater !== id ? 1 : 0 };
   };
-  let other = 0; // (in the play as it went, someone else ate it)
-  const A = play(false);
-  { const x = back(after); playOut(x, 0, y => { if (y.events.some(v => v.type === 'eat' && v.kind === 'spill' && v.snake.id !== id && v.x === e.x && v.y === e.y)) other = 1; }); }
+  const A = play(false), other = A.other; // (in the play as it went, someone else ate it)
   const B = play(true);
   const room = Math.min(e.leaps, T.LEAP_MAX - s0.leaps) + Math.min(e.dashes, T.DASH_MAX - s0.dashes);
   diffs.push({ ...d(A.out, B.out), gotA: A.got, gotB: B.got, away: near(s0), room, other, persona: s0.name });
@@ -201,9 +207,12 @@ function grab(after, g, e) {
 }
 // Part 6: snake id ate golden charges this tick (kind: 'spill' or 'leaf'). Played on from after it as it went (A) and
 // with the charges that meal gave taken back (B), the meal itself kept. Diffs: what the charges were worth.
-function charges(before, after, id, kind, persona) {
+// (What the meal gave: what it holds now, less what it held before the tick and didn't spend in it: a golden leap or
+// dash the same tick goes before the meal.)
+function charges(before, after, id, kind, persona, events) {
   const was = back(before).snakes[id], now = back(after).snakes[id];
-  const gl = Math.max(0, now.leaps - was.leaps), gd = Math.max(0, now.dashes - was.dashes);
+  const spentL = events.filter(v => v.type === 'leap' && v.gold && v.snake.id === id).length, spentD = events.filter(v => v.type === 'dash' && !v.plain && v.snake.id === id).length;
+  const gl = Math.min(now.leaps, Math.max(0, now.leaps - (was.leaps - spentL))), gd = Math.min(now.dashes, Math.max(0, now.dashes - (was.dashes - spentD)));
   if (!gl && !gd) return;
   const play = take => { const x = back(after), s = x.snakes[id]; if (take) { s.leaps -= gl; s.dashes -= gd; } rngState = after.rng; return playOut(x).get(id); };
   diffs.push({ ...d(play(false), play(true)), kind, gained: gl + gd, persona });
