@@ -368,7 +368,8 @@ them where its head fell, one golden pickup anyone can grab (a bump it lives thr
 - **Measured** (PR #584): about 0.4 spills a round, in a third of rounds, 1.7 charges each; 40% grabbed, the grabbers
   out within 3 s 6% of the time (no refuge). Per use (`tools/dev/fork-moves.js --move grab`, seeds 921–923, 158
   spills, the nearest rival wanting it against ignoring spills): it grabs 31% against 14%, but places no better
-  (−0.01 ± 0.04 a spill). The move doesn't matter to places, a design finding for the owner (#587); kept as built
+  (−0.01 ± 0.04 a spill); head to head (seeds 811/813, 1,000 paired rounds, against rivals that ignore spills),
+  0.05 grabs a snake against 0.02, every side row and trademark the same. The move doesn't matter to places, a design finding for the owner (#587); kept as built
   until he answers.
 
 ### Mushrooms come back up
