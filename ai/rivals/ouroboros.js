@@ -9,6 +9,6 @@ PERSONAS.ouroboros = {
     space: 1.0, territory: 0.6, aggression: 0.2,
     food: 3, eat: 45, pellet: 1.2, foodRange: 40,
     margin: 3, headRisk: 800, zoneRisk: 150,
-    coil: { weight: 20, from: 10 },
+    coil: { weight: 20, from: 10 }, drop: 'late', // (2h: its tail dropped only when every crawl crashes)
   },
 };

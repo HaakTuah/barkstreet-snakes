@@ -358,3 +358,11 @@ Gobbler's nerve is 0.5 at any hunger; Desperado fears heads less everywhere; hun
 (#325). Apples by the edge (#324) were measured both ways, and no change was kept; what is left is #595. What it
 measured is in the PR; the rules are in `docs/design/39-the-rivals.md`, "Nerve at a contested apple" and "A meal isn't
 a pin".
+
+### 2h. The endgame: eat what keeps you alive, not what boxes you in (the owner, 29 October 2026; an AI entry, after 2b)
+
+Done (PR #596): from the woodpecker on, a meal past the length worth keeping (a crash and hunger buffer, `keep`) is
+worth only the hunger it stops, and a rival weighs dropping its tail once it sees itself boxed in (Creeper all round,
+Ouroboros only out of a crash). The denial play came out even both ways and was left out. Its numbers come again after
+entry 6. What it measured is in the PR; the rules are in `docs/design/39-the-rivals.md`, "The endgame: a meal is worth
+the life it buys".

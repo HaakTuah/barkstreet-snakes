@@ -41,6 +41,7 @@ const census = () => ({
   // the biggest won (chance: what a blind pick would get).
   seals: 0, sealedOut: 0, falls: 0, fallCells: 0, fallBig: 0, fellOut: 0, piecesLeft: 0, split: 0, splitBiggest: 0, splitChance: 0,
   causesSD: {}, sdTimes: [],
+  ...endgameCounts(),
 });
 
 // The land in sudden death, for the census: 4-connected islands of cells

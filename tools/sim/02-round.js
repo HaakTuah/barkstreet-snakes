@@ -85,6 +85,7 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
       st.goldAt.delete(f);
     }
     woodpeckerCensus(g, c, st, dying, N, T);
+    if (late) endgameCensus(g, c, st, dying, N);
     if (mid) c.mealsMid += new Set(g.events.filter(e => e.type === 'eat' && e.kind !== 'mushroom').map(e => e.snake)).size;
     if (signs) signatures(g, T, per, was);
     if (st.isleFrom) for (const [s, was] of st.isleFrom) { // (2r: down on another piece of log smaller than itself, where it can't live)
