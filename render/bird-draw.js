@@ -136,21 +136,13 @@ const PARTS = {
 const partsFull = new Map(), partsHalf = new Map();
 let partsK = 0; // (device px a unit they were drawn for: the bird at 1.12, a touch bigger than it ever flies)
 // The frenzy's darker feathers (entry 6): each part darkened once into a
-// copy of its own (a filter on every draw cost a CPU canvas too much), laid
-// over the plain one as it comes over the bird (birdDark, 0 to 1), then alone.
+// copy of its own (a filter on every draw cost a CPU canvas too much), in
+// place of the plain one from halfway through the frenzy's coming over it
+// (birdDark, 0 to 1; laid one over the other, their soft edges thickened).
 let birdDark = 0;
 const DARK = 'brightness(0.68) saturate(1.3)';
 function layPart(g, name, half) {
-  if (birdDark > 0) {
-    const [x0, y0, x1, y1] = PARTS[name];
-    if (birdDark < 1) partOf(name, half, false, g);
-    const a = g.globalAlpha;
-    g.globalAlpha = a * birdDark;
-    g.drawImage(partOf(name, half, true), x0, y0, x1 - x0, y1 - y0);
-    g.globalAlpha = a;
-    return;
-  }
-  partOf(name, half, false, g);
+  partOf(name, half, birdDark >= 0.5, g);
 }
 // A part's bitmap (dark: the frenzy's copy), made once; with g, laid there.
 function partOf(name, half, dark, g = null) {
@@ -218,7 +210,7 @@ function drawBird(g, P, half) {
     g.fillStyle = P.fury > 0.5 ? '#7f1d1d' : '#b91c1c';
     g.beginPath();
     for (let i = 0; i < 4; i++) {
-      const a0 = Math.PI * (1.02 + 0.13 * i), a1 = a0 + 0.13, am = (a0 + a1) / 2, out = (0.28 + 0.16 * (i % 2)) * P.crest;
+      const a0 = Math.PI * (1.02 + 0.13 * i), a1 = a0 + 0.13, am = (a0 + a1) / 2, out = (0.13 + 0.07 * (i % 2)) * P.crest; // (its tips inside the head's box, PARTS.head, which keeps the perched bird off the cells)
       g.moveTo(0.45 + 0.66 * Math.cos(a0), -1.75 + 0.64 * Math.sin(a0));
       g.lineTo(0.45 + (0.7 + out) * Math.cos(am), -1.75 + (0.68 + out) * Math.sin(am));
       g.lineTo(0.45 + 0.66 * Math.cos(a1), -1.75 + 0.64 * Math.sin(a1));
