@@ -38,6 +38,8 @@
 //                                   (2y; default 0.6, times 0.5 + my aggression, see ringCover)
 //   spit                          how much a shot with a mushroom is worth to me, when I weigh eating
 //                                   one on purpose (round six B; default SPIT)
+//   aim                           how hard I work to land one I've got in my cheek: getting in line with a
+//                                   head and leading it (3b+; default 1)
 //   powers                        { price, risk, everyWay, jumpAny, dashSpend, keepFlash }: a power habit (see
 //                                   powerPick). price: what every power costs me, as a share of what it
 //                                   costs anyone else, wherever it ends with no more risk than `risk`

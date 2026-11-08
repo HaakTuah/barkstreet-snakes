@@ -70,10 +70,12 @@ window.TUNING = Object.freeze({
   MIN_LENGTH: 3,            // ...but never below this
   // Round six B: a mushroom comes back up. Swallowed, it sits in the cheek
   // (the mouth full: nothing else is eaten) for CHEEK_TICKS, then it's spat
-  // SPIT_REACH cells ahead of the head, over anything between, a shade
-  // stronger: one segment more each time it comes back up, to SHRINK_MAX.
-  CHEEK_TICKS: 9,           // about a second: the ring 3 ahead shows where it'll land, for anyone to dodge
-  SPIT_REACH: 3,
+  // straight ahead, flying SPIT_SPEED cells a tick up to SPIT_REACH, till it
+  // hits something (3b+), a shade stronger: one segment more each time it
+  // comes back up, to SHRINK_MAX.
+  CHEEK_TICKS: 9,           // about a second: the dotted line ahead shows where it'll fly, for anyone to step out of
+  SPIT_REACH: 5,
+  SPIT_SPEED: 2,
   SHRINK_MAX: 5,
   SPIT_WILT_MIN: 20,        // a spat mushroom wilts in half the time it had left, but lies at least this many ticks
   OWN_SPIT_TICKS: 6,        // (2x) the spitter slides over its own spat mushroom this many moves, as a full mouth goes over food: straight on, it would swallow it again

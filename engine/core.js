@@ -129,8 +129,8 @@ function createGame({ humans = null, withPlayer = true, personas = null } = {}) 
     // many it has caught over its life. weatherBag: the spells still to come
     // before any kind repeats (see spell). sdApples: apples fallen since the
     // woodpecker came; sdAppleAt: the tick the next falls.
-    // portals: the gold portals open now (see portals.js).
-    portals: [], burrows: [], unders: [], fires: new Map(), fireGroups: new Map(), fireTotals: new Map(), fireGroup: 0,
+    // portals: the gold portals open now (see portals.js); spits: mushrooms flying (see spit).
+    portals: [], spits: [], burrows: [], unders: [], fires: new Map(), fireGroups: new Map(), fireTotals: new Map(), fireGroup: 0,
     weather: { kind: 'clear', since: 0, until: T.WEATHER_FIRST_MS, nextGust: 0, nextStrike: 0 }, weatherBag: [],
     sdApples: 0, sdAppleAt: null,
   };

@@ -87,13 +87,13 @@ const portalRun = (gap, ticks = 40, stun = 0) => {
 }
 
 { // A gold portal is a way through for snakes, not for what they spit: a mushroom spat at an open one goes off the
-  // board, as its ring shows (none, there), and doesn't land on the far side.
+  // board, as its dotted line shows (none, there), and doesn't land on the far side.
   const g = board([[line(N21 - 2, 10, 4), 'right'], [line(10, 20, 4), 'right']], { time: 30000 });
   g.snakes[0].cheek = { power: T.SHRINK, spitAt: g.tick, left: 120 };
   g.portals.push({ x: N21 - 1, y: 10, dx: 1, dy: 0, tx: 0, ty: 10, owner: 1, shutAt: g.time + 1500, followed: [], wrappers: [] });
   feed(g); quiet(g);
-  const e = g.events.find(e => e.type === 'spit');
-  check('a mushroom spat at an open gold portal goes off the board, not through it', e && e.tx >= N21 && !g.food.some(f => f.kind === 'mushroom' && f.y === 10 && f.x < 3), JSON.stringify({ spit: e && [e.tx, e.ty], food: g.food.filter(f => f.kind === 'mushroom') }));
+  const e = g.events.find(e => e.type === 'spat');
+  check('a mushroom spat at an open gold portal goes off the board, not through it', e && e.x >= N21 && e.lx === null && !g.spits.length && !g.food.some(f => f.kind === 'mushroom' && f.y === 10 && f.x < 3), JSON.stringify({ spat: e && [e.x, e.y], food: g.food.filter(f => f.kind === 'mushroom') }));
 }
 
 { // Following close behind (the body passing, then a moment after): through, out at the exit, nothing crashed.

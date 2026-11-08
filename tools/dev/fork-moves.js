@@ -10,9 +10,10 @@
 // move it would have made with the move's price waived)?
 // --rest forbids that rival the move for the rest of the round in the play without it: one tick measures when to use
 // it (the rival still holds it and uses it later), the rest of the round whether having it helps.
-//   node tools/dev/fork-moves.js <root> --move fly|now|dash|portal|power|golden [--rounds 40] [--seed 1] [--per-round 4] [--forced] [--rest] [--json]
+//   node tools/dev/fork-moves.js <root> --move fly|now|dash|portal|spit|power|golden [--rounds 40] [--seed 1] [--per-round 4] [--forced] [--rest] [--json]
 //     fly: a golden flight held past the plain hop (always GOLD_FLY cells); now: a plain leap now; dash: a golden flash;
 //     portal: following someone through a gold portal (no --forced)
+//     spit (3b+): a mushroom spat along its line, against the same mushroom gone from the cheek unspat (no --forced or --rest)
 //     power (2u+): a plain jump or flash used with both in the bar, played on with the jump, the flash and neither
 //       (which was the more useful, each moment). No --forced or --rest.
 //     golden (2z): a golden apple eaten, played on six ways from the tick after: as it went; uneaten; and, from the
@@ -54,7 +55,7 @@ let rngState = 0;
 const rng = () => { rngState = (rngState + 0x6d2b79f5) >>> 0; let t = rngState; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 const M = Object.create(Math); M.random = rng;
 const ctx = vm.createContext({ window: {}, console, Math: M });
-const empty = () => ({ fly: new Set(), now: new Set(), dash: new Set(), portal: new Set(), any: new Set(), pjump: new Set(), pdash: new Set() });
+const empty = () => ({ fly: new Set(), now: new Set(), dash: new Set(), portal: new Set(), spit: new Set(), any: new Set(), pjump: new Set(), pdash: new Set() });
 ctx.__forbid = empty(); ctx.__force = empty();
 const gameFiles = require('../game-files.js'), files = gameFiles(root), read = f => fs.readFileSync(path.join(root, f), 'utf8');
 vm.runInContext(read('tuning.js'), ctx, { filename: 'tuning.js' });
@@ -72,6 +73,7 @@ function used(g, s) {
     if (MOVE === 'now' && e.type === 'leap' && e.now && !e.gold) return true;
     if (MOVE === 'dash' && e.type === 'dash' && !e.plain) return true;
     if (MOVE === 'portal' && e.type === 'through') return true; // (following someone through a gold portal)
+    if (MOVE === 'spit' && e.type === 'spit') return true; // (3b+: a mushroom spat)
     if (MOVE === 'golden' && e.type === 'eat' && e.kind === 'golden') return true;
     if (MOVE === 'power' && plainPower(e)) return true;
   }
@@ -138,7 +140,7 @@ for (let r = 0; r < ROUNDS; r++) {
     const A = back(before), B = back(before);
     rngState = before.rng; E.step(A); const afterA = rngState;
     if (process.env.FORK_CHECK && (sig(A) !== sig(back(after)) || afterA !== after.rng)) throw new Error(`round ${r}, tick ${g.tick}: the fork's own play differs from the round's`);
-    rngState = before.rng; ctx.__forbid[MOVE].add(id); E.step(B); ctx.__forbid = empty(); const afterB = rngState;
+    rngState = before.rng; ctx.__forbid[MOVE].add(id); if (MOVE === 'spit') B.snakes[id].cheek = null; E.step(B); ctx.__forbid = empty(); const afterB = rngState;
     if (used(B, B.snakes[id])) { g = back(after); continue; } // (it couldn't be stopped: a held move)
     const ctxA = { cut: A.events.some(e => e.type === 'cut' && e.by === id), ate: A.events.filter(e => e.type === 'eat' && e.snake?.id === id).length, len: A.snakes[id].body.length, late: E.suddenDeath(A) ? 1 : 0, gold: A.snakes[id].leaps };
     rngState = afterA; const oa = playOut(A); rngState = afterB; if (REST) ctx.__forbid[MOVE].add(id); const ob = playOut(B); ctx.__forbid = empty();

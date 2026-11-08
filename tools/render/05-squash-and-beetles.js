@@ -269,3 +269,29 @@ const dug = await ev(`(() => {
     `knocked 1 cell, up to y ${near.top} (it lies at 17.5), down by ${near.landsBy} ms; knocked 4 cells, up to y ${far.top}, down by ${far.landsBy} ms`);
   check(dug.end.beetle === 0 && dug.end.gulp > 0, 'a beetle still in the mark at the strike is gone, eaten in a puff (it never flies off it)', `its emerald pixels after ${dug.end.beetle}; particles at the strike ${dug.end.gulp}`);
 }
+
+// The spit flies along the line (3b+): while it's in the cheek, a dotted green line runs SPIT_REACH cells ahead of the
+// head (and no further); and a mushroom in the air is drawn where it flies, over the board.
+const spitLook = await ev(`(() => {
+  seeds(42);
+  const g = stage(['joker', 'gobbler', 'mason']), [you, jo] = g.snakes;
+  setBody(you, [[2, 22], [1, 22], [0, 22]], 'right');
+  setBody(jo, Array.from({ length: 6 }, (_, i) => [8 - i, 8]), 'right'); jo.stunUntil = 1e9;
+  show(g); R.setViewer(99);
+  const lime = x => { const d = pixels(x, 8, 1, 1).data; let n = 0; for (let i = 0; i < d.length; i += 4) if (Math.abs(d[i] - 163) < 24 && Math.abs(d[i + 1] - 230) < 24 && d[i + 2] < 90) n++; return n; };
+  const air = () => { const d = pixels(15.5, 14.5, 2, 2).data; let s = 0; for (let i = 0; i < d.length; i += 4) s += d[i] + d[i + 1] + d[i + 2]; return s; };
+  jo.cheek = { power: TUNING.SHRINK, spitAt: g.tick + 2, left: 100 };
+  drawN(1, 0.5, 0);
+  const dots = [9, 10, 11, 12, 13, 14].map(lime);
+  jo.cheek = null;
+  drawN(1, 1, 0);
+  const bare = air();
+  g.spits.push({ x: 16, y: 15, dir: SnakeEngine.DIRS.down, left: 1, power: 4, wilt: 30, by: jo.id, wrap: false });
+  drawN(1, 1, 0);
+  const flying = air();
+  g.spits.length = 0;
+  return { dots, bare, flying };
+})()`);
+check(spitLook.dots.slice(0, 5).every(n => n > 0) && spitLook.dots[5] === 0, 'a mushroom in a cheek shows its dotted line, five cells ahead and no further',
+  `lime pixels in the cells 1 to 6 ahead: ${spitLook.dots.join(', ')}`);
+check(Math.abs(spitLook.flying - spitLook.bare) > 2000, 'a mushroom in the air is drawn where it flies', `the cell's colour sum without it ${spitLook.bare}, with it ${spitLook.flying}`);

@@ -65,9 +65,10 @@ function frame(alpha, now) {
   drawWrapEdges(now);
   if (streaks.length) drawStreaks(now); // (under the snakes: beside the dasher, never through it)
   drawLandings(now); // (under the snakes: where a jump comes down)
-  drawSpitRings(now); // (and where a mushroom in a cheek comes down)
+  drawSpitLines(now); // (and where a mushroom in a cheek will fly)
   drawSnakes(alpha, now); // (and the fields' light round any rival in them, under its body)
   drawCheeks(alpha, now); // (a mushroom in a cheek: puffed green, counting down to the spit)
+  drawSpitsInAir(alpha, now); // (over the snakes: a mushroom flying along its line)
   drawPortals(now); // (over the snakes: a body goes into one, and comes out of the other)
   if (flagsLater.length) drawBentFlags(now); // (the flags, over the snakes, but not over what stands in front of them)
   if (flagBends.size) forgetBends(now);
@@ -254,15 +255,16 @@ function onTick(events) {
       eatenNow.add(e.y * GRID + e.x);
       const v = born.get(e.y * GRID + e.x)?.v, fill = v ? v.slice(0, v.indexOf('|')) : colorOf(e.snake);
       addSplat(e.x, e.y, fill[0] === '#' ? fill : '#a16207', now);
-    } else if (e.type === 'spit') { // a mushroom come back up (round six B): in an arc to where it lies, or onto a head (a green puff: poisoned), or gone
-      const tx = e.tx * CELL + CELL / 2, ty = e.ty * CELL + CELL / 2;
-      if (e.lx != null) moveFood(e.x, e.y, e.lx, e.ly, now, true, true, e.snake);
+    } else if (e.type === 'spat') { // a mushroom stopped (3b+): down where it lies, off what it hit, onto a head (a green puff: poisoned), or gone
+      const tx = e.x * CELL + CELL / 2, ty = e.y * CELL + CELL / 2;
+      spitStopped(e, now);
+      if (e.lx != null) moveFood(e.fx, e.fy, e.lx, e.ly, now, true);
       else if (e.hit >= 0) {
         spawn(tx, ty, 14, 170, 600, 2.8, '#84cc16', '#c084fc');
         const o = game.snakes[e.hit];
         if (o) animOf(o, now).queasyAt = now;
         if (o && o.id === viewerId) floater(tx, Math.max(CELL * 1.3, ty - CELL * 0.6), `-${e.power}`);
-      } else if (e.tx >= 0 && e.ty >= 0 && e.tx < GRID && e.ty < GRID) spawn(tx, ty, 7, 110, 420, 2.2, '#6f1546', '#84cc16'); // (into a hole or the fire)
+      } else if (e.x >= 0 && e.y >= 0 && e.x < GRID && e.y < GRID) spawn(tx, ty, 7, 110, 420, 2.2, '#6f1546', '#84cc16'); // (into a hole or the fire)
     } else if (e.type === 'knock') { // the woodpecker's strike knocks food out of its patch: it flies to where the rule says, in an arc as high and long as the throw (see knockFly), and with nowhere to go, or a beetle (round six B, 2m), the bird has it
       const x = e.x * CELL + CELL / 2, y = e.y * CELL + CELL / 2;
       if (e.tx == null || e.ty == null) { eatenNow.add(e.y * GRID + e.x); spawn(x, y, 8, 160, 420, 2.2, e.kind === 'beetle' ? '#059669' : '#c08a4a', '#f6ecd2'); }
