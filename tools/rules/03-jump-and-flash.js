@@ -269,7 +269,7 @@ const endless = s => Object.defineProperty(s, 'restedAt', { get: () => 0, set() 
   const scatter = seeded(5);
   let near = 0, nearAims = 0, early = 0, underFood = 0, knocked = 0, badKnocks = 0, strikes = 0, cells = 0, aims = 0, underBodies = 0, besideHoles = 0, under = 0, cuts = 0, aimedAt = -1;
   for (const [b, spots] of [[[14, 3], [22, 9], [16, 15], [23, 21]], [[18, 5], [13, 11], [23, 16], [15, 22]], [[12, 2], [20, 8], [14, 14], [22, 20]], [[22, 4], [15, 10], [12, 17], [18, 23]]].entries()) seededWhile(101 + b, () => { // (the engine's own draws seeded per board, so the run's seed and the checks before can't move them)
-    const g = board(spots.map(([x, y]) => [line(x, y, 12), 'right']), { time: T.SUDDEN_DEATH_MS });
+    const g = board(spots.map(([x, y]) => [line(x, y, 12), 'right']), { time: FRENZY });
     for (const s of g.snakes) s.stunUntil = 1e9;
     for (let t = 0; t < 700 && g.holes.size < T.GRID * T.GRID / 2; t++) {
       feed(g);
@@ -330,7 +330,7 @@ const endless = s => Object.defineProperty(s, 'restedAt', { get: () => 0, set() 
 
 { // A body lying across the patch when it strikes bridges the new hole: no cut, nothing dropped; the hole's there once its tail has passed.
   const g = board([[line(12, 10, 9), 'right'], [line(12, 16, 4), 'right'], [line(5, 20, 3), 'right']]);
-  g.time = T.SUDDEN_DEATH_MS;
+  g.time = FRENZY;
   feed(g);
   // P0 (head at 12,10, nine long) lies across (8, 10); P1 turns up out of the patch, its neck left in it; P2's head goes into it.
   g.woodpecker = { x: 8, y: 10, at: g.time, target: [K(8, 10), K(8, 9), K(8, 11), K(12, 16), K(12, 17), K(6, 20)], strikeAt: g.tick, last: [], struckAt: -1, restUntil: 0 };

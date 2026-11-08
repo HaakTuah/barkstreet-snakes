@@ -67,7 +67,7 @@
 //                 length    the median round
 //                 sd        sudden death: its median length (of the rounds that reached it), and how many did
 //                 deaths    what snakes died of (each cause's share of the deaths)
-//                 starving  the share of snake-time starving, before the woodpecker and after
+//                 starving  the share of snake-time starving, before the frenzy and after
 //                 powers    plain flashes a minute alive, plain jumps, golden leaps used, golden dashes and golden power food a round
 //                 win       each personality's win rate (of the rounds it played; shown, not waited for)
 //                 place     each personality's average place (shown, not waited for)
@@ -82,7 +82,7 @@
 //                 (win and place shown, not waited for, as above). Not with --at
 //   --at MS     fast-forward: store every round at game time MS as A plays it (simulate.js
 //               --save-at), and play both on from there; for questions about the late game
-//               (2:00, the woodpecker, is 120000). Only what happens after MS can differ
+//               (2:00 is 120000; each round draws its own acts, the woodpecker's and its frenzy's: tuning.js's ACT_*). Only what happens after MS can differ
 //   --alpha P   1 - the confidence, for the whole table (default 0.05: any verdict wrong at most 5% of the time)
 //   --margin ROW=X  a difference smaller than X doesn't matter, for a row (sd, win.Star...) or a group (win=5)
 //   --workers N passed on to simulate.js
@@ -156,10 +156,10 @@ function rowsFor(As, Bs, groups = USUAL, margins = new Map()) {
   } else {
   add('length', 'length', 'round length, median', 's', { median: v => v.length }, 3);
   add('sd', 'sd', 'sudden death length, median', 's', { median: v => v.sd }, 4);
-  add('sd', 'reached', 'rounds reaching the woodpecker', '%', { num: v => v.reached, den: () => 1, scale: 100 }, 2);
+  add('sd', 'reached', 'rounds reaching the frenzy', '%', { num: v => v.reached, den: () => 1, scale: 100 }, 2);
   const causes = [...new Set([...As, ...Bs].flatMap(v => Object.keys(v.causes)))].sort();
   for (const k of causes) add('deaths', 'deaths.' + k, `deaths: ${k}`, '%', { num: v => v.causes[k] || 0, den: v => v.deaths, scale: 100 }, 3);
-  add('starving', 'starving.early', 'starving, before the woodpecker', '%', { num: v => v.starvingEarly, den: v => v.aliveEarly, scale: 100 }, 0.5);
+  add('starving', 'starving.early', 'starving, before the frenzy', '%', { num: v => v.starvingEarly, den: v => v.aliveEarly, scale: 100 }, 0.5);
   add('starving', 'starving.late', 'starving, after', '%', { num: v => v.starvingLate, den: v => v.aliveLate, scale: 100 }, 0.5);
   add('powers', 'flashes', 'plain flashes a minute alive', '', { num: v => v.flashes, den: v => v.minutes }, 0.2);
   add('powers', 'jumps', 'plain jumps a round', '', { num: v => v.jumps, den: () => 1 }, 0.5);

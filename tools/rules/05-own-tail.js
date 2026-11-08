@@ -119,7 +119,7 @@ const freeHere = g => (x, y) => passHere(g)(x, y) && !g.food.some(f => f.x === x
     const s = g.snakes[0];
     return [Math.round(E.hungerLeft(g, s) + g.time - t0), Math.round(s.nextStarve - t0)]; // (as it ate: the time left, and when it starts shrinking)
   };
-  const opening = meal(T.HUNGER_MID_FROM_MS - 5000), mid = meal(T.HUNGER_MID_FROM_MS + 5000), late = meal(T.SUDDEN_DEATH_MS + 1000);
+  const opening = meal(T.HUNGER_MID_FROM_MS - 5000), mid = meal(T.HUNGER_MID_FROM_MS + 5000), late = meal(FRENZY + 1000);
   check('a meal lasts HUNGER_MS in the opening, HUNGER_MID_MS mid-round, HUNGER_MS once the woodpecker\'s here', [opening, mid, late].map(String).join(' ') === [[T.HUNGER_MS, T.HUNGER_MS], [T.HUNGER_MID_MS, T.HUNGER_MID_MS], [T.HUNGER_MS, T.HUNGER_MS]].map(String).join(' '), JSON.stringify([opening, mid, late]));
   // A meal just before HUNGER_MID_FROM_MS, then one just after: the second never takes time away (nor does the bar fill for less than is left).
   const g = board([[line(5, 10, 5), 'right'], [line(5, 20, 3), 'right']], { food: [[6, 10]], time: T.HUNGER_MID_FROM_MS - 100 });
@@ -135,7 +135,7 @@ const freeHere = g => (x, y) => passHere(g)(x, y) && !g.food.some(f => f.x === x
 }
 
 { // Sudden death: the last apples fall one at a time, each wait longer than the last; the first is announced; nothing else grows (beetles still come out).
-  const g = board([[line(3, 2, 3), 'right'], [line(3, 21, 3), 'right']], { time: T.SUDDEN_DEATH_MS });
+  const g = board([[line(3, 2, 3), 'right'], [line(3, 21, 3), 'right']], { time: FRENZY });
   for (const o of g.snakes) o.stunUntil = 1e9;
   g.food = [];
   const falls = [];
@@ -222,13 +222,13 @@ const freeHere = g => (x, y) => passHere(g)(x, y) && !g.food.some(f => f.x === x
   g.weather = { kind: 'rain', since: 0, until: 1e9, nextGust: 0, nextStrike: 0 };
   for (let t = 0; t < T.RAIN_DOUSE_TICKS + 2; t++) E.step(g);
   check('rain puts fire out', !g.fires.has(K(1, 1)));
-  g.time = T.SUDDEN_DEATH_MS;
+  g.time = FRENZY;
   E.step(g);
   check('the sky clears for the woodpecker', g.weather.kind === 'clear', g.weather.kind);
 }
 
 { // Winter: snow puts fire out, there's less food, and hunger runs faster.
-  const g = E.createGame({ withPlayer: false });
+  const g = E.createGame({ withPlayer: false, season: 'normal' }); // (a normal season: winter's own apples)
   g.fires.set(K(1, 1), { from: 0, until: 500, group: 1, strike: true });
   g.weather = { kind: 'snow', since: 0, until: 1e9, nextGust: 0, nextStrike: 0 };
   g.food = g.food.filter(f => f.kind !== 'food');

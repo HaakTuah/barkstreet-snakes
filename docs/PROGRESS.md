@@ -7,7 +7,7 @@ when it is merged into `develop`; add the owner's new tasks where he places them
 
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
-**The main lane is 6** (round six C: the woodpecker in three acts), the first open entry that waits on nothing (3c
+**The main lane is 6** (round six C: the woodpecker in three acts; part 1 done, part 2 next), the first open entry that waits on nothing (3c
 waits on 3b's Wildcard part, 3d on 3c, and 4 on 5): item 5's part 7 (one pricing
 model, built afresh) waits on 2ab, which is blocked on #574, and 2y++'s last step waits on part 7, so both are skipped
 until #574 is answered. 2i (PR #599), 2h (PR #596), 2b (PR #593), part 4 (#198,
@@ -170,7 +170,12 @@ Teaches every move of item 5 by showing, each with its picture or cue, its lesso
 
 The woodpecker cuts shapes that fall, down to a floor, then fights; hunger stays a trade-off to the end; and the food
 A/B, chips, skeletons and memorials beside it. Spec: `docs/handoff/queue-specs.md`, "6. Round six C: the woodpecker in
-three acts" (its draft: `docs/handoff/woodpecker-acts-draft.md`).
+three acts" (its draft: `docs/handoff/woodpecker-acts-draft.md`). In six playable PRs, each merged before the next:
+1. **Done** (PR #605): the three acts (calm, the watcher and its gaze, the first pecks, the frenzy), `?acts=`; Sovereign's
+   time at home asked in #607.
+2. Outline cutting, the floor, then the fight. 3. Hunger a conditional good to the end. 4. The food A/B (`?food=fall`),
+   chips and a bounce if the knock stays (the old study patches, `tools/dev/r6-study-tools/patch-flex*.js`, rebuilt for
+   it). 5. Skeletons and trademark memorials. 6. 2h's numbers measured again.
 
 ### 7. Then: local multiplayer (PR D)
 

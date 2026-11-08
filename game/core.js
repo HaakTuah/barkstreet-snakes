@@ -49,6 +49,8 @@ const touchFirst = matchMedia('(pointer: coarse)').matches;
 const reducedMQ = matchMedia('(prefers-reduced-motion: reduce)');
 const params = new URLSearchParams(location.search);
 const DEV = params.has('debug') || params.has('perf');
+// A playtest's pins (entry 6): ?acts=70,140,200 starts the woodpecker's acts at those seconds (three rising times; anything else is ignored).
+const pinnedActs = params.has('acts') ? params.get('acts').split(',').map(n => Number(n) * 1000) : null;
 
 // ----------------------------------------------------------------- words
 
@@ -117,8 +119,10 @@ const FLAVOR = {
   golden: ['A golden apple! Everyone pretends not to have seen it.', 'A golden apple just dropped onto the log.'],
   // The first time in a round you cross a rival's border.
   field: { home: name => `You’re in ${name}’s realm now. It noticed.`, colony: name => `That’s one of ${name}’s colonies. It’s seen you.` },
-  woodpecker: ['The woodpecker is here. Keep out of wherever it’s looking.', 'Rat-a-tat. The woodpecker has come for the log, a patch at a time.'],
-  woodpeckerWatch: ['The woodpecker is here. Everyone, keep clear of its mark.', 'Rat-a-tat. The woodpecker is at work on the log.'],
+  // The woodpecker's three acts (entry 6), as each starts: it comes and watches, it starts pecking, it's in a frenzy.
+  woodpecker: ['The woodpecker has landed. It’s sizing up the log.', 'A woodpecker, watching the log. Kik!'],
+  woodpeckerPecks: ['It’s started pecking! Keep off its mark.', 'Rat-a-tat. The woodpecker’s at the log.'],
+  woodpeckerFrenzy: ['Sudden death! The woodpecker’s in a frenzy.', 'Sudden death! Nothing grows now, and the bird’s furious.'],
   // The new rules, as they first happen to you in a round: one idea each, short.
   // (A no-break space keeps "At 3" together: split, it reads as two statements.)
   youCrash: ['Crashes cost tail. At length\u00a03, or boxed in, one ends you.', 'That crash cost tail. At length\u00a03, or boxed in, you’re out.'],
@@ -128,7 +132,8 @@ const FLAVOR = {
   youPeckedUnder: 'Pecking under you! Only your head can fall in.', // (a body over a fresh hole bridges it)
   cutLoose: 'The shaded piece is cut loose and will fall. Get off it!', // (2s: the first mark that cuts a piece loose, or its strike)
   youSquash: 'Your own beads feed nobody.', // (round six B: your first own bead squashed)
-  youWoodpecker: 'Food in the woodpecker’s mark flies to its ring.', // (once a round, as it comes, once its own banner has had its time: the one idea you can act on, in one line on a phone; that it won't shut you in if it can help it is the Field guide's)
+  youWatched: 'The woodpecker’s watching… Mind where it looks.', // (entry 6: as it comes, its gaze a tell: its first patch grows where it looked last)
+  youWoodpecker: 'Food in the woodpecker’s mark flies to its ring.', // (once a round, as it starts pecking, once its own banner has had its time: the one idea you can act on, in one line on a phone; that it won't shut you in if it can help it is the Field guide's)
   birdBeetle: 'The woodpecker eats beetles too.', // (round six B, 2m: the first beetle you see the bird eat, one that didn't get off its mark in time)
   spillFirst: 'A snake knocked out drops its powers. Grab them!', // (round six B, part 6: the first spill anyone sees)
   youSpill: s => `Spilled powers: now ${[s.leaps ? `${s.leaps} golden jump${s.leaps === 1 ? '' : 's'}` : '', s.dashes ? `${s.dashes} golden dash${s.dashes === 1 ? '' : 'es'}` : ''].filter(Boolean).join(' and ')}.`, // (what you hold after the grab, not what it gave: full already, it gives nothing)
@@ -221,9 +226,8 @@ const FLAVOR = {
     'Winter. Less food, and you’ll get hungry faster.': 'Winter. Less food, and hunger comes faster.',
     'Snow on the bark. Hard times: eat while you can.': 'Snow. Hard times: eat while you can.',
     'Winter. Less food, and everyone gets hungry faster.': 'Winter. Less food, and hunger comes faster.',
-    'The woodpecker is here. Keep out of wherever it’s looking.': 'The woodpecker is here. Keep out of its sight.',
-    'Rat-a-tat. The woodpecker has come for the log, a patch at a time.': 'Rat-a-tat. The woodpecker has come for the log.',
-    'The woodpecker is here. Everyone, keep clear of its mark.': 'The woodpecker is here. Everyone, mind its mark.',
+    'The woodpecker has landed. It’s sizing up the log.': 'The woodpecker has landed.',
+    'Sudden death! Nothing grows now, and the bird’s furious.': 'Sudden death! Nothing grows now.',
     'A golden leaf blew onto the log: golden dashes, for the taking.': 'A golden leaf blew in: golden dashes to take.',
     'A golden leaf on the wind: golden dashes, for whoever eats it.': 'A golden leaf: golden dashes, for whoever eats it.',
     'A golden mushroom came up. Eat it: no edges for a while.': 'A golden mushroom came up: no edges for a while.',
@@ -313,7 +317,8 @@ function musicStage() {
   mood.danger = state === 'running' ? dangerNow : 0;
   mood.watching = spectating();
   mood.paused = state === 'paused' || waking;
-  return alive <= 2 ? 'duel' : Engine.suddenDeath(theGame) ? 'sudden' : theGame.time > TUNE.MUSIC_MID_MS ? 'mid' : 'early';
+  const act = Engine.actOf(theGame); // (entry 6: the woodpecker's acts each have their own)
+  return alive <= 2 ? 'duel' : act === 3 ? 'sudden' : act === 2 ? 'pecks' : act === 1 ? 'watch' : theGame.time > TUNE.MUSIC_MID_MS ? 'mid' : 'early';
 }
 
 // -------------------------------------------------------------- the loop

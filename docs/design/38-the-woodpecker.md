@@ -1,19 +1,48 @@
 ## The woodpecker
 
-From 2:00 a great spotted woodpecker comes for the log, a patch at a time: it is what ends a round. The rules as the
+A great spotted woodpecker comes for the log in three acts, and it is what ends a round. The rules as the
 round's arc, round four, round six A and the owner's playtest settled them (their text, with what was tried and measured,
 is in `docs/archive/design-woodpecker.md`). Elsewhere: how beetles flee its mark ("Beetles and the woodpecker" in
 `04-food-and-the-world.md`), the last apples that fall meanwhile ("Food on the log", there), its perch on a phone
 ("The woodpecker's perch" in `31-phones.md`), the sound's levels (`21-sound.md`), and a flag it pecks out ("A pecked
 flag is a lost colony" in `44-realms-and-colonies.md`).
 
-### When it comes
+### Its three acts
 
-- **At 2:00** (`SUDDEN_DEATH_MS`), when sudden death starts, and it stays to the end of the round. It lands, looks round
-  for `PECK_ARRIVE_TICKS` (12), then aims its first patch.
-- **Then, over and over:** it picks a patch, eyes it for `PECK_AIM_TICKS` (17, about 1.6 s), strikes, and rests. It
-  gets hungrier: each rest is `PECK_REST_TICKS` (30) times `PECK_HUNGRIER` (0.85) for every strike so far, never under
-  `PECK_REST_MIN` (10).
+Entry 6 (round six C; the owner, 19 October 2026: the round had "just 2 stages. Chill start where nothing happens, then
+sudden elimination"). Each act starts at a time drawn in its window after the one before (`ACT_WATCH_MS`,
+`ACT_PECKS_MS`, `ACT_FRENZY_MS` in `tuning.js`; `game.acts`, drawn by the host), so a round is never quite predictable;
+`E.actOf` gives the act. A playtest pins them in the address: `?acts=70,140,200` (seconds, three rising times).
+- **0. Calm,** from the start: food, weather, beetles, the meal clock from 0:45.
+- **1. The watcher** (50–75 s in; the owner's starting point, 60–90 s, then 50–80 s and 50–80 s, made rounds of
+  246 s at the median, against the draft's 3 to 3.5 minutes): it lands outside the board and scouts it. No pecks. It watches a spot on the log
+  (`w.gaze`, anywhere that isn't a hole), then moves to a new vantage 2 to 4 times (`WATCH_LOOKS`), its last look
+  `WATCH_LAST` (1.6) times as long as each of the others. **Its gaze is a tell:** act 2's first patch starts within
+  `GAZE_NEAR` (4) cells of where it looked last, while any patch there keeps the fairness tries below.
+  - **Shown on the log:** where its eye settles, a pale diamond of its attention lies over the spot, brightest at the
+    middle, its dotted rim round the cells within `GAZE_NEAR` (`render/watch.js`): where its first patch may start, and
+    the ground the rivals weigh. It eases in over a second at each new look, steady, under the snakes. Its head alone
+    showed only a row from a side perch, or a column from a phone's ledge, while the rivals read the spot itself: the
+    diamond shows anyone what they read.
+  - **Its look:** its crest raised while it watches (its red nape, up), its head cocked at the spot, and a soft "kik!"
+    as it settles at each new vantage.
+- **2. The first pecks** (40–60 s after it came): a patch of `FIRST_CHUNK` (8) cells, then a rest of
+  `FIRST_REST_TICKS` (90, about 9 s), over and over, while food still grows.
+- **3. The frenzy, sudden death** (40–60 s after act 2): nothing new grows but the last apples, the weather clears, and
+  the meal clock is `HUNGER_MS` again. Its first rest is `PECK_REST_TICKS` (30) from its last strike; each patch is
+  `PECK_CHUNK` (12) cells, a cell bigger each strike of the frenzy (`w.fury`) up to `PECK_CHUNK_MAX` (20), and each
+  rest `PECK_REST_TICKS` times `PECK_HUNGRIER` (0.85) for every strike of the frenzy, never under `PECK_REST_MIN` (10).
+- **Each patch:** eyed for `PECK_AIM_TICKS` (17, about 1.6 s), struck, then the rest.
+- **Its look in the frenzy:** its eyes glow red, its feathers darken, and its crest ruffles up dark red, coming over it in a
+  second and a half and then steady (no flicker, with reduced motion too), and the page's sky dims (`html.frenzy` in
+  `style/base.css`).
+- **The music** has a stage for each act (`audio/music.js`): the watcher adds a low, slow drone under the mid-round
+  loop; the first pecks add its own drum, a quick roll of light knocks at each bar's end; the frenzy is faster (116 bpm),
+  in a minor key with wood-block knocks and toms, the drum at every half bar.
+- **Measured** (seeds 3 and 11, 200 rounds each, against the woodpecker at 2:00 before): rounds of 214 and 211 s at the
+  median (181 and 182 before); deaths spread over the acts, calm 7 and 6%, the watcher 19 and 18%, the first pecks 16
+  and 21%, the frenzy 58 and 54% (before, about four in five came after 2:00); sudden death lasts 54 and 50 s (61 before);
+  sealed deaths 9.1 and 6.1% of sudden death's (6.2% before).
 
 ### How it picks a patch
 
@@ -228,6 +257,12 @@ phone's address bar never resizes it.
 
 ### The rivals tell a mark from a hole
 
+- **They read the acts** as a person does (`aiView`'s `act` and `gaze`): while it watches, the ground within
+  `GAZE_NEAR` of its spot counts as risky to linger in (`AI_GAZE_RISK` of each rival's soft zone at its middle, less
+  out to the edge, in `ai/risk.js`), so a careful rival like Ghost gives it a wide berth and Desperado, whose zone
+  counts for little, skims it; in the frenzy every rival not desperate wants `AI_FRENZY_MARGIN` (2) more spare room
+  (`ai/decide.js`). Its marks they keep out of as before (below).
+
 - **What they see** (`aiView`): the mark apart from the holes (`view.pecks`), the strike's tick while the bird aims
   (`strikeAt`: anyone sees it drum the patch, its last blow on the strike), the pieces it cuts loose (`fall`), and, from
   the promise, the promised landings (`landings`: the rings show them to everyone).
@@ -244,12 +279,14 @@ phone's address bar never resizes it.
 
 ### Cues, lessons and the Field guide
 
-- **The banner:** as it comes, the round's news, dressed in the woodpecker's orange (`FLAVOR.woodpecker`, or
-  `woodpeckerWatch` once you're out, in `game/core.js`, with their phone words in `FLAVOR.phone`).
+- **The banners,** each act's news as it starts, dressed in the woodpecker's orange (`game/core.js`, with their phone
+  words in `FLAVOR.phone`): as it comes (`FLAVOR.woodpecker`), its first mark (`woodpeckerPecks`: "It's started
+  pecking! Keep off its mark."), and the frenzy (`woodpeckerFrenzy`: "Sudden death! The woodpecker's in a frenzy.").
 - **The lessons** (`game/core.js`, told by `game/banners.js`):
-  - once a round, as it comes, once its own banner has had its time and only while you're alive: "Food in the
-    woodpecker's mark flies to its ring." (the one idea you can act on, one line on a phone; that it won't shut you in
-    if it can help it is the Field guide's);
+  - once a round, as it comes, after its banner and only while you're alive: "The woodpecker's watching… Mind where it
+    looks." (`youWatched`: its gaze is the tell);
+  - once a round, at its first mark, the same way: "Food in the woodpecker's mark flies to its ring." (the one idea you
+    can act on, one line on a phone; that it won't shut you in if it can help it is the Field guide's);
   - the first time it pecks under you: "Pecking under you! Only your head can fall in.";
   - the first mark that cuts a piece loose (or as it falls, if the banner was busy): "The shaded piece is cut loose and will fall.
     Get off it!";
@@ -285,7 +322,7 @@ The sound topic is `21-sound.md` ("Round six A's cues", "The woodpecker's drum i
 
 ### Online
 
-The woodpecker's row carries where it is, its mark (`target`), the strike's tick, the last patch, when it struck and
+When the acts start crosses with each tick (`ac`, since protocol 30). The woodpecker's row carries where it is, its mark (`target`), the strike's tick, the last patch, when it struck and
 rests, how many it has struck, the promised landings and the pieces cut loose (`WoodpeckerRow` in `online.js`; the
 landings since protocol 10, `fall` since protocol 20). The events `aim`, `peck` (its cells, the bodies it pecked under,
 what fell) and `knock` (the kind, from where to where, or nowhere when the bird ate it; golden; a bead's colour) cross

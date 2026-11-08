@@ -30,7 +30,7 @@ await ev(`(() => {
 })()`);
 const { BEETLE_DIG, BURROW_MAX } = await ev('({ BEETLE_DIG: TUNING.BEETLE_DIG, BURROW_MAX: TUNING.BURROW_MAX })');
 const reach = BEETLE_DIG + 1;
-const DIG_LESSON = 'A cornered beetle digs in. Grab it before it’s gone!', FAIR_LESSON = 'Food in the woodpecker’s mark flies to its ring.';
+const DIG_LESSON = 'A cornered beetle digs in. Grab it before it’s gone!', WATCH_LESSON = 'The woodpecker’s watching… Mind where it looks.'; // (entry 6: its gaze, the tell, as it comes)
 const BURROW_LESSON = 'A beetle that digs in leaves a burrow behind.', BOTH_LESSON = 'A cornered beetle digs in, leaving a burrow.';
 const HEAL_LESSON = 'Old burrows grow shut: beetles go in, none come out.';
 const TAKEN_LESSON = 'A new burrow by an old one: the old one grows shut.';
@@ -127,7 +127,7 @@ await toTick();
 const pairAfter = await ev('toastText()');
 await cues();
 check(farDig.toast !== DIG_LESSON && farDig.heard === 'dig~', 'a beetle a rival corners, far from you: heard as a rival’s, and no lesson', `“${farDig.toast}”; heard ${farDig.heard}`);
-check(/woodpecker|Rat-a-tat/.test(peckNews) && fair === FAIR_LESSON, 'the woodpecker’s coming: its news, then its rule once the news has had its time', `“${peckNews}”, then “${fair}”`);
+check(/woodpecker|Rat-a-tat/.test(peckNews) && fair === WATCH_LESSON, 'the woodpecker’s coming: its news, then its rule once the news has had its time', `“${peckNews}”, then “${fair}”`);
 check(heldDig.toast === peckNews && heldDig.heard === 'dig' && nearDig.toast === DIG_LESSON && nearDig.heard === 'dig',
   'a beetle digging in near you: heard as yours; its lesson the first time the banner’s free for it', `held: “${heldDig.toast}”, heard ${heldDig.heard}; later “${nearDig.toast}”, heard ${nearDig.heard}`);
 check(tooFar.toast !== DIG_LESSON && tooFar.heard === 'dig', `a beetle digging in ${reach + 1} cells from your head, a cell further than you could get to in its dig (${BEETLE_DIG} ticks) with a flash: heard as yours, and no lesson`, `“${tooFar.toast}”; heard ${tooFar.heard}`);

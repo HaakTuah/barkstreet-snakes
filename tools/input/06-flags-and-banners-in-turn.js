@@ -130,9 +130,9 @@ const pocket = await ev(`(() => {
 check(pocket === JSON.stringify({ coil: false, trap: true }), 'the tail-drop lesson: not for a coil whose tail frees the way in time, but for a real pocket', pocket);
 
 { // 2s: the lesson, "The shaded piece is cut loose…", goes up the first time a mark cuts a piece of log loose (on the aim; with
-  // the banner busy, on the strike).
+  // the banner busy, on the strike). (Not its first mark: that one's news is its first pecks', entry 6.)
   const r = await inTurn(async () => {
-    await ev(`(() => { const t = SnakeDebug.game().told; if (t) delete t.cutLoose; return 'ok'; })()`);
+    await ev(`(() => { const g = SnakeDebug.game(), t = (g.told ||= {}); delete t.cutLoose; t.firstPecks = t.fairPecks = true; /* (its first pecks' news told already: entry 6) */ return 'ok'; })()`);
     await ev(`stageEvents(g => { const k = 2 * 24 + 20; g.woodpecker = { x: 20, y: 2, at: g.time, target: [k, k + 1], fall: [k + 1], strikeAt: g.tick + 17, last: [], struckAt: -1, restUntil: g.tick + 40 }; return [{ type: 'aim', x: 20, y: 2 }]; })`);
     await toTick();
   }, 1500);

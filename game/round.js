@@ -14,7 +14,7 @@ function newGame({ personas, aiOnly = false, humans = null, chosen = false } = {
   const unplayed = theGame && !theGame.spent ? theGame.dealt || [] : [];
   if (!personas) Records.undeal(SnakeAI.POOL, unplayed);
   const dealt = personas ? null : dealLineUp(Math.max(0, TUNE.OPPONENTS + 1 - people.length));
-  theGame = Engine.createGame({ personas: personas || dealt.keys, humans: people });
+  theGame = Engine.createGame({ personas: personas || dealt.keys, humans: people, acts: pinnedActs });
   theGame.chosen = dealt ? dealt.chosen : !!chosen;
   const keys = theGame.snakes.filter(s => s.persona).map(s => s.personaKey);
   if (personas) Records.undeal(SnakeAI.POOL, unplayed.filter(k => !keys.includes(k)));
@@ -352,7 +352,8 @@ function cornering(x, y) {
 // asked a moment ahead, so it's placed on the audio clock where the blow
 // is drawn, and started late, the knocks already past are left out); and
 // its "kik!" as it settles back on its perch after a strike, when the
-// drawing has it land (R.birdHome). Watched faster, both come faster.
+// drawing has it land (R.birdHome), and as it moves to each new vantage
+// while it watches (entry 6, act 1). Watched faster, both come faster.
 let drumDue = -1, drumGame = null, kikAt = -1, kikGame = null;
 function birdSounds() {
   const w = theGame?.woodpecker;
@@ -365,6 +366,9 @@ function birdSounds() {
     if (to > 40 * rate) return;
     drumDue = w.strikeAt; drumGame = theGame;
     if (-to < long) Sound.play('drum', { strike: w.pecks || 0, rate, delay: Math.max(0, to) / rate / 1000, from: Math.max(0, -to), ...at(w.x) });
+  } else if (w.gaze >= 0 && w.struckAt < 0 && w.lookAt > w.came && !(kikAt === -2 - w.lookAt && kikGame === theGame)) { // (entry 6: watching, a soft "kik!" as it lands at each new vantage)
+    kikAt = -2 - w.lookAt; kikGame = theGame;
+    if ((tp - w.lookAt) * ms < 900 * rate) Sound.play('call', { settle: true, ...at(w.x) });
   } else if (w.struckAt >= 0 && !(kikAt === w.struckAt && kikGame === theGame)) {
     const since = (tp - w.struckAt) * ms, home = Render.birdHome();
     if (since < home) return;
