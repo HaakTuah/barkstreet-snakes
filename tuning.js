@@ -143,8 +143,8 @@ window.TUNING = Object.freeze({
 
   // ------------------------------------------------- the woodpecker's acts
   // (entry 6) Each act starts at a seeded random time inside its window, so a round is never quite predictable; a
-  // playtest's ?acts=70,140,200 pins them (seconds). 0, calm, from the start: as before the woodpecker. (The owner's
-  // starting point, 60-90 s, then 50-80 and 50-80 after, made rounds of 246 s at the median: these aim at 3-3.5 min.)
+  // playtest's ?acts=70,140,200 pins them (seconds). 0, calm, from the start: as before the woodpecker. (Why these:
+  // 38-the-woodpecker.md, "Its three acts".)
   ACT_WATCH_MS: [50000, 75000],  // 1, the watcher: it lands outside the board and scouts it, no pecks, its gaze a tell...
   ACT_PECKS_MS: [40000, 60000],  // 2, the first pecks, this long after it came: small patches, a long rest between...
   ACT_FRENZY_MS: [40000, 60000], // 3, the frenzy, this long after act 2: sudden death, nothing new grows but the last apples (SD_APPLE_GAP), though beetles still come out

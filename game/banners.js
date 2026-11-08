@@ -71,7 +71,7 @@ function news(dying) {
   }
   if (Engine.suddenDeath(theGame) && once('frenzy')) {
     flashFrame('bird', true);
-    document.documentElement.classList.add('frenzy'); // (the sky dims: style/base.css)
+    updateControls(); // (the sky dims: html.frenzy, set there)
     Sound.play('stinger');
     return toast(pick(FLAVOR.woodpeckerFrenzy), 2800, 'bird', 'round');
   }

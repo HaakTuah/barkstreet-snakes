@@ -68,7 +68,7 @@ the keys" in `42-controls.md`).
 ### The Hall of Fame ranks by place, then time alive, then food
 
 The owner's call. A better place first (a win beats a shared first), then the longer time alive, then more food, then
-the older row (`compare` in `records.js`). From 2:00 food stops appearing but for the last apples and the beetles, so
+the older row (`compare` in `records.js`). From sudden death (the woodpecker's frenzy) food stops appearing but for the last apples and the beetles, so
 food eaten mostly measures how early you died; time alive measures how well you played. The rank on your death card
 already counts the snakes still alive (they'll all finish ahead of you; online, only the people, whose rows are
 kept), so it's the rank the round-over card will show.

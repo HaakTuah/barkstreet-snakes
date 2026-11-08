@@ -20,7 +20,7 @@ const { launch, serve, sleep } = require(path.join(root, 'tools', 'browser.js'))
       await sleep(300);
       // (one strike staged on the held board: its rest, then the drum)
       await b.eval(`(() => { const g = SnakeDebug.game(); window.__cell = 18 * GRID + 12; window.__t0 = g.tick; window.__S = g.tick + 40;
-        g.time = Math.max(g.time, TUNING.SUDDEN_DEATH_MS + 1000); g.woodpecker = null; SnakeDebug.draw();
+        g.time = Math.max(g.time, g.acts.frenzy + 1000); g.woodpecker = null; SnakeDebug.draw();
         g.woodpecker = { x: 12, y: 18, at: g.time, target: [], strikeAt: -1, last: [], struckAt: -1, restUntil: g.tick + 1e6, pecks: 0 };
         window.__now = performance.now(); for (let i = 0; i < 6; i++) SnakeRender.frame(0.5, window.__now += 16); return 'ok'; })()`);
       const tall = `Math.round(SnakeRender.birdPose().s * (BIRD_BOX[3] - BIRD_BOX[1]) * BU * boardRect.w / SIZE)`;

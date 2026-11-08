@@ -12,7 +12,7 @@ const census = () => ({
   cutsPlain: 0, cutsGold: 0, cutsOwn: 0, failed: 0, failedGold: 0, edgeTicks: 0, huggers: 0, huggerWins: 0, huggerPlace: 0, others: 0, otherWins: 0, otherPlace: 0, // (round six B, the flashes cut: cuts by plain flashes and dashes, of them its own tail dropped; failed flashes (golden ones); snake-ticks with the head on the board's edge; snakes whose head was on the edge an eighth of their time or more (twice the field's 6% before part 3) ("huggers"), and the rest: how many, wins, places)
   rides: 0, rideTicks: 0, rideDeaths: 0, rideFalls: 0, // (bridges: rides begun, snake-ticks with a head on another's back over a pit, deaths while on one, and of them falls)
   hop1: 0, hop2: 0, hop3: 0, hopHole: 0, hopFail: 0, hopDie: 0, smallIsle: 0, // (round six B's island hop: jumps by the cells they went over, those over a hole, those whose landing crashed, jumpers out within 3 s of taking off, and jumps down on another island smaller than the jumper (2r))
-  pecks: 0, holes: 0, aims: 0, aimsNear: 0, flashes: 0, jumps: 0, goldLeaps: 0, goldGot: 0, dashes: 0, pickups: 0, greedy: 0,
+  pecks: 0, holes: 0, aims: 0, aimsNear: 0, tellAims: 0, tellKept: 0, flashes: 0, jumps: 0, goldLeaps: 0, goldGot: 0, dashes: 0, pickups: 0, greedy: 0,
   aliveEarly: 0, hungryEarly: 0, starvingEarly: 0, aliveLate: 0, hungryLate: 0, starvingLate: 0, // (snake-ticks before and after the woodpecker: alive, in the hunger warning, starving)
   beads: 0, ownBeads: 0, chokes: 0, chokeRounds: 0, nudges: 0, nudgedBeads: 0, // (beads eaten, and by the snake they broke off; own beads squashed (chokes before round six B); food nudged aside coughing, and the beads among it, before round six B)
   knocks: 0, knockedEaten: 0, knockedTaken: 0, knockedTicks: [], digs: 0, digsCaught: 0, // (food the woodpecker's strike knocked aside, of it what it ate, with nowhere to knock it, and what a snake ate where it landed within 6 s, how many ticks after the strike; beetles digging in, and caught while digging)
@@ -32,7 +32,7 @@ const census = () => ({
   portals: 0, portalChances: 0, throughs: 0, throughOut: 0, followRounds: 0, ownerOut: 0, // (round six B, part 5: gold portals opened, those a rival could have followed (its head within reach of the entry while it was open), followers through, followers out within 3 s of it, rounds with anyone following, and portals' owners out within 3 s of being followed)
   burrowsOpened: 0, sdTicks: 0, sdBurrowTicks: 0, underWait: 0,
   beakBugs: 0, beakRan: 0, beakCaught: 0, beakDived: 0, beakDug: 0, beakFlown: 0, beakPecked: 0,
-  ticks: 0, burrowTicks: 0, ticksEarly: 0, freeEarly: 0, // (ticks, and burrows open summed over them; before the woodpecker, cells free for an apple summed over them)
+  ticks: 0, burrowTicks: 0, ticksEarly: 0, freeEarly: 0, // (ticks, and burrows open summed over them; before the frenzy, cells free for an apple summed over them)
   // The woodpecker's fairness: aims whose mark left a snake less room than
   // its length (timed: tails leaving), and of them, the snake out by 3 s
   // (30 ticks) after the strike; islands of one or two cells a strike cut

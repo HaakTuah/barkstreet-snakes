@@ -129,7 +129,7 @@ A balance question ("does this shorten sudden death?", "did my change hurt anyon
 
    `node tools/abtest.js . ../variant --metrics sd,deaths`
 
-2. **Fast-forward a late-game question.** `--at 120000` stores every round at 2:00, as A plays it, and plays both copies on from there. The openings, most of a round's work, are played once, and the two sides are the same round up to the woodpecker, so a difference shows sooner. By hand, `simulate.js --save-at` stores the rounds (and prints where) and `--from` goes on with them under any copy; with the same files, every round comes out exactly as played straight through.
+2. **Fast-forward a late-game question.** `--at 120000` stores every round at 2:00, as A plays it, and plays both copies on from there. The openings, most of a round's work, are played once, and the two sides are the same round up to then, so a difference shows sooner. By hand, `simulate.js --save-at` stores the rounds (and prints where) and `--from` goes on with them under any copy; with the same files, every round comes out exactly as played straight through.
 
    `node tools/abtest.js . ../variant --at 120000 --metrics sd`
 
