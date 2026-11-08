@@ -57,6 +57,12 @@ a line eats (`MEAL_PLIES`), a neck's allowance is 2 ticks (`MEAL_DAWDLE`): only 
 soon as the snake (one that could cut it off) makes it a trap. A jump or a flash that eats on its way counts as a meal
 too. Everywhere else the neck test is as above.
 
+Apples by the edge rot six times as often as the rest (#324, measured in entry 2b), though only about 2% of apples
+rot at all. What turns rivals from an apple on the edge row, fed and with no rival near, is territory: from the edge,
+more of the board is nearer a rival's head. Two exceptions for a line that has just eaten were measured: wanting no
+room to spare beyond its length left about a sixth fewer apples to rot with nothing lost, but no staged board showed
+it deciding a move, so it was left out; a floor under territory made every rival contest apples more, and was dropped.
+
 ### Hunters close easy pins
 
 - **The neck test reads the rivals on the line's own board.** Where `reach` says a rival could shut a gap, the AI looks
@@ -90,17 +96,24 @@ Every persona fears the cells a rival could strike next (`headRisk`) and where i
 
 ### Nerve at a contested apple
 
-- **A persona's nerve:** `nerve: { base, hungry }`, the share of a rival's threat set aside at a cell with food on it.
-  It covers both the head-on fear and the zone fear, as they are read for that cell in the search; the maps themselves
-  are not changed, so every other cell, and the risk where a power lands, reads as before. `hungry` adds that much more
-  for every share of the hunger clock (`HUNGER_MS`) gone since the last meal. The nerve is never more than 0.85
-  (`NERVE_MAX`): the odds still count, even starving.
-- **Desperado:** 0.7, always.
-- **Gobbler:** 0.3, plus 0.7 of its hunger. Its head-on fear is the highest of all, so it takes the gamble only once
-  it's hungry.
+- **A meal is worth what it saves, for every rival** (entry 2b): the length it adds and, hungry, the length it stops
+  the rival losing, from nothing 10 s before its first shrink (`AI_HUNGRY_MS`) to one more at the shrink and two a
+  while into starving. At a cell with food on it, the threat is counted over that worth (times 1 / (1 + what it
+  saves)), so a hungry rival contests an apple because it is worth more, not by a rule of its own. Each persona's
+  fear still shapes it: in a staged duel, nearly starving, Sniper, Sovereign and Joker take an apple a rival's head is
+  beside, and Ghost still gives way.
+- **A persona's nerve:** `nerve: { base, hungry }`, the share of a rival's threat set aside at a cell with food on it,
+  on top of the worth above. It covers both the head-on fear and the zone fear, as they are read for that cell in the
+  search; the maps themselves are not changed, so every other cell, and the risk where a power lands, reads as before.
+  `hungry` adds that much more for every share of the hunger clock (`HUNGER_MS`) gone since the last meal. The nerve
+  is never more than 0.85 (`NERVE_MAX`): the odds still count, even starving.
+- **Desperado:** 0.7, always; and, an adrenaline junkie, less afraid of heads and of where they may be everywhere
+  (`headRisk` 450, `zoneRisk` 25). Its skims come from its taste for the thrill (`thrill`), not from that fear: they
+  stayed the same with less of it.
+- **Gobbler:** 0.5 at any hunger, plus 0.7 of its hunger, so it contests even fed. Its head-on fear is the highest of
+  all, so it takes a sure head-on only from half-way hungry.
 - **Everyone else:** no nerve, the hunters included. Capricious borrows Gobbler's or Desperado's whole weights with its
   mood, nerve and all.
-- To build: a contested apple worth what it saves, for every rival (entry 2b in `docs/PROGRESS.md`).
 
 ### Stuns, head-ons and food that won't keep
 
@@ -115,7 +128,8 @@ Past a length of its own (`hungryBelow`), a fed rival wants food only `fedFactor
 (`SUDDEN_DEATH_MS`) nothing new grows but the last apples, so the "fed" state switches off for everyone and every snake
 eats what it can. Hunger trumps it too: with under 10 s before it starts starving (`AI_HUNGRY_MS`), any rival goes
 looking for food, harder the closer it gets. Ghost, which stays small on purpose, keeps small but not starvation-small:
-food counts in full for it under 18 cells (`hungryBelow` 18, `fedFactor` 0.4).
+food counts in full for it under 18 cells (`hungryBelow` 18, `fedFactor` 0.4), and hungry it keeps its distance from
+heads less (none, desperate), so its distance doesn't cost it the meals it needs.
 
 ### A starving rival takes its chances
 
