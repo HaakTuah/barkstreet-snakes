@@ -372,5 +372,5 @@ the life it buys".
 Done (PR #599): each round draws its food season (lean one in four, normal one in two, plentiful one in four), named in
 a banner after Go with a lesson and a Field guide row, sent online with the weather (protocol 29), and played by the
 rivals. A lean season has one apple fewer, beetles half as often and meals that keep a snake 70% as long; a plentiful
-one an apple more and beetles half again as often. Starving went from 3% of deaths to 5% (16% of a lean round's). What
+one an apple more and beetles half again as often. Starving went from 3% of deaths to 5 to 6% (15 to 18% of a lean round's). What
 it measured is in the PR; the rules are in `docs/design/04-food-and-the-world.md`, "Food seasons".
