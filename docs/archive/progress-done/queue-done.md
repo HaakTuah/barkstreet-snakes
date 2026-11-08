@@ -366,3 +366,11 @@ worth only the hunger it stops, and a rival weighs dropping its tail once it see
 Ouroboros only out of a crash). The denial play came out even both ways and was left out. Its numbers come again after
 entry 6. What it measured is in the PR; the rules are in `docs/design/39-the-rivals.md`, "The endgame: a meal is worth
 the life it buys".
+
+### 2i. Food seasons: lean, normal and plentiful rounds (the owner, 29 October 2026; an engine-rules entry, after 2h)
+
+Done (PR #599): each round draws its food season (lean one in four, normal one in two, plentiful one in four), named in
+a banner after Go with a lesson and a Field guide row, sent online with the weather (protocol 29), and played by the
+rivals. A lean season has one apple fewer, beetles half as often and meals that keep a snake 70% as long; a plentiful
+one an apple more and beetles half again as often. Starving went from 3% of deaths to 5 to 6% (15 to 18% of a lean round's). What
+it measured is in the PR; the rules are in `docs/design/04-food-and-the-world.md`, "Food seasons".

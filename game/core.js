@@ -97,10 +97,18 @@ const FLAVOR = {
     wind: ['The wind’s up. Apples are falling.', 'A blustery spell: windfall apples.'],
     rain: ['Rain. The mushrooms are sprouting.', 'Here comes the rain, and the mushrooms with it.'],
     storm: ['A storm’s brewing. Watch for the crackle.', 'Thunder on the bark. Lightning strikes where it crackles.'],
-    snow: ['Winter. Less food, and you’ll get hungry faster.', 'Snow on the bark. Lean times: eat while you can.'],
+    snow: ['Winter. Less food, and you’ll get hungry faster.', 'Snow on the bark. Hard times: eat while you can.'],
   },
   // (A line that talks to "you", when you're not in the round: the same news, for everyone.)
-  weatherWatch: { snow: ['Winter. Less food, and everyone gets hungry faster.', 'Snow on the bark. Lean times for everyone.'] },
+  weatherWatch: { snow: ['Winter. Less food, and everyone gets hungry faster.', 'Snow on the bark. Hard times for everyone.'] },
+  // The round's food season (2i), after Go (none for a normal one), and its rule, the first time each comes.
+  season: {
+    lean: ['A lean season. Food is scarce this round.', 'Lean times on the log: little food about.'],
+    plentiful: ['A season of plenty!', 'Plenty on the log this round.'],
+  },
+  seasonRule: k => k === 'lean' // (one idea, 60 characters at most, as every lesson)
+    ? `Lean: ${inWords(Engine.seasonApples(k))} apple, fewer beetles, short meals. Some starve.`
+    : `Plenty: ${inWords(Engine.seasonApples(k))} apples, more beetles. Mind the crowd.`,
   strike: ['Lightning! The bark’s on fire.', 'Crack! Fire on the bark.'],
   rainbow: ['A rainbow! And at its foot, something golden.', 'After the rain, a rainbow. Follow it to the gold.'],
   rainbowWatch: ['A rainbow! And at its foot, something golden.', 'After the rain, a rainbow. Gold at its foot.'],
@@ -211,7 +219,7 @@ const FLAVOR = {
   phone: {
     'Thunder on the bark. Lightning strikes where it crackles.': 'Thunder! Lightning strikes where it crackles.',
     'Winter. Less food, and you’ll get hungry faster.': 'Winter. Less food, and hunger comes faster.',
-    'Snow on the bark. Lean times: eat while you can.': 'Snow. Lean times: eat while you can.',
+    'Snow on the bark. Hard times: eat while you can.': 'Snow. Hard times: eat while you can.',
     'Winter. Less food, and everyone gets hungry faster.': 'Winter. Less food, and hunger comes faster.',
     'The woodpecker is here. Keep out of wherever it’s looking.': 'The woodpecker is here. Keep out of its sight.',
     'Rat-a-tat. The woodpecker has come for the log, a patch at a time.': 'Rat-a-tat. The woodpecker has come for the log.',
@@ -273,6 +281,7 @@ let acc = 0, tickLen = TUNE.OPENING_TICK, lastFrame = 0, drawAlpha = 1, dirty = 
 // weather): the frame clock, but at 2x or 4x when you're watching that fast.
 let boardClock = performance.now();
 let helpText = ''; // (the help under the board, as last written)
+const seasonsTold = new Set(); // (the food seasons whose rule a Go has told, 2i: once each a visit)
 let powersTold = false; // (the first Go on a short phone has said how to jump and flash)
 let flashedEver = false; // (you've flashed, or pressed to: the flash's key needn't be told again this visit)
 let beatsLeft = 0, beatTimer = 0, waking = false; // (waking: the one beat back from a nap)

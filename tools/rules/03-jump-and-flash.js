@@ -186,7 +186,7 @@ const endless = s => Object.defineProperty(s, 'restedAt', { get: () => 0, set() 
   check('...not a stunned one\'s', E.step(g6).includes(g6.snakes[0]));
 }
 
-{ // Winter is the lean season: one apple, rotting twice as fast, and no golden apples.
+{ // Winter is a hungry spell: one apple, rotting twice as fast, and no golden apples.
   const g = board([[line(5, 5, 4), 'right'], [[[5, 15], [4, 15], [3, 15]], 'right']]);
   g.weather = { kind: 'snow', since: 0, until: 1e9, nextGust: 0, nextStrike: 0 };
   g.food = [];

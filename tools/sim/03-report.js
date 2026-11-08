@@ -7,6 +7,12 @@ function merge(results, suddenAt) {
     total.times.push(...r.total.times);
     total.trace.push(...r.total.trace);
     for (const [c, n] of Object.entries(r.total.causes)) total.causes[c] = (total.causes[c] || 0) + n;
+    for (const [k, v] of Object.entries(r.total.seasons || {})) { // (2i: each food season's own)
+      const t = (total.seasons[k] ||= { rounds: 0, times: [], causes: {}, snakeMs: 0, meals: 0, powers: 0, long: 0, longN: 0 });
+      for (const f of ['rounds', 'snakeMs', 'meals', 'powers', 'long', 'longN']) t[f] += v[f] || 0;
+      t.times.push(...v.times);
+      for (const [c, n] of Object.entries(v.causes)) t.causes[c] = (t.causes[c] || 0) + n;
+    }
     for (const [k, v] of Object.entries(r.total.census)) {
       if (Array.isArray(v)) total.census[k].push(...v);
       else if (k === 'causesSD') for (const [c, n] of Object.entries(v)) total.census.causesSD[c] = (total.census.causesSD[c] || 0) + n;
@@ -31,6 +37,13 @@ function report({ per, total, suddenAt }, withCensus) {
   const sec = ms => `${Math.round(ms / 1000)}s`;
   console.log(`${total.rounds} rounds · length median ${sec(times[times.length >> 1])}, middle half ${sec(times[times.length >> 2])}-${sec(times[(times.length * 3) >> 2])}`
     + ` · ${pct(total.sudden, total.rounds)}% reached the woodpecker (${sec(suddenAt)}) · draws ${total.draws} · stalled ${total.stalled}`);
+  for (const k of Object.keys(total.seasons).sort()) { // (2i: a line for each food season: lean, normal, plentiful)
+    const t = total.seasons[k];
+    const ts = t.times.sort((a, b) => a - b), dead = Object.values(t.causes).reduce((a, b) => a + b, 0), mins = t.snakeMs / 60000;
+    console.log(`${k} season: ${t.rounds} rounds · length median ${sec(ts[ts.length >> 1])}, middle half ${sec(ts[ts.length >> 2])}-${sec(ts[(ts.length * 3) >> 2])}`
+      + ` · meals ${(t.meals / Math.max(1e-9, mins)).toFixed(2)} and powers ${(t.powers / Math.max(1e-9, mins)).toFixed(2)} a snake-minute · ${(t.long / Math.max(1, t.longN)).toFixed(1)} long at the woodpecker · deaths: `
+      + Object.entries(t.causes).sort((a, b) => b[1] - a[1]).map(([c, n]) => `${c} ${pct(n, dead)}%`).join(', '));
+  }
   const each = n => (n / Math.max(1, total.rounds)).toFixed(1);
   console.log(`a round: ${each(total.crashes)} crashes survived, ${each(total.alight)} snakes set alight, ${each(total.cuts)} cut by a dash · food: ${each(total.baked)} baked, ${each(total.ash)} to ash, ${each(total.rot)} apples and ${each(total.rotBeads)} beads rotted`);
   if (total.beetles) console.log(`beetles: ${(total.beetles / total.rounds).toFixed(1)} a round, ${pct(total.caught, total.beetles)}% caught, ${pct(total.flown, total.beetles)}% flew off`);

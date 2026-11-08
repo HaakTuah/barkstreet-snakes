@@ -118,7 +118,7 @@ function timedGrid(g, N) {
     s.body.forEach((c, j) => { const k = c.y * N + c.x; free[k] = Math.max(free[k], L - j + extra); });
   }
 }
-const totals = () => ({ rounds: 0, timeSum: 0, times: [], sudden: 0, draws: 0, stalled: 0, trace: [], beetles: 0, caught: 0, flown: 0, causes: {}, crashes: 0, alight: 0, cuts: 0, baked: 0, ash: 0, rot: 0, rotBeads: 0, census: census() });
+const totals = () => ({ rounds: 0, timeSum: 0, times: [], sudden: 0, draws: 0, stalled: 0, trace: [], beetles: 0, caught: 0, flown: 0, causes: {}, crashes: 0, alight: 0, cuts: 0, baked: 0, ash: 0, rot: 0, rotBeads: 0, seasons: {}, census: census() });
 
 // What --signatures measures, per snake (summed over its ticks and rounds;
 // each trademark is read against everyone else's, the field):

@@ -86,6 +86,7 @@ const DIG_SPRAY = [[-0.62, -0.42, 0.045], [0.6, -0.5, 0.04], [0.66, 0.36, 0.05],
 const GUIDE = {
   apple: g => drawApple(g, 'fresh'),
   baked: g => drawApple(g, 'baked'),
+  season: g => { for (const [x, a] of [[-0.66, 1], [0, 1], [0.66, 0.35]]) { g.save(); g.globalAlpha = a; g.translate(CELL * x, 0); g.scale(0.6, 0.6); drawApple(g, 'fresh'); g.restore(); } }, // (2i: three apples, the third faint: one more, or one fewer)
   golden: g => { guideGlow(g); drawGolden(g); g.translate(CELL * 0.2, -CELL * 0.22); drawStar(g); },
   mushroom: g => { g.scale(1.2, 1.2); drawHaze(g); g.translate(0, CELL * 0.04); drawMushroom(g); }, // (on bark, as on the log: its cream stem vanished on the card; and the purple haze its rule mentions)
   goldcap: g => { guideGlow(g); g.translate(0, CELL * 0.04); drawGoldcap(g); },

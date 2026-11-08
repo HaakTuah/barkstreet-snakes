@@ -410,7 +410,7 @@ function drawSnow(now) {
   if (sky.snow < 0.02) return;
   if (!snowTile) snowTile = buildSnowTile();
   const n = RAIN_TILE;
-  if (reduced) { // (held still, not taken away, like the rain: snow is a rule too, it puts fire out and starts the lean season)
+  if (reduced) { // (held still, not taken away, like the rain: snow is a rule too, it puts fire out and starts the hungry spell)
     ctx.globalAlpha = sky.snow * 0.6;
     for (let y = 0; y < SIZE; y += n) for (let x = 0; x < SIZE; x += n) ctx.drawImage(snowTile, x, y, n, n);
     ctx.globalAlpha = 1;

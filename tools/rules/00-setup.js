@@ -38,9 +38,10 @@ function check(name, ok, detail = '') {
   if (!ok) failed++;
 }
 
-// Two people steered by their queues, with nothing else on the board.
-function board(bodies, { food = [], time = 0 } = {}) {
-  const g = E.createGame({ humans: bodies.map((b, i) => ({ name: `P${i}` })), personas: [] });
+// Two people steered by their queues, with nothing else on the board (in a
+// normal food season, unless another is given).
+function board(bodies, { food = [], time = 0, season = 'normal' } = {}) {
+  const g = E.createGame({ humans: bodies.map((b, i) => ({ name: `P${i}` })), personas: [], season });
   g.snakes = g.snakes.slice(0, bodies.length);
   bodies.forEach(([cells, dir], i) => {
     const s = g.snakes[i];

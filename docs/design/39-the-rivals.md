@@ -125,7 +125,9 @@ Every persona fears the cells a rival could strike next (`headRisk`) and where i
 ### The endgame: a meal is worth the life it buys
 
 Past a length of its own (`hungryBelow`), a fed rival wants food only `fedFactor` as much. Once the woodpecker's here
-(`SUDDEN_DEATH_MS`) nothing new grows but the last apples, so the "fed" state switches off for everyone. Hunger trumps
+(`SUDDEN_DEATH_MS`) nothing new grows but the last apples, so the "fed" state switches off for everyone (and all
+round in a lean food season; a plentiful one starts the weighing below before the woodpecker: "Food seasons" in
+`04-food-and-the-world.md`). Hunger trumps
 it too: with under 10 s before it starts starving (`AI_HUNGRY_MS`), any rival goes looking for food, harder the closer
 it gets. Ghost, which stays small on purpose, keeps small but not starvation-small: before the woodpecker food counts
 in full for it under 18 cells (`hungryBelow` 18, `fedFactor` 0.4), and in the endgame it keeps the least (below), and hungry it keeps its distance from heads less (none, desperate), so its

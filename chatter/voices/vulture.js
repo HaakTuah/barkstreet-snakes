@@ -8,7 +8,7 @@ addVoice('vulture', {
   ash: ['Overcooked. Even I won’t eat that.'],
   rot: ['Gone already? I like them ripe.'],
   kill: ['I didn’t even have to try.'],
-  weather: { storm: ['Lightning. Something’s bound to cook.'], rain: ['Grim weather. Lovely.'], snow: ['Winter. The lean season. My season.'] },
+  weather: { storm: ['Lightning. Something’s bound to cook.'], rain: ['Grim weather. Lovely.'], snow: ['Winter. The hungry season. My season.'] },
   woodpecker: ['Ah. A colleague.'],
   last: ['The last apples. Then it’s just us.'],
   rainbow: ['Pretty. Someone will die chasing it.'],
@@ -25,7 +25,7 @@ addVoice('vulture', {
   dies: ['Who’s… eating… whom…'],
   diesBy: { edge: ['Fell… off… the menu…'], hole: ['Buried… already?'], woodpecker: ['Picked clean… by a bird…'], hunger: ['Waited… too long…'], fire: ['Cooked… for someone else…'], self: ['Tasted… myself… delicious…'] },
 }, {
-  "Winter. The lean season. My season.": "冬天。饥荒的季节。我的季节。",
+  "Winter. The hungry season. My season.": "冬天。饥荒的季节。我的季节。",
   "Lightning. Something’s bound to cook.": "闪电。总会烤熟点什么。",
   "Grim weather. Lovely.": "阴沉的天气。真可爱。",
   "Someone die already. I’m starving.": "快死一个吧。我饿坏了。",
