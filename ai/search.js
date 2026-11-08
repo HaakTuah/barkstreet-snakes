@@ -61,7 +61,7 @@ function move(body, len, grow, d, depth, t, bonus) {
   // (A rival's head beside a cell: a head-on on my first move; on my
   // next `age`, its body, if it went there, which I can't see yet; after
   // that I'd see where it went in time to turn.)
-  const keep = v > 0 ? nerveKeep : 1; // (my nerve over food; times 1, the very same numbers)
+  const keep = v > 0 ? nerveKeep : 1; // (over food: my nerve, and what the meal is worth to me; elsewhere times 1, the very same numbers)
   let gain = v * (foodW * w.foodRange + eatW * (ahead ? SOONER[t] : Math.pow(0.85, t))) - risk[i] * keep * (ahead ? RISK_AHEAD[t] : Math.pow(0.6, t)) - (t <= age ? strikes[i] * keep * RISK_AHEAD[t] : 0);
   if (turning && w.turn) gain -= w.turn * (ahead ? TURN_AHEAD[t] : Math.pow(0.9, t));
   // (A mushroom coming up: mine aimed at a head, as I face after this
