@@ -106,9 +106,9 @@ const FLAVOR = {
     lean: ['A lean season. Eat when you can.', 'Lean times on the log. Every bite counts.'],
     plentiful: ['A season of plenty!', 'Plenty on the log this round.'],
   },
-  seasonRule: k => {
-    const apples = Math.max(1, TUNE.APPLES + TUNE.SEASONS[k].apples), lean = TUNE.SEASONS[k].beetles < 1;
-    return `${lean ? 'Lean' : 'Plenty'}: ${inWords(apples)} apple${apples === 1 ? '' : 's'} at a time, ${lean ? 'fewer beetles, and a meal doesn’t keep you as long. Snakes starve in lean rounds.' : 'and more beetles. Snakes grow long, and the log gets crowded.'}`;
+  seasonRule: k => { // (one idea, 60 characters at most, as every lesson)
+    const apples = Math.max(1, TUNE.APPLES + TUNE.SEASONS[k].apples);
+    return TUNE.SEASONS[k].beetles < 1 ? `Lean: ${inWords(apples)} apple, fewer beetles, short meals. Snakes starve.` : `Plenty: ${inWords(apples)} apples, more beetles. Mind the crowd.`;
   },
   strike: ['Lightning! The bark’s on fire.', 'Crack! Fire on the bark.'],
   rainbow: ['A rainbow! And at its foot, something golden.', 'After the rain, a rainbow. Follow it to the gold.'],
