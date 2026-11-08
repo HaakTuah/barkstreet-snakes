@@ -59,6 +59,8 @@ window.TUNING = Object.freeze({
   LEAF_TICKS: 90,           // ...it blows away after this many ticks
   DASH_CHARGES: 2,          // ...this many (up to DASH_MAX held): golden flashes, three cells in one tick, cutting through a body up to DASH_THICK thick and putting out every fire (the edge or a hole: you blow up)
   DASH_MAX: 3,
+  SPILL_TICKS: 90,          // round six B, dropped charges: a snake knocked out holding golden jumps or dashes spills them where its head fell, one golden pickup anyone can grab (all of them, up to LEAP_MAX and DASH_MAX); it fades after this many ticks. Not on a bump: only out
+  SPILL_NEAR: 3,            // ...on the nearest free cell within this many of the head (never a hole, fire or a body; none, and they're lost)
   DASH_LENGTH: 3,
   DASH_THICK: 2,
   GOLDCAP_CHANCE: 0.55,     // rain: once in a while a golden mushroom comes up (one a spell, at most)...
