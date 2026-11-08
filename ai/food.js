@@ -35,7 +35,7 @@ function readDesperation() {
 // looking for food, harder the closer it gets (and food a rival may
 // reach first counts for more); desperate, harder still.
 // (readAppetite() sets these for each decision:)
-let hunger, lean, fed, foodW0, eatW0, foodW, eatW, contested, starved, saves, nerveKeep;
+let hunger, lean, fed, foodW0, eatW0, foodW, eatW, contested, starved, saves, nerveKeep, keepLen, roomy, growShare;
 function readAppetite() {
   // (the hunger clock, from 0 AI_HUNGRY_MS before my first shrink, 1 at it, and on past it while I starve)
   const ramp = me.hungerLeft == null ? 0 : Math.max(0, (TUNE.AI_HUNGRY_MS - me.hungerLeft) / TUNE.AI_HUNGRY_MS);
@@ -59,6 +59,22 @@ function readAppetite() {
   // snake contests an apple because it's worth more, each in its own weights.
   saves = Math.min(2, ramp);
   nerveKeep = (w.nerve ? 1 - Math.min(NERVE_MAX, (w.nerve.base || 0) + (w.nerve.hungry || 0) * starved) : 1) / (1 + saves);
+  // The endgame (2h): a meal is worth the life it buys against the room it
+  // costs. From the woodpecker on there's no clock to run out (the round ends
+  // when one snake is left), so length is worth a crash and hunger buffer
+  // (keepLen) and no more: beyond it, it only fills the room I need to turn
+  // in. So past keepLen a meal is worth only the hunger it stops (one bead,
+  // not the heap), unless the log is roomy (ROOMY times my length free a
+  // snake: then as before). growShare: the share of a meal's growth that
+  // counts, at my length now; along a line, a meal after one is worth only
+  // roomy past keepLen (see move).
+  keepLen = lean ? TUNE.MIN_LENGTH + (w.keep ?? KEEP) : Infinity;
+  if (lean) {
+    let free = N * N - holes.size - myLen;
+    for (const o of others) free -= o.body.length;
+    roomy = Math.min(1, Math.max(0, free / (others.length + 1) / (ROOMY * myLen) - 1) * 2);
+  } else roomy = 1;
+  growShare = myLen < keepLen ? 1 : Math.max(hunger, roomy);
 }
 
 // How many ticks something I saw has left before it rots, withers or
@@ -82,11 +98,11 @@ function readFood() {
     const low = me.stamina < Math.min(TUNE.JUMP_STAMINA_MS, TUNE.DASH_STAMINA_MS) ? 2 : 1;
     return STAMINA_PRICE * low * Math.min(ms, gap) / TUNE.STAMINA_MS;
   };
-  worth = {
-    food: Math.max(appleWorth, hunger) + lift(TUNE.STAMINA_FOOD_MS),
-    golden: TUNE.GOLDEN_GROWTH * Math.max(appleWorth, hunger) * craving.apple + lift(TUNE.STAMINA_MS), // (it fills my bar)
-    beetle: TUNE.BEETLE_GROWTH * Math.max(appleWorth, hunger) + lift(TUNE.BEETLE_GROWTH * TUNE.STAMINA_FOOD_MS), // it moves, but it's worth what it's worth
-    pellet: (w.pellet ?? 1) + lift(TUNE.STAMINA_FOOD_MS),
+  worth = { // (the growth part times growShare: past my length worth keeping, in the endgame, only the hunger it stops)
+    food: Math.max(appleWorth, hunger) * growShare + lift(TUNE.STAMINA_FOOD_MS),
+    golden: TUNE.GOLDEN_GROWTH * Math.max(appleWorth, hunger) * craving.apple * growShare + lift(TUNE.STAMINA_MS), // (it fills my bar)
+    beetle: TUNE.BEETLE_GROWTH * Math.max(appleWorth, hunger) * growShare + lift(TUNE.BEETLE_GROWTH * TUNE.STAMINA_FOOD_MS), // it moves, but it's worth what it's worth
+    pellet: (w.pellet ?? 1) * growShare + lift(TUNE.STAMINA_FOOD_MS),
     mushroom: Math.min(-TUNE.SHRINK, w.mushroom ?? -TUNE.SHRINK), // (it takes SHRINK segments off, and it isn't a meal: as many apples lost, hungry or not)
     leaf: 2 * Math.max(appleWorth, hunger, 0.5) * craving.power, // (golden powers: worth it for what they do)
     goldcap: 1.5 * Math.max(appleWorth, hunger, 0.5) * craving.power,
@@ -167,7 +183,8 @@ function readFood() {
   // bead, nothing). foodCells lists the cells worth something, and goldCells
   // the golden power food among them, for a craving that counts it even
   // where a rival may get there first. (Beetles are worked out apart: they move.)
-  foodValue.fill(0); foodGrow.fill(0);
+  foodValue.fill(0); foodGrow.fill(0); denyValue.fill(0);
+  const deny = starvingNear();
   foodCount = 0, goldCount = 0, bugCount = 0;
   bugFood = [];
   for (const f of food) {
@@ -177,6 +194,7 @@ function readFood() {
     if (f.spitBy === me.id && f.slideUntil > view.tick) foodFrom[i] = Math.max(foodFrom[i], f.slideUntil - view.tick + 1); // (what I just spat I slide over, as the engine has it, till then)
     foodGrow[i] = own ? 0 : f.kind === 'mushroom' ? -(f.power || TUNE.SHRINK) : f.kind === 'golden' ? TUNE.GOLDEN_GROWTH : f.kind === 'beetle' ? TUNE.BEETLE_GROWTH : f.cooked ? TUNE.COOKED_GROWTH : 1;
     let v = own ? 0 : f.kind === 'mushroom' ? shroomWorth(f) : f.kind === 'spill' ? spillWorth(f) : worth[f.kind] ?? 0;
+    if (deny && f.kind !== 'mushroom' && v >= 0 && deny(f)) { denyValue[i] = DENY * (0.5 + (w.aggression || 0)); v = Math.max(v, denyValue[i]); }
     if (!v) continue;
     if (f.cooked && v > 0) v *= TUNE.COOKED_GROWTH; // (baked: worth more)
     if (f.gold && v > 0) v *= 1.5 * craving.power; // (a golden beetle: leaps too)
@@ -191,4 +209,22 @@ function readFood() {
   // unless food a rival gets to could still be mine: the rivals' own
   // beads.)
   beadCount = 0;
+}
+
+// The denial play (2h): in the endgame, the rivals I've seen starving (a
+// segment off, as anyone sees one shrink, and no crash), and whether a
+// piece of food is within DENY_NEAR moves of one of their heads; null if
+// none (or before the woodpecker). Remembered from decision to decision
+// (memory.seenLen, memory.shrankAt: by id).
+function starvingNear() {
+  const seenLen = memory.seenLen ||= {}, shrankAt = memory.shrankAt ||= {};
+  for (const o of others) {
+    if (seenLen[o.id] === o.body.length + 1) shrankAt[o.id] = view.tick;
+    seenLen[o.id] = o.body.length;
+  }
+  if (!lean) return null;
+  const tickMs = Math.max(TUNE.MIN_TICK, TUNE.START_TICK - (TUNE.START_TICK - TUNE.MIN_TICK) * view.timeMs / TUNE.RAMP_MS), recent = STARVING_FOR * TUNE.STARVE_EVERY_MS / tickMs;
+  const near = [];
+  others.forEach((o, k) => { if (view.tick - (shrankAt[o.id] ?? -HOLE) <= recent) near.push(heads[k]); });
+  return near.length ? f => near.some(h => manhattan(h, f) <= DENY_NEAR) : null;
 }

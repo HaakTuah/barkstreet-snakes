@@ -54,7 +54,7 @@ function flashOpt(d, gold) {
       for (let k = 0, x = c % N, y = (c - x) / N; k < r && i + k < n; k++, x += d.x, y += d.y) { // (a layer beyond its reach isn't cut: it's only why it can't go on)
         if (myCells[cellAt(x, y)] === stampM) { // (my own: my tail drops, only to get out of a trap)
           const j = me.body.findIndex(q => q.x === x && q.y === y);
-          if (j < TUNE.MIN_LENGTH || !trapped) return null; // (only when it's that or the end: dropped any sooner (boxed), rivals dropped 5 tails a round and starved small)
+          if (j < TUNE.MIN_LENGTH || !dropping) return null; // (only when it's that or the end, or boxed in, planned (see dropping): dropped any sooner, rivals dropped 5 tails a round and starved small)
           if (ownCut < 0 || j + n - 1 < ownCut) ownCut = j + n - 1;
           continue;
         }
@@ -73,6 +73,7 @@ function flashOpt(d, gold) {
     if (gold) for (const f of food) if (f.y * N + f.x === c && (f.kind === 'golden' || f.kind === 'leaf' || f.kind === 'goldcap' || f.kind === 'spill' || f.gold)) got = true;
   }
   if (covered & sureCover) cutKills = true; // (it's out, near enough sure)
+  if (ownCut >= 0 && !trapped) cut -= Math.max(0, Math.min(keepLen, me.body.length) - ownCut); // (2h: planned, what it drops below the length worth keeping, an apple a segment)
   if (gold && !cut && !got && !trapped && ownCut < 0) { // (just for speed: only a habit's, and at anyone's price, so only for a real gain; free, it spent both at once, a zig-zag that got it nothing)
     if (!habit.dashSpend) return null;
     idle = true;
