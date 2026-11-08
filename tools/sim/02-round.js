@@ -46,6 +46,7 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
     // the random numbers are drawn in the same order as without --ahead.
     if (ahead) for (const s of g.snakes) { if (!s.alive) continue; if (!E.canThinkAhead(g, s)) break; E.thinkAhead(g, s); }
     const held = g.snakes.map(s => s.leaps), late = E.suddenDeath(g);
+    if (late && st.longAt == null) { st.longAt = 0; st.longN = 0; for (const s of g.snakes) if (s.alive) { st.longAt += s.body.length; st.longN++; } } // (2i: how long the snakes are when the woodpecker comes)
     for (const s of g.snakes) if (s.alive) { const left = E.hungerLeft(g, s); c[late ? 'aliveLate' : 'aliveEarly']++; if (left < T.HUNGER_WARN_MS) c[late ? 'hungryLate' : 'hungryEarly']++; if (left < 0) c[late ? 'starvingLate' : 'starvingEarly']++; }
     const mid = !late && g.time >= T.HUNGER_MID_FROM_MS;
     if (mid) c.midMs += E.tickMs(g) * g.snakes.filter(s => s.alive).length;
@@ -189,8 +190,8 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
   total.timeSum += g.time;
   total.times.push(g.time);
   { // (2i: the round's food season: its length, deaths by cause, and its snakes' meals and powers, for a line each)
-    const t = (total.seasons[g.season] ||= { rounds: 0, times: [], causes: {}, snakeMs: 0, meals: 0, powers: 0 });
-    t.rounds++; t.times.push(g.time); t.meals += st.meals || 0;
+    const t = (total.seasons[g.season] ||= { rounds: 0, times: [], causes: {}, snakeMs: 0, meals: 0, powers: 0, long: 0, longN: 0 });
+    t.rounds++; t.times.push(g.time); t.meals += st.meals || 0; t.long += st.longAt || 0; t.longN += st.longN || 0;
     for (const [k, n] of Object.entries(total.causes)) t.causes[k] = (t.causes[k] || 0) + n;
     for (const p of Object.values(per)) { t.snakeMs += p.aliveMs; t.powers += p.flashes + p.jumps + p.dashes + p.leaps; }
   }

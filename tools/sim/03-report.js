@@ -8,8 +8,8 @@ function merge(results, suddenAt) {
     total.trace.push(...r.total.trace);
     for (const [c, n] of Object.entries(r.total.causes)) total.causes[c] = (total.causes[c] || 0) + n;
     for (const [k, v] of Object.entries(r.total.seasons || {})) { // (2i: each food season's own)
-      const t = (total.seasons[k] ||= { rounds: 0, times: [], causes: {}, snakeMs: 0, meals: 0, powers: 0 });
-      for (const f of ['rounds', 'snakeMs', 'meals', 'powers']) t[f] += v[f] || 0;
+      const t = (total.seasons[k] ||= { rounds: 0, times: [], causes: {}, snakeMs: 0, meals: 0, powers: 0, long: 0, longN: 0 });
+      for (const f of ['rounds', 'snakeMs', 'meals', 'powers', 'long', 'longN']) t[f] += v[f] || 0;
       t.times.push(...v.times);
       for (const [c, n] of Object.entries(v.causes)) t.causes[c] = (t.causes[c] || 0) + n;
     }
@@ -41,7 +41,7 @@ function report({ per, total, suddenAt }, withCensus) {
     const t = total.seasons[k];
     const ts = t.times.sort((a, b) => a - b), dead = Object.values(t.causes).reduce((a, b) => a + b, 0), mins = t.snakeMs / 60000;
     console.log(`${k} season: ${t.rounds} rounds · length median ${sec(ts[ts.length >> 1])}, middle half ${sec(ts[ts.length >> 2])}-${sec(ts[(ts.length * 3) >> 2])}`
-      + ` · meals ${(t.meals / Math.max(1e-9, mins)).toFixed(2)} and powers ${(t.powers / Math.max(1e-9, mins)).toFixed(2)} a snake-minute · deaths: `
+      + ` · meals ${(t.meals / Math.max(1e-9, mins)).toFixed(2)} and powers ${(t.powers / Math.max(1e-9, mins)).toFixed(2)} a snake-minute · ${(t.long / Math.max(1, t.longN)).toFixed(1)} long at the woodpecker · deaths: `
       + Object.entries(t.causes).sort((a, b) => b[1] - a[1]).map(([c, n]) => `${c} ${pct(n, dead)}%`).join(', '));
   }
   const each = n => (n / Math.max(1, total.rounds)).toFixed(1);
