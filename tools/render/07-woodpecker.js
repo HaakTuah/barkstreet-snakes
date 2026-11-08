@@ -22,7 +22,7 @@ await ev(STAGE);
 const BIRD = n => `
   seeds(${n});
   const g = show(stage(['gobbler', 'ghost', 'mason'])), N = TUNING.GRID;
-  g.time = TUNING.SUDDEN_DEATH_MS + 5000; g.tick = 2000;
+  g.time = g.acts.frenzy + 5000; g.tick = 2000;
   g.snakes.forEach((s, i) => setBody(s, [[4 + 4 * i, 23], [3 + 4 * i, 23], [2 + 4 * i, 23]], 'right'));
   const ms = E.tickMs(g), L = document.getElementById('bird-layer');
   // (drawn m ms before its strike, or with after, m ms after it: the tick and how far through it)
@@ -187,7 +187,7 @@ const promise = await ev(`(() => {
 // The sound, in a real round on a virtual 60 Hz clock: the drum the game
 // starts (when, how late, how fast) and its last knock against the moment
 // the drawing reaches the strike; the "kik!" against the bird's landing.
-await round('TUNING.SUDDEN_DEATH_MS + 5000');
+await round('g.acts.frenzy + 5000', true);
 const heard = await ev(`(() => {
   const g = SnakeDebug.game(), N = TUNING.GRID, me = g.snakes[0];
   me.stunUntil = 1e9; me.body = [{ x: 3, y: 21 }, { x: 3, y: 22 }, { x: 3, y: 23 }]; me.prev = null;

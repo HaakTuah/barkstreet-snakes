@@ -6,7 +6,7 @@ const fallen = await ev(`(() => {
   seeds(220);
   SnakeDebug.pinQuality(0);
   const g = stage(['gobbler', 'mason', 'ghost']), N = TUNING.GRID, K = (x, y) => y * N + x;
-  g.time = TUNING.SUDDEN_DEATH_MS + 5000; g.tick = 2000;
+  g.time = g.acts.frenzy + 5000; g.tick = 2000;
   g.snakes.forEach((s, i) => setBody(s, [[3 + 4 * i, 20], [2 + 4 * i, 20], [1 + 4 * i, 20]], 'right'));
   for (let y = 0; y <= 5; y++) for (const x of [16, 17]) g.holes.add(K(x, y));
   const fall = [], patch = [];
@@ -40,7 +40,7 @@ const riding = await ev(`(() => {
   seeds(230);
   SnakeDebug.pinQuality(0);
   const g = stage(['colonist', 'mason', 'ghost']), N = TUNING.GRID, K = (x, y) => y * N + x, col = g.snakes[1];
-  g.time = TUNING.SUDDEN_DEATH_MS + 5000; g.tick = 2000;
+  g.time = g.acts.frenzy + 5000; g.tick = 2000;
   g.snakes.forEach((s, i) => setBody(s, [[3 + 4 * i, 20], [2 + 4 * i, 20], [1 + 4 * i, 20]], 'right'));
   col.memory.colonies = [{ x: 19, y: 4, radius: 2, n: 2 }];
   for (let y = 0; y <= 8; y++) for (const x of [16]) g.holes.add(K(x, y));

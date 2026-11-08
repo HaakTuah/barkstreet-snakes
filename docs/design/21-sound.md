@@ -133,10 +133,12 @@ round (`musicStage` in `game/core.js`; the round's arc in `12-the-rounds-arc.md`
 | `title` | Start card, countdown, round over | A calm marimba loop at 84 bpm over a long low note and a soft pad; every other time round the line falls and a high note answers it |
 | `early` | The round's opening | 94 bpm: the loop in eighths plus a soft bass, and the pad |
 | `mid` | From `MUSIC_MID_MS` (0:45) | 102 bpm: a shaker joins, and high bells answer the tune |
-| `sudden` | Sudden death (2:00) | 108 bpm, a minor key: wood-block knocks and low toms rolling round the bar |
+| `watch` | The woodpecker watching (act 1) | `mid`'s, with a low, slow drone underneath, a note held two bars and swelling in |
+| `pecks` | Its first pecks (act 2) | 104 bpm: the drone, and its own drum, a quick roll of light knocks quickening at each bar's end |
+| `sudden` | Its frenzy, sudden death (act 3) | 116 bpm, a minor key: wood-block knocks, low toms rolling round the bar, the drone, and its drum at every half bar |
 | `duel` | The last two snakes | 124 bpm, minor and tense: a heartbeat kick and closed hats on every sixteenth, no pad |
 
-- **It speeds up with the game:** in `early` and `mid` the tempo creeps up to 15% faster as the ticks speed up.
+- **It speeds up with the game:** in `early`, `mid`, `watch` and `pecks` the tempo creeps up to 15% faster as the ticks speed up.
 - **The pad,** a soft, slightly detuned chord held each bar, is under every arrangement but the duel's.
 - **The music feels the danger:** each tick the game measures how close a rival's head is to yours and how much room
   is ahead (`dangerOf` in `game/round.js`); past a quarter, a heartbeat (lub-dub on the beat, each with a muffled thump

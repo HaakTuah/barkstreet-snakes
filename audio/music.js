@@ -272,7 +272,7 @@ window.SnakeAudioMusic = k => {
         if (stageNow === 'off') return;
       }
       const a = ARRANGEMENTS[stageNow] || ARRANGEMENTS.title;
-      tempo = a.bpm * (stageNow === 'early' || stageNow === 'mid' ? 1 + 0.15 * intensity : 1);
+      tempo = a.bpm * (stageNow === 'early' || stageNow === 'mid' || stageNow === 'watch' || stageNow === 'pecks' ? 1 + 0.15 * intensity : 1);
       try {
         scheduleStep(a, step, nextAt, watching);
         schedulePad(a, step, nextAt, watching);

@@ -308,7 +308,7 @@ fs.mkdirSync(out, { recursive: true });
     await b.key('3');
     const beetle = await b.eval(`waitFor(() => SnakeDebug.state() === 'over' || SnakeDebug.game().food.some(f => f.kind === 'beetle'), 90000).then(() => SnakeDebug.game().food.some(f => f.kind === 'beetle')).catch(() => false)`);
     if (beetle) { await b.sleep(250); await shot('beetle.jpg'); }
-    const late = await b.eval(`waitFor(() => SnakeDebug.state() === 'over' || SnakeDebug.game().time > TUNING.SUDDEN_DEATH_MS + 6000, 240000).then(() => SnakeDebug.state() !== 'over')`);
+    const late = await b.eval(`waitFor(() => SnakeDebug.state() === 'over' || SnakeDebug.game().time > SnakeDebug.game().acts.frenzy + 6000, 240000).then(() => SnakeDebug.state() !== 'over')`);
     if (late) await shot('sudden-death.jpg');
     await b.eval(`waitFor(() => SnakeDebug.state() === 'over' && cardUp(), 240000).then(() => 1)`);
     await b.sleep(500);

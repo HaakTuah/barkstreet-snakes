@@ -4,7 +4,7 @@
 // held fed, its clock held at `time`. Each frame keeps where your head's
 // drawn (__frames: x, y in cells) and the streaks drawn (__streaks), each
 // tick your head's cells and what it did (__steps).
-const round = async time => {
+const round = async (time, bird = false) => { // (bird: the woodpecker's acts as drawn; else it never comes)
   await ev(`window.__autoRaf = true; 'ok'`);
   await b.go(site.url + '?debug', { settle: 0 });
   await ev('__settle()');
@@ -19,14 +19,14 @@ const round = async time => {
     E.step = g => {
       const me = g.snakes[0], from = me.body[0].x, out = step(g);
       __steps.push({ frame: __frames.length, from, to: me.body[0].x, dash: g.events.some(e => e.type === 'dash' && e.snake === me), leap: g.events.some(e => e.type === 'leap' && e.snake === me) });
-      g.food.length = 0; g.time = ${time}; g.weather.until = 1e12;
+      g.food.length = 0; g.time = ${time}; g.weather.until = 1e12; ${bird ? '' : 'g.acts = { watch: 1e12, pecks: 2e12, frenzy: 3e12 };'}
       for (const s of g.snakes) { s.nextStarve = 1e15; s.lastAte = g.time; }
       return out;
     };
     window.vf = n => { for (let i = 0; i < n; i++) { SnakeDebug.frames(1, 1000 / 60); const g = SnakeDebug.game(), o = SnakeRender.headPx(g.snakes[0], 1, TUNING.GRID * ${CELL}, {}); __frames.push({ x: o.x / ${CELL} - 0.5, y: o.y / ${CELL} - 0.5 }); __streaks.push(SnakeRender.streaked()); __parts.push(SnakeRender.particles); } };
     const g = SnakeDebug.game();
     g.snakes.forEach((s, i) => { if (i) { s.stunUntil = 1e9; const x = (i - 1) * 2; s.body = [{ x, y: 21 }, { x, y: 22 }, { x, y: 23 }]; s.prev = null; } });
-    g.food.length = 0; g.time = ${time};
+    g.food.length = 0; g.time = ${time}; ${bird ? '' : 'g.acts = { watch: 1e12, pecks: 2e12, frenzy: 3e12 };'}
     for (const s of g.snakes) { s.nextStarve = 1e15; s.lastAte = g.time; } // (held fed: late in a round, hunger would end it)
     return 'ok';
   })()`);
@@ -41,7 +41,7 @@ const press = async key => {
   await b.send('Input.dispatchKeyEvent', { type: 'keyUp', key, code, windowsVirtualKeyCode: vk });
 };
 const step = (frames, f) => Math.hypot(frames[f].x - frames[f - 1].x, frames[f].y - frames[f - 1].y); // (cells the head's drawn moving, frame f - 1 to f)
-const FAST = 'TUNING.SUDDEN_DEATH_MS - 1000'; // (as fast as it gets before the woodpecker comes)
+const FAST = 'TUNING.RAMP_MS'; // (as fast as it gets; the woodpecker kept away: see round)
 for (const { what, time, gold } of [
   { what: 'a flash at 120 ms ticks', time: 1000, gold: false },
   { what: 'a flash at full speed', time: FAST, gold: false },
