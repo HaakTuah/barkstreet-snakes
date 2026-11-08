@@ -193,10 +193,13 @@ function evaluate(body, len, grow, t) {
   }
 
   // 5. Distance from rivals: from the nearest head (Ghost), or per rival.
+  //    Hungry, I keep less of it, and none desperate: a meal it cost me
+  //    was length lost (#325: Ghost lost the most to hunger, its distance
+  //    the same within noise without those meals).
   if (w.distance) {
     let nearest = DISTANCE_CAP;
     for (const h of heads) nearest = Math.min(nearest, manhattan(head, h));
-    score += w.distance * nearest;
+    score += w.distance * (1 - hunger) * nearest;
   }
   if (intent.avoid) {
     for (let k = 0; k < heads.length; k++) score += intent.avoid[k] * Math.min(DISTANCE_CAP, manhattan(head, heads[k]));
