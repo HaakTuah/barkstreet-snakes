@@ -33,3 +33,34 @@
   const g = E.createGame({ withPlayer: false, season: 'lean' });
   check('...and every rival sees the season, as it sees the weather', g.season === 'lean' && g.snakes.every(s => E.aiView(g, s).season === 'lean'));
 }
+
+{ // A lean season's meal keeps a snake SEASONS.lean.meal as long, mid-round and before.
+  const lasts = (season, time) => {
+    const g = board([[line(5, 5, 4), 'right']], { season, time, food: [[6, 5]] });
+    Object.assign(g.snakes[0], { lastAte: time - T.HUNGER_MS + 1000, nextStarve: time + 1000 }); // (hungry: a meal never leaves it less time than it had)
+    E.step(g);
+    return g.snakes[0].mealMs;
+  };
+  check('a lean meal keeps a snake less long (mid-round and in the opening), a plentiful one as a normal one',
+    lasts('lean', 60000) === T.HUNGER_MID_MS * T.SEASONS.lean.meal && lasts('normal', 60000) === T.HUNGER_MID_MS && lasts('plentiful', 60000) === T.HUNGER_MID_MS
+    && lasts('lean', 5000) === T.HUNGER_MS * T.SEASONS.lean.meal, [lasts('lean', 60000), lasts('normal', 60000), lasts('lean', 5000)].join());
+}
+
+// The rivals play the season. A long snake, an apple three cells to its side (below), nobody near.
+const seasonTakes = (season, key, len, others = [aiRival(1, [[22, 2], [22, 3], [22, 4]], 'down')]) => {
+  const cells = [];
+  for (let i = 0, x = 10, y = 12; i < len; i++) { cells.push([x, y]); if (i < 9) x--; else if (y < 22) y++; else x++; }
+  let toward = 0;
+  for (let i = 0; i < 6; i++) if (AI.decide(aiView({ season, food: [{ x: 10, y: 15, kind: 'food', expires: 999 }], me: aiMe(cells, 'right'), others }), AI.PERSONAS[key], {}).y === 1) toward++;
+  return toward >= 5;
+};
+{ // Lean: nobody is too fed to eat. Ghost and Sniper, fed past their length (hungryBelow), pass it up in a normal round, not in a lean one.
+  const fed = ['ghost', 'sniper'].map(k => [seasonTakes('normal', k, 22), seasonTakes('lean', k, 22)]);
+  check('in a lean season no rival is too fed to eat (Ghost and Sniper, long and fed, take an apple they pass up in a normal round)', fed.every(([n, l]) => !n && l), JSON.stringify(fed));
+}
+{ // Plentiful: on a crowded log a long rival weighs growing against the room it costs (as in the endgame): it passes up an apple it takes in a normal round.
+  const row = (y0, n) => { const c = []; for (let i = 0, x = 23, y = y0, d = -1; i < n; i++) { c.push([x, y]); x += d; if (x < 0 || x > 23) { d = -d; x += d; y++; } } return c; };
+  const crowd = [aiRival(1, row(0, 60), 'left'), aiRival(2, row(4, 60), 'left'), aiRival(3, row(8, 40), 'left')];
+  const took = ['drab', 'mute'].map(k => [seasonTakes('normal', k, 30, crowd), seasonTakes('plentiful', k, 30, crowd)]);
+  check('in a plentiful season a long rival on a crowded log passes up growth it takes in a normal round (Drab, Mute)', took.every(([n, p]) => n && !p), JSON.stringify(took));
+}

@@ -65,7 +65,7 @@ function powerPick(crawlIn, crawlDirIn) {
   // round for a snake that drops readily (Creeper); a late one (Ouroboros)
   // waits for the crash. A boxed snake rarely still has its flash rested,
   // a body one thick and a free cell beyond, so it plans the drop.)
-  dropping = trapped || (boxed && (w.drop === 'ready' || (lean && w.drop !== 'late')));
+  dropping = trapped || (boxed && (w.drop === 'ready' || (endgame && w.drop !== 'late')));
   roomsHere = new Int32Array(others.length).fill(-1), foodHere = new Int32Array(others.length); // (each rival's room and moves to food as I am, once asked: see shutIn)
   hereFree = -1, hereFood = false, landFood = false, landCells = 0; // (the free log round me, and whether there's food on it: see islandGain) // (boxed: the crawl leaves me less room than I need, or only through a gap a rival could shut)
   pecks = view.pecks; // (the woodpecker's mark, if I'm shown it apart from the holes)

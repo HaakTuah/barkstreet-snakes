@@ -103,13 +103,12 @@ const FLAVOR = {
   weatherWatch: { snow: ['Winter. Less food, and everyone gets hungry faster.', 'Snow on the bark. Hard times for everyone.'] },
   // The round's food season (2i), after Go (none for a normal one), and its rule, the first time each comes.
   season: {
-    lean: ['A lean season. Eat when you can.', 'Lean times on the log. Every bite counts.'],
+    lean: ['A lean season. Food is scarce this round.', 'Lean times on the log: little food about.'],
     plentiful: ['A season of plenty!', 'Plenty on the log this round.'],
   },
-  seasonRule: k => { // (one idea, 60 characters at most, as every lesson)
-    const apples = Math.max(1, TUNE.APPLES + TUNE.SEASONS[k].apples);
-    return TUNE.SEASONS[k].beetles < 1 ? `Lean: ${inWords(apples)} apple, fewer beetles, short meals. Snakes starve.` : `Plenty: ${inWords(apples)} apples, more beetles. Mind the crowd.`;
-  },
+  seasonRule: k => k === 'lean' // (one idea, 60 characters at most, as every lesson)
+    ? `Lean: ${inWords(Engine.seasonApples(k))} apple, fewer beetles, short meals. Some starve.`
+    : `Plenty: ${inWords(Engine.seasonApples(k))} apples, more beetles. Mind the crowd.`,
   strike: ['Lightning! The bark’s on fire.', 'Crack! Fire on the bark.'],
   rainbow: ['A rainbow! And at its foot, something golden.', 'After the rain, a rainbow. Follow it to the gold.'],
   rainbowWatch: ['A rainbow! And at its foot, something golden.', 'After the rain, a rainbow. Gold at its foot.'],
