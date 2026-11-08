@@ -124,8 +124,8 @@ Every persona fears the cells a rival could strike next (`headRisk`) and where i
 
 ### The endgame: a meal is worth the life it buys
 
-Past a length of its own (`hungryBelow`), a fed rival wants food only `fedFactor` as much. Once the woodpecker's here
-(`SUDDEN_DEATH_MS`) nothing new grows but the last apples, so the "fed" state switches off for everyone (and all
+Past a length of its own (`hungryBelow`), a fed rival wants food only `fedFactor` as much. Once the woodpecker's frenzy starts
+(sudden death, its third act: `view.act` 3) nothing new grows but the last apples, so the "fed" state switches off for everyone (and all
 round in a lean food season; a plentiful one starts the weighing below before the woodpecker: "Food seasons" in
 `04-food-and-the-world.md`). Hunger trumps
 it too: with under 10 s before it starts starving (`AI_HUNGRY_MS`), any rival goes looking for food, harder the closer
