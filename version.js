@@ -10,6 +10,7 @@
 window.SnakeVersion = {
   build: 'dev',
   news: [
+    { on: '2026-11-08', line: 'Spat mushrooms fly straight ahead: aim with care.' },
     { on: '2026-11-07', line: 'Rivals spot far-off snakes a beat late, like you.' },
     { on: '2026-11-07', line: 'Meals bank stamina; golden apples bring a shield.' },
     { on: '2026-11-07', line: 'The rivals’ speech bubbles no longer overlap.' },
