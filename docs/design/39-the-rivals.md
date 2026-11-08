@@ -145,18 +145,19 @@ room a snake needs to turn in.
   snake rarely has all three. So in the endgame a rival weighs dropping its tail as soon as the search sees it boxed in
   (every crawl ends in less room than it needs, or only through a gap a rival could shut), not only once every crawl
   crashes; what it drops below the length worth keeping costs an apple a segment. Each in its style (`drop`): Creeper
-  readily, all round; Ouroboros late, only out of a crash.
+  readily, all round; Ouroboros and Mason late, only out of a crash (Mason's walls are its body: dropping it planned,
+  its body lay beside itself 3.5 points less).
 - **The denial play, tried and left out:** a rival seen starving (a segment off, as anyone sees one shrink) made food
   within 8 moves of its head worth eating to keep from it, whatever the eater's length, and a bead of the eater's own
   there worth squashing. Head to head both ways (seeds 71 and 73, 800 paired rounds), its users came out even (win% a
   snake −1.8 points, [−4.2, +0.5]; place the same within 0.1), so it stays out, as the owner's rule for it says.
-- **Measured** (PR #596, seeds 71 and 73, head to head against the AI 2b left, 800 paired rounds): win% a snake +10.8
-  points, place 0.20 better; deaths into its own body down from 22% to 15%, into holes from 10.5% to 7.7%, starved up
-  from 1.7% to 2.8% and head-ons from 1.6% to 3.1%. Both ways, the length worth keeping +7.9 points of win% and the
-  planned drop +7.2. In sudden death (`--census`, "the endgame (2h)") a snake averages 33 long instead of 39, drops
-  its tail about 2 times a woodpecker round instead of 0.3 (nine in ten alive 5 s on), and the deaths in a pocket
-  smaller than itself fall from 89% to 82%. Its numbers are measured again after the woodpecker's makeover (entry 6),
-  which changes the endgame's timing.
+- **Measured** (PR #596, seeds 71 and 73, head to head against the AI 2b left, 800 paired rounds): win% a snake +12.2
+  points, place 0.23 better, and every rival's win% up; deaths into its own body down from 23% to 14%, head-ons up from
+  1.2% to 2.9%. Both ways, the length worth keeping +11.7 points of win% and the planned drop +10.5. In sudden death
+  (`--census`, "the endgame (2h)") a snake averages 32 long instead of 39, it lasts about 9 s longer, drops its tail
+  about 2.9 times a woodpecker round instead of 0.3 (nine in ten alive 5 s on), and the deaths in a pocket smaller than
+  itself fall from 89% to about 79%. Every trademark within noise. Its numbers are measured again after the
+  woodpecker's makeover (entry 6), which changes the endgame's timing.
 
 ### A starving rival takes its chances
 

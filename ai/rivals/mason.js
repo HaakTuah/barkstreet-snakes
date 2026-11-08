@@ -9,6 +9,6 @@ PERSONAS.mason = {
     space: 1.3, territory: 1.8,
     food: 3, eat: 40, pellet: 1, foodRange: 30,
     margin: 6, headRisk: 800, zoneRisk: 150, turn: 25, thick: 60, // (thick 45 before round six B: a plain flash cuts a wall one thick, so it lays them two thick)
-    keep: 16, // (2h: in the endgame its walls, two thick, still need the length: at the default its body lay beside itself 2 points less)
+    keep: 16, drop: 'late', // (2h: in the endgame its walls, two thick, still need the length, and its tail: it drops it only out of a crash)
   },
 };
