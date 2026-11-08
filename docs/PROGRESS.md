@@ -7,7 +7,8 @@ when it is merged into `develop`; add the owner's new tasks where he places them
 
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
-**The main lane is item 5's part 7** (one pricing model, built afresh; 2ab is blocked on #574); part 4 (#198,
+**The main lane is 2y++, steps 2 and 3** (the flight against fliers who fly like people, then portals with a real cost);
+item 5's part 7 (one pricing model, built afresh) waits on 2ab, which is blocked on #574. Part 4 (#198,
 merged as it stands), 2y, 2y+, part 5, 2x, 2z, 2u, 2u+, 2q, 3b+ (PR #580; its finding, that spitters come out even, is
 #583) and part 6 (PR #584) before it are done. The polish lane and the workshop lane run beside it, each claimed by a draft PR.
 
@@ -116,8 +117,13 @@ tests a safe-meal exception like the one by the neck (`MEAL_DAWDLE`), measured b
 2y left the flight even both ways (24.9% against 25.1% head to head; +0.10 ± 0.15 place a use): between rivals a
 landing is almost never contestable. The flight stays as built for now, and no rule changes yet:
 1. **The ring tinted by its taker** (#401): done, PR #550 (the cue: "Taking a landing" in design 40).
-2. **The flight measured against fliers who fly like people** (a measurement, a side lane now): fliers who take off into
-   contested rings, as people do, against the rivals who now take landings; per use and head to head.
+2. **The flight measured against fliers who fly like people:** done, PR #588; still even, and no AI change. Fliers that
+   take off into contested rings, as people do, came out even with develop's careful ones head to head (wins 25.0%
+   against 24.9%, place 2.49 against 2.51, 1,200 pairs on seeds 631 and 632), and so did each flight (+0.03 ± 0.07
+   place a use, against develop's −0.02 ± 0.05, seeds 631 to 633). Contested rings rose (3.3 to 3.9 jump-ticks a
+   round), but rivals went for one only 0.2 times a round, and fliers came down on a body no more often (0.2 a round).
+   Even taking a landing worth ten times as much took no more of them: a ring is almost never reachable in time, so the
+   ring costs a flier little.
 3. **Portals with a real cost** (#447; the owner, 3 November 2026): portals stay as built, followed one round in five
    but never winning places, so the wrap's trade-off is not yet real. A measured experiment: a follower coming out
    of the portal may cut off its owner. Built only if it makes following matter both ways, with no refuge for owner
