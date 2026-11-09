@@ -48,8 +48,6 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
     const held = g.snakes.map(s => s.leaps), late = E.suddenDeath(g);
     if (late && st.longAt == null) { st.longAt = 0; st.longN = 0; for (const s of g.snakes) if (s.alive) { st.longAt += s.body.length; st.longN++; } } // (2i: how long the snakes are when the frenzy starts)
     for (const s of g.snakes) if (s.alive) { const left = E.hungerLeft(g, s); c[late ? 'aliveLate' : 'aliveEarly']++; if (left < T.HUNGER_WARN_MS) c[late ? 'hungryLate' : 'hungryEarly']++; if (left < 0) c[late ? 'starvingLate' : 'starvingEarly']++; }
-    const mid = !late && g.time >= T.HUNGER_MID_FROM_MS;
-    if (mid) c.midMs += E.tickMs(g) * g.snakes.filter(s => s.alive).length;
     c.ticks++;
     c.burrowTicks += g.burrows.length;
     if (late) { c.sdTicks++; c.sdBurrowTicks += g.burrows.length; }
@@ -100,7 +98,6 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
     }
     woodpeckerCensus(g, c, st, dying, N, T);
     if (late) endgameCensus(g, c, st, dying, N);
-    if (mid) c.mealsMid += new Set(g.events.filter(e => e.type === 'eat' && e.kind !== 'mushroom').map(e => e.snake)).size;
     if (signs) signatures(g, T, per, was);
     if (st.isleFrom) for (const [s, was] of st.isleFrom) { // (2r: down on another piece of log smaller than itself, where it can't live)
       if (s.flight && s.alive) continue;

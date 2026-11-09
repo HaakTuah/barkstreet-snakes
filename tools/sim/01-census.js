@@ -16,7 +16,6 @@ const census = () => ({
   aliveEarly: 0, hungryEarly: 0, starvingEarly: 0, aliveLate: 0, hungryLate: 0, starvingLate: 0, // (snake-ticks before and after the woodpecker: alive, in the hunger warning, starving)
   beads: 0, ownBeads: 0, chokes: 0, chokeRounds: 0, nudges: 0, nudgedBeads: 0, // (beads eaten, and by the snake they broke off; own beads squashed (chokes before round six B); food nudged aside coughing, and the beads among it, before round six B)
   knocks: 0, knockedEaten: 0, knockedTaken: 0, knockedTicks: [], digs: 0, digsCaught: 0, // (food the woodpecker's strike knocked aside, of it what it ate, with nowhere to knock it, and what a snake ate where it landed within 6 s, how many ticks after the strike; beetles digging in, and caught while digging)
-  midMs: 0, mealsMid: 0, // (mid-round, from HUNGER_MID_FROM_MS to the woodpecker: snake-time alive, and meals then, a snake's in a tick counted once)
   // Each time a beetle is above ground (out of a burrow, to caught, down a
   // burrow, dug in, flown off or eaten by the bird; a round's end leaves it
   // out): all of them, and those chased (a head came within BEETLE_FEAR).

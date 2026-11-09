@@ -78,7 +78,7 @@ const GUIDE_ROWS = [
     ['basic-win', 'Winning', 'Last snake wriggling wins. Score counts what you eat.'],
     ['basic-steer', 'Steering', `${touchFirst ? 'Swipe the way to go' : 'The arrow keys (or WASD)'}. You never stop, so look ahead.`],
     ['basic-crash', 'Crashes', `An edge, a snake or your own tail costs you tail. At ${TUNE.MIN_LENGTH}, or boxed in, a crash ends you.`],
-    ['basic-hunger', 'Hunger', `A hungry snake grows thin, then growls; one gone pale is shrinking. At ${TUNE.MIN_LENGTH} it starves. In sudden death hunger runs twice as fast. Your bar is under your name.`],
+    ['basic-hunger', 'Hunger', `A hungry snake grows thin, then growls; one gone pale is shrinking. At ${TUNE.MIN_LENGTH} it starves. Your bar is under your name.`],
   ]],
   ['Food', [
     ['apple', 'Apple', `Worth 1, and a full tummy. ${inWords(TUNE.APPLES).replace(/^./, c => c.toUpperCase())} on the log at a time (a season can change that); leave one too long and it rots.`],

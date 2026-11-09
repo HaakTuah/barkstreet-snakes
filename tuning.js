@@ -109,9 +109,7 @@ window.TUNING = Object.freeze({
   COOKED_GROWTH: 2,         // baked food is worth this much
 
   // ---------------------------------------------------------------- hunger
-  HUNGER_MS: 20000,         // this long without food (mushrooms don't count) and you start shrinking, in the opening and once the woodpecker's here...
-  HUNGER_MID_MS: 12000,     // ...but a meal between HUNGER_MID_FROM_MS and then keeps you only this long (with 20 s, a snake was hungry 3% of the time before 2:00; with 13, 9%; once the rivals hunted well, 8% with 13 and about 10% with 12)
-  HUNGER_MID_FROM_MS: 45000,
+  HUNGER_MS: 12000,         // this long without food (mushrooms don't count) and you start shrinking: one clock for the whole round, tuned so a meal is a trade-off to the end (entry 6, part 3; #616)...
   STARVE_EVERY_MS: 1500,    // ...one segment this often, starving at MIN_LENGTH
   HUNGER_WARN_MS: 6000,     // warn you when this much time is left (half again as early at your smallest)
   BANNER_BASE_MS: 1000,     // a banner is held for its reading time, read in glances while you steer: this...
@@ -202,7 +200,6 @@ window.TUNING = Object.freeze({
   RAINBOW_CHANCE: 0.5,      // when rain stops: a rainbow, with a golden apple at its end
   SNOW_APPLES: 1,           // winter, a hungry spell: one apple (rotting twice as fast), no new mushrooms, no golden apples...
   SNOW_HUNGER: 1.75,        // ...and everyone gets hungry this many times as fast (it's cold)
-  FRENZY_HUNGER: 2,         // in the woodpecker's frenzy (sudden death) everyone gets hungry this many times as fast, snow or not (entry 6, part 3: a meal a trade-off to the end)
   AFTER_STORM_RAIN: 0.6,    // a storm is often followed by rain
   STRIKE_MIN_MS: 2000,      // storm: lightning this often...
   STRIKE_MAX_MS: 4000,

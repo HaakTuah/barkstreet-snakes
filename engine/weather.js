@@ -43,8 +43,8 @@ function weather(game) {
     now.nextStrike = game.time + between(T.STRIKE_MIN_MS, T.STRIKE_MAX_MS);
     strike(game);
   }
-  // Winter and the frenzy: hunger runs faster (the clock to everyone's
-  // next meal runs down quicker: hungerRate); in winter apples rot twice as fast.
+  // Winter: hunger runs faster (the clock to everyone's next meal runs
+  // down quicker: hungerRate), and apples rot twice as fast.
   const rate = hungerRate(game);
   if (rate !== 1) {
     const extra = tickLength(game) * (rate - 1);

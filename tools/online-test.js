@@ -221,6 +221,7 @@ function stage(game) {
     return;
   }
   if (w && w.target.length > 1 && !w.fall && k < w.strikeAt && short('woodpecker 10')) { w.fall = [w.target[w.target.length - 1]]; staged.set('fall', (staged.get('fall') || 0) + 1); return; } // (2s: a mark that cuts a piece loose, its last cell the piece)
+  if (w && !w.fury && short('woodpecker 12')) { w.fury = 1; staged.set('fury', (staged.get('fury') || 0) + 1); return; } // (part 2: a piece fallen in the frenzy; rounds end sooner with one hunger clock)
   if (w && w.target.length && !w.fall && !w.zone && k < w.strikeAt && short('woodpecker 19')) { w.zone = [w.target[0]]; staged.set('zone', (staged.get('zone') || 0) + 1); return; } // (part 2: a fight's plus, its tile at its middle)
   if (k % 7) return;
   if (short('snake leaps')) { s.leaps = Math.min(T.LEAP_MAX, s.leaps + T.LEAP_CHARGES); return; } // (as a golden beetle gives them)

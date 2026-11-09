@@ -37,12 +37,12 @@
 { // A lean season's meal keeps a snake SEASONS.lean.meal as long, mid-round and before.
   const lasts = (season, time) => {
     const g = board([[line(5, 5, 4), 'right']], { season, time, food: [[6, 5]] });
-    Object.assign(g.snakes[0], { lastAte: time - T.HUNGER_MS + 1000, nextStarve: time + 1000 }); // (hungry: a meal never leaves it less time than it had)
+    Object.assign(g.snakes[0], { lastAte: time - T.HUNGER_MS + 1000, nextStarve: time + 1000 }); // (hungry)
     E.step(g);
     return g.snakes[0].mealMs;
   };
   check('a lean meal keeps a snake less long (mid-round and in the opening), a plentiful one as a normal one',
-    lasts('lean', 60000) === T.HUNGER_MID_MS * T.SEASONS.lean.meal && lasts('normal', 60000) === T.HUNGER_MID_MS && lasts('plentiful', 60000) === T.HUNGER_MID_MS
+    lasts('lean', 60000) === T.HUNGER_MS * T.SEASONS.lean.meal && lasts('normal', 60000) === T.HUNGER_MS && lasts('plentiful', 60000) === T.HUNGER_MS
     && lasts('lean', 5000) === T.HUNGER_MS * T.SEASONS.lean.meal, [lasts('lean', 60000), lasts('normal', 60000), lasts('lean', 5000)].join());
 }
 
