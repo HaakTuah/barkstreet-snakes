@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------- 2s: a piece cut loose falls, the log stays one piece
 // (the owner, 31 October 2026: "we want to avoid the islands stuff.") The land: a field, a one-cell neck on its right, and a
-// 3x3 peninsula beyond it, nine cells (under PECK_FALL_SOFT): a patch that takes the neck cuts the peninsula loose.
+// 3x3 peninsula beyond it, nine cells: a peck that takes the neck cuts the peninsula loose.
 const field2s = rect(2, 2, 12, 18), neck2s = [13, 10], penin2s = rect(14, 9, 16, 11);
 const land2s = [...field2s, neck2s, ...penin2s];
 const peninK = penin2s.map(([x, y]) => K(x, y));
@@ -18,28 +18,6 @@ function pieces2s(g, mark) {
     sizes.push(q.length);
   }
   return sizes;
-}
-
-{ // The mark: a patch that cuts the peninsula loose takes it too, from the aim, shaded as it will fall (w.fall); no mark
-  // leaves the log in two pieces.
-  const g = island([[[[4, 4], [3, 4], [2, 4]], 'right']], land2s);
-  const got = seededWhile(621, () => {
-    const out = [];
-    g.woodpecker = { x: 12, y: 0, at: g.time, target: [], strikeAt: -1, last: [], struckAt: -1, restUntil: g.tick };
-    for (let t = 0; t < 600 && out.length < 200; t++) {
-      feed(g); quiet(g);
-      if (g.events.some(e => e.type === 'aim')) out.push({ mark: new Set(g.woodpecker.target), fall: g.woodpecker.fall || [] });
-      g.woodpecker.target = []; delete g.woodpecker.fall; g.woodpecker.restUntil = g.tick;
-    }
-    return out;
-  });
-  const cut = got.filter(m => m.mark.has(K(...neck2s)));
-  check('2s: a patch that cuts a piece loose takes it too, in the mark from the aim, as the piece that falls',
-    cut.length > 0 && cut.every(m => peninK.every(k => m.mark.has(k)) && m.fall.every(k => peninK.includes(k))),
-    `${cut.length} of ${got.length} marks took the neck; wrong (mark/fall): ${cut.filter(m => !(peninK.every(k => m.mark.has(k)) && m.fall.every(k => peninK.includes(k)))).map(m => `${m.mark.size}/${m.fall.length}`).join(' ')}`);
-  check('...so no mark leaves the log in pieces', got.length === 200 && got.every(m => pieces2s(g, m.mark).length === 1),
-    `${got.filter(m => pieces2s(g, m.mark).length !== 1).length} of ${got.length} leave pieces`);
-  check('...and a mark that cuts nothing loose has nothing to fall', got.every(m => m.mark.has(K(...neck2s)) || !m.fall.length));
 }
 
 { // The strike: the piece falls with it. A head still on it falls too ("Down the hole!"); food on it is gone with it, never
@@ -97,44 +75,3 @@ function pieces2s(g, mark) {
   check('...while the patch\'s own food lands outside the mark', onNeck && onNeck.to && !g.woodpecker.target.includes(K(onNeck.to.x, onNeck.to.y)), JSON.stringify(onNeck));
 }
 
-{ // 2s+: the bird aims small (PECK_FALL_SOFT, 12 cells: its first tries cut nothing bigger loose; past them any size
-  // may fall, as the design says under "The log stays one piece"). A field, a neck and a 4x4 peninsula beyond it (16
-  // cells, over the cap), a snake far off on the field: with the field to peck, no mark cuts the peninsula loose; on the
-  // same seed, with the nine-cell peninsula instead, under the cap, some marks take the neck and cut it loose, so the
-  // bigger one was a patch it could have taken.
-  const marksOf = (g, n, seed) => seededWhile(seed, () => {
-    const out = [];
-    g.woodpecker = { x: 12, y: 0, at: g.time, target: [], strikeAt: -1, last: [], struckAt: -1, restUntil: g.tick };
-    for (let t = 0; t < n * 4 && out.length < n; t++) {
-      feed(g); quiet(g);
-      if (g.events.some(e => e.type === 'aim')) out.push({ mark: new Set(g.woodpecker.target), fall: g.woodpecker.fall || [] });
-      g.woodpecker.target = []; delete g.woodpecker.fall; g.woodpecker.restUntil = g.tick;
-    }
-    return out;
-  });
-  const big = rect(14, 8, 17, 11);
-  const a = marksOf(island([[[[4, 4], [3, 4], [2, 4]], 'right']], [...field2s, neck2s, ...big]), 120, 631);
-  const small = marksOf(island([[[[4, 4], [3, 4], [2, 4]], 'right']], land2s), 120, 631);
-  check('2s+: the bird aims small: with any other patch to take, none cuts a piece bigger than PECK_FALL_SOFT loose', T.PECK_FALL_SOFT < big.length && a.length === 120 && a.every(m => m.fall.length <= T.PECK_FALL_SOFT) && small.some(m => m.mark.has(K(...neck2s)) && m.fall.length), `${a.filter(m => m.fall.length > T.PECK_FALL_SOFT).length} of ${a.length} cut a bigger piece loose; the nine-cell one cut loose ${small.filter(m => m.mark.has(K(...neck2s)) && m.fall.length).length} of ${small.length} times`);
-}
-
-{ // 2s+: no size is banned from falling. The log is one cell wide, a long line bent at a corner, a snake lying at each
-  // end (an S of 68 cells): any patch on it splits it in two with a head on each side, so every try that keeps clear
-  // of heads is refused (a crumb only never under a head, a bigger piece as clear of heads as the patch), and the last
-  // try, "anywhere left", still marks, cutting loose the smaller side: over PECK_FALL_SOFT cells when the patch lies
-  // well inside it.
-  const line = [...rect(1, 1, 22, 1), [22, 2], ...rect(1, 3, 22, 3), [1, 4], ...rect(1, 5, 22, 5)];
-  const g = island([[[[1, 1], [2, 1], [3, 1]], 'left'], [[[22, 5], [21, 5], [20, 5]], 'right']], line);
-  const got = seededWhile(641, () => {
-    const out = [];
-    g.woodpecker = { x: 12, y: 0, at: g.time, target: [], strikeAt: -1, last: [], struckAt: -1, restUntil: g.tick };
-    for (let t = 0; t < 160 && out.length < 40; t++) {
-      feed(g); quiet(g);
-      if (g.events.some(e => e.type === 'aim')) out.push({ mark: g.woodpecker.target.length, fall: (g.woodpecker.fall || []).length });
-      g.woodpecker.target = []; delete g.woodpecker.fall; g.woodpecker.restUntil = g.tick;
-    }
-    return out;
-  });
-  check('2s+: and when nothing smaller is left it still cuts a bigger piece loose (no size is banned): on a log one cell wide between two heads', got.length === 40 && got.some(m => m.fall > T.PECK_FALL_SOFT),
-    `${got.length} marks; pieces to fall ${got.map(m => m.fall).join(' ')}`);
-}

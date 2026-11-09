@@ -158,7 +158,8 @@ function matched(r, host, guest, dyingHost, dyingGuest) {
   const food = g => g.food.map(f => [f.x, f.y, f.kind, f.expires, f.color, f.dir && f.kind === 'beetle' ? f.dir : null, f.px ?? null, f.py ?? null, f.movedAt ?? null, !!f.scared, f.heat || 0, !!f.cooked, !!f.gold, f.owner ?? null, f.digUntil ?? null, f.power || 0]);
   check(r, k, 'food', food(host), food(guest));
   check(r, k, 'holes', [...host.holes], [...guest.holes]);
-  check(r, k, 'woodpecker', host.woodpecker, guest.woodpecker);
+  const sorted = o => o && Object.fromEntries(Object.entries(o).sort(([a], [b]) => (a < b ? -1 : 1))); // (its fields come and go as it plans and fights: compared whatever their order)
+  check(r, k, 'woodpecker', sorted(host.woodpecker), sorted(guest.woodpecker));
   check(r, k, 'acts', host.acts, guest.acts); // (entry 6: when the woodpecker's acts start, as the host drew them)
   check(r, k, 'burrows', host.burrows, guest.burrows);
   check(r, k, 'beetles underground', host.unders || [], guest.unders);
@@ -220,6 +221,7 @@ function stage(game) {
     return;
   }
   if (w && w.target.length > 1 && !w.fall && k < w.strikeAt && short('woodpecker 10')) { w.fall = [w.target[w.target.length - 1]]; staged.set('fall', (staged.get('fall') || 0) + 1); return; } // (2s: a mark that cuts a piece loose, its last cell the piece)
+  if (w && w.target.length === 1 && !w.fall && !w.zone && k < w.strikeAt && short('woodpecker 19')) { w.zone = [w.target[0]]; staged.set('zone', (staged.get('zone') || 0) + 1); return; } // (part 2: a fight's plus, its tile at its middle)
   if (k % 7) return;
   if (short('snake leaps')) { s.leaps = Math.min(T.LEAP_MAX, s.leaps + T.LEAP_CHARGES); return; } // (as a golden beetle gives them)
   if (short('snake dashes')) { s.dashes = Math.min(T.DASH_MAX, s.dashes + T.DASH_CHARGES); return; } // (a golden leaf)
@@ -354,7 +356,7 @@ const want = [...KINDS, ...says, ...['snake', 'cause', 'killer', 'diedAt', 'fata
   ...['food', 'golden', 'mushroom', 'pellet', 'beetle', 'leaf', 'goldcap', 'spill'].flatMap(k => [`food ${k}`, `food ${k} 3`]), // (each kind, and when it goes)
   'food food 5', 'food food 6', 'food pellet 4', 'food pellet 7', 'food spill 8', 'food spill 9', ...[5, 6, 7, 8, 9, 10, 11].map(j => `food beetle ${j}`), // (warming and baked; a bead's colour and whose; a beetle's way, where from, when it moved, scared, golden, digging in)
   ...FIRES.map(k => `fire ${k}`),
-  ...WEATHER.map((w, k) => `weather ${k}`), ...Object.keys(T.SEASONS).map((w, k) => `season ${k}`), ...Array.from({ length: 18 }, (_, j) => `woodpecker ${j}`), 'acts', ...['way', 'jump', 'flash'].flatMap(k => [`plan rival ${k}`, `plan person ${k}`])];
+  ...WEATHER.map((w, k) => `weather ${k}`), ...Object.keys(T.SEASONS).map((w, k) => `season ${k}`), ...Array.from({ length: 20 }, (_, j) => `woodpecker ${j}`), 'acts', ...['way', 'jump', 'flash'].flatMap(k => [`plan rival ${k}`, `plan person ${k}`])];
 const lacking = [...new Set(want)].filter(short).map(k => `${k} (${seen.get(k) || 0})`);
 if (process.env.ONLINE_SEEN) console.log([...seen].sort().map(([k, v]) => `${k}: ${v}`).join('\n'));
 if (lacking.length) { console.error(`seen too few times (fewer than ${MIN}; a death's, never), the test lost its point there: ${lacking.join(', ')}`); process.exit(1); }
@@ -383,7 +385,7 @@ function protocolSamples() {
   a.cheek = { power: 3, spitAt: 18, left: 90 };
   host.unders = [{ until: 50, expires: 90, from: 41, gold: true }];
   host.holes.add(123);
-  host.woodpecker = { x: 1, y: 2, at: 3, came: 1, target: [10, 11], strikeAt: 20, last: [9], struckAt: 4, restUntil: 5, gaze: 30, lookAt: 2, looks: 1, unit: 900, lookUntil: 1200, pecks: 2, fury: 1, landings: [[10, 12], [11, -1]] };
+  host.woodpecker = { x: 1, y: 2, at: 3, came: 1, target: [10, 11], strikeAt: 20, last: [9], struckAt: 4, restUntil: 5, gaze: 30, lookAt: 2, looks: 1, unit: 900, lookUntil: 1200, pecks: 2, fury: 1, plan: { cut: [12, 13], piece: [14], waitFrom: -1 }, zone: [10, 11], landings: [[10, 12], [11, -1]] };
   host.burrows = [{ x: 2, y: 3, at: 4, used: 8, dug: 1, shutFrom: 900, shutAt: 9900 }];
   host.portals = [{ x: 2, y: 3, dx: 1, dy: 0, tx: 4, ty: 3, owner: 0, shutAt: 0 }];
   host.spits = [{ x: 5, y: 3, dir: D.right, left: 3, power: 4, wilt: 0, by: 0, wrap: false }];

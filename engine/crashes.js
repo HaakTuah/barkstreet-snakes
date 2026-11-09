@@ -159,6 +159,20 @@ function freeBy(game, o, j, wake) {
 // unless only that tail leaves it room: then the shield stays unspent and
 // it pays as anyone would (see room, in step).
 const lossOf = s => s.shielded ? 0 : s.failed ? T.FAIL_LOSS : T.CRASH_LOSS;
+// What a crash costs a snake that lives: whatever it pressed (for a board
+// that's gone), a golden apple's shield (2u+: it takes the crash, and is
+// gone) or the tail it loses, as beads (drops), and the stun; a flash
+// waiting on a jump goes when it moves again. Returns { lost, shield }.
+function crashCost(game, s, drops) {
+  s.queue.length = 0;
+  const shield = s.shielded;
+  if (shield) s.shieldUntil = -1;
+  const lost = Math.min(lossOf(s), s.body.length - T.MIN_LENGTH);
+  for (let n = 0; n < lost; n++) { const t = s.body.pop(); drops.push({ x: t.x, y: t.y, color: s.color, owner: s.id }); }
+  s.stunUntil = game.tick + 1 + stunOf(s);
+  if (s.flashArmed > game.tick) s.flashArmed = s.stunUntil; // (as one pressed in a stun does)
+  return { lost, shield };
+}
 const stunOf = s => s.failed ? T.FAIL_STUN_TICKS : T.STUN_TICKS;
 // A head that gets to (x, y) this tick (it doesn't crash), if one does.
 function arrivalAt(x, y) {

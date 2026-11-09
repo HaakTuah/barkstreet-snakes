@@ -23,7 +23,7 @@ Its rules are in `03-the-snake-as-a-character.md` under the same name, and its t
 
 ### The woodpecker: holes under you, and holes that look like holes
 
-Its rules are in `38-the-woodpecker.md` ("The strike", "Fewer, bigger hollows", "The pits and the mark" and "The rivals tell a
+Its rules are in `38-the-woodpecker.md` ("The strike", "It cuts a shape", "The pits and the mark" and "The rivals tell a
 mark from a hole"), and its text as it was, with its measurements, in `docs/archive/design-woodpecker.md`.
 
 ### Food

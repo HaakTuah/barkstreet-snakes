@@ -39,7 +39,7 @@ const census = () => ({
   // off (with food on them, a snake on them); and the rounds whose last
   // snakes ended up on islands of their own, of them how often the one on
   // the biggest won (chance: what a blind pick would get).
-  seals: 0, sealedOut: 0, falls: 0, fallCells: 0, fallBig: 0, fellOut: 0, piecesLeft: 0, split: 0, splitBiggest: 0, splitChance: 0,
+  seals: 0, sealedOut: 0, falls: 0, fallCells: 0, fallBig: 0, bigFalls: [], fights: 0, fightHits: 0, floorRounds: 0, cutDeaths: 0, cutVictim: 0, cutChance: 0, fellOut: 0, piecesLeft: 0, split: 0, splitBiggest: 0, splitChance: 0,
   causesSD: {}, sdTimes: [],
   ...endgameCounts(),
 });
@@ -272,7 +272,11 @@ function woodpeckerCensus(g, c, st, dying, N, T) {
       if (st.beak) { for (const f of st.beak) if (g.food.includes(f)) c.beakRan++; st.beak = null; }
       labelLand(g, N);
       const { sizes } = land;
-      if (e.fall) { c.falls++; c.fallCells += e.fall.length; if (e.fall.length > T.PECK_FALL_SOFT) c.fallBig++; } // (2s: pieces cut loose, fallen with the strike; bigger than PECK_FALL_SOFT)
+      if (e.fall) { // (2s: pieces cut loose, fallen with the strike; bigger than CUT_SHARE_MAX of the log then, part 2's cap; the biggest a round)
+        c.falls++; c.fallCells += e.fall.length; if (e.fall.length > T.CUT_SHARE_MAX * (N * N - g.holes.size + e.cells.length)) c.fallBig++;
+        st.bigFall = Math.max(st.bigFall || 0, e.fall.length);
+      }
+      if (e.zone) { c.fights++; if (!st.fought) { st.fought = true; c.floorRounds++; } } // (part 2: a fight's strike, at the floor; and the rounds with one)
       if (sizes.length > 1) c.piecesLeft++; // (2s: a strike that left the log in pieces)
     }
   }
