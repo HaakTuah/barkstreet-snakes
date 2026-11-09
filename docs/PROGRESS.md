@@ -74,7 +74,7 @@ the second account until its usage is spent; on the main account the brake close
 
 *Next find:* the portals drawn blue and orange, as in the game Portal (the owner, 9 November 2026, #592): the entry
 blue, the exit orange, glowing ovals with a thin gold trim, every text that calls them gold portals updated (design 40,
-"Gold portals for the wrap"). Then look for more by playing, as "How" says.
+"Portals for the wrap"). Then look for more by playing, as "How" says.
 
 *Done in the lane:* each fix's line is in `docs/archive/progress-done/polish-lane.md`, "The polish lane, done" (the README for
 players, any key wakes, the woodpecker bigger on a phone, the flash become the dash, the room card and Join on a phone,
