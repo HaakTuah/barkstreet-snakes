@@ -357,12 +357,12 @@ late, it is probably the most uneasecary feature we have discussed here, so leav
 - **Measured:** the simulation counts fights a round (rare is fine, as long as it happens), and deaths near a beetle,
   the one real risk, stay within noise.
 
-### 9. At the very end: the writing pass (the owner, 31 October 2026; Fable 5.1, after everything else, entry 8 included)
+### 9. At the very end: the writing pass (the owner, 31 October 2026; Fable, its newest version, after everything else, entry 8 included)
 
 The owner (31 October 2026): "Also, many of the Snakes dialogue lines are really really bad and corny. some of it are fun pop cultural stuff or wordplays I came up with, but most of it is corny writing by Opus 5.5. I think it would be nice to have a Fable 5.1 run on it at the end, to really piff up the writing. make it more clever and culturally engrossing. Though Trump actually got some good lines! So i don't want it to remove across the lines. remove the funny gags like Mason talking bad latin, or saying vidi vici veni which is a sex joke. but i want it to look at all, and give it a make over. the chinese lines are not as important. if it can, do them too, but most can't read them regardless. concur?" Then, to the design session's take (his gags kept, at the end of the queue, a page
 to choose from): "yes, and let it be creative! i don't want it to strictly look and improve whats there. that contrains it. let it go a bit wild and add stuff to, or make it over. it needs creative control outside of what i protect."
 - **Who and when:** after entry 8, so it covers every line the queue adds (the Charmer, the new moves, the woodpecker's
-  acts). Fable 5.1 holds the creative control but not the volume, since its usage drains far faster, and it gets only
+  acts). Fable holds the creative control but not the volume, since its usage drains far faster, and it gets only
   the parts that need its judgement (archive, 5 November 2026, and "A helper above you gets only what needs it" in
   `CLAUDE.md`): (1) an Opus session at high effort runs the pass and gathers every line, for each rival and for the
   game's own text, into one file per rival with the owner's protected lines marked; (2) from those files alone, Fable at
