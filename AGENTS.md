@@ -90,9 +90,10 @@ allows, at the lowest cost now and later. Four of them are the pillars that hold
   snakes and food it needs, for a few ticks. Full rounds only in the few tests that guard the whole (the simulation's
   fingerprint and `--check`, the online round trip); long measurements (`tools/abtest.js`, censuses) in
   `scripts/sim.sh`, never in CI.
-- **The owner's words are kept, in the archive.** Quote each instruction he gives word for word, dated, in the PR and
-  in the archive (`docs/archive/instructions.md` says which file), leaving out personal details as `SECURITY.md`, point
-  11, says. A standing rule
+- **The owner's words are kept, in the archive.** Quote each instruction he gives word for word, dated, in the archive
+  (`docs/archive/instructions.md` says which file), leaving out personal details as `SECURITY.md`, point 11, says; PRs,
+  issues, the progress file and the design files point to it and never quote it again, since every copy is read again
+  (archive, 9 November 2026). A standing rule
   goes, as briefly as it can be said and with what it is for, into the section of this file where it applies (or
   `CLAUDE.md`, if only Claude uses it). Rule files state rules, never quotes or dated history (a date a measurement or a status needs may stay), with at most a pointer to the
   archive, "(archive, D Month YYYY)": every session pays to read them, and the archive keeps his words.
@@ -203,8 +204,8 @@ whether that PR was merged; if it was, start a new branch and PR.
 
 **Milestones,** so the live game never lags: one is due whenever a change a player would notice has merged into
 `develop`, and at least once a day while work merges. Make sure a PR from `develop` to `main` carries the new work,
-saying what to try, with its line of what is new at the top of `version.js`'s news and the workshop check's line
-(`docs/orchestrating.md`, "The workshop check"); merge it yourself once its CI is green, and carry on without waiting
+saying what to try, with its line of what is new at the top of `version.js`'s news and, once a week, the workshop
+check's line (`docs/orchestrating.md`, "The workshop check"); merge it yourself once its CI is green, and carry on without waiting
 for the owner. **Before pushing `develop`,** check the last `develop` -> `main` PR
 (the call in `docs/developing.md`): if it has merged, merge `main` back into `develop` first and open a new milestone PR.
 

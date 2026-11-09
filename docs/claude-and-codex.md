@@ -212,9 +212,12 @@ guards: the rounds come to an end, and what a 10 means never slips (archive, 1 N
    (code or a question the task did not touch) may become a follow-up (a `bug` issue if it is a bug, otherwise an entry in `docs/PROGRESS.md`), with the reason in the
    PR. A point the builder thinks wrong is answered in the PR with why. The next round's reviewer rules on each move
    and each answer.
-3. **Later rounds judge the change.** Each round's reviewer gets the earlier rounds' lists and the builder's answers,
-   with the same model, effort and brief as before, and judges as "How a review passes" in `docs/review-guidelines.md`
-   says, so the rounds come to an end.
+3. **Later rounds judge the change, and only the change** (archive, 9 November 2026). A later round's reviewer gets the diff
+   since the last round, the earlier rounds' lists and the builder's answers, and "How a review passes" and "What
+   blocks" from `docs/review-guidelines.md`, not the whole first brief again, with the same model and effort; it may
+   read a file the change touches when the diff alone cannot settle a point, and judges as "How a review passes" says,
+   so the rounds come to an end. Point 4's three rounds hold for each review, Codex's included, since its quota is
+   paid for too.
 4. **At most three rounds, then escalation, then blocked, held firmly** (a fourth round is never asked
    for, whatever the reason). Anything still open after the third round goes
    to escalation ("Who does what") with a self-contained brief. It fixes each point, or rules it outside the task or
@@ -249,7 +252,8 @@ guards: the rounds come to an end, and what a 10 means never slips (archive, 1 N
 7. **The briefs.** A reviewer starts cold and gets its brief and nothing more.
    - **The fallback reviewer's:** the diff, the task's text and `docs/review-guidelines.md`, whole.
    - **The design checker's:** the same brief; it sends the work back until it meets the task.
-   - **A later round's** adds the earlier rounds' lists and the builder's answers (point 3); **an escalation's** is in
+   - **A later round's** is point 3's: the diff since the last round, the earlier lists and answers, and the two
+     sections of the guidelines it judges by; **an escalation's** is in
      "Who does what".
 
 ## For Codex
