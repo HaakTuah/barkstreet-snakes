@@ -455,7 +455,7 @@ window.SnakeOnline = (() => {
         case 'weather': return { type: 'weather', kind: WEATHER[e[1]] || 'clear' };
         case 'ember': return { type: 'ember', x: e[1], y: e[2], fx: e[3], fy: e[4] };
         case 'woodpecker': return { type: 'woodpecker' };
-        case 'peck': return { type: 'peck', x: e[1], y: e[2], cells: Array.isArray(e[3]) ? e[3].filter(Number.isInteger) : [], under: Array.isArray(e[4]) ? e[4].filter(Number.isInteger) : [], ...(Array.isArray(e[5]) && e[5].length ? { fall: e[5].filter(Number.isInteger) } : {}) , ...(Array.isArray(e[6]) && e[6].length && e[6].length <= 5 ? { zone: [...new Set(e[6].filter(k => Number.isInteger(k) && k >= 0 && k < window.TUNING.GRID * window.TUNING.GRID))] } : {}) }; // (a fight's plus: cells on the board, each once)
+        case 'peck': return { type: 'peck', x: e[1], y: e[2], cells: Array.isArray(e[3]) ? e[3].filter(Number.isInteger) : [], under: Array.isArray(e[4]) ? e[4].filter(Number.isInteger) : [], ...(Array.isArray(e[5]) && e[5].length ? { fall: e[5].filter(Number.isInteger) } : {}) , ...(Array.isArray(e[6]) && e[6].length && e[6].length <= 5 ? { zone: uniqueCells(e[6]) } : {}) }; // (a fight's plus)
         case 'rot': return { type: 'rot', x: e[1], y: e[2], kind: e[3] ? 'pellet' : 'apple', ...(typeof e[4] === 'string' ? { color: e[4] } : {}) };
         case 'flown': return { type: 'flown', x: e[1], y: e[2] };
         case 'spill': return snake && cell(e[2]) && cell(e[3]) ? { type: 'spill', snake, x: e[2], y: e[3], leaps: num(e[4]) ? e[4] : 0, dashes: num(e[5]) ? e[5] : 0 } : null;

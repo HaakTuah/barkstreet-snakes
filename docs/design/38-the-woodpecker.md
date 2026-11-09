@@ -82,13 +82,14 @@ in the very late game.
 ### Then it fights
 
 At the floor, in the frenzy, it pecks at the snakes instead (`engine/fight.js`), aimed and warned like any peck:
-- **Whom and where:** the snake with the most log (`regions`, the same rule), a tile `FIGHT_LEAD` (6) moves ahead of its
-  head the way it's going (stopping at the log's end), or as near that as it may, in its region; its plus is the tile and
+- **Whom and where:** the snake with the most log (`regions`, the same rule), where its head will be as the strike
+  lands if it keeps on the way it's going (`PECK_AIM_TICKS` moves ahead, stopping at the log's end), or as near that as
+  it may, in its region, so it must turn or slow to dodge; its plus is the tile and
   the log cells beside it (`w.zone`), the tile its mark (`w.target`).
 - **Fair:** the whole plus more than `FIGHT_GAP` (2) cells from every head as it aims, shutting nobody in, and never a tile
   that would cut a piece loose; it has the aim's warning to steer clear. A rest of `FIGHT_REST_TICKS` (30) between.
 - **The strike:** a head on the ground in the plus takes a crash (`CRASH_LOSS` off and stunned, as any crash; a golden
-  apple's shield takes it; at its smallest, out: "Pecked!"), never a fall: the tile under a head isn't taken. Otherwise
+  apple's shield takes it, except at its smallest: out, "Pecked!"), never a fall: the tile under a head isn't taken. Otherwise
   the tile is a hole, food on it knocked aside.
 - **The cue:** its plus shaded red cell by cell (what the rivals keep out of), a red ring round it tightening as the strike
   nears, a tick on each arm, the tile marked as any.
@@ -121,7 +122,7 @@ test proves it); it plans small (see "It cuts a shape").
 At the strike every cell of the patch becomes a hole, for good: holes are only ever added (the squeeze is what ends
 rounds, and online play relies on it).
 - **Only a head falls in.** A head on the ground in the patch is out ("Pecked!"; on a piece cut loose, "Down the
-  hole!"); a head in the air isn't in it.
+  hole!"); a head in the air isn't in it. (A fight's strike is a crash instead: "Then it fights".)
 - **A body lying over a fresh hole bridges it:** it isn't cut and drops nothing, and the cell is an ordinary hole once
   the tail has passed. A jump whose landing was taken meanwhile comes down on a bridging body, not into the hole under
   it; if that body moves on while the head is still there, stunned, it falls in.

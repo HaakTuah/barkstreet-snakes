@@ -1,8 +1,9 @@
 // The woodpecker's fight (entry 6, part 2): at the floor (see logFloor) it
 // stops cutting and pecks at the snakes instead, aimed and warned like
 // any strike, so they must dodge. It goes for the snake with the most log
-// (see regions), FIGHT_LEAD moves ahead of its head the way it's going
-// (or as near that as it may), a plus of up to five cells (w.zone) round a
+// (see regions), where its head will be as the strike lands if it keeps
+// on the way it's going (PECK_AIM_TICKS moves ahead, stopping at the
+// log's end), or as near that as it may, a plus of up to five cells (w.zone) round a
 // centre it takes (w.target, a single tile: a tile here and there in the
 // very late game). Never within FIGHT_GAP of a head as it aims, never
 // shutting anyone in (it has the whole warning to steer clear), never
@@ -12,7 +13,7 @@ function fightAim(game) {
   if (!order.length) return null;
   const r = order[0], s = game.snakes[r], h = s.body[0];
   let ax = h.x, ay = h.y;
-  for (let n = 0; n < T.FIGHT_LEAD; n++) {
+  for (let n = 0; n < T.PECK_AIM_TICKS; n++) {
     const nx = ax + s.dir.x, ny = ay + s.dir.y;
     if (!inside(nx, ny) || game.holes.has(key(nx, ny))) break;
     ax = nx; ay = ny;
@@ -43,7 +44,7 @@ function fightHit(game, zone, dying, drops) {
     const k = key(s.body[0].x, s.body[0].y);
     if (!zone.has(k)) continue;
     hit.push(k);
-    if (s.body.length <= T.MIN_LENGTH && !s.shielded) {
+    if (s.body.length <= T.MIN_LENGTH) {
       s.cause = 'got pecked by the woodpecker'; s.killer = 'wall'; s.killerId = null; s.fatal = 'pecked';
       s.alive = false; dying.push(s);
       continue;
