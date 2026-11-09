@@ -93,7 +93,7 @@ const GUIDE_ROWS = [
   ['Golden things', [
     ['goldbeetle', 'Golden beetle', `${TUNE.LEAP_CHARGES} golden jumps: free, no stamina. Tap for the plain hop; hold the jump and you fly ${TUNE.GOLD_FLY} cells, always, steering in the air to land where it's safe. Hold up to ${TUNE.LEAP_MAX}.`],
     ['leaf', 'Golden leaf', `${TUNE.DASH_CHARGES} golden dashes: three cells at once, cutting through a body up to ${TUNE.DASH_THICK} thick and putting out every fire. Never at an edge or a hole: you blow up.`],
-    ['goldcap', 'Golden mushroom', `Up in the rain. The edges wrap round for you, ${secs(TUNE.WRAP_MS)} s a mushroom (up to ${secs(TUNE.WRAP_MAX_MS)}). Going off one opens gold portals: anyone may follow you through, for a moment.`],
+    ['goldcap', 'Golden mushroom', `Up in the rain. The edges wrap round for you, ${secs(TUNE.WRAP_MS)} s a mushroom (up to ${secs(TUNE.WRAP_MAX_MS)}). Going off one opens a blue portal and an orange one: anyone may follow you through, for a moment.`],
     ['spill', 'Spilled powers', `Knocked out (never just bumped), a snake drops the golden jumps and dashes it held where its head fell: a gold coin ringed with its pips. Grab it before it fades and they’re yours, up to ${TUNE.LEAP_MAX} of each.`],
   ]],
   ['Your powers', [

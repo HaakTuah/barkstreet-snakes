@@ -124,7 +124,7 @@ landing is almost never contestable. The flight stays as built for now, and no r
    Even taking a landing worth ten times as much took no more of them: a ring is almost never reachable in time, so the
    ring costs a flier little.
 3. **Portals with a real cost** (#447): done, PR #591; no rule changed. A follower snipping its owner's body out of the
-   exit bit in a third of follows but moved no places either way ("Gold portals for the wrap" in design 40); the
+   exit bit in a third of follows but moved no places either way ("Portals for the wrap" in design 40); the
    owner's call is #592.
 4. **Measured again after 2u and part 7,** whose stamina and pricing change what a flight costs. Only if it is still
    even then does a bigger change go to the owner as a question: a longer flight, or the ring shown before take-off.
