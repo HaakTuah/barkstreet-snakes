@@ -160,12 +160,6 @@ room a snake needs to turn in.
   about 2.9 times a woodpecker round instead of 0.3 (nine in ten alive 5 s on), and the deaths in a pocket smaller than
   itself fall from 89% to about 79%. Every trademark within noise. Its numbers are measured again after the
   woodpecker's makeover (entry 6), which changes the endgame's timing.
-- **A conditional good to the end** (entry 6, part 3; the owner, 31 October 2026). With the woodpecker in three acts, a
-  meal is a trade-off in the endgame as it is: head to head against the weighing (seeds 81 and 83, 1200 paired rounds,
-  `tools/dev/endgame-meals/variants.js`), rivals that always eat in the frenzy win 4.7 points less a snake (more of them
-  into their own bodies, +3.5 points), and rivals that never eat win 7.3 points less (starved 17% of their deaths
-  against 3%). In sudden death (`--census`, seeds 3 and 11) both ends show among the causes: boxed in, about 80% of sudden
-  death's deaths; starved, 2%, with snakes in the hunger warning 13–16% of the frenzy. The hunger clock stays as it is.
 
 ### A starving rival takes its chances
 
