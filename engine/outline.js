@@ -50,7 +50,7 @@ function logFloor(game) {
 }
 const canCut = game => logLeft(game) - logFloor(game) >= T.CUT_MIN;
 // A plan still fits: what's left of its cut and piece no more than the log past the floor (snakes grow meanwhile).
-const planFits = (game, plan) => plan.cut.length + plan.piece.filter(k => !game.holes.has(k)).length <= logLeft(game) - logFloor(game);
+const planFits = (game, plan) => [...plan.cut, ...plan.piece].filter(k => !game.holes.has(k)).length <= logLeft(game) - logFloor(game);
 // A cell's solid sides: in the piece, a hole, or off the board.
 function solidSides(game, k, inP) {
   const x = k % GRID, y = (k - x) / GRID;

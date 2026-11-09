@@ -132,6 +132,10 @@ const cornerPlan = cx => {
   }));
   const over = plans.filter(({ g, p }) => p && p.cut.length + p.piece.length > (576 - g.holes.size) - Math.max(T.FLOOR_MIN, T.FLOOR_PER_LENGTH * 64));
   check('part 2: a plan never takes the log past its floor (its crumbs counted)', over.length === 0 && plans.some(({ p }) => p), `${over.length} over, ${plans.filter(({ p }) => p).length} planned`);
+  // ...and its pecks don't count twice: a peck takes as much from the log as from what's left to cut (Codex's case: the
+  // first peck of a plan right at the floor doesn't make it give the plan up).
+  const pecked = plans.filter(({ p }) => p).map(({ g, p }) => { p.cut.slice(0, 3).forEach(k => g.holes.add(k)); return E.planFits(g, p); });
+  check('...and a peck of it leaves it fitting', pecked.length && pecked.every(Boolean), JSON.stringify(pecked));
 }
 
 { // A rival walking off a doomed piece reckons with its own growth: its tail stays put while it grows (Codex's case: a head
@@ -143,4 +147,8 @@ const cornerPlan = cx => {
   // stunned 8 lying along the top, its tail just above my head).
   const held = picks(() => aiView({ me: aiMe([[1, 1], [0, 1], [0, 0]], 'right'), others: [{ ...aiRival(1, [[3, 0], [2, 0], [1, 0]], 'right'), stun: 8 }], holes: new Set([K(1, 1)]), pecks: new Set([K(1, 1)]), strikeAt: 18, tick: 10, timeMs: FRENZY + 5000, act: 3 }), 'drab', 10);
   check('...nor into a stunned rival\'s tail', !held.up, JSON.stringify(held));
+  // ...nor into a head-on: a rival heading up the column it would go down (Codex's case: only my head marked, a hole above
+  // me, a rival seen 2 moves ago at (1, 5) heading up: down meets it at (1, 2); right is clear).
+  const wary = picks(() => aiView({ me: aiMe([[1, 1], [0, 1], [0, 0]], 'right'), others: [aiRival(1, [[1, 5], [1, 6], [1, 7]], 'up')], holes: new Set([K(1, 0), K(1, 1)]), pecks: new Set([K(1, 1)]), strikeAt: 18, tick: 10, timeMs: FRENZY + 5000, act: 3 }), 'drab', 10);
+  check('...nor into a head-on', (wary.right || 0) === 10, JSON.stringify(wary));
 }

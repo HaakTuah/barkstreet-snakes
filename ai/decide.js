@@ -69,7 +69,7 @@ function decide(viewIn, personaIn, memoryIn = {}) {
   // piece it cuts loose, or its cut), the shortest way off it, if I can
   // make it before the strike, whatever the search made of it (it reads
   // the mark as walls, so from inside it sees no way at all).
-  const off = view.strikeAt != null && mark.has(myHead.y * N + myHead.x) ? escapeMark() : null;
+  const off = view.strikeAt != null && mark.has(myHead.y * N + myHead.x) ? escapeMark(true) || escapeMark(false) : null;
   if (off) return off;
   // Powers: each weighed as a move. The same search as crawling, from
   // where the power leaves me and to the same horizon, plus what it eats on
@@ -89,8 +89,9 @@ window.SnakeAI = { DIRS, PERSONAS, POOL, decide, watchStyles, traitsOf, styleOf,
 
 // The first step of the shortest crawl out of the woodpecker's mark, to a
 // cell off it that's no hole and no body (bodies as seen, a tail as it
-// leaves), within the moves left before its strike; null if none.
-function escapeMark() {
+// leaves), within the moves left before its strike; null if none. Wary:
+// never a first step a rival's head could take too (`strikes`: a head-on).
+function escapeMark(wary) {
   const left = view.strikeAt - view.tick, start = myHead.y * N + myHead.x, from = new Map([[start, null]]);
   const occupied = (x, y, t) => [me, ...others].some(o => o.body.some((c, j) => c.x === x && c.y === y && o.body.length - j + (o === me ? Math.max(0, me.grow) : stunLeft(o)) > t)); // (a body's cell till its tail has passed: mine later while I grow, a stunned rival's while it's stunned)
   let level = [start];
@@ -102,7 +103,7 @@ function escapeMark() {
         const nx = x + d.x, ny = y + d.y;
         if (!inGrid(nx, ny)) continue;
         const nk = ny * N + nx;
-        if (from.has(nk) || pitAt(nk) || fire.has(nk) || (view.zone || EMPTY).has(nk) || occupied(nx, ny, t)) continue;
+        if (from.has(nk) || pitAt(nk) || fire.has(nk) || (view.zone || EMPTY).has(nk) || occupied(nx, ny, t) || (wary && t === 1 && strikes[nk] > 0)) continue;
         from.set(nk, k);
         if (!mark.has(nk)) { let c = nk; while (from.get(c) !== start) c = from.get(c); const cx = c % N, cy = (c - cx) / N; return DIR_LIST.find(q => q.x === cx - myHead.x && q.y === cy - myHead.y); }
         next.push(nk);
