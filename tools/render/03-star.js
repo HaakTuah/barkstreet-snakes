@@ -148,7 +148,8 @@ const tell = await ev(`(() => {
     st.restedAt = (g2.time + TUNING.STAMINA_MS - TUNING.DASH_STAMINA_MS + REST);
     show(g2); drawN(20, 0.5, 100);
     const run = [];
-    for (let t = 0; t <= REST + 500; t += 100) { g2.time = 60000 + t; drawN(1, 0.5, 100); run.push([t, points(st).split('').reduce((n, v) => n + +v, 0), middle(st)]); }
+    for (let t = 0; t <= REST + 500; t += 100) { g2.time = 60000 + t; st.lastAte = g2.time; drawN(1, 0.5, 100); // (held fed: a hungry snake pales)
+      run.push([t, points(st).split('').reduce((n, v) => n + +v, 0), middle(st)]); }
     out.run[how] = run;
   }
   // The burst: its flash comes back (no burst), then it flashes (a burst), lively.
