@@ -155,4 +155,8 @@ const cornerPlan = cx => {
   // right lies over (2, 3) now; up from (2, 4) is into it, down is clear).
   const since = picks(() => aiView({ me: aiMe([[2, 4], [1, 4], [1, 5]], 'right'), others: [aiRival(1, [[1, 3], [0, 3], [0, 2], [0, 1]], 'right')], holes: new Set([K(2, 4)]), pecks: new Set([K(2, 4)]), strikeAt: 18, tick: 10, timeMs: FRENZY + 5000, act: 3 }), 'drab', 10);
   check('...nor into a rival\'s body where it has gone since', !since.up, JSON.stringify(since));
+  // ...nor off into a dead end (Codex's case: only my head marked at (2, 1), holes at (1, 0) and (3, 0): up is (2, 0),
+  // walled in by the edge, the holes and my neck; right and down are open).
+  const dead = picks(() => aiView({ me: aiMe([[2, 1], [1, 1], [1, 2]], 'right'), others: [aiRival(1, line(20, 20, 4), 'right')], holes: new Set([K(1, 0), K(3, 0), K(2, 1)]), pecks: new Set([K(2, 1)]), strikeAt: 18, tick: 10, timeMs: FRENZY + 5000, act: 3 }), 'drab', 10);
+  check('...nor off into a dead end', !dead.up, JSON.stringify(dead));
 }
