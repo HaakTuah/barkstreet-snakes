@@ -30,7 +30,8 @@ sudden elimination"). Each act starts at a time drawn in its window after the on
 - **2. The first pecks** (40–60 s after it came): it cuts its outline `CUT_STEP_2` (2) cells a peck, a rest of
   `FIRST_REST_TICKS` (50, about 5 s) between, while food still grows.
 - **3. The frenzy, sudden death** (35–50 s after act 2): nothing new grows but the last apples, the weather clears, and
-  the meal clock is `HUNGER_MS` again. It cuts `CUT_STEP_3` (3) cells a peck, a cell more for each piece fallen in the
+  the meal clock is `HUNGER_MS` again, run twice as fast (`FRENZY_HUNGER`: "Food on the log" in
+  `04-food-and-the-world.md`). It cuts `CUT_STEP_3` (3) cells a peck, a cell more for each piece fallen in the
   frenzy (`w.fury`) up to `CUT_STEP_MAX` (5), each rest `PECK_REST_TICKS` (20) times `PECK_HUNGRIER` (0.85) for each of
   them, never under `PECK_REST_MIN` (8); down to the floor, where it fights.
 - **Each peck:** eyed for `PECK_AIM_TICKS` (17, about 1.6 s), struck, then the rest.
@@ -317,7 +318,9 @@ phone's address bar never resizes it.
     Get off it!";
   - the first beetle it eats: "The woodpecker eats beetles too.";
   - its first peck along an outline: "It's cutting a piece out: get off before it falls!";
-  - its first fight: "Little log left: now it pecks at snakes. Dodge!".
+  - its first fight: "Little log left: now it pecks at snakes. Dodge!";
+  - once a round, after the frenzy's banner, while you're alive: "Hunger runs twice as fast now: eat, but not too much."
+    (`frenzyHunger`).
 - **Death:** the card's title is **Pecked!** (or "Drilled!") for a head in the patch, "Down the hole!" for one on a
   piece cut loose, and "Flattened!" for a hole you hit (`09-voice-and-copy.md`, "Death titles").
 - **The Field guide's** Woodpecker row (`game/friends.js`, with a picture of an apple flying out of the mark to its

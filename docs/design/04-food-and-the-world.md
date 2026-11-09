@@ -25,7 +25,11 @@ was tried and measured, is in `docs/archive/design-food.md`).
 - **A meal keeps you 20 s** (`HUNGER_MS`) in the opening and once the woodpecker has come, and **12 s mid-round**
   (`HUNGER_MID_MS`, from 0:45, `HUNGER_MID_FROM_MS`), so hunger matters in the middle of the round too. Each snake keeps
   how long its last meal keeps it (`mealMs`, carried online), and its tag's bar is measured against that, so it's full
-  after any meal. Under `HUNGER_WARN_MS` (6 s) left, the tag shows it's starving: the bar in Berry, a ring pulsing round
+  after any meal.
+- **In the frenzy hunger runs twice as fast** (`FRENZY_HUNGER`, 2: the meal clock and the shrinking both, as in snow;
+  `hungerRate` in `engine/core.js`, which the warning and the rivals read too), so a meal is a trade-off to the end, as
+  the owner asked (entry 6, part 3, 31 October 2026): it buys life but costs room in a shrinking log, and neither eating
+  everything nor eating nothing wins. The lesson as it starts: "Hunger runs twice as fast now: eat, but not too much. Under `HUNGER_WARN_MS` (6 s) left, the tag shows it's starving: the bar in Berry, a ring pulsing round
   the tag, and "starving" for a screen reader.
 - **Starving is decided after eating:** a snake whose head reaches food on the tick it would starve eats instead
   (`ateTick`, in `engine/food.js` and `engine/step.js`). A mushroom doesn't save it, nor does its own bead, which it

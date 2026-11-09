@@ -73,7 +73,9 @@ function news(dying) {
     flashFrame('bird', true);
     updateControls(); // (the sky dims: html.frenzy, set there)
     Sound.play('stinger');
-    return toast(pick(FLAVOR.woodpeckerFrenzy), 2800, 'bird', 'round');
+    toast(pick(FLAVOR.woodpeckerFrenzy), 2800, 'bird', 'round');
+    if (me?.alive && once('frenzyHunger')) toast(FLAVOR.frenzyHunger, 3000, 'warn', 'lesson', { still: () => me.alive, follows: true });
+    return;
   }
   if (dying.length && alive.length === 2) {
     const [a, b] = isMe(alive[0]) ? [alive[1], alive[0]] : alive;
