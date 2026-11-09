@@ -49,6 +49,8 @@ function logFloor(game) {
   return Math.max(T.FLOOR_MIN, T.FLOOR_PER_LENGTH * need);
 }
 const canCut = game => logLeft(game) - logFloor(game) >= T.CUT_MIN;
+// A plan still fits: what's left of its cut and piece no more than the log past the floor (snakes grow meanwhile).
+const planFits = (game, plan) => plan.cut.length + plan.piece.filter(k => !game.holes.has(k)).length <= logLeft(game) - logFloor(game);
 // A cell's solid sides: in the piece, a hole, or off the board.
 function solidSides(game, k, inP) {
   const x = k % GRID, y = (k - x) / GRID;
@@ -166,7 +168,7 @@ function planCut(game, w) {
       const seed = seeds.splice(Math.floor(Math.random() * seeds.length), 1)[0];
       const { inP, cut } = growPiece(game, owner, r, seed, size);
       if ([...inP, ...cut].some(k => heads.has(k)) || !cut.size || (near && ![...cut].some(gazeNear))) continue; // (the first: its cut starts where it looked)
-      if (!oneTrunk(game, inP, cut)) continue;
+      if (!oneTrunk(game, inP, cut) || inP.size + cut.size > room) continue; // (and never past the floor, its crumbs and all)
       const score = cut.size / (inP.size + cut.size);
       if (!best || score < best.score) best = { score, inP, cut };
     }

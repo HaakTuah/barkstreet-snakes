@@ -130,7 +130,7 @@ function peck(game, dying, drops) {
     // waiting while no cell of it may go, and giving it up after
     // CUT_GIVEUP_TICKS; at the floor, in the frenzy, a fight.)
     let pick = null;
-    if (w.plan && !canCut(game)) delete w.plan;
+    if (w.plan && (!canCut(game) || !planFits(game, w.plan))) delete w.plan; // (the floor came up to it: given up, its holes stay)
     if (!w.plan && canCut(game)) { const p = planCut(game, w); if (p) w.plan = p; }
     if (w.plan) {
       pick = nextPeck(game, w);

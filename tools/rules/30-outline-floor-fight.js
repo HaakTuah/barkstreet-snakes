@@ -122,3 +122,21 @@ const cornerPlan = cx => {
   const dodge = picks(() => aiView({ me: aiMe(line(10, 12, 4), 'right'), others: [aiRival(1, line(20, 20, 4), 'right')], holes: new Set(zone), pecks: new Set([K(12, 12)]), zone: new Set(zone), strikeAt: 18, tick: 10, timeMs: FRENZY + 5000, act: 3 }), 'drab', 10);
   check('...and keeps out of a fight\'s plus', !dodge.right, JSON.stringify(dodge));
 }
+
+{ // Never past the floor: a plan, its crumbs and all, takes no more than the log past it. A 12x12 log, two snakes of 3 with
+  // 29 still to grow each: the floor 128, 16 cells to cut.
+  const plans = seededWhile(311, () => Array.from({ length: 20 }, () => {
+    const g = cutBoard([[line(4, 4, 3), 'right'], [line(11, 11, 3), 'left']], rect(2, 2, 13, 13));
+    for (const s of g.snakes) s.grow = 29;
+    return { g, p: E.planCut(g, g.woodpecker) };
+  }));
+  const over = plans.filter(({ g, p }) => p && p.cut.length + p.piece.length > (576 - g.holes.size) - Math.max(T.FLOOR_MIN, T.FLOOR_PER_LENGTH * 64));
+  check('part 2: a plan never takes the log past its floor (its crumbs counted)', over.length === 0 && plans.some(({ p }) => p), `${over.length} over, ${plans.filter(({ p }) => p).length} planned`);
+}
+
+{ // A rival walking off a doomed piece reckons with its own growth: its tail stays put while it grows (Codex's case: a head
+  // in the mark, its tail just above it, one still to grow: up is its own body; right or down are open).
+  const mark = rect(0, 0, 3, 3).map(([x, y]) => K(x, y));
+  const grown = picks(() => aiView({ me: aiMe([[1, 1], [0, 1], [0, 0], [1, 0]], 'right', { grow: 1 }), others: [aiRival(1, line(20, 20, 4), 'right')], holes: new Set(mark), pecks: new Set(mark), strikeAt: 18, tick: 10, timeMs: FRENZY + 5000, act: 3 }), 'drab', 10);
+  check('part 2: ...and never into its own tail while it grows', !grown.up, JSON.stringify(grown));
+}
