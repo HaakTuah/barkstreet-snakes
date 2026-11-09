@@ -47,7 +47,7 @@ const runTo = (g, until, each = () => {}) => {
   check('...and every rival sees the act, and where it looks', v.act === 1 && v.gaze === g.woodpecker.gaze);
 }
 
-{ // Act 2, the first pecks: its first patch grows where it looked last; small patches, a long rest; food still grows.
+{ // Act 2, the first pecks: its first cut starts where it looked last; a few cells a peck, a long rest; food still grows.
   const g = actsBoard(ACTS[0] - 500);
   let gaze = -1, first = null, rest = null, sizes = [];
   let grows = false;
@@ -59,7 +59,7 @@ const runTo = (g, until, each = () => {}) => {
   check('...and food still grows', grows);
   const gx = gaze % T.GRID, gy = Math.floor(gaze / T.GRID);
   const near = first && first.some(k => Math.abs(k % T.GRID - gx) + Math.abs(Math.floor(k / T.GRID) - gy) <= T.GAZE_NEAR);
-  check('act 2: its first patch grows where it looked last (its gaze is a tell)', near, `gaze ${gx},${gy}; patch ${first}`);
+  check('act 2: its first cut starts where it looked last (its gaze is a tell)', near, `gaze ${gx},${gy}; patch ${first}`);
   check('...each peck a few cells of its outline (the piece it cuts loose aside), and a long rest between', sizes.length >= 2 && sizes.every(n => n <= T.CUT_STEP_2) && rest === T.FIRST_REST_TICKS, `${sizes} rest ${rest}`);
 }
 

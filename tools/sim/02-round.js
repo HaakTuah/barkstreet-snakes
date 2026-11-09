@@ -136,7 +136,7 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
       else if (e.type === 'peck') c.pecks++;
       else if (e.type === 'aim') {
         c.aims++; if (g.woodpecker.target.some(k => nearHead(g, k))) c.aimsNear++;
-        const w = g.woodpecker; // (entry 6: its first patch, against where it looked last: is the tell kept?)
+        const w = g.woodpecker; // (entry 6: its first cut, against where it looked last: is the tell kept?)
         if (!w.pecks && w.gaze >= 0) { c.tellAims++; if (w.target.some(k => Math.abs(k % N - w.gaze % N) + Math.abs(Math.floor(k / N) - Math.floor(w.gaze / N)) <= T.GAZE_NEAR)) c.tellKept++; }
       }
       else if (e.type === 'leap') { if (e.gold) { c.goldLeaps++; per[e.snake.name].leaps++; } else { c.jumps++; per[e.snake.name].jumps++; } }
