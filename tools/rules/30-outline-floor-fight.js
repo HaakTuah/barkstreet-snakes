@@ -151,4 +151,8 @@ const cornerPlan = cx => {
   // me, a rival seen 2 moves ago at (1, 5) heading up: down meets it at (1, 2); right is clear).
   const wary = picks(() => aiView({ me: aiMe([[1, 1], [0, 1], [0, 0]], 'right'), others: [aiRival(1, [[1, 5], [1, 6], [1, 7]], 'up')], holes: new Set([K(1, 0), K(1, 1)]), pecks: new Set([K(1, 1)]), strikeAt: 18, tick: 10, timeMs: FRENZY + 5000, act: 3 }), 'drab', 10);
   check('...nor into a head-on', (wary.right || 0) === 10, JSON.stringify(wary));
+  // ...nor into a rival's body where it has gone since I saw it (Codex's case: a rival seen 2 moves ago at (1, 3) heading
+  // right lies over (2, 3) now; up from (2, 4) is into it, down is clear).
+  const since = picks(() => aiView({ me: aiMe([[2, 4], [1, 4], [1, 5]], 'right'), others: [aiRival(1, [[1, 3], [0, 3], [0, 2], [0, 1]], 'right')], holes: new Set([K(2, 4)]), pecks: new Set([K(2, 4)]), strikeAt: 18, tick: 10, timeMs: FRENZY + 5000, act: 3 }), 'drab', 10);
+  check('...nor into a rival\'s body where it has gone since', !since.up, JSON.stringify(since));
 }

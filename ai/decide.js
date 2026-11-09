@@ -89,7 +89,8 @@ window.SnakeAI = { DIRS, PERSONAS, POOL, decide, watchStyles, traitsOf, styleOf,
 
 // The first step of the shortest crawl out of the woodpecker's mark, to a
 // cell off it that's no hole and no body (bodies as seen, a tail as it
-// leaves), within the moves left before its strike; null if none. Wary:
+// leaves; and as the search reads the board, mineFree: a rival's path
+// since I saw it), within the moves left before its strike; null if none. Wary:
 // never a first step a rival's head could take too (`strikes`: a head-on).
 function escapeMark(wary) {
   const left = view.strikeAt - view.tick, start = myHead.y * N + myHead.x, from = new Map([[start, null]]);
@@ -103,7 +104,7 @@ function escapeMark(wary) {
         const nx = x + d.x, ny = y + d.y;
         if (!inGrid(nx, ny)) continue;
         const nk = ny * N + nx;
-        if (from.has(nk) || pitAt(nk) || fire.has(nk) || (view.zone || EMPTY).has(nk) || occupied(nx, ny, t) || (wary && t === 1 && strikes[nk] > 0)) continue;
+        if (from.has(nk) || pitAt(nk) || fire.has(nk) || (view.zone || EMPTY).has(nk) || occupied(nx, ny, t) || (!holes.has(nk) && mineFree[nk] > t) || (wary && t === 1 && strikes[nk] > 0)) continue;
         from.set(nk, k);
         if (!mark.has(nk)) { let c = nk; while (from.get(c) !== start) c = from.get(c); const cx = c % N, cy = (c - cx) / N; return DIR_LIST.find(q => q.x === cx - myHead.x && q.y === cy - myHead.y); }
         next.push(nk);
