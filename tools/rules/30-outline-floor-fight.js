@@ -139,4 +139,8 @@ const cornerPlan = cx => {
   const mark = rect(0, 0, 3, 3).map(([x, y]) => K(x, y));
   const grown = picks(() => aiView({ me: aiMe([[1, 1], [0, 1], [0, 0], [1, 0]], 'right', { grow: 1 }), others: [aiRival(1, line(20, 20, 4), 'right')], holes: new Set(mark), pecks: new Set(mark), strikeAt: 18, tick: 10, timeMs: FRENZY + 5000, act: 3 }), 'drab', 10);
   check('part 2: ...and never into its own tail while it grows', !grown.up, JSON.stringify(grown));
+  // ...and with a stunned rival's: its tail stays put while it's stunned (Codex's case: only my head marked, a rival of 3
+  // stunned 8 lying along the top, its tail just above my head).
+  const held = picks(() => aiView({ me: aiMe([[1, 1], [0, 1], [0, 0]], 'right'), others: [{ ...aiRival(1, [[3, 0], [2, 0], [1, 0]], 'right'), stun: 8 }], holes: new Set([K(1, 1)]), pecks: new Set([K(1, 1)]), strikeAt: 18, tick: 10, timeMs: FRENZY + 5000, act: 3 }), 'drab', 10);
+  check('...nor into a stunned rival\'s tail', !held.up, JSON.stringify(held));
 }

@@ -49,6 +49,7 @@ function fightHit(game, zone, dying, drops) {
       s.alive = false; dying.push(s);
       continue;
     }
+    s.shielded = s.shieldUntil > game.time; // (a golden apple eaten this very tick shields it too)
     const { lost, shield } = crashCost(game, s, drops);
     game.events.push({ type: 'crash', snake: s, x: s.body[0].x, y: s.body[0].y, cause: 'got pecked by the woodpecker', killer: 'wall', killerId: null, lost, ...(shield ? { shield: 1 } : {}) });
   }

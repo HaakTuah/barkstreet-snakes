@@ -92,7 +92,7 @@ window.SnakeAI = { DIRS, PERSONAS, POOL, decide, watchStyles, traitsOf, styleOf,
 // leaves), within the moves left before its strike; null if none.
 function escapeMark() {
   const left = view.strikeAt - view.tick, start = myHead.y * N + myHead.x, from = new Map([[start, null]]);
-  const occupied = (x, y, t) => [me, ...others].some(o => o.body.some((c, j) => c.x === x && c.y === y && o.body.length - j + (o === me ? Math.max(0, me.grow) : 0) > t)); // (a body's cell till its tail has passed: mine later while I grow)
+  const occupied = (x, y, t) => [me, ...others].some(o => o.body.some((c, j) => c.x === x && c.y === y && o.body.length - j + (o === me ? Math.max(0, me.grow) : stunLeft(o)) > t)); // (a body's cell till its tail has passed: mine later while I grow, a stunned rival's while it's stunned)
   let level = [start];
   for (let t = 1; t <= left && level.length; t++) {
     const next = [];
