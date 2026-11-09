@@ -37,7 +37,7 @@ const offBoard = (x, y) => x < 0 || y < 0 || x >= GRID || y >= GRID;
 const hurdleAt = (x, y) => !offBoard(x, y) && (stays[y * GRID + x] === 1 || game.holes.has(y * GRID + x) || burningAt(x, y)); // (what a leap hops)
 const wrapX = (s, v) => s.wrapUntil > game.time ? (v + GRID) % GRID : v;
 // One cell on from (x, y) heading d, as the game goes: over the edge where
-// it wraps for s, or through a gold portal open that way (into stepX, stepY).
+// it wraps for s, or through a portal open that way (into stepX, stepY).
 let stepX = 0, stepY = 0;
 function stepOn(s, x, y, d) {
   stepX = wrapX(s, x + d.x); stepY = wrapX(s, y + d.y);
@@ -87,7 +87,7 @@ function predict(s, a) {
   if (!s.alive || s.stunUntil > game.tick) return;
   const d = s.flight ? s.flight.dir : wayOf(s);
   stepOn(s, h.x, h.y, d);
-  const x = stepX, y = stepY; // (over a wrapped edge, or through a gold portal open that way)
+  const x = stepX, y = stepY; // (over a wrapped edge, or through a portal open that way)
   a.mx = x; a.my = y; a.mv = 1; a.mg = s.grow > 0 ? 1 : 0; a.mdx = d.x; a.mdy = d.y;
   if (s.flight?.over.length) return; // (in the air: on over what it hops, a cell a tick, then down where it's going)
   if (!s.flight && asksJump(s) && ringAhead(s, h, d)) { a.lr = 1; a.lx = landX; a.ly = landY; } // (where it'll come down, while the press waits: see drawLandings)

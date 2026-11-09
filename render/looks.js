@@ -435,7 +435,7 @@ function prepare(s, alpha, now, dead, impact = 0) {
   a.n = m;
   const prev = s.prev, { pts, cor } = a;
   // (A snake that's had the edges wrap this round, or may have followed
-  // through a gold portal: its body may run off one edge and on at the
+  // through a portal: its body may run off one edge and on at the
   // other, and a segment may move across one.)
   const wrapped = acrossEdges(s, a);
   let behind = s.body[n - 1]; // (dashed: where its tail was a cell back along its body, if it moved)
