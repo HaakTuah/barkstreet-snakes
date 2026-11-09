@@ -176,6 +176,9 @@ function tickLength(game) {
 // pecks, 3 the frenzy, which is sudden death.
 const actOf = (game, at = game.time) => (at >= game.acts.frenzy ? 3 : at >= game.acts.pecks ? 2 : at >= game.acts.watch ? 1 : 0);
 const suddenDeath = game => game.time >= game.acts.frenzy;
+// How many times as fast everyone's hunger clock runs: in snow (it's cold),
+// and in the frenzy (entry 6, part 3: a meal a trade-off to the end), both.
+const hungerRate = game => (game.weather.kind === 'snow' ? T.SNOW_HUNGER : 1) * (suddenDeath(game) ? T.FRENZY_HUNGER : 1);
 // Milliseconds until a snake starts starving (negative once it has).
 // (lastAte is when it ate as the clock counts it: a meal that lasts less
 // than HUNGER_MS counts as eaten that much earlier, and winter moves it on.)
@@ -191,7 +194,7 @@ const hungerLeft = (game, s) => s.lastAte + T.HUNGER_MS - game.time;
 // early then, never late. A snake of 4 in snow was once warned only 4 s
 // before it starved: #327.)
 const hungerWarning = (game, s, now = game.time) => {
-  const rate = game.weather.kind === 'snow' ? T.SNOW_HUNGER : 1, left = s.lastAte + T.HUNGER_MS - now;
+  const rate = hungerRate(game), left = s.lastAte + T.HUNGER_MS - now;
   const end = Math.max(left, s.nextStarve - now) + (s.body.length - T.MIN_LENGTH) * T.STARVE_EVERY_MS;
   return Math.min(left / T.HUNGER_WARN_MS, end / (1.5 * T.HUNGER_WARN_MS)) / rate;
 };

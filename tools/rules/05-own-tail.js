@@ -117,7 +117,8 @@ const freeHere = g => (x, y) => passHere(g)(x, y) && !g.food.some(f => f.x === x
     const t0 = g.time;
     quiet(g);
     const s = g.snakes[0];
-    return [Math.round(E.hungerLeft(g, s) + g.time - t0), Math.round(s.nextStarve - t0)]; // (as it ate: the time left, and when it starts shrinking)
+    const ran = (g.time - t0) * (E.suddenDeath(g) ? T.FRENZY_HUNGER : 1); // (the hunger clock since: faster in the frenzy)
+    return [Math.round(E.hungerLeft(g, s) + ran), Math.round(s.nextStarve - g.time + ran)]; // (as it ate: the time left, and when it starts shrinking)
   };
   const opening = meal(T.HUNGER_MID_FROM_MS - 5000), mid = meal(T.HUNGER_MID_FROM_MS + 5000), late = meal(FRENZY + 1000);
   check('a meal lasts HUNGER_MS in the opening, HUNGER_MID_MS mid-round, HUNGER_MS once the woodpecker\'s here', [opening, mid, late].map(String).join(' ') === [[T.HUNGER_MS, T.HUNGER_MS], [T.HUNGER_MID_MS, T.HUNGER_MID_MS], [T.HUNGER_MS, T.HUNGER_MS]].map(String).join(' '), JSON.stringify([opening, mid, late]));

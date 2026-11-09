@@ -202,6 +202,7 @@ window.TUNING = Object.freeze({
   RAINBOW_CHANCE: 0.5,      // when rain stops: a rainbow, with a golden apple at its end
   SNOW_APPLES: 1,           // winter, a hungry spell: one apple (rotting twice as fast), no new mushrooms, no golden apples...
   SNOW_HUNGER: 1.75,        // ...and everyone gets hungry this many times as fast (it's cold)
+  FRENZY_HUNGER: 2,         // in the woodpecker's frenzy (sudden death) everyone gets hungry this many times as fast, snow or not (entry 6, part 3: a meal a trade-off to the end)
   AFTER_STORM_RAIN: 0.6,    // a storm is often followed by rain
   STRIKE_MIN_MS: 2000,      // storm: lightning this often...
   STRIKE_MAX_MS: 4000,

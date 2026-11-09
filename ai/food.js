@@ -13,7 +13,7 @@ let myLen, winter, lifeMs, lifeTicks, desperate;
 function readDesperation() {
   myLen = me.body.length + me.grow;
   winter = view.weather === 'snow';
-  lifeMs = me.starveIn == null ? Infinity : (me.starveIn + (myLen - TUNE.MIN_LENGTH) * TUNE.STARVE_EVERY_MS) / (winter ? TUNE.SNOW_HUNGER : 1);
+  lifeMs = me.starveIn == null ? Infinity : (me.starveIn + (myLen - TUNE.MIN_LENGTH) * TUNE.STARVE_EVERY_MS) / (view.hungerRate || 1);
   lifeTicks = lifeMs / Math.max(TUNE.MIN_TICK, TUNE.START_TICK - (TUNE.START_TICK - TUNE.MIN_TICK) * view.timeMs / TUNE.RAMP_MS);
   desperate = lifeMs < TUNE.AI_DESPERATE_MS;
   memory.desperate = desperate;

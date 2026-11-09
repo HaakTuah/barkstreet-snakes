@@ -79,3 +79,18 @@ const runTo = (g, until, each = () => {}) => {
   const below = picks(turn(K(20, 14)), 'drab', 20), above = picks(turn(K(20, 10)), 'drab', 20);
   check('a rival keeps off the ground the watching woodpecker looks at', (below.up || 0) > (below.down || 0) && (above.down || 0) > (above.up || 0), `${JSON.stringify(below)} ${JSON.stringify(above)}`);
 }
+
+{ // In the frenzy everyone gets hungry FRENZY_HUNGER times as fast (part 3: a meal a trade-off to the end), the warning
+  // reading it as everyone's bar does; before it, as ever. One tick, a fed snake: how much of its meal it used up.
+  const used = from => {
+    const g = actsBoard(from), s = g.snakes[0];
+    s.lastAte = g.time; s.nextStarve = g.time + T.HUNGER_MS;
+    const before = E.hungerLeft(g, s), t0 = g.time;
+    E.step(g);
+    return (before - E.hungerLeft(g, s)) / (g.time - t0);
+  };
+  const calm = used(FRENZY - 5000), frenzy = used(FRENZY + 5000);
+  check('part 3: in the frenzy hunger runs FRENZY_HUNGER times as fast; before it, as ever', Math.abs(calm - 1) < 1e-9 && Math.abs(frenzy - T.FRENZY_HUNGER) < 1e-9, `${calm}, ${frenzy}`);
+  const warnAt = from => { const g = actsBoard(from), s = g.snakes[0]; s.lastAte = g.time - 8000; s.nextStarve = g.time + T.HUNGER_MS - 8000; return E.hungerWarning(g, s); };
+  check('...and the warning comes that much sooner by the clock on the wall', Math.abs(warnAt(FRENZY - 5000) / warnAt(FRENZY + 5000) - T.FRENZY_HUNGER) < 1e-9);
+}
