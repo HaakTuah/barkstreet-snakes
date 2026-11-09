@@ -122,7 +122,7 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
       if (e.type === 'spawn' && e.kind === 'beetle') { total.beetles++; if (e.gold) { c.goldBeetles++; seen.add('goldBeetle'); } }
       else if (e.type === 'eat' && e.kind === 'beetle') { total.caught++; per[e.snake.name].beetles++; }
       else if (e.type === 'flown') total.flown++;
-      else if (e.type === 'crash') { total.crashes++; per[e.snake.name].crashes++; if (e.cause === 'got pecked by the woodpecker') c.fightHits++; // (a fight's hit a snake lived) if (e.snake.landing) c.hopFail++; if (e.failed) c.failed++; }
+      else if (e.type === 'crash') { total.crashes++; per[e.snake.name].crashes++; if (e.cause === 'got pecked by the woodpecker') c.fightHits++; /* (a fight's hit a snake lived) */ if (e.snake.landing) c.hopFail++; if (e.failed) c.failed++; }
       else if (e.type === 'alight') total.alight++;
       else if (e.type === 'cut') { total.cuts++; if (e.by === e.snake.id) c.cutsOwn++; if (g.events.some(d => d.type === 'dash' && d.snake.id === e.by && d.plain)) c.cutsPlain++; else c.cutsGold++; }
       else if (e.type === 'baked') total.baked++;
