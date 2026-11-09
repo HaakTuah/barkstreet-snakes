@@ -72,13 +72,11 @@ the second account until its usage is spent; on the main account the brake close
   and 11), so nothing that changes play slips in; merged at once, one line per fix under this lane. Nothing is left
   half done: a fix not finished when usage ends is left unstarted, its find noted for the next session.
 
-*Next find:* the portals drawn blue and orange, as in the game Portal (the owner, 9 November 2026, #592): the entry
-blue, the exit orange, glowing ovals with a thin gold trim, every text that calls them gold portals updated (design 40,
-"Portals for the wrap"). Then look for more by playing, as "How" says.
+*Next find:* none queued; look for one by playing, as "How" says.
 
 *Done in the lane:* each fix's line is in `docs/archive/progress-done/polish-lane.md`, "The polish lane, done" (the README for
 players, any key wakes, the woodpecker bigger on a phone, the flash become the dash, the room card and Join on a phone,
-and the owner's notes of 2 November, among them).
+the owner's notes of 2 November and the portals blue and orange, among them).
 
 ## The workshop lane (splits by meaning, leftovers, the file-by-file review)
 

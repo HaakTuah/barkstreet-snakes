@@ -61,3 +61,5 @@ owner's three notes of 2 November merged as PRs #322 (the remains), #320 (the fl
   marble, so gold stays for powers alone.
 - Speech bubbles keep apart as they glide (#326, PR #565): a glide that would cross another bubble or the banner hops
   straight there; at 4× overlaps fell from 202 to 20 in two minutes on a phone (longest 0.53 s to 0.13 s), 98 to 6 on desktop.
+- The portals blue and orange, as in the game Portal (#592, PR #619): the entry a glowing blue half oval, the exit an
+  orange one, each with a thin gold trim; design 40's section is "Portals for the wrap", and the README and Field guide say so.
