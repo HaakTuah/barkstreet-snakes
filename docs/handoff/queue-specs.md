@@ -9,7 +9,9 @@ and a pointer here; this text is its spec, as the entry's own words were. When a
 
 The rules common to every project move to one public repository, `HaakTuah/agent-rules` (the name the design session
 proposed), and each project carries an exact copy of it under `core/`, pinned to one of its commits, generated and never
-edited by hand, as Amarna Letters treats its copy of its design document. What moves: the security baseline, the four
+edited by hand, as Amarna Letters treats its copy of its design document. It comes in two layers (archive, 9 November 2026): a safety floor every
+project takes whole and can never edit or leave out, and practice modules each project picks in a small manifest of its
+own; this game takes them all. What moves: the security baseline, the four
 pillars, the one inbox, keeping the owner's words, the roles and reviews, helpers, models and effort, the Git flow,
 usage, updates and "No description left untrue". What stays in each project: what it is, its rules that stand, its
 commands, its queue and whatever only it has, each rule file cut to that, with pointers into `core/`. The steps: (1) the
