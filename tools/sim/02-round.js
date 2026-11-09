@@ -60,8 +60,21 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
     for (const f of bugs) { const b = st.bugs.get(f); if (b && b.near < 0 && g.snakes.some(s => s.alive && Math.abs(s.body[0].x - f.x) + Math.abs(s.body[0].y - f.y) <= CHASE_NEAR)) b.near = g.tick; }
     const riding = new Set(g.snakes.filter(s => s.alive && !s.flight && g.holes.has(s.body[0].y * N + s.body[0].x)));
     const rings = ringsUp(g); // (2y: each jump's ring before the tick, and who could get there first)
+    const aliveBefore = g.snakes.filter(s => s.alive).length;
     const dying = E.step(g);
     landingsTaken(g, c, per, rings);
+    { // (part 2: decided by where it cut? Whose log a piece was, at its last peck's aim (most of its cells nearest that
+      // snake); then a death within 10 s of its fall: was it that snake's, against chance among those alive)
+      const w = g.woodpecker;
+      if (w?.plan && w.fall && g.events.some(e => e.type === 'aim')) {
+        const { owner } = E.regions(g), n = new Map();
+        for (const k of w.plan.piece) if (owner[k] >= 0) n.set(owner[k], (n.get(owner[k]) || 0) + 1);
+        st.cutOf = n.size ? g.snakes[[...n].sort((a, b) => b[1] - a[1])[0][0]].id : -1;
+      }
+      if (g.events.some(e => e.type === 'peck' && e.fall) && st.cutOf >= 0) st.lastFall = { id: st.cutOf, tick: g.tick };
+      if (g.events.some(e => e.type === 'peck' && e.zone)) for (const s of dying) if (s.fatal === 'pecked') c.fightHits++; // (and one that put a snake out)
+      if (st.lastFall && g.tick - st.lastFall.tick <= 100) for (const s of dying) { c.cutDeaths++; if (s.id === st.lastFall.id) c.cutVictim++; c.cutChance += 1 / Math.max(1, aliveBefore); }
+    }
     st.edge ||= g.snakes.map(() => [0, 0]); // (each snake's ticks alive, and with its head on the edge)
     for (const s of g.snakes) if (s.alive) { const h = s.body[0], on = h.x === 0 || h.y === 0 || h.x === N - 1 || h.y === N - 1; st.edge[s.id][0]++; if (on) { st.edge[s.id][1]++; c.edgeTicks++; } }
     for (const s of dying) if (/blew up/.test(s.cause || '')) c.failedGold++;
@@ -109,7 +122,7 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
       if (e.type === 'spawn' && e.kind === 'beetle') { total.beetles++; if (e.gold) { c.goldBeetles++; seen.add('goldBeetle'); } }
       else if (e.type === 'eat' && e.kind === 'beetle') { total.caught++; per[e.snake.name].beetles++; }
       else if (e.type === 'flown') total.flown++;
-      else if (e.type === 'crash') { total.crashes++; per[e.snake.name].crashes++; if (e.snake.landing) c.hopFail++; if (e.failed) c.failed++; }
+      else if (e.type === 'crash') { total.crashes++; per[e.snake.name].crashes++; if (e.cause === 'got pecked by the woodpecker') c.fightHits++; /* (a fight's hit a snake lived) */ if (e.snake.landing) c.hopFail++; if (e.failed) c.failed++; }
       else if (e.type === 'alight') total.alight++;
       else if (e.type === 'cut') { total.cuts++; if (e.by === e.snake.id) c.cutsOwn++; if (g.events.some(d => d.type === 'dash' && d.snake.id === e.by && d.plain)) c.cutsPlain++; else c.cutsGold++; }
       else if (e.type === 'baked') total.baked++;
@@ -123,7 +136,7 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
       else if (e.type === 'peck') c.pecks++;
       else if (e.type === 'aim') {
         c.aims++; if (g.woodpecker.target.some(k => nearHead(g, k))) c.aimsNear++;
-        const w = g.woodpecker; // (entry 6: its first patch, against where it looked last: is the tell kept?)
+        const w = g.woodpecker; // (entry 6: its first cut, against where it looked last: is the tell kept?)
         if (!w.pecks && w.gaze >= 0) { c.tellAims++; if (w.target.some(k => Math.abs(k % N - w.gaze % N) + Math.abs(Math.floor(k / N) - Math.floor(w.gaze / N)) <= T.GAZE_NEAR)) c.tellKept++; }
       }
       else if (e.type === 'leap') { if (e.gold) { c.goldLeaps++; per[e.snake.name].leaps++; } else { c.jumps++; per[e.snake.name].jumps++; } }
@@ -202,6 +215,7 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
   }
   total.actReached[E.actOf(g)]++; // (entry 6: the act each round ended in)
   if (E.suddenDeath(g)) { total.sudden++; c.sdTimes.push(g.time - g.acts.frenzy); c.holes += g.holes.size; }
+  if (st.bigFall) c.bigFalls.push(st.bigFall); // (part 2: the biggest piece that fell this round)
   if (st.split && alive.length === 1 && g.time < MAX_TIME) { // (the last snakes on islands of their own: did the biggest island's win?)
     const sizes = Object.entries(st.split.size), most = Math.max(...sizes.map(([, n]) => n)), top = sizes.filter(([, n]) => n === most).map(([id]) => +id);
     c.split++;

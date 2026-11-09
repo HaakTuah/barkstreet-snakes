@@ -321,13 +321,7 @@ function step(game) {
       dying.push(s);
       continue;
     }
-    s.queue.length = 0; // (a crash: whatever was pressed before it was for a board that's gone)
-    const shield = s.shielded; // (2u+: a golden apple's shield takes this crash, and is gone)
-    if (shield) s.shieldUntil = -1;
-    const lost = Math.min(lossOf(s), s.body.length - T.MIN_LENGTH);
-    for (let n = 0; n < lost; n++) { const t = s.body.pop(); drops.push({ x: t.x, y: t.y, color: s.color, owner: s.id }); }
-    s.stunUntil = game.tick + 1 + stunOf(s);
-    if (s.flashArmed > game.tick) s.flashArmed = s.stunUntil; // (a flash waiting on a jump, or on its landing: it goes when it moves again, as one pressed in a stun does)
+    const { lost, shield } = crashCost(game, s, drops);
     if ((s.landing || s.bumped) && burning(game, key(s.body[0].x, s.body[0].y))) { // (come down on fire: alight)
       if (!(s.burnUntil > game.tick)) { s.burnFrom = game.tick; game.events.push({ type: 'alight', snake: s }); }
       s.burnUntil = game.tick + T.BURN_TICKS;
@@ -358,7 +352,7 @@ function step(game) {
   singe(game, dying, drops);
 
   crawl(game);
-  peck(game, dying);
+  peck(game, dying, drops);
   fallIn(game, dying);
 
   // Dead snakes fall to beads (every other segment: see leavesBead), and
@@ -399,5 +393,5 @@ function step(game) {
 
 window.SnakeEngine = {
   GRID, PLAYER_COLOR, PERSONAS, DIRS, WEATHER,
-  createGame, step, tickMs: tickLength, hungerLeft, hungerWarning, aiView, canThinkAhead, thinkAhead, suddenDeath, actOf, leap, letGo, leapIn, flash, flashIn, stamina, staminaIn, staminaStep, seasonApples, rollSide, knockTo, knocks, beakDepth, beakGap,
+  createGame, step, tickMs: tickLength, hungerLeft, hungerWarning, aiView, canThinkAhead, thinkAhead, suddenDeath, actOf, planCut, planFits, regions, leap, letGo, leapIn, flash, flashIn, stamina, staminaIn, staminaStep, seasonApples, rollSide, knockTo, knocks, beakDepth, beakGap,
 };

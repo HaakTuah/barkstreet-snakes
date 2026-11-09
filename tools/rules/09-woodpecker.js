@@ -1,4 +1,4 @@
-// ---------------------------------------------------------------- round six A: the woodpecker plays fair
+// ---------------------------------------------------------------- round six A: the woodpecker plays fair (its knocks and rings; its outline: 30-outline-floor-fight.js)
 // A board in sudden death whose only land is `land` (cells: [x, y]) and the
 // snakes on it, each stunned for good (they stay put) and fed; more: grow.
 const CELLS = T.GRID * T.GRID;
@@ -9,88 +9,7 @@ function island(bodies, land, { grow = 0 } = {}) {
   for (const s of g.snakes) { s.stunUntil = 1e9; s.grow = grow; }
   return g;
 }
-// The woodpecker's marks, one a tick: it aims, and instead of striking, aims
-// afresh the next tick (pecks: as hungry as after that many strikes).
-function marks(g, n, pecks = 0) {
-  const out = [];
-  g.woodpecker = { x: 12, y: 0, at: g.time, target: [], strikeAt: -1, last: [], struckAt: -1, restUntil: g.tick, pecks };
-  for (let t = 0; t < n * 3 && out.length < n; t++) {
-    feed(g); quiet(g);
-    if (g.events.some(e => e.type === 'aim')) out.push(new Set(g.woodpecker.target));
-    g.woodpecker.target = []; g.woodpecker.restUntil = g.tick;
-  }
-  return out;
-}
 const rect = (x0, y0, x1, y1) => { const out = []; for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) out.push([x, y]); return out; };
-const heads = g => new Set(g.snakes.filter(s => s.alive).map(s => K(s.body[0].x, s.body[0].y)));
-
-{ // It never shuts you in while it has another patch to pick. A snake at the mouth of a winding corridor, 36 cells long and a
-  // dead end, with growth to come that needs 35 of them (so any patch in it shuts the snake in), and a field far off, joined
-  // to the corridor behind the snake's head (2s: the log is one piece), so the snake can't get there.
-  const corridor = [...rect(4, 12, 23, 12), ...rect(23, 13, 23, 20), ...rect(15, 20, 22, 20)], field = [...rect(0, 0, 11, 8), ...rect(1, 9, 1, 11)];
-  const snake = [[[3, 12], [2, 12], [1, 12], [0, 12]], 'right'];
-  const inCorridor = m => corridor.some(([x, y]) => m.has(K(x, y)));
-  const fair = seededWhile(601, () => marks(island([snake], [...corridor, ...field], { grow: 31 }), 30));
-  check('the woodpecker never shuts a snake in while it has another patch: every mark is in the field', fair.length === 30 && !fair.some(inCorridor), `${fair.filter(inCorridor).length} of ${fair.length} in the corridor`);
-  const only = seededWhile(602, () => marks(island([snake], corridor, { grow: 31 }), 10));
-  check('...and with no other, it still takes one (the old tiers)', only.length === 10 && only.every(inCorridor), `${only.length} marks`);
-}
-
-{ // No crumbs: a patch that would cut off an island of one or two cells takes it too, in the mark from the aim. A field, with a
-  // one-cell bay and a two-cell bay on its left; a snake's head just within the clearance of each (they're never part of a
-  // patch's own growth), on land of its own.
-  const field = rect(10, 6, 21, 17), bay1 = [[9, 11]], bay2 = [[9, 14], [8, 14]];
-  const a = [[[5, 11], [4, 11], [3, 11], [2, 11]], 'right'], c = [[[5, 14], [4, 14], [3, 14], [2, 14]], 'right'];
-  // (their land joined to the field round the back, 2s: the log is one piece)
-  const ways = [...rect(1, 4, 1, 19), ...rect(2, 4, 10, 4), ...rect(10, 5, 10, 5), ...rect(2, 19, 10, 19), ...rect(10, 18, 10, 18)];
-  field.push(...ways);
-  const g = island([a, c], [...field, ...bay1, ...bay2]);
-  const got = seededWhile(611, () => marks(g, 200));
-  const has = (m, cells) => cells.every(([x, y]) => m.has(K(x, y)));
-  const cut1 = got.filter(m => m.has(K(10, 11))), cut2 = got.filter(m => m.has(K(10, 14)));
-  check('a patch that cuts off a one-cell island takes it too, in the mark from the aim', cut1.length > 0 && cut1.every(m => has(m, bay1)) && !got.some(m => !m.has(K(10, 11)) && has(m, bay1)), `${cut1.length} of ${got.length} marks cut it off`);
-  check('...and a two-cell one', cut2.length > 0 && cut2.every(m => has(m, bay2)), `${cut2.length} of ${got.length} marks cut it off`);
-  // (No mark leaves an island of one or two cells beside it: the land less holes and mark, in islands.)
-  const crumbsLeft = m => {
-    let n = 0;
-    for (const k0 of m) for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) {
-      const x0 = k0 % T.GRID + dx, y0 = Math.floor(k0 / T.GRID) + dy, s0 = K(x0, y0);
-      if (x0 < 0 || y0 < 0 || x0 >= T.GRID || y0 >= T.GRID || m.has(s0) || g.holes.has(s0)) continue;
-      const isle = [s0], seen = new Set(isle);
-      for (let i = 0; i < isle.length && isle.length <= 2; i++) for (const [ex, ey] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) {
-        const x = isle[i] % T.GRID + ex, y = Math.floor(isle[i] / T.GRID) + ey, k = K(x, y);
-        if (x < 0 || y < 0 || x >= T.GRID || y >= T.GRID || m.has(k) || g.holes.has(k) || seen.has(k)) continue;
-        seen.add(k); isle.push(k);
-      }
-      if (isle.length <= 2) n++;
-    }
-    return n;
-  };
-  check('...so no mark leaves a crumb beside it', got.every(m => !crumbsLeft(m)), `${got.filter(m => crumbsLeft(m)).length} of ${got.length}`);
-  // 2s: a piece cut loose falls, and never with a head on it while there's another patch. A snake whose head is in the
-  // one-cell bay (its body out through the mouth): no mark takes the mouth (it'd drop the head with the bay). With only its
-  // tail in the bay, the bay may go: the body lies over the new hole, a bridge, and its head is out on the field.
-  const headIn = [[[9, 11], [10, 11], [11, 11], [12, 11]], 'left'];
-  const tailIn = [[[16, 11], ...Array.from({ length: 7 }, (_, i) => [15 - i, 11])], 'right'];
-  const on = seededWhile(612, () => marks(island([a, headIn, c], [...field, ...bay1, ...bay2]), 200));
-  const off = seededWhile(612, () => marks(island([a, tailIn, c], [...field, ...bay1, ...bay2]), 200));
-  check('...but never a piece with a head on it, while there\'s another patch (a tail on it, yes: it bridges the hole)', on.length === 200 && !on.some(m => m.has(K(9, 11))) && off.some(m => m.has(K(9, 11))),
-    `${on.filter(m => m.has(K(9, 11))).length} with the head on it, ${off.filter(m => m.has(K(9, 11))).length} with the tail`);
-}
-
-{ // Rounder hollows. A 3x4 field with a one-cell bay off its side: the patch grows 12 of the 13 cells, and the one it left
-  // out, with three or more sides closed (the patch, old holes or the edge), is filled in: all 13, every time.
-  const g = island([[[[20, 20], [21, 20], [22, 20], [23, 20]], 'left']], [...rect(9, 1, 11, 4), [12, 2]]);
-  const got = seededWhile(621, () => marks(g, 20));
-  check('a patch fills in a notch it left (12 grown, and the 13th filled)', got.length === 20 && got.every(m => m.size === 13 && rect(9, 1, 11, 4).every(([x, y]) => m.has(K(x, y))) && m.has(K(12, 2))), JSON.stringify(got.map(m => m.size)));
-  // A 3x3 field with a cell sticking out at the top edge, between two heads (two snakes lying down its sides, stunned): the
-  // spur (only one side in the patch: the edge and the heads are open) is dropped; the heads, with three sides closed,
-  // are never filled in. (Every first try is too near them; the heads go in only in the last, anywhere-left one.)
-  const s1 = [[[9, 0], [9, 1], [9, 2], [9, 3]], 'up'], s2 = [[[11, 0], [11, 1], [11, 2], [11, 3]], 'up'];
-  const h = island([s1, s2], [...rect(9, 1, 11, 3), [10, 0]], { grow: 100 });
-  const spurs = seededWhile(622, () => marks(h, 20)).filter(m => !m.has(K(9, 0)) && !m.has(K(11, 0)));
-  check('...drops a one-cell spur', spurs.length >= 10 && spurs.every(m => m.size === 9 && rect(9, 1, 11, 3).every(([x, y]) => m.has(K(x, y))) && !m.has(K(10, 0))), `${spurs.length} marks: ${JSON.stringify(spurs.map(m => m.size))}`);
-}
 
 { // Knocked aside: the nearest free cell outside the patch as the crow flies, then nearest the middle of the log, then the
   // first by row; null with none. A rule, never chance.

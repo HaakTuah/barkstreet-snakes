@@ -74,8 +74,10 @@ declare namespace Engine {
   interface Woodpecker {
     x: number; y: number; at: number; target: number[]; strikeAt: number; last: number[];
     struckAt: number; restUntil: number; pecks?: number;
-    /** Entry 6: the tick it came; strikes in the frenzy; act 1's look (the cell it watches, and where it looked last after; the tick that look began; looks left; when it moves on, and a look's length, ms). */
+    /** Entry 6: the tick it came; pieces fallen in the frenzy; act 1's look (the cell it watches, and where it looked last after; the tick that look began; looks left; when it moves on, and a look's length, ms). */
     came: number; fury?: number; gaze: number; lookAt: number; looks: number; lookUntil: number; unit: number;
+    /** Entry 6, part 2: its outline (the cut's cells left in peck order, the piece, the tick it began waiting or -1), and a fight's plus. (fury: pieces fallen in the frenzy.) */
+    plan?: { cut: number[]; piece: number[]; waitFrom: number }; zone?: number[];
     /** [from, to] cells; to -1: the bird eats it. */
     landings?: [number, number][];
     /** 2s: the cells of the pieces its patch cuts loose (in target too): they fall with the strike. */
@@ -104,7 +106,7 @@ declare namespace Engine {
     | { type: 'weather'; kind: string }
     | { type: 'ember'; x: number; y: number; fx: number; fy: number }
     | { type: 'woodpecker' }
-    | { type: 'peck'; x: number; y: number; cells?: number[]; under?: number[]; fall?: number[] }
+    | { type: 'peck'; x: number; y: number; cells?: number[]; under?: number[]; fall?: number[]; zone?: number[] }
     | { type: 'rot'; x: number; y: number; kind: string; color?: string }
     | { type: 'spill'; snake: Snake; x: number; y: number; leaps: number; dashes: number }
     | { type: 'starving' | 'alight' | 'singe'; snake: Snake }

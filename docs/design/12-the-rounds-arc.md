@@ -15,9 +15,9 @@ A round has a shape. Times are the round's game time (`tuning.js`):
 | 0:15 | Beetles start coming out (`BEETLE_FIRST_MS`) |
 | 0:30 | A storm may come (`STORM_FROM_MS`) |
 | 0:45 | Mid-round: a meal keeps you 12 s, not 20 (`HUNGER_MID_FROM_MS`); winter may come (`SNOW_FROM_MS`); the music picks up (`MUSIC_MID_MS`) |
-| 0:50–1:15 | **The watcher** (`ACT_WATCH_MS`): the woodpecker lands and watches the log; where it looks last, its first patch grows ("Its three acts" in `38-the-woodpecker.md`) |
-| 40–60 s on | **The first pecks** (`ACT_PECKS_MS`): a small patch now and then, while food still grows |
-| 40–60 s on | **Sudden death,** its frenzy (`ACT_FRENZY_MS`): it pecks the log away a patch at a time; nothing new grows, but the last apples fall one at a time, and beetles still come out; the sky clears and stays clear; a meal keeps you 20 s again |
+| 0:50–1:15 | **The watcher** (`ACT_WATCH_MS`): the woodpecker lands and watches the log; where it looks last, it starts cutting ("Its three acts" in `38-the-woodpecker.md`) |
+| 40–60 s on | **The first pecks** (`ACT_PECKS_MS`): it cuts a piece out of the log, a few cells a peck, while food still grows ("It cuts a shape") |
+| 35–50 s on | **Sudden death,** its frenzy (`ACT_FRENZY_MS`): it cuts faster, down to the floor, then fights ("The floor", "Then it fights"); nothing new grows, but the last apples fall one at a time, and beetles still come out; the sky clears and stays clear; a meal keeps you 20 s again |
 | 2:00 | The ticks are at their fastest |
 | Last two snakes | Only the music changes (the duel) |
 | One snake left, or none | The round is over |
@@ -25,9 +25,9 @@ A round has a shape. Times are the round's game time (`tuning.js`):
 ### Sudden death closes in
 
 **Sudden death closes in.** A round ends with the board closing in, not with long snakes waiting to starve: hunger
-bites no harder in sudden death than in the opening (`HUNGER_MS`), but **the woodpecker gets hungrier**: each rest is
-shorter than the one before and each patch a cell bigger, so the log shrinks faster and faster (`PECK_HUNGRIER`,
-`PECK_REST_MIN` and `PECK_CHUNK_MAX`: "When it comes" and "How it picks a patch" in `38-the-woodpecker.md`). Ghost,
+bites no harder in sudden death than in the opening (`HUNGER_MS`), but **the woodpecker gets hungrier**: with each piece
+that falls in its frenzy each rest is shorter and each peck a cell bigger, so the log shrinks faster, down to a floor
+where it fights ("Its three acts", "It cuts a shape", "The floor" and "Then it fights" in `38-the-woodpecker.md`). Ghost,
 which keeps its distance, eats with a normal appetite up to 18 long so it doesn't starve first, and in the endgame
 keeps the least length of the cast ("The endgame: a meal is worth the life it buys" in `39-the-rivals.md`).
 

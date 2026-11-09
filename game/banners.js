@@ -118,6 +118,8 @@ function news(dying) {
     if (e.type === 'spawn' && e.kind === 'leaf') { flashFrame('gold'); if (newsOnce('leaf')) return toast(lineFor('leaf'), 2400, 'gold'); }
     if (e.type === 'spawn' && e.kind === 'goldcap') { flashFrame('gold'); if (newsOnce('goldcap')) return toast(lineFor('goldcap'), 2400, 'gold'); }
     if (e.type === 'knock' && e.kind === 'beetle' && e.tx == null && newsFree() && once('birdBeetle')) return toast(FLAVOR.birdBeetle, 2400, 'bird', 'lesson'); // (round six B, 2m: the first beetle the bird eats, anyone's to catch)
+    if (e.type === 'peck' && theGame.woodpecker?.plan && newsFree() && once('outline')) return toast(FLAVOR.outline, 2600, 'bird', 'lesson'); // (part 2: its outline, as its first peck along one shows the rest of it nicked)
+    if (e.type === 'aim' && theGame.woodpecker?.zone && newsFree() && once('fight')) return toast(FLAVOR.fight, 2600, 'bird', 'lesson'); // (part 2: its first fight, at the floor)
     if ((e.type === 'aim' ? theGame.woodpecker?.fall?.length : e.type === 'peck' && e.fall?.length) && newsFree() && once('cutLoose')) return toast(FLAVOR.cutLoose, 2600, 'bird', 'lesson'); // (2s: the first piece cut loose, as its mark shows it, or as it falls if the banner was busy)
     if (e.type === 'spill' && newsFree() && once('spillFirst')) { flashFrame('gold'); return toast(FLAVOR.spillFirst, 2800, 'gold', 'lesson'); } // (round six B, part 6: the first spill anyone sees)
     if (e.type === 'through' && newsFree() && once('portalFollow')) return toast(FLAVOR.portalFollow, 2600, 'gold', 'lesson'); // (round six B, part 5: the first time anyone follows anyone through a gold portal)
