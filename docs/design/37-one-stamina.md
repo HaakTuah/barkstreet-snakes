@@ -37,7 +37,9 @@ bar could just recover a bit quicker."
     below);
   - neither is better or worse in aggregate: snakes that lean on the jump and snakes that lean on the dash come out
     even (the seat-split A/B), while each rival keeps its own lean and its trademark. Not yet: rivals pushed onto the
-    dash still live about 3 s less (2u and 2u+ alike), the owner's question #569;
+    dash still live about 3 s less (2u and 2u+ alike), the owner's question #569; on fresh seeds the gap is about 1 s
+    and may be noise, and no fix closed it without cutting flashing, so 2ab was stopped with no AI change (the owner,
+    9 November 2026, #574);
   - the pace stays: round length, deaths by cause and power uses a minute within noise of today; if the game slows,
     stamina comes back quicker.
 - **Golden ones stay apart.** Golden jumps and dashes are still free charges from golden food, spent before stamina,
