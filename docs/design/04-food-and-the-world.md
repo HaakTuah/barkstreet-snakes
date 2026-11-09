@@ -31,6 +31,9 @@ was tried and measured, is in `docs/archive/design-food.md`).
   the owner asked (entry 6, part 3, 31 October 2026): it buys life but costs room in a shrinking log, and neither eating
   everything nor eating nothing wins. The lesson as it starts: "Hunger runs twice as fast now: eat, but not too much. Under `HUNGER_WARN_MS` (6 s) left, the tag shows it's starving: the bar in Berry, a ring pulsing round
   the tag, and "starving" for a screen reader.
+  *To come* (the owner, 9 November 2026, #616: "Is it not good to have a bit of consistency throughout, expert?", then
+  "Yes to all, expertly!"): one hunger clock for the whole round, no longer back to 20 s once the woodpecker comes,
+  its length tuned so that in the endgame neither always nor never eating wins; entry 6, part 3.
 - **Starving is decided after eating:** a snake whose head reaches food on the tick it would starve eats instead
   (`ateTick`, in `engine/food.js` and `engine/step.js`). A mushroom doesn't save it, nor does its own bead, which it
   squashes.

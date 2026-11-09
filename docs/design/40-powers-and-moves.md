@@ -328,6 +328,10 @@ Built in part 5 of round six B (PR #202):
 - Going off an edge while wrapping opens a pair of gold portals, one on each side, trimmed in your colour. The entry
   swirls in and the exit spills out. The frame is gilded while you wrap. Gold, not blue and orange: on this board sky
   blue means jump and ember means flash.
+  *To come* (the owner, 9 November 2026, #592: "A blue and orange color scheme for the portals immediately communicates
+  to a player what it is, and gives them a chuckle."): the entry blue and the exit orange, glowing ovals as in the game
+  Portal, with a thin gold trim for the golden mushroom; their shape keeps them apart from the jump's sky blue and the
+  flash's ember. The polish lane's next find in `docs/PROGRESS.md`.
 - Others may follow you through while your body passes and for a while after (`PORTAL_MS`, 2 s). Coming out
   onto your body is a crash.
 - *Open long enough to matter:* the time a portal stays open after your tail is lengthened, step by step, until
@@ -437,6 +441,9 @@ once, four out the tick after, and a target has the second of the dotted line, a
 a body between the spitter and it is a shield. Over the edge it flies on only where the edges wrapped for the spitter as
 it left; a gold portal is a way through for snakes, not for what they spit. The spitter's own head goes over it in the
 air, as over its own lying wet.
+- **To come** (the owner, 9 November 2026, #583: "Should be improved, but I want it to mainly be something you shoot in
+  front of people, which they can avoid. So it is skill based, not just something that you have no control to avoid."):
+  it lands more between rivals and stays a shot its target can see coming and step out of; entry 3b++ in `docs/PROGRESS.md`.
 - *The rivals* (`ai/spit.js`): each line is the engine's, cell by cell and tick by tick (`spitLine`), on over the edge
   where it wraps for the spitter as they'd see it, and stopped at a hole, the edge or a body still there. Dodging: from a rival's cheek, every way it might face (straight on
   the likeliest), and from any mushroom in the air as seen a reaction time ago (2q), and from a cheek whose time has run

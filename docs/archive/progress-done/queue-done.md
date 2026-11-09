@@ -374,3 +374,15 @@ a banner after Go with a lesson and a Field guide row, sent online with the weat
 rivals. A lean season has one apple fewer, beetles half as often and meals that keep a snake 70% as long; a plentiful
 one an apple more and beetles half again as often. Starving went from 3% of deaths to 5 to 6% (15 to 18% of a lean round's). What
 it measured is in the PR; the rules are in `docs/design/04-food-and-the-world.md`, "Food seasons".
+
+### 2ab. Rivals skip the marginal dash (the owner, 7 November 2026; #569; an AI entry, right after 2u+, before part 7)
+
+Rivals pushed to dash more live about 3 s less than rivals pushed to jump more (PR #560), though each power is the more
+useful in about half the moments (design 37): the extra dashes are poor picks. Each rival learns to pass up a dash that
+does not pay, in its own style, the rules unchanged; done when that gap closes within noise, trademarks kept. Before
+part 7, whose pricing needs rivals that judge a dash well.
+
+**Stopped** (the owner, 9 November 2026, #574: "Yes to all, expertly!", to stopping it): no AI change; only the `pdash` fork mode of draft PR #572 merges, for part 7. On fresh seeds (631, 632; 1200 pairs) the gap is −1.3 s [−3.5, +1.0], under
+half of #560's. Two fixes did not move it: no plain dash when boxed (−1.1 s, and 0.4 fewer flashes a minute) and three
+times the reserve when boxed (−1.7 s). Neither price change alone differs from develop (cheaper dash −0.2 s, dearer jump
++0.3 s), and no rival stands out. The brief and the `pdash` fork mode are on draft PR #572.

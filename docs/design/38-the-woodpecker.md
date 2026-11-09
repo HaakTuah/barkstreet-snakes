@@ -112,6 +112,12 @@ them (`shutsIn`'s `until`), so it's aimed only if every head on the piece can ge
 2s. The log is the biggest piece of bark once a peck is out (`cutLoose`); any other piece it cuts loose goes into the mark
 from the aim (`w.fall`) and falls with the strike. No size is banned from falling: what ends up cut loose falls (a rules
 test proves it); it plans small (see "It cuts a shape").
+- **To come: islands that stay** (the owner, 9 November 2026, #611: "maybe not island was a bit harsh. makes jumping
+  between them never happen", then "islands should always be attached to the edges, one must be able to tell clearly
+  what will fall, and what will stay!"): a piece cut off from the rest stays, as an island, only while it is still
+  attached to the board's edge and its gap back to the log is within a jump; a piece attached to nothing falls, and
+  the mark shows it. Measured: jumps between pieces happen, and the last snakes never end each alone on an island of
+  its own. Entry 6, step 3+, in `docs/PROGRESS.md`.
 - **A head on it:** the mark shows it the whole aim; one that gets off in time lives, one still on it at the strike falls
   with it ("Down the hole!"); it's aimed only if every head on it can get off in time ("The woodpecker plays fair"). A body
   lying over it bridges the new hole, as over any peck.

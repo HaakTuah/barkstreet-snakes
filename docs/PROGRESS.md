@@ -9,8 +9,8 @@ The first open entry below is next. The older state notes (27 October 2026) are 
 
 **The main lane is 6** (round six C: the woodpecker in three acts; parts 1 and 2 done, part 3 next), the first open entry that waits on nothing (3c
 waits on 3b's Wildcard part, 3d on 3c, and 4 on 5): item 5's part 7 (one pricing
-model, built afresh) waits on 2ab, which is blocked on #574, and 2y++'s last step waits on part 7, so both are skipped
-until #574 is answered. 2i (PR #599), 2h (PR #596), 2b (PR #593), part 4 (#198,
+model, built afresh) waits on nothing now that 2ab is stopped (#574), so it is next once 6's part 3 (PR #615) merges,
+as the queue's order says; 2y++'s last step waits on part 7. 2i (PR #599), 2h (PR #596), 2b (PR #593), part 4 (#198,
 merged as it stands), 2y, 2y+, part 5, 2x, 2z, 2u, 2u+, 2q, 2y++ steps 1 to 3 (PRs #550, #588, #591), 3b+ (PR #580; its finding, that spitters come out even, is
 #583) and part 6 (PR #584) before it are done. The polish lane and the workshop lane run beside it, each claimed by a draft PR.
 
@@ -72,7 +72,9 @@ the second account until its usage is spent; on the main account the brake close
   and 11), so nothing that changes play slips in; merged at once, one line per fix under this lane. Nothing is left
   half done: a fix not finished when usage ends is left unstarted, its find noted for the next session.
 
-*Next find:* none queued; look for one by playing, as "How" says.
+*Next find:* the portals drawn blue and orange, as in the game Portal (the owner, 9 November 2026, #592): the entry
+blue, the exit orange, glowing ovals with a thin gold trim, every text that calls them gold portals updated (design 40,
+"Gold portals for the wrap"). Then look for more by playing, as "How" says.
 
 *Done in the lane:* each fix's line is in `docs/archive/progress-done/polish-lane.md`, "The polish lane, done" (the README for
 players, any key wakes, the woodpecker bigger on a phone, the flash become the dash, the room card and Join on a phone,
@@ -127,21 +129,16 @@ landing is almost never contestable. The flight stays as built for now, and no r
 4. **Measured again after 2u and part 7,** whose stamina and pricing change what a flight costs. Only if it is still
    even then does a bigger change go to the owner as a question: a longer flight, or the ring shown before take-off.
 
-### 2ab. Rivals skip the marginal dash (the owner, 7 November 2026; #569; an AI entry, right after 2u+, before part 7)
-
-Rivals pushed to dash more live about 3 s less than rivals pushed to jump more (PR #560), though each power is the more
-useful in about half the moments (design 37): the extra dashes are poor picks. Each rival learns to pass up a dash that
-does not pay, in its own style, the rules unchanged; done when that gap closes within noise, trademarks kept. Before
-part 7, whose pricing needs rivals that judge a dash well.
-
-**Blocked, waiting on the owner (#574).** On fresh seeds (631, 632; 1200 pairs) the gap is −1.3 s [−3.5, +1.0], under
-half of #560's. Two fixes did not move it: no plain dash when boxed (−1.1 s, and 0.4 fewer flashes a minute) and three
-times the reserve when boxed (−1.7 s). Neither price change alone differs from develop (cheaper dash −0.2 s, dearer jump
-+0.3 s), and no rival stands out. The brief and the `pdash` fork mode are on draft PR #572.
-
 ### 5. Round six B: the new moves (DESIGN "Round six B")
 
 The golden jump that flies, leap now, gold portals, dropped charges, the spit along the line and one pricing model for every power, each its own playable PR that the rivals use well. *Done:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195). **Next, in order:** part 4 (draft PR #198, 2r folded in; the owner answered on 1 November 2026 that the moves stay as designed and the rivals are improved until their users come out ahead: the row is in `docs/archive/progress-done/owner-answered.md`, "For the owner, answered"), then 2x (done, PR #456), then 2q (done, PR #576, part 4's both-ways test run again on its log), part 3b+ (done, PR #580: the spit flies along the line; its finding, that the spitters come out even, is #583), part 5 (done, PR #202: gold portals; its finding, that following feeds but wins no places, is #447), part 6 (done, PR #584: dropped charges; a grab's charges are worth what a leaf's are, and how far one is worth going is for part 7) and part 7 (parked on `round6b/pricing`; it also fixes the trademark measures and lifts Joker into the band, see the spec); then the teaching system (item 4). Spec: `docs/handoff/queue-specs.md`, "5. Round six B: the new moves". **When part 4 merges:** run the census on seeds 3 and 11 again (`scripts/sim.sh 200 --seed 3 --census --check`): chased beetles must still get away a third to 45% of the time (2w measured it before the flight was in; `--check` fails a census outside that band).
+
+### 3b++. The spit lands more, and stays a shot you can dodge (the owner, 9 November 2026; #583; after part 7)
+
+Between rivals 2% of spits hit a head. Make it land more as a skill shot fired in front of a snake, which the target sees
+coming and can step out of (longer reach, the spitter choosing its moment, a lead), never by a shorter warning or a
+flight too quick for 2q's reaction time. Done when spitters come out ahead both ways. Design 40, "The spit flies along
+the line".
 
 ### 2r. No hop onto a doomed island (30 October 2026; part of item 5's part 4)
 
@@ -174,7 +171,8 @@ three acts" (its draft: `docs/handoff/woodpecker-acts-draft.md`). In six playabl
 1. **Done** (PR #605): the three acts (calm, the watcher and its gaze, the first pecks, the frenzy), `?acts=`; Sovereign's
    time at home asked in #607.
 2. **Done** (PR #610): it cuts shapes along an outline, down to a floor, then fights.
-3. Hunger a conditional good to the end. 4. The food A/B (`?food=fall`),
+3. Hunger a conditional good to the end, by one hunger clock for the whole round (#616; design 04). 3+. Islands
+   that stay (#611; design 38, "The log stays one piece"). 4. The food A/B (`?food=fall`),
    chips and a bounce if the knock stays (the old study patches, `tools/dev/r6-study-tools/patch-flex*.js`, rebuilt for
    it). 5. Skeletons and trademark memorials. 6. 2h's numbers measured again.
 
