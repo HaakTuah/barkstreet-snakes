@@ -72,7 +72,9 @@ the second account until its usage is spent; on the main account the brake close
   and 11), so nothing that changes play slips in; merged at once, one line per fix under this lane. Nothing is left
   half done: a fix not finished when usage ends is left unstarted, its find noted for the next session.
 
-*Next find:* none queued; look for one by playing, as "How" says.
+*Next find:* the portals drawn blue and orange, as in the game Portal (the owner, 9 November 2026, #592): the entry
+blue, the exit orange, glowing ovals with a thin gold trim, every text that calls them gold portals updated (design 40,
+"Gold portals for the wrap"). Then look for more by playing, as "How" says.
 
 *Done in the lane:* each fix's line is in `docs/archive/progress-done/polish-lane.md`, "The polish lane, done" (the README for
 players, any key wakes, the woodpecker bigger on a phone, the flash become the dash, the room card and Join on a phone,
@@ -142,6 +144,13 @@ times the reserve when boxed (−1.7 s). Neither price change alone differs from
 ### 5. Round six B: the new moves (DESIGN "Round six B")
 
 The golden jump that flies, leap now, gold portals, dropped charges, the spit along the line and one pricing model for every power, each its own playable PR that the rivals use well. *Done:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195). **Next, in order:** part 4 (draft PR #198, 2r folded in; the owner answered on 1 November 2026 that the moves stay as designed and the rivals are improved until their users come out ahead: the row is in `docs/archive/progress-done/owner-answered.md`, "For the owner, answered"), then 2x (done, PR #456), then 2q (done, PR #576, part 4's both-ways test run again on its log), part 3b+ (done, PR #580: the spit flies along the line; its finding, that the spitters come out even, is #583), part 5 (done, PR #202: gold portals; its finding, that following feeds but wins no places, is #447), part 6 (done, PR #584: dropped charges; a grab's charges are worth what a leaf's are, and how far one is worth going is for part 7) and part 7 (parked on `round6b/pricing`; it also fixes the trademark measures and lifts Joker into the band, see the spec); then the teaching system (item 4). Spec: `docs/handoff/queue-specs.md`, "5. Round six B: the new moves". **When part 4 merges:** run the census on seeds 3 and 11 again (`scripts/sim.sh 200 --seed 3 --census --check`): chased beetles must still get away a third to 45% of the time (2w measured it before the flight was in; `--check` fails a census outside that band).
+
+### 3b++. The spit lands more, and stays a shot you can dodge (the owner, 9 November 2026; #583; after part 7)
+
+Between rivals 2% of spits hit a head. Make it land more as a skill shot fired in front of a snake, which the target sees
+coming and can step out of (longer reach, the spitter choosing its moment, a lead), never by a shorter warning or a
+flight too quick for 2q's reaction time. Done when spitters come out ahead both ways. Design 40, "The spit flies along
+the line".
 
 ### 2r. No hop onto a doomed island (30 October 2026; part of item 5's part 4)
 
