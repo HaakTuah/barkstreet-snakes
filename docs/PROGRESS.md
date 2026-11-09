@@ -97,9 +97,7 @@ and the owner's notes of 2 November, among them).
   `docs/archive/progress-done/split-lane.md`, "The split lane, done".
 - **The shared core** (archive, 5 November 2026), first among the side lanes and before the rule-file audit: the rules
   common to every project move to one repository, each project carrying a checked copy; its spec is in
-  `docs/handoff/queue-specs.md` under the same title. Steps 1 and 2 are done (core PR 5, merged 9 November): the core is
-  `HaakTuah/agent-rules` at `main`; step 3 is next, from the core's `reports/2026-11-09-first-core.md` (this game's
-  manifest, the map of the lines the core replaces, and its last section, the owner's answers).
+  `docs/handoff/queue-specs.md` under the same title. Step 3 is next.
 - **The browser suites' one ending** (#526): `tools/render-test.js` and `tools/input-test.js` end with `report.end(b)`
   like the others, once entry 2u, which holds them, merges.
 - **The rule-file audit's larger moves** (the workshop check's point 6; archive, 3 November 2026): (1)
