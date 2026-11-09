@@ -6,7 +6,7 @@ lanes, its fallback and the reviews between the two builders: `docs/claude-and-c
 `codex` is a claimed lane like any other.
 
 **The orchestrator builds nothing itself** (archive, 2 November 2026). Every lane, the item or main lane included, goes to a builder session of its
-own, with its own brief, at the builder's effort (for Claude: `CLAUDE.md`). Helpers belong to builders, never to the
+own, with its own brief, at the builder's model and effort (for Claude: `CLAUDE.md`). Helpers belong to builders, never to the
 orchestrator: a lane is never a helper of the orchestrator's. The orchestrator keeps its own context small, for what
 only it does: claims, starting and handing over sessions, merging Codex's work, and the owner's questions word for
 word. A session it starts runs at its own effort, and it never waits for one at a higher effort: the builder gives the
@@ -32,7 +32,7 @@ reviews", point 6, in `docs/claude-and-codex.md`), so a gap shows too.
   the background, the next entry from `develop`) is "How work flows" in `AGENTS.md`, points 1 and 2; the
   orchestrator's:
   1. **Bigger review fixes in a session of their own.** If a review asks for more than about an hour's work, the
-     orchestrator starts a fresh session for it with the PR, the review and nothing else, at the builder's effort (for Claude: `CLAUDE.md`); the
+     orchestrator starts a fresh session for it with the PR, the review and nothing else, at the builder's model and effort (for Claude: `CLAUDE.md`); the
      builder goes on.
   2. **Keep the cache warm.** One session per task, continued for its review fixes and its milestone while its context
      is under an hour old, rather than a fresh session reading everything again. A new task goes to whichever does the
@@ -55,8 +55,9 @@ reviews", point 6, in `docs/claude-and-codex.md`), so a gap shows too.
 
 ## The workshop check
 
-At every milestone, say in one line of the milestone PR what slows the work as the game grows, and fix what passes its
-mark: (1) how long the checks take for a docs-only and a code PR, finding out why if either grew by over a fifth since
+Once a week, at the first milestone seven days or more after the last check (not at every milestone, since milestones
+come daily and what it measures changes slowly; archive, 9 November 2026), say in one line of that milestone PR what
+slows the work as the game grows, and fix what passes its mark: (1) how long the checks take for a docs-only and a code PR, finding out why if either grew by over a fifth since
 the last check; (2) the files every session reads, each kept under its mark (both in `tools/sizes.json`), with done
 entries and answered questions moved to `docs/archive/` and a line pointing to them; (3) files that should be split by
 meaning (`AGENTS.md`, "How to work"), each in a PR of its own with behaviour proven unchanged ((2) and (3) are measured
