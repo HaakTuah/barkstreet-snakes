@@ -40,10 +40,10 @@ sudden elimination"). Each act starts at a time drawn in its window after the on
 - **The music** has a stage for each act (`audio/music.js`): the watcher adds a low, slow drone under the mid-round
   loop; the first pecks add its own drum, a quick roll of light knocks at each bar's end; the frenzy is faster (116 bpm),
   in a minor key with wood-block knocks and toms, the drum at every half bar.
-- **Measured** (seeds 3 and 11, 200 rounds each; with the outline, part 2): rounds of 217 and 221 s at the median (181 and
+- **Measured** (seeds 3 and 11, 200 rounds each; with the outline, part 2): rounds of 217 and 220 s at the median (181 and
   182 with the woodpecker at 2:00, 214 and 211 s with the acts' patches); deaths spread over the acts, calm 7 and 7%, the
   watcher 19 and 13%, the first pecks 15 and 21%, the frenzy 59 and 60% (at 2:00, about four in five came after it);
-  sealed deaths (out within 3 s of a strike) 2.3 and 2.2% of sudden death's (6.2% at 2:00, 9.1 and 6.1% with the
+  sealed deaths (out within 3 s of a strike) 2.3 and 1.7% of sudden death's (6.2% at 2:00, 9.1 and 6.1% with the
   patches).
 
 ### It cuts a shape
@@ -67,7 +67,9 @@ it never takes out half the trunk."). It never melts the log: it plans a piece a
   turn; with none it may take, it waits, and after `CUT_GIVEUP_TICKS` (100) plans elsewhere (its holes stay).
 - **The last peck cuts the piece loose** (2s's rule, "The log stays one piece"): its mark shows the piece, shaded, the
   whole aim, and it falls with the strike, food and all. Measured: about ten pieces a woodpecker round, 27 cells each; the
-  biggest in a round 51 cells at the median, 60 at most; none ever left the log in pieces.
+  biggest in a round 51 cells at the median, 60 at most; none ever left the log in pieces. Where it cuts doesn't pick
+  the loser: of deaths within 10 s of a piece falling, the snake whose log it was 42% (chance, among those alive, 41–42%);
+  the last snakes never ended on islands of their own.
 - **It may cover food:** food in the mark is knocked aside at the strike (see "It knocks food aside").
 - **The cue:** each cell its cut has still to go is nicked on the bark, a short dark slit with a pale rim
   (`render/cut.js`), so you can watch the line close round the piece; the pecked ones are pits.
@@ -93,8 +95,8 @@ At the floor, in the frenzy, it pecks at the snakes instead (`engine/fight.js`),
   the tile is a hole, food on it knocked aside.
 - **The cue:** its plus shaded red cell by cell (what the rivals keep out of), a red ring round it tightening as the strike
   nears, a tick on each arm, the tile marked as any.
-- **Measured:** a fight in 18–22% of rounds, two or three strikes in each, and hardly any hit (the rivals read the ring; a
-  person must too).
+- **Measured:** a fight in 18–22% of rounds, two or three strikes in each, each aimed into a head's path; the rivals turn
+  aside every time but about one in a hundred rounds (they read the plus; a person must too).
 
 ### The woodpecker plays fair
 
