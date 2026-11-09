@@ -7,7 +7,7 @@ when it is merged into `develop`; add the owner's new tasks where he places them
 
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
-**The main lane is 6** (round six C: the woodpecker in three acts; parts 1 and 2 done, part 3 next), the first open entry that waits on nothing (3c
+**The main lane is 6** (round six C: the woodpecker in three acts; parts 1, 2 and 3 done, part 4 next), the first open entry that waits on nothing (3c
 waits on 3b's Wildcard part, 3d on 3c, and 4 on 5): item 5's part 7 (one pricing
 model, built afresh) waits on 2ab, which is blocked on #574, and 2y++'s last step waits on part 7, so both are skipped
 until #574 is answered. 2i (PR #599), 2h (PR #596), 2b (PR #593), part 4 (#198,
@@ -174,7 +174,9 @@ three acts" (its draft: `docs/handoff/woodpecker-acts-draft.md`). In six playabl
 1. **Done** (PR #605): the three acts (calm, the watcher and its gaze, the first pecks, the frenzy), `?acts=`; Sovereign's
    time at home asked in #607.
 2. **Done** (PR #610): it cuts shapes along an outline, down to a floor, then fights.
-3. Hunger a conditional good to the end. 4. The food A/B (`?food=fall`),
+3. **Done** (PR #615): hunger a conditional good to the end, measured: 2h's weighing beats rivals that always eat and
+   rivals that never eat in the endgame, with no change needed.
+4. The food A/B (`?food=fall`),
    chips and a bounce if the knock stays (the old study patches, `tools/dev/r6-study-tools/patch-flex*.js`, rebuilt for
    it). 5. Skeletons and trademark memorials. 6. 2h's numbers measured again.
 
