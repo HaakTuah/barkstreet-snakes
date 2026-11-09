@@ -60,8 +60,20 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
     for (const f of bugs) { const b = st.bugs.get(f); if (b && b.near < 0 && g.snakes.some(s => s.alive && Math.abs(s.body[0].x - f.x) + Math.abs(s.body[0].y - f.y) <= CHASE_NEAR)) b.near = g.tick; }
     const riding = new Set(g.snakes.filter(s => s.alive && !s.flight && g.holes.has(s.body[0].y * N + s.body[0].x)));
     const rings = ringsUp(g); // (2y: each jump's ring before the tick, and who could get there first)
+    const aliveBefore = g.snakes.filter(s => s.alive).length;
     const dying = E.step(g);
     landingsTaken(g, c, per, rings);
+    { // (part 2: decided by where it cut? Whose log a piece was, at its last peck's aim (most of its cells nearest that
+      // snake); then a death within 10 s of its fall: was it that snake's, against chance among those alive)
+      const w = g.woodpecker;
+      if (w?.plan && w.fall && g.events.some(e => e.type === 'aim')) {
+        const { owner } = E.regions(g), n = new Map();
+        for (const k of w.plan.piece) if (owner[k] >= 0) n.set(owner[k], (n.get(owner[k]) || 0) + 1);
+        st.cutOf = n.size ? g.snakes[[...n].sort((a, b) => b[1] - a[1])[0][0]].id : -1;
+      }
+      if (g.events.some(e => e.type === 'peck' && e.fall) && st.cutOf >= 0) st.lastFall = { id: st.cutOf, tick: g.tick };
+      if (st.lastFall && g.tick - st.lastFall.tick <= 100) for (const s of dying) { c.cutDeaths++; if (s.id === st.lastFall.id) c.cutVictim++; c.cutChance += 1 / Math.max(1, aliveBefore); }
+    }
     st.edge ||= g.snakes.map(() => [0, 0]); // (each snake's ticks alive, and with its head on the edge)
     for (const s of g.snakes) if (s.alive) { const h = s.body[0], on = h.x === 0 || h.y === 0 || h.x === N - 1 || h.y === N - 1; st.edge[s.id][0]++; if (on) { st.edge[s.id][1]++; c.edgeTicks++; } }
     for (const s of dying) if (/blew up/.test(s.cause || '')) c.failedGold++;

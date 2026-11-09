@@ -21,7 +21,7 @@ sudden elimination"). Each act starts at a time drawn in its window after the on
   (`cutSeeds`: the edge of the most log per snake, see "It cuts a shape"). **Its gaze is a tell:** act 2's first
   outline starts within `GAZE_NEAR` (4) cells of where it looked last, while it can (measured: 86–89% of rounds).
   - **Shown on the log:** where its eye settles, a pale diamond of its attention lies over the spot, brightest at the
-    middle, its dotted rim round the cells within `GAZE_NEAR` (`render/watch.js`): where its first patch may start, and
+    middle, its dotted rim round the cells within `GAZE_NEAR` (`render/watch.js`): where its first cut may start, and
     the ground the rivals weigh. It eases in over a second at each new look, steady, under the snakes. Its head alone
     showed only a row from a side perch, or a column from a phone's ledge, while the rivals read the spot itself: the
     diamond shows anyone what they read.
@@ -40,10 +40,11 @@ sudden elimination"). Each act starts at a time drawn in its window after the on
 - **The music** has a stage for each act (`audio/music.js`): the watcher adds a low, slow drone under the mid-round
   loop; the first pecks add its own drum, a quick roll of light knocks at each bar's end; the frenzy is faster (116 bpm),
   in a minor key with wood-block knocks and toms, the drum at every half bar.
-- **Measured** (seeds 3 and 11, 200 rounds each, against the woodpecker at 2:00 before): rounds of 214 and 211 s at the
-  median (181 and 182 before); deaths spread over the acts, calm 7 and 6%, the watcher 19 and 18%, the first pecks 16
-  and 21%, the frenzy 58 and 54% (before, about four in five came after 2:00); sudden death lasts 54 and 50 s (61 before);
-  sealed deaths 9.1 and 6.1% of sudden death's (6.2% before).
+- **Measured** (seeds 3 and 11, 200 rounds each; with the outline, part 2): rounds of 217 and 221 s at the median (181 and
+  182 with the woodpecker at 2:00, 214 and 211 s with the acts' patches); deaths spread over the acts, calm 7 and 7%, the
+  watcher 19 and 13%, the first pecks 15 and 21%, the frenzy 59 and 60% (at 2:00, about four in five came after it);
+  sealed deaths (out within 3 s of a strike) 2.3 and 2.2% of sudden death's (6.2% at 2:00, 9.1 and 6.1% with the
+  patches).
 
 ### It cuts a shape
 
@@ -89,9 +90,10 @@ At the floor, in the frenzy, it pecks at the snakes instead (`engine/fight.js`),
 - **The strike:** a head on the ground in the plus takes a crash (`CRASH_LOSS` off and stunned, as any crash; a golden
   apple's shield takes it; at its smallest, out: "Pecked!"), never a fall: the tile under a head isn't taken. Otherwise
   the tile is a hole, food on it knocked aside.
-- **The cue:** a red ring round its plus, tightening as the strike nears, a tick on each arm, the tile marked as any.
-- **Measured:** the floor is reached in 16–23% of rounds, a fight's strike about one in two of those, and hardly any hit
-  (the rivals read the ring; a person must too).
+- **The cue:** its plus shaded red cell by cell (what the rivals keep out of), a red ring round it tightening as the strike
+  nears, a tick on each arm, the tile marked as any.
+- **Measured:** a fight in 18–22% of rounds, two or three strikes in each, and hardly any hit (the rivals read the ring; a
+  person must too).
 
 ### The woodpecker plays fair
 

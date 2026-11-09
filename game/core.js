@@ -134,7 +134,7 @@ const FLAVOR = {
   outline: 'It’s cutting a piece out: get off before it falls!', // (part 2: its first peck along an outline, the nicks showing the rest)
   fight: 'Little log left: now it pecks at snakes. Dodge!', // (part 2: its first fight, at the floor: a head in the ring at the strike crashes)
   youSquash: 'Your own beads feed nobody.', // (round six B: your first own bead squashed)
-  youWatched: 'The woodpecker’s watching… Mind where it looks.', // (entry 6: as it comes, its gaze a tell: its first patch grows where it looked last)
+  youWatched: 'The woodpecker’s watching… Mind where it looks.', // (entry 6: as it comes, its gaze a tell: its first cut starts where it looked last)
   youWoodpecker: 'Food in the woodpecker’s mark flies to its ring.', // (once a round, as it starts pecking, once its own banner has had its time: the one idea you can act on, in one line on a phone; that it won't shut you in if it can help it is the Field guide's)
   birdBeetle: 'The woodpecker eats beetles too.', // (round six B, 2m: the first beetle you see the bird eat, one that didn't get off its mark in time)
   spillFirst: 'A snake knocked out drops its powers. Grab them!', // (round six B, part 6: the first spill anyone sees)

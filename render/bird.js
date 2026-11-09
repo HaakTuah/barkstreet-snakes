@@ -140,7 +140,7 @@ function posture(w, tp, now) {
     // Coming in from far off, small, as act 1 starts ("kik! kik! kik!"),
     // the moment the engine has it come (w.came); then, each time it
     // moves on, a flight to its next vantage (w.lookAt), where it watches
-    // the spot (its gaze: act 2's first patch grows where it looked last).
+    // the spot (its gaze: act 2's first cut starts where it looked last).
     const msA = (tp - w.came) * ms;
     if (msA >= 0 && msA < B_ARRIVE) {
       if (!lively) { perched(to, P, 'rest'); P.alpha = clamp01(msA / 400); return; }

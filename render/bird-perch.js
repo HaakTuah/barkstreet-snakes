@@ -227,7 +227,7 @@ function perchAt(spot) {
 }
 // The cell of a patch it works on: the one nearest the patch's middle (of
 // those as near, the first by row), so it's always on the patch, round a
-// bend too. Before its first patch it rests where the engine has it come
+// bend too. Before its first peck it rests where the engine has it come
 // to, the middle of the top row (ARRIVAL_SPOT).
 function spotIn(cells) {
   let sx = 0, sy = 0, best = -1, near = Infinity;

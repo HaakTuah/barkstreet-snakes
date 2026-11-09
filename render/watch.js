@@ -1,6 +1,6 @@
 // The renderer (see render/core.js): the woodpecker's watch (entry 6, act
 // 1). Where its eye settles on the log, a pale pool of its attention lies
-// over the spot it watches, a diamond as far out as its first patch may
+// over the spot it watches, a diamond as far out as its first cut may
 // start (GAZE_NEAR cells across and down), brightest at the middle, easing in over a
 // second at each new look: the same ground the rivals read as risky
 // (aiView's gaze), so a person reads it as well as they do, whatever the
@@ -21,7 +21,7 @@ function drawWatch(now) {
   ctx.globalAlpha = k;
   ctx.fillStyle = glow;
   diamond(0); ctx.fill();
-  ctx.setLineDash([CELL * 0.18, CELL * 0.3]); ctx.lineWidth = CELL * 0.06; ctx.strokeStyle = 'rgba(255, 236, 190, 0.45)'; // (its rim: the cells its first patch may start from, as the rivals weigh them)
+  ctx.setLineDash([CELL * 0.18, CELL * 0.3]); ctx.lineWidth = CELL * 0.06; ctx.strokeStyle = 'rgba(255, 236, 190, 0.45)'; // (its rim: the cells its first cut may start from, as the rivals weigh them)
   diamond(CELL * 0.2); ctx.stroke();
   ctx.setLineDash([]);
   ctx.globalAlpha = 1;

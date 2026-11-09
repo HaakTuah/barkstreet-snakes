@@ -60,7 +60,8 @@ const cornerPlan = cx => {
 { // Fair to get off: the peck that cuts a piece loose is aimed only if every head on it can get off within its warning (less
   // FALL_REACT_TICKS); otherwise it waits, and in CUT_GIVEUP_TICKS plans elsewhere.
   const near = cornerPlan(3);
-  run(near, 2);
+  near.snakes[0].stunUntil = 0; // (free to move: up to (3, 0), its way off two moves on)
+  run(near, 1);
   check('part 2: the peck that cuts a piece loose is aimed with a head on it that can get off in time (shown, the piece shaded)', near.woodpecker.target.length > 0 && (near.woodpecker.fall || []).length >= 12);
   // (A strip two cells deep along the top, cut round below and at its right end but for (23, 0): a head at its left end
   // is 23 moves from the way off, past the warning less FALL_REACT_TICKS.)

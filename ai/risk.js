@@ -72,8 +72,8 @@ function readRisk() {
       }
     }
   });
-  // The woodpecker watching a spot (entry 6, act 1): its first patch will
-  // grow there, so it's ground I'd rather not linger in, the nearer its
+  // The woodpecker watching a spot (entry 6, act 1): its first cut will
+  // start there, so it's ground I'd rather not linger in, the nearer its
   // middle the more (as a person reads its gaze).
   // The piece the woodpecker's outline cuts round (part 2): ground to get
   // off before it falls, as a person sees its dotted cut close.

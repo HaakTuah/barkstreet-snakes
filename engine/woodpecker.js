@@ -36,7 +36,7 @@ function beakDepth(target, isHole) {
 // The woodpecker, in three acts (entry 6; see actOf). Act 1, the watcher:
 // it lands outside the board and scouts it, no pecks: a look at a spot on
 // the log (w.gaze), then 2 to 4 more from new vantage points (WATCH_LOOKS),
-// the last the longest (WATCH_LAST); act 2's first patch grows from where it
+// the last the longest (WATCH_LAST); act 2's first cut starts from where it
 // looked last (GAZE_NEAR, see planCut), so its gaze is a tell. Act 2, the
 // first pecks: now and then (FIRST_REST_TICKS) a few cells of its outline (CUT_STEP_2, engine/outline.js).
 // Act 3, the frenzy, sudden death: it cuts faster, hungrier with each

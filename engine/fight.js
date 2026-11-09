@@ -48,12 +48,7 @@ function fightHit(game, zone, dying, drops) {
       s.alive = false; dying.push(s);
       continue;
     }
-    const shield = s.shielded;
-    if (shield) s.shieldUntil = -1;
-    const lost = Math.min(lossOf(s), s.body.length - T.MIN_LENGTH);
-    for (let n = 0; n < lost; n++) { const t = s.body.pop(); drops.push({ x: t.x, y: t.y, color: s.color, owner: s.id }); }
-    s.stunUntil = game.tick + 1 + T.STUN_TICKS;
-    s.queue.length = 0;
+    const { lost, shield } = crashCost(game, s, drops);
     game.events.push({ type: 'crash', snake: s, x: s.body[0].x, y: s.body[0].y, cause: 'got pecked by the woodpecker', killer: 'wall', killerId: null, lost, ...(shield ? { shield: 1 } : {}) });
   }
   return hit;

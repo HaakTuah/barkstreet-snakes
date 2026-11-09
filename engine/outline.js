@@ -92,29 +92,10 @@ function growPiece(game, owner, r, seed, size) {
 // of PECK_NO_ORPHANS or fewer it adds to `inP` (they go with the piece);
 // a bigger second piece: false.
 function oneTrunk(game, inP, cut) {
-  pieceOf.fill(-1);
-  const sizes = [];
-  for (let k0 = 0; k0 < CELLS; k0++) {
-    if (pieceOf[k0] >= 0 || game.holes.has(k0) || inP.has(k0) || cut.has(k0)) continue;
-    const id = sizes.length;
-    pieceOf[k0] = id; pieceQ[0] = k0;
-    let read = 0, write = 1;
-    while (read < write) {
-      const i = pieceQ[read++], x = i % GRID, y = (i - x) / GRID;
-      for (const d of CRAWL) {
-        const nx = x + d.x, ny = y + d.y;
-        if (!inside(nx, ny)) continue;
-        const ni = key(nx, ny);
-        if (pieceOf[ni] >= 0 || game.holes.has(ni) || inP.has(ni) || cut.has(ni)) continue;
-        pieceOf[ni] = id; pieceQ[write++] = ni;
-      }
-    }
-    sizes.push(write);
-  }
-  if (sizes.length < 2) return true;
-  const trunk = sizes.indexOf(Math.max(...sizes));
-  for (let i = 0; i < sizes.length; i++) if (i !== trunk && sizes[i] > T.PECK_NO_ORPHANS) return false;
-  for (let k = 0; k < CELLS; k++) if (pieceOf[k] >= 0 && pieceOf[k] !== trunk) inP.add(k);
+  const fall = cutLoose(game, new Set([...inP, ...cut])), sizes = new Map();
+  for (const k of fall) sizes.set(pieceOf[k], (sizes.get(pieceOf[k]) || 0) + 1);
+  for (const n of sizes.values()) if (n > T.PECK_NO_ORPHANS) return false;
+  for (const k of fall) inP.add(k);
   return true;
 }
 // Where a cut may start in region r: its cells on the board's edge or an

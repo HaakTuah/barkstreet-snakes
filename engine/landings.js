@@ -3,7 +3,8 @@
 // as a snake really has it (see timedRoom). room.now: each snake's room
 // without the patch, worked out the first time it's asked. until: moves
 // a snake may still cross the patch's cells (entry 6: the severing peck's
-// warning, to get off a piece it cuts loose); 0, never.
+// warning, to get off a piece it cuts loose, less any stun the snake has
+// left); 0, never.
 const SHUT = 1 << 30;
 const openAt = new Int32Array(CELLS), roomSeen = new Int32Array(CELLS), roomQ = new Int32Array(CELLS);
 let roomStamp = 0;
@@ -19,7 +20,7 @@ function shutsIn(game, patch, room, until = 0) {
     if (!s.alive) continue;
     const need = roomNeed(s);
     if (room.now.get(s) < need) continue; // (shut in already: not the patch's doing)
-    if (timedRoom(game, s, set, need, until) < need) return true;
+    if (timedRoom(game, s, set, need, Math.max(0, until - Math.max(0, s.stunUntil - game.tick))) < need) return true; // (a stunned head gets off that much later)
   }
   return false;
 }
