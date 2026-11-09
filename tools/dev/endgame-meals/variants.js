@@ -8,8 +8,8 @@
 //   node tools/abtest.js . <copy> --head-to-head --seed 81 --seed 83 --metrics side,deaths
 //
 // always: in the endgame (the frenzy, act 3) a meal counts in full, however
-// long the snake is (no length worth keeping). never: in the endgame food is
-// worth nothing, starving or not.
+// long the snake is (the length worth keeping still prices a planned tail
+// drop, as in 2h). never: in the endgame food is worth nothing, starving or not.
 const fs = require('fs'), path = require('path');
 const [dir, which] = process.argv.slice(2);
 const file = path.join(dir || '', 'ai/food.js');
@@ -18,7 +18,10 @@ if (!dir || !['always', 'never'].includes(which) || !fs.existsSync(file)) {
   process.exit(1);
 }
 const EDITS = {
-  always: [['keepLen = endgame ? TUNE.MIN_LENGTH + (w.keep ?? KEEP) :', 'keepLen = endgame ? Infinity :']],
+  always: [
+    ['growShare = myLen < keepLen ? 1 :', 'growShare = endgame || myLen < keepLen ? 1 :'],
+    ['ateAt > -HOLE && len >= keepLen ?', 'ateAt > -HOLE && !endgame && len >= keepLen ?'],
+  ],
   never: [['eatW = desperate ? Math.max(600, eatW0) : eatW0;', 'eatW = desperate ? Math.max(600, eatW0) : eatW0;\n  if (endgame) foodW0 = eatW0 = foodW = eatW = 0;']],
 };
 let src = fs.readFileSync(file, 'utf8');
