@@ -55,8 +55,9 @@ reviews", point 6, in `docs/claude-and-codex.md`), so a gap shows too.
 
 ## The workshop check
 
-At every milestone, say in one line of the milestone PR what slows the work as the game grows, and fix what passes its
-mark: (1) how long the checks take for a docs-only and a code PR, finding out why if either grew by over a fifth since
+Once a week, at the first milestone seven days or more after the last check (not at every milestone, since milestones
+come daily and what it measures changes slowly; archive, 9 November 2026), say in one line of that milestone PR what
+slows the work as the game grows, and fix what passes its mark: (1) how long the checks take for a docs-only and a code PR, finding out why if either grew by over a fifth since
 the last check; (2) the files every session reads, each kept under its mark (both in `tools/sizes.json`), with done
 entries and answered questions moved to `docs/archive/` and a line pointing to them; (3) files that should be split by
 meaning (`AGENTS.md`, "How to work"), each in a PR of its own with behaviour proven unchanged ((2) and (3) are measured
