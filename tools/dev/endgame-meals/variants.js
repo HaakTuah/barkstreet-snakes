@@ -9,7 +9,9 @@
 //
 // always: in the endgame (the frenzy, act 3) a meal counts in full, however
 // long the snake is (the length worth keeping still prices a planned tail
-// drop, as in 2h). never: in the endgame food is worth nothing, starving or not.
+// drop, as in 2h). never: in the endgame nothing is worth eating,
+// starving or not (a mushroom still worth keeping away from; the weights that
+// scale every other gain kept).
 const fs = require('fs'), path = require('path');
 const [dir, which] = process.argv.slice(2);
 const file = path.join(dir || '', 'ai/food.js');
@@ -22,7 +24,10 @@ const EDITS = {
     ['growShare = myLen < keepLen ? 1 :', 'growShare = endgame || myLen < keepLen ? 1 :'],
     ['ateAt > -HOLE && len >= keepLen ?', 'ateAt > -HOLE && !endgame && len >= keepLen ?'],
   ],
-  never: [['eatW = desperate ? Math.max(600, eatW0) : eatW0;', 'eatW = desperate ? Math.max(600, eatW0) : eatW0;\n  if (endgame) foodW0 = eatW0 = foodW = eatW = 0;']],
+  never: [
+    ["if (f.kind === 'beetle' && bugCount < BUGS) {", "if (endgame && f.kind === 'beetle') continue;\n    if (f.kind === 'beetle' && bugCount < BUGS) {"],
+    ['    if (!v) continue;', '    if (!v || endgame && v > 0) continue;'],
+  ],
 };
 let src = fs.readFileSync(file, 'utf8');
 for (const [from, to] of EDITS[which]) {
