@@ -23,7 +23,9 @@ for s in "${suites[@]}"; do
     { node core/scripts/copies.mjs tools/copies.json && node core/scripts/pointers.mjs && node core/scripts/reading-size.mjs tools/sizes.json; } >"$log" 2>&1; rc=$?
   elif [ "$s" = versions ]; then # (offline: each entry of tools/versions.json finds exactly one version in its file, by the core's own reading)
     node --input-type=module -e 'import fs from "node:fs"; import { current } from "./core/scripts/versions.mjs";
-      for (const e of current(JSON.parse(fs.readFileSync("tools/versions.json", "utf8")).entries, ".")) console.log(`ok   ${e.name} ${e.version} in ${e.file}`);' >"$log" 2>&1; rc=$?
+      const found = current(JSON.parse(fs.readFileSync("tools/versions.json", "utf8")).entries, ".");
+      if (!found.length) throw new Error("tools/versions.json lists no versions");
+      for (const e of found) console.log(`ok   ${e.name} ${e.version} in ${e.file}`);' >"$log" 2>&1; rc=$?
   else node "tools/$s-test.js" >"$log" 2>&1; rc=$?; fi
   t=$(( $(date +%s) - start ))
   if [ $rc -eq 0 ]; then echo "PASS $s (${t}s)"; else
