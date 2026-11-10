@@ -61,3 +61,17 @@ owner's three notes of 2 November merged as PRs #322 (the remains), #320 (the fl
   marble, so gold stays for powers alone.
 - Speech bubbles keep apart as they glide (#326, PR #565): a glide that would cross another bubble or the banner hops
   straight there; at 4× overlaps fell from 202 to 20 in two minutes on a phone (longest 0.53 s to 0.13 s), 98 to 6 on desktop.
+
+## The slop audit, done so far
+
+*Done so far* (3 November 2026), one line a merge:
+- Capricious, Metagamer and Star: the "X! I love X!" template, the colon log lines and "in my day" thinned (PR #438).
+- Sovereign, Colonist and Desperado: "royal X", "I say", "partner" and "Yeehaw" thinned; the two posh voices apart (PR #439).
+- Ouroboros, Joker and Sniper: "again", knock-knock and "Target X" thinned; Sniper's "whoppertunity" kept (PR #441).
+- Creeper, Gobbler, Vulture and Mute: light touches where each repeated itself (PR #442).
+- The banners and cards: the deflating tag ("X. For now.") and the repeated jokes gone (PR #443).
+- The lessons and the Field guide: terse lessons and subjectless rows read straight, rules unchanged (PR #445).
+- The guard: the chatter suite fails a voice with more than four lines of one shape (PR #448).
+- The menus: the start card's trailer-shaped intro, the nap card's cliché, the repeated friends joke and errors that didn't say what went wrong (PR #558).
+- The news lines: the repeated "no longer", semicolon lists, "islands" and a stray "Leap now!" gone, the top line left to the milestone (PR #561).
+- The README's player text: run-ons with piled brackets, "So …" summaries and one phrase four times, facts unchanged (PR #562).
