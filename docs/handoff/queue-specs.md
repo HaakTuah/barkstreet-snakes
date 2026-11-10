@@ -35,7 +35,10 @@ reports in this order: `reports/2026-11-09-first-core.md` (this game's manifest,
 replaces, the owner's answers), `reports/2026-11-09-shared-scripts.md` and `reports/2026-11-10-before-step-3.md` ("What
 each game changes at step 3", and the fragments its dry run found that whole-line cuts leave behind, each with its
 rewrite), then `reports/2026-11-10-lean-pass.md` ("What each game changes at step 3": where a cut line's home in the core
-moved). Its workflows need the owner's yes in its PR. No session writes to more than one repository:
+moved). Its workflows need the owner's yes in its PR. Step 3 also drops `develop` (core archive 113, core PR 37): a
+last `develop` -> `main` PR, then every open PR retargeted to `main`, and this game's rule files, workflows, previews
+and `.claude/settings.json` changed from `develop` to `main`; once it merges, the owner sets `main`'s rules on GitHub
+and deletes `develop`. No session writes to more than one repository:
 the core's own session writes the core, and each project's builders read it and write only their own. Then the rule-file
 audit runs once on the core and once on each project's own rules (archive, 5 November 2026). The same in Amarna Letters.
 
