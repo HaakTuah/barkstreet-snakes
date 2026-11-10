@@ -21,6 +21,6 @@ game. [...] Like why would I not want the latest version?"
   moment between rounds. A file that didn't come (offline, or slow past 5 s): not now, again in a minute. Storage
   blocked outright (all cookies blocked) never stops the game: nothing is kept, and it plays. The worker keeps no
   copy of the look at `version.js`, so the offline copy's `version.js` always matches its other files.
-- **What changed.** `version.js` keeps one line per milestone, newest first, written with the milestone. After an
+- **What changed.** `version.js` keeps one line per change a player would notice, newest first, written by the PR that makes it, since every merge goes live. After an
   update, a returning player's start card shows "New: …" in place of its intro line (the same length, so the card keeps its size on the smallest phone) for three rounds started from a card
   (a nap doesn't count), then it goes (`snake-news` in localStorage). A first visit shows none: everything is new.

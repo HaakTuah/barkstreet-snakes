@@ -18,8 +18,8 @@ these whole at the start of every task (Claude Code imports them; Codex: read ea
 @core/modules/git.md
 
 The other modules are read when a task needs them, each saying when, among them `core/floor/topics.md` and
-`core/modules/game-design.md`. Safety rules of this game's own, which "Principles over rules" (`core/modules/how-to-work.md`) never reaches: the
-storage keys (`SECURITY.md`, rule 7).
+`core/modules/game-design.md`. Safety rules of this game's own, which "Principles over rules"
+(`core/modules/how-to-work.md`) never reaches: the storage keys (`SECURITY.md`, rule 7).
 
 ## Where things are
 

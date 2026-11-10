@@ -4,7 +4,7 @@ How the game teaches: the one-time lessons and how they're chosen and spaced, th
 round's news (its levels, its hold and queue, its place and its words), the Field guide and its doors, the first seconds
 of a round, and the plan to teach by showing rather than telling, as the third pass, round four, round six A and B and
 "Teaching by showing" settled them (their text, with what was measured, is in `docs/archive/design-teaching.md`).
-Every new rule comes with a visible cue, a one-time lesson and a Field guide row ("Rules that stand" in `AGENTS.md`).
+Every new rule comes with a visible cue, a one-time lesson and a Field guide row ("No rule untaught" in `core/modules/game-design.md`, by this game's `core-manifest.md`).
 Elsewhere: each move's, food's and danger's own lesson and Field guide row (`40-powers-and-moves.md`, `41-crashes.md`,
 `04-food-and-the-world.md`, `38-the-woodpecker.md`); the page round the banner and the cards (`31-phones.md`,
 `33-one-screen.md`); a rival's note asked for from its tag ("A rival's note" in `43-the-start-card-and-records.md`);
