@@ -6,7 +6,8 @@
 # The same script can be pasted into a cloud environment's "Setup script" field: it works from the repository this
 # script is in, or, pasted there, the folder it runs in.
 here=$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")/.." 2>/dev/null && pwd); [ -f "$here/tools/package-lock.json" ] || here=$PWD
-# Node: the core's scripts/node.sh, as main holds it, as this script itself runs (floor rule 3).
+# Node: the core's scripts/node.sh, as main holds it, as this script itself runs (floor rule 3); it reads the pin from
+# core/.node-version here, and installs only a version main's copy holds checksums for.
 if node_sh=$(git -C "$here" --no-replace-objects show refs/remotes/origin/main:core/scripts/node.sh 2>/dev/null); then
   (cd "$here" && bash -c "$node_sh"); hash -r
 else echo "NOT INSTALLED: Node (no core/scripts/node.sh on refs/remotes/origin/main: fetch main)"; fi
