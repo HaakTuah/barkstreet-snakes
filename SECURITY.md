@@ -9,8 +9,8 @@ floor's numbers, what only this game has and what the floor leaves to it; who mi
 3. **The protected files:** the trusted builder is Claude's builder sessions (`core/modules/roles.md`). The files:
    - **what runs by itself or with credentials:** besides what the floor names, `scripts/cloud-setup.sh` and
      `docs/pr-pictures.md` (the pushes of PR pictures);
-   - **the rule files:** besides those the floor names, `docs/claude-and-codex.md`, `docs/review-guidelines.md` and
-     `docs/threat-model.md`;
+   - **the rule files:** besides those the floor names, `docs/claude-and-codex.md`, `docs/review-guidelines.md`,
+     `docs/slop-bar.md` and `docs/threat-model.md`;
    - **the checks on the work:** the configs of the core's copies, reading-size and licence checks
      (`tools/copies.json`, `tools/copies-baseline.json`, `tools/sizes.json` and `tools/licence-check.json`).
 5. **Untrusted input, and its checks:**
