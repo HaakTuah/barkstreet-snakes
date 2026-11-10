@@ -1,18 +1,19 @@
 # Progress
 
-What is done and what comes next, in order (how to work through it: `AGENTS.md`). Mark an item done here, with its PR,
-when it is merged into `main`; add the owner's new tasks where he places them, with his words quoted.
+What is done and what comes next, in order (how to work through it: `AGENTS.md`). When an entry merges into `main`, move it to
+`docs/archive/progress-done/queue-done.md` with its PR; add the owner's new tasks where he places them, with a pointer
+to his words in the archive.
 
 ## State
 
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
-**The main lane is 6** (round six C: the woodpecker in three acts; parts 1 and 2 done, part 3 next), the first open entry that waits on nothing (3c
-waits on 3b's Wildcard part, 3d on 3c, and 4 on 5): item 5's part 7 (one pricing
-model, built afresh) waits on nothing now that 2ab is stopped (#574), so it is next once 6's part 3 (PR #615) merges,
-as the queue's order says; 2y++'s last step waits on part 7. 2i (PR #599), 2h (PR #596), 2b (PR #593), part 4 (#198,
-merged as it stands), 2y, 2y+, part 5, 2x, 2z, 2u, 2u+, 2q, 2y++ steps 1 to 3 (PRs #550, #588, #591), 3b+ (PR #580; its finding, that spitters come out even, is
-#583) and part 6 (PR #584) before it are done. The polish lane and the workshop lane run beside it, each claimed by a draft PR.
+**The main lane is 6** (round six C: the woodpecker in three acts; parts 1 and 2 done, part 3 next, PR #615), the first
+open entry that waits on nothing (3c waits on 3b's Wildcard part, 3d on 3c, and 4 on 5). Item 5's part 7 (one pricing
+model, built afresh) is next once 6's part 3 (PR #615) merges, as the queue's order says; 2y++'s last step waits on part
+7. The entries before
+these are done (`docs/archive/progress-done/queue-done.md`). The polish lane and the workshop lane run beside it, each
+claimed by a draft PR.
 
 ## For the owner
 
@@ -29,36 +30,10 @@ we add a polish point to each that it can spend the last credits on also?" and, 
 "Yes, and make things as refined as possible!"). Taken when the main lane's current entry is merged or parked, and on
 the second account until its usage is spent; on the main account the brake closes it first (from about 85%).
 - **First: the slop audit** (the owner, 2 November 2026: "Are these 2 games ai sloppy?", then "Yes, please,
-  expertly!"). Everything a player reads, checked by fresh eyes for the tells of machine-written text, before the
-  writing pass at the end, which still comes:
-  1. **Scope:** every voice's chatter, impressions, moments and talk (`chatter/`), each rival's blurb, the lessons, the
-     Field guide, banners, cards, menus, the news lines and the README's player text.
-  2. **A fresh-eyes reviewer** (a helper given only the text and this brief, Opus at high effort) reads each voice or
-     screen whole and lists its worst lines, each with the tell: one sentence shape filled in again and again (as in
-     Capricious's "Sunshine! I love sunshine! Today." and its siblings), filler and hedging, clichés, every line
-     exclaimed, two voices that sound alike, the same joke twice, lines too long to read in play.
-  3. **The builder rewrites them** in each character's own voice, keeping every trademark and line count's purpose;
-     the PR shows ten lines before and after, so the owner can set the bar.
-  4. **A cheap guard after:** a test that fails when too many lines in one voice share one shape (the same opening
-     words and punctuation), so the formula cannot creep back.
-  Each kind of text is reviewed as every review is (`core/modules/reviews.md`); here a 10 means
-  nothing reads machine-made, every voice is its own and no formula repeats. The owner's read of the ten lines before
-  and after is the final word. One PR per voice group or screen, in this lane.
-  *Done so far* (3 November 2026), one line a merge:
-  - Capricious, Metagamer and Star: the "X! I love X!" template, the colon log lines and "in my day" thinned (PR #438).
-  - Sovereign, Colonist and Desperado: "royal X", "I say", "partner" and "Yeehaw" thinned; the two posh voices apart (PR #439).
-  - Ouroboros, Joker and Sniper: "again", knock-knock and "Target X" thinned; Sniper's "whoppertunity" kept (PR #441).
-  - Creeper, Gobbler, Vulture and Mute: light touches where each repeated itself (PR #442).
-  - The banners and cards: the deflating tag ("X. For now.") and the repeated jokes gone (PR #443).
-  - The lessons and the Field guide: terse lessons and subjectless rows read straight, rules unchanged (PR #445).
-  - The guard: the chatter suite fails a voice with more than four lines of one shape (PR #448).
-  - The menus: the start card's trailer-shaped intro, the nap card's cliché, the repeated friends joke and errors that didn't say what went wrong (PR #558).
-  - The news lines: the repeated "no longer", semicolon lists, "islands" and a stray "Leap now!" gone, the top line left to the milestone (PR #561).
-  - The README's player text: run-ons with piled brackets, "So …" summaries and one phrase four times, facts unchanged (PR #562).
-  *Next on resume:* the guide's Burrows, Jump, Cuts and Golden beetle rows, once 2u+ and 2aa merge.
-  *Left:* the guide's Burrows, Jump, Cuts and Golden beetle rows
-  and one name for each thing (hole, pit or gap; jump, hop or leap; the rings), once part 5 (#202) merges. Wildcard's
-  and Mason's protected lines stay as they are; the Chinese is rewritten with each changed line.
+  expertly!"): its bar and method are in `docs/slop-bar.md`; the lines it has fixed so far, in
+  `docs/archive/progress-done/polish-lane.md`, "The slop audit, done so far". *Left:* the guide's Burrows, Jump, Cuts
+  and Golden beetle rows, and one name for each thing (hole, pit or gap; jump, hop or leap; the rings). Wildcard's and
+  Mason's protected lines stay as they are; the Chinese is rewritten with each changed line.
 - **What belongs:** whatever makes the game feel finished without changing how it plays: things drawn wrong, out of
   place, overlapping, flickering or cut off; the same thing drawn, named or worded differently in two places (a
   rival's colours, a move's name in the lesson and the Field guide); layout at 390 px and desktop, phone held upright and
@@ -69,8 +44,8 @@ the second account until its usage is spent; on the main account the brake close
 - **How:** look for them by playing the live build, on a phone-sized screen and on desktop, through every screen, a
   lesson, an online lobby, and whole rounds watched at top speed; each find is its own small PR (about half an hour),
   with a before-and-after picture on `pr-media`, the suites green and the simulation's fingerprints unchanged (seeds 3
-  and 11), so nothing that changes play slips in; merged at once, one line per fix under this lane. Nothing is left
-  half done: a fix not finished when usage ends is left unstarted, its find noted for the next session.
+  and 11), so nothing that changes play slips in; merged once reviewed, one line per fix under this lane. A fix not finished when usage ends is left as the brake says
+  (`core/modules/claude.md`), its find noted for the next session.
 
 *Next find:* the portals drawn blue and orange, as in the game Portal (the owner, 9 November 2026, #592): the entry
 blue, the exit orange, glowing ovals with a thin gold trim, every text that calls them gold portals updated (design 40,
@@ -82,27 +57,16 @@ and the owner's notes of 2 November, among them).
 
 ## The workshop lane (splits by meaning, leftovers, the file-by-file review)
 
-- **The old copy, removed** (archive, 3 November 2026): `tools/copies-baseline.json` lists one, the same probe of the
-  page's header in `tools/layout/01-probes.js` and `tools/ui/03-header-over-the-board.js`; one shared helper, and the
-  entry dropped.
-
 *Done in the lane:* each line is in `docs/archive/workshop-lane-done.md`.
 
 - **The file-by-file review** (the owner, 2 November 2026; part 1, the docs every session reads, done in PR #334;
-  part 2, `docs/design/`, PR #335; part 3, the code, draft PR #337): its spec is in
+  part 2, `docs/design/`, PR #335; part 3, the code, PR #337): its spec is in
   `docs/handoff/queue-specs.md` under the same title.
-- *Done:* `audio.js` and `chatter/zh.js` split (PRs #225, #226), the chatter split by meaning (PR #318), the workshop
-  check's point (2) (this file 10 KB, `AGENTS.md` 20 KB, 2 November; condensed again from 23.6 to 19.8 KB, PR #360)
-  and point (5), the unused-code check (PR #331):
-  `docs/archive/progress-done/split-lane.md`, "The split lane, done".
 - **The shared core** (archive, 5 November 2026): the rules common to every project live in one repository, each
   project carrying a checked copy (here `core/`); its spec is in `docs/handoff/queue-specs.md` under the same title.
   Step 3 is done (#636, #637).
 - **The browser suites' one ending** (#526): `tools/render-test.js` and `tools/input-test.js` end with `report.end(b)`
-  like the others, once entry 2u, which holds them, merges.
-- **The rule-file audit's larger moves** (the workshop check's point 6; archive, 3 November 2026): the slop
-  bar a home of its own, since `core-manifest.md`'s *slop bar* points to the slop audit's entry in this file, which
-  moves to the archive when done.
+  like the others.
 - **Waiting for a gap, a split by meaning:** `render/world.js` (40 KB), the file-by-file review's last part, in a PR
   of its own when no open lane touches it, proven by fingerprints and suites.
 
@@ -183,7 +147,7 @@ As planned: up to 4 players, key sets, gamepads, and local and online play toget
 
 Two beetles that meet fight a shoving match, and a snake that gets there in time can catch them while they do; last of the rules, before the writing pass. Spec: `docs/handoff/queue-specs.md`, "8. Near the end: beetles who meet, fight".
 
-### 9. At the very end: the writing pass (the owner, 31 October 2026; Fable, its newest version, after everything else, entry 8 included)
+### 9. At the very end: the writing pass (the owner, 31 October 2026; Fable, after everything else, entry 8 included)
 
 Every rival's lines given a make-over, Fable holding the creative control (voice guides, samples, spot-checks) and Opus writing the bulk, outside what the owner protects: his own lines, the lines he likes, and the gags (Mason's bad Latin, "vidi vici veni"). After everything else, so it covers every line the queue adds. Spec: `docs/handoff/queue-specs.md`, "9. At the very end: the writing pass".
 
