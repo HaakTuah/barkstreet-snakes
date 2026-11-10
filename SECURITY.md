@@ -7,15 +7,12 @@ floor's numbers, what only this game has and what the floor leaves to it; who mi
 ## What this game adds
 
 3. **The protected files:** the trusted builder is Claude's builder sessions (`core/modules/roles.md`). The files:
-   - **what runs by itself or with credentials:** `.github/`, `.claude/`, `scripts/cloud-setup.sh`, and
+   - **what runs by itself or with credentials:** besides what the floor names, `scripts/cloud-setup.sh` and
      `docs/pr-pictures.md` (the pushes of PR pictures);
-   - **the rule files:** `AGENTS.md`, `CLAUDE.md`, `core-manifest.md`, `docs/claude-and-codex.md`,
-     `docs/review-guidelines.md`, `docs/threat-model.md` and this file; with the copy of the core, `core/`, as the floor
-     names it;
-   - **the checks on the work:** the copies check (`core/scripts/copies.mjs` with `tools/copies.json` and
-     `tools/copies-baseline.json`), the pointer and reading-size checks (`tools/pointers-test.js`,
-     `tools/sizes-test.js`, `tools/sizes.json` and `tools/rule-files.js`), and the licence check's config
-     (`tools/licence-check.json`).
+   - **the rule files:** besides those the floor names, `docs/claude-and-codex.md`, `docs/review-guidelines.md` and
+     `docs/threat-model.md`;
+   - **the checks on the work:** the configs of the core's copies, reading-size and licence checks
+     (`tools/copies.json`, `tools/copies-baseline.json`, `tools/sizes.json` and `tools/licence-check.json`).
 5. **Untrusted input, and its checks:**
    - **Online peers** (PeerJS, `net.js` and `online.js`): anyone with a room code. Their checks: each
      message's pinned shape (`tools/online-test.js`, `tools/protocol-shapes.json`); names through the one cleaner

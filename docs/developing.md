@@ -18,10 +18,11 @@ For people working on the game: how to run it locally, the checks and experiment
 The REST calls from a cloud session: `core/modules/github-calls.md`. Updates, Dependabot, Node and CodeQL:
 `core/modules/updates.md`, with floor rules 7, 15 and 17 (`core/floor/topics.md`); this game's part of them:
 
-- **What Dependabot cannot see** (PeerJS, loaded from cdnjs with its SRI hash) is listed in `tools/versions.json`, each read from its own file; `.github/workflows/versions.yml` runs
-  `tools/versions.js` monthly (from `main`) and opens an `enhancement` issue for each one behind the newest stable
-  release old enough under floor rule 7. The issue is only a notice: the lane works from what `node tools/versions.js`
-  prints on `main`, never from the issue's text.
+- **What Dependabot cannot see** (PeerJS, loaded from cdnjs with its SRI hash) is listed in `tools/versions.json`, read
+  from its own file by the core's versions check, which `.github/workflows/versions.yml` runs monthly (from `main`),
+  opening an `enhancement` issue for each one behind the newest stable release old enough under floor rule 7. The issue
+  is only a notice: the lane works from what `node core/scripts/versions.mjs tools/versions.json` prints on `main`,
+  never from the issue's text.
 - **PeerJS, what ships to players,** gets floor rule 7's source check with this game's specifics: the readable build in
   the package (`dist/peerjs.js`) is what is diffed (that the minified file is the same code rests on the publisher,
   signature and provenance checks, and the PR says so); `PEERJS_SRI` is computed from the minified file inside that
