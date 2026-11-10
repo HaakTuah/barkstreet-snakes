@@ -25,7 +25,7 @@ Floor: whole. Modules: all.
 | *planning design* | the rivals' planning |
 | *hard work* | the AI's planning, the engine's rules and online sync (not a big-file split: its fingerprints and suites check it) |
 | *measurements* | `tools/abtest.js`, a census, the fingerprints |
-| *slop bar* | the slop audit in `docs/PROGRESS.md` (a 10: nothing reads machine-made); finds fixed in the polish lane; the formula test in the chatter suite |
+| *slop bar* | `docs/slop-bar.md` (a 10: nothing reads machine-made); finds fixed in the polish lane; the formula test in the chatter suite |
 | *major version checks* | the full suites, and played through for what ships |
 | *Codex's checks* | `scripts/test.sh`, and `scripts/sim.sh` with the fingerprint for a change that should keep behaviour |
 | *Codex environment* | made: a legacy Codex cloud environment, its internet access limited to read-only methods |
