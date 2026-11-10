@@ -73,7 +73,8 @@ This game's own, beside the core's (`core/modules/game-design.md`, whose section
   rates, and old against new AI coming out even), character (every trademark) or feel (round length, deaths by cause,
   starving and crashes survived). Visuals too: a look-alike is fine if nobody would see a difference. Measure skill,
   character and feel with `tools/abtest.js` on fresh seeds (`--metrics … trademarks`).
-- **Conditional goods** ("No solutions, only trade-offs"): checked by simulation; the mushrooms are the example (archive, 31 October 2026).
+- **Conditional goods** ("No solutions, only trade-offs"): checked by simulation; the mushrooms are the example
+  (archive, 31 October 2026).
 - **Never create a repository named `snake-game`:** old links redirect from it.
 
 ## Commands

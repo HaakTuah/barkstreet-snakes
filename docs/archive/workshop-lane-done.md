@@ -37,4 +37,5 @@ the workshop check's 20 KB. New ones are added here.
   lettering served with the game; PR #526; its CI step, PR #527, waits for the owner's yes).
 - *Done:* `style/screens.css` (52 KB) split by meaning into `style/small-boards.css`, `phones.css`, `beside.css`,
   `header.css` and `access.css`, linked in the same order (the workshop/split-screens PR).
-- *Done:* the old copy in `tools/copies-baseline.json` removed (the shared header probe, PR #522); the workshop check's point (2) condensed again, `AGENTS.md` from 23.6 to 19.8 KB (PR #360).
+- *Done:* the old copy in `tools/copies-baseline.json` removed (the shared header probe, PR #522); the workshop check's
+  point (2) condensed again, `AGENTS.md` from 23.6 to 19.8 KB (PR #360).
