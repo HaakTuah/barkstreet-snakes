@@ -1,23 +1,48 @@
-#!/usr/bin/env node
-// The copies check ("One fact, one place" in AGENTS.md): fails when the same run of code (8 lines that are more than
-// brackets, 240 characters at least) or of the rule files' prose (12 words) stands in two places, unless the baseline
-// (tools/copies-baseline.json) lists every window of it (a run of lines or words) in as many places, as one of the old
+// The copies check ("One fact, one place" in the core's modules/how-to-work.md): fails when the same run of code (8
+// lines that are more than brackets, 240 characters at least) or of the rule files' prose (12 words) stands in two
+// places, unless the baseline lists every window of it (a run of lines or words) in as many places, as one of the old
 // copies, which are removed over time and never added to. A listed window gone or in fewer places fails too, so the
 // baseline only shrinks. A copy may move (cut from one place, pasted in another), since its places do not grow: moving
-// is how a fact reaches its better home. Node's own modules only.
+// is how a fact reaches its better home. Node's own modules only, so the check needs no install. It runs from the
+// project's root, whatever the directory it is started from.
 //
-//   node tools/copies-test.js            the check
-//   node tools/copies-test.js --write    lower the baseline to what still stands (it never adds a copy)
-const fs = require('fs');
-const crypto = require('crypto');
-const { execFileSync, spawnSync } = require('child_process');
-const { git, ruleFiles } = require('./rule-files.js');
-process.chdir(require('path').join(__dirname, '..'));
-// The pointer and reading-size checks run here too, so they share the copies check's CI step and its COPIES_BASE.
-for (const t of ['tools/pointers-test.js', 'tools/sizes-test.js']) if (spawnSync(process.execPath, [t], { stdio: 'inherit' }).status !== 0) process.exitCode = 1;
-const BASELINE = 'tools/copies-baseline.json';
-const CODE = () => ls(['*.js']).filter(f => !f.startsWith('tools/dev/') && !f.startsWith('docs/'));
-const PROSE = [...ruleFiles(), 'docs/developing.md', 'docs/calibration.md'];
+//   node core/scripts/copies.mjs <config>            the check
+//   node core/scripts/copies.mjs <config> --write    lower the baseline to what still stands (it never adds a copy)
+//
+// The config, a JSON file the project keeps (its *copies check* slot names it), says what is checked: "baseline", the
+// baseline's path; "code" and "prose", lists of git pathspecs (":!" leaves a path out); and "proseFromSecurity": true
+// to add the files the project's SECURITY.md names in rule 3, after "the rule files:" (rule-files.mjs, beside this file).
+import fs from "node:fs";
+import crypto from "node:crypto";
+import { execFileSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+import { ruleFiles } from "./rule-files.mjs";
+const git = args => execFileSync("git", args, { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
+const fail = msg => { console.error(`FAIL: ${msg}`); process.exit(1); };
+const configPath = process.argv.slice(2).find(a => !a.startsWith("--"));
+if (!configPath) fail("name the config: node core/scripts/copies.mjs <config> [--write]");
+let config;
+try { config = JSON.parse(fs.readFileSync(configPath, "utf8")); } catch { fail(`cannot read the config ${configPath} as JSON`); }
+process.chdir(fileURLToPath(new URL(".", import.meta.url)));
+process.chdir(git(["rev-parse", "--show-toplevel"]).trim());
+// A key it does not know, or one of the wrong shape, would check less without a word, so it fails.
+const KEYS = ["baseline", "code", "prose", "proseFromSecurity"];
+const unknown = Object.keys(config || {}).filter(k => !KEYS.includes(k));
+if (!config || typeof config !== "object" || Array.isArray(config)) fail("the config is not a JSON object");
+if (unknown.length) fail(`the config holds keys it does not know: ${unknown.join(", ")}`);
+const list = (v, key) => {
+  if (v === undefined) return [];
+  if (!Array.isArray(v) || v.some(x => typeof x !== "string" || !x)) fail(`the config's "${key}" is not a list of paths`);
+  return v;
+};
+if (typeof config.baseline !== "string" || !config.baseline) fail('the config names no "baseline"');
+if (config.proseFromSecurity !== undefined && typeof config.proseFromSecurity !== "boolean") fail('the config\'s "proseFromSecurity" is not true or false');
+const BASELINE = config.baseline;
+const CODE_SPECS = list(config.code, "code"), PROSE_SPECS = list(config.prose, "prose");
+let fromSecurity = [];
+if (config.proseFromSecurity) try { fromSecurity = ruleFiles(); } catch (e) { fail(e.message); }
+const proseSpecs = PROSE_SPECS.concat(fromSecurity);
+if (!CODE_SPECS.length && !proseSpecs.length) fail('the config names nothing to check ("code", "prose")');
 const LINES = 8, MIN_CHARS = 240, WORDS = 12;
 const hash = s => crypto.createHash('sha1').update(s).digest('hex').slice(0, 12);
 
@@ -45,7 +70,7 @@ function find(files, units, size, joiner, minChars) {
   const perFile = new Map(), seen = new Map();
   const at = (u, i) => u.slice(i, i + size).map(x => x.t).join(joiner);
   for (const f of files) {
-    const u = units(fs.readFileSync(f, 'utf8'));
+    const u = units(fs.readFileSync(f, "utf8"));
     perFile.set(f, u);
     for (let i = 0; i + size <= u.length; i++) {
       const s = at(u, i);
@@ -92,11 +117,12 @@ function find(files, units, size, joiner, minChars) {
   return { copies, dup };
 }
 
-const ls = globs => execFileSync('git', ['ls-files', '-z', ...globs], { encoding: 'utf8' }).split('\0').filter(Boolean);
-const runs = [find(CODE(), codeUnits, LINES, '\n', MIN_CHARS), find(ls(PROSE), proseUnits, WORDS, ' ', 0)];
+// An empty list checks nothing: git ls-files would list every file.
+const ls = specs => specs.length ? execFileSync("git", ["ls-files", "-z", "--", ...specs], { encoding: "utf8" }).split("\0").filter(Boolean) : [];
+const runs = [find(ls(CODE_SPECS), codeUnits, LINES, "\n", MIN_CHARS), find(ls(proseSpecs), proseUnits, WORDS, " ", 0)];
 const found = runs.flatMap(r => r.copies);
 const places = new Map(runs.flatMap(r => [...r.dup].map(([h, list]) => [h, list.length])));
-const base = JSON.parse(fs.readFileSync(BASELINE, 'utf8'));
+const base = JSON.parse(fs.readFileSync(BASELINE, "utf8"));
 // A count is a whole number of places, at least two; anything else would let a copy through, so it fails.
 const counted = (w, where) => {
   const bad = Object.entries(w || {}).filter(([h, n]) => !/^[0-9a-f]{12}$/.test(h) || !Number.isInteger(n) || n < 2);
@@ -106,16 +132,15 @@ const counted = (w, where) => {
 counted(base.windows, BASELINE);
 // The baseline holds the old copies window by window: each run of lines or words that is copied, by its hash, and how
 // many places it stands in. Every copied window must be listed with at least as many places, so a copy that is new,
-// spreads to another place, grows, or is copied in part fails. A listed window that is gone or in fewer places fails
-// too, until --write lowers it; --write only ever lowers, never lists a window that is not listed already.
+// spreads to another place, grows, or is copied in part fails.
 // The baseline only shrinks against the branch a PR merges into (COPIES_BASE, set by the workflow): a window it adds or a
 // count it raises there fails, whoever wrote it.
 const from = process.env.COPIES_BASE;
 if (from) {
-  try { git(['rev-parse', '--verify', `${from}^{commit}`]); } catch { console.error(`FAIL: COPIES_BASE ${from} is not a commit here: fetch it`); process.exit(1); }
+  try { git(["rev-parse", "--verify", `${from}^{commit}`]); } catch { console.error(`FAIL: COPIES_BASE ${from} is not a commit here: fetch it`); process.exit(1); }
   let there = true;
-  try { git(['cat-file', '-e', `${from}:${BASELINE}`]); } catch { there = false; } // no baseline on that branch yet
-  const old = there ? counted(JSON.parse(git(['show', `${from}:${BASELINE}`])).windows, `${from}:${BASELINE}`) || null : null;
+  try { git(["cat-file", "-e", `${from}:${BASELINE}`]); } catch { there = false; } // no baseline on that branch yet
+  const old = there ? counted(JSON.parse(git(["show", `${from}:${BASELINE}`])).windows, `${from}:${BASELINE}`) || null : null;
   const raised = old ? Object.entries(base.windows).filter(([h, n]) => !(h in old) || n > old[h]) : [];
   if (raised.length) { console.error(`FAIL: ${BASELINE} adds or raises ${raised.length} windows against ${from}: the baseline only shrinks`); process.exit(1); }
 }

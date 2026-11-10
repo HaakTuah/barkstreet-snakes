@@ -205,7 +205,7 @@ starves, and rounds feel alike. Each round draws its **food season**, as it draw
 part waits** (after 5), built on the branch `wildcard-shows-its-mix`: two or three traits a round from eight (`TRAITS`
 in `ai.js`), its tag's note ("This round: hungry, reckless and hunts"), a brag as its first line (with its Chinese), a
 Field guide row, protocol 16 with `mix` synced, rules tests, and the simulation's `--signatures` reading each trait's
-trademark. Left to do: merge `develop` into it (its `ai.js` predates 5), re-check the traits that showed weakly in a
+trademark. Left to do: bring it up to date with `main` (its `ai.js` predates 5), re-check the traits that showed weakly in a
 first 40-round look (coward, tail-rider: given Ghost's and Creeper's room weights since), the A/B and head to head,
 pictures, review.
 
@@ -395,16 +395,16 @@ to choose from): "yes, and let it be creative! i don't want it to strictly look 
 The owner: "Need a full review and clean up where we look at every file, especially the documents, and ask what does this
 state that it does, and does it do it? If something in it doesn't then it needs to be somewhere else, if anywhere at
 all." Every file, docs first: what does it say it is for, and does it do that? What doesn't belong moves to where it
-does, or goes; code is checked against "Split by meaning" and "Keep it lean" in `AGENTS.md`. The files every session
+does, or goes; code is checked against "Split by meaning" and "Keep it lean" in `core/modules/how-to-work.md`. The files every session
 reads first, then `docs/`, then the code, in a few PRs, each with a table of every file it covered and what happened to
-it, behaviour proven unchanged (suites, fingerprints). Helpers by "Helpers: when they pay" in
-`docs/claude-and-codex.md` (a Haiku search helper per folder).
+it, behaviour proven unchanged (suites, fingerprints). Helpers by
+`core/modules/helpers.md` (a Haiku search helper per folder).
 
 ### The file-by-file review's moves (the workshop lane; found in part 3 of the file-by-file review, PR #337, 2 November 2026)
 
 Part 3 of the review asked of every code file what its header says it holds and whether it holds that. Its headers
 are now right; what sits in the wrong file is listed here, checked against the code, for PRs of their own ("Split by
-meaning" in `AGENTS.md`: a split goes in its own PR, behaviour proven unchanged by the fingerprints and the suites,
+meaning" in `core/modules/how-to-work.md`: a split goes in its own PR, behaviour proven unchanged by the fingerprints and the suites,
 with what it saves said). One folder per PR; `render/world.js` waits for the main lane, as its split does.
 
 - **render/:** `drawSnakes`, `drawPasses`, `drawTrails` (marks.js) to world.js, with the frame; `drawBurning` (marks.js)

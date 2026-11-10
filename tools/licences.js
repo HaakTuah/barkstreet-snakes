@@ -1,63 +1,24 @@
 #!/usr/bin/env node
-// The licence gate's audit check (SECURITY.md, point 10), run on every pull request by
-// .github/workflows/licences.yml beside GitHub's dependency review: every entry of tools/licences.json is under a
-// licence on its list (what ships, the strict list; a tool that only runs, the tools' list); nothing the game or its
-// tools use is missing from it (the actions the workflows use, the packages npx and npm fetch, the packages of the
-// tools' package.json and its lock, and the root's if there are any, every address the game loads from, code copied in
-// with someone's licence notice, and any font, image, sound or data file); what the game serves is audited as
-// shipping; both lists
-// keep to SECURITY.md's; and everything that ships has its notice in THIRD-PARTY-NOTICES.txt.
+// The licence check's scan (SECURITY.md, rule 10, with floor rule 10), run on every pull request by
+// .github/workflows/licences.yml beside the core's check: nothing the game or its tools use is missing from the audit,
+// tools/licences.json (the actions the workflows use, but the owner's own, HaakTuah/; the packages npx and npm fetch;
+// the packages of the tools' package.json and its lock, and the root's if there are any; every address the game loads
+// from; code copied in with someone's licence notice; and any font, image, sound or data file); what the game serves is
+// audited as shipping; and everything that ships has its notice in THIRD-PARTY-NOTICES.txt. Then the core's check
+// (core/scripts/licences.mjs, with tools/licence-check.json) holds every entry and package to its list.
 //
-//   node tools/licences.js [--audit FILE]   (FILE: another audit to check, such as a test's)
+//   node tools/licences.js
 const fs = require('fs');
 const path = require('path');
 const root = path.join(__dirname, '..');
 const read = f => fs.readFileSync(path.join(root, f), 'utf8');
-const at = process.argv.indexOf('--audit');
-const data = JSON.parse(at > 0 ? fs.readFileSync(process.argv[at + 1], 'utf8') : read('tools/licences.json'));
-const audit = data.entries;
+const audit = JSON.parse(read('tools/licences.json')).entries;
 const fails = new Set();
 const fail = m => fails.add(m);
 
-// The two lists, as SPDX ids ("public-domain" for what has none): what ships, in tools/licences.json, and tools that
-// only run, the dependency review's (.github/dependency-review-config.yml), since the packages it sees are all tools
-// (the workflows' actions, and a tools-only package.json: the game ships no dependencies).
-const shipList = new Set([...(data.ships || []), 'public-domain']);
-const toolList = new Set(['public-domain']);
-let inList = false;
-for (const line of read('.github/dependency-review-config.yml').split('\n')) {
-  if (/^allow-licenses:/.test(line)) { inList = true; continue; }
-  const m = line.match(/^\s+-\s+(\S+)/);
-  if (inList && m) toolList.add(m[1]); else if (inList && /^\S/.test(line)) inList = false;
-}
-// Both keep to SECURITY.md, point 10: the ship list is the one its first part names, word for word, and lies within
-// the tools' (a tool may be under anything a shipped thing may); neither holds what point 10 never allows
-// (non-commercial or no-derivatives terms, source-available terms).
-const point10 = (read('SECURITY.md').match(/^10\. \*\*Licences[\s\S]*?(?=\n\S|\n\n\S)/m) || [''])[0];
-const shipsPart = ((point10.match(/\*\*What ships[\s\S]*?(?=\n\s+- \*\*)/) || [''])[0]).replace(/\s+/g, ' ');
-const escape = t => t.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&');
-for (const id of shipList) if (id !== 'public-domain' && !new RegExp(`(^|[ ,(:])${escape(id)}([ ,)]|$)`).test(shipsPart)) fail(`${id} is on the ship list but not in SECURITY.md, point 10's list for what ships`);
-for (const id of shipList) if (!toolList.has(id)) fail(`${id} is on the ship list but not the tools' (.github/dependency-review-config.yml)`);
-const NEVER = /(^|-)(NC|ND)(-|$)|BUSL|SSPL|Elastic|Commons-Clause/i;
-for (const id of [...shipList, ...toolList]) if (NEVER.test(id)) fail(`${id} is on a list but SECURITY.md, point 10 never allows it`);
-
-// Each entry's licence: one SPDX id, or ids joined by AND (each allowed) or by OR (one allowed); a mix of the two or
-// brackets fails, written out in full instead, so no grouping can hide a licence off the list. GitHub's own services
-// run under GitHub's terms while the repository is public (point 10): those named here, and only they.
-const ok = (expr, list) => {
-  if (/[()]/.test(expr) || (/\sAND\s/.test(expr) && /\sOR\s/.test(expr))) return false;
-  const ids = expr.split(/\s+(?:AND|OR)\s+/).map(id => id.trim());
-  return /\sOR\s/.test(expr) ? ids.some(id => list.has(id)) : ids.every(id => list.has(id));
-};
-const GITHUB = { 'CodeQL CLI': 'LicenseRef-GitHub-Terms' };
 const byName = new Map();
-for (const e of audit) {
-  if (!e.name || !e.licence) { fail(`an entry without a name or licence: ${JSON.stringify(e)}`); continue; }
-  byName.set(e.name, e);
-  if (e.loads && !e.ships) fail(`${e.name}: the game loads it, so it ships`);
-  if (!e.ships && GITHUB[e.name] === e.licence) continue;
-  if (!ok(e.licence, e.ships ? shipList : toolList)) fail(`${e.name}: ${e.licence} is not on the list for ${e.ships ? 'what ships' : 'tools that only run'} (SECURITY.md, point 10)`);
-}
+for (const e of audit) if (e.name) byName.set(e.name, e);
+for (const e of audit) if (e.loads && !e.ships) fail(`${e.name}: the game loads it, so it ships`);
 // The packages an npx or npm install command fetches, failing closed: each must be written in one strict form,
 // name@exact.version (for npx, after -p or --package, else its first word; for npm install or exec, every word not
 // an option), and anything else (a bare name, a range or tag, an alias, a URL, git, a path, a tarball, a variable, an
@@ -94,7 +55,7 @@ const ci = ['.github/workflows', 'scripts', 'tools'].flatMap(d => walk(d, none))
 for (const f of ci) {
   const comment = /\.[cm]?js$/.test(f) ? /(^|\s)\/\/.*$/ : /(^|\s)#.*$/;
   const src = read(f).split('\n').map(l => l.replace(comment, '')).join('\n'); // (a comment fetches nothing)
-  for (const m of src.matchAll(/uses:\s*['"]?([\w.-]+\/[\w.-]+)/g)) need(m[1], f);
+  for (const m of src.matchAll(/uses:\s*['"]?([\w.-]+\/[\w.-]+)/g)) if (!m[1].startsWith('HaakTuah/')) need(m[1], f); // (the owner's own, the core's workflows among them)
   for (const m of src.matchAll(/\b(npx|npm(?:\s+-\S+)*\s+(?:install|in|i|add|exec|x))\s([^\n;&|>]*)/g)) for (const [p, v] of fetched(m[1], m[2], `${f}, ${m[0].trim()}`)) need(p, `${f}, ${m[0].trim()}`, v);
 }
 
@@ -144,5 +105,9 @@ const notices = read('THIRD-PARTY-NOTICES.txt');
 for (const e of audit) if (e.ships && !notices.includes(e.name)) fail(`${e.name} ships but has no notice in THIRD-PARTY-NOTICES.txt`);
 if (!read('sw.js').includes("'THIRD-PARTY-NOTICES.txt'")) fail('sw.js does not keep THIRD-PARTY-NOTICES.txt');
 
+// Every entry and package to its list: the core's check.
+const core = require('../core/scripts/licences.mjs');
+const { failures, summary } = core.check(core.loadConfig(path.join(root, 'tools/licence-check.json')), root);
+for (const m of failures) fail(m);
 if (fails.size) { for (const m of fails) console.error('FAIL:', m); process.exit(1); }
-console.log(`ok   ${audit.length} entries, each under a licence on its list, nothing used left out, the notices whole`);
+console.log(`ok   ${audit.length} entries, nothing used left out, the notices whole; ${summary}`);

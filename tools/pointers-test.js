@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// The pointer check ("One fact, one place" in AGENTS.md): every pointer in the rule files (SECURITY.md, rule 3) to a
+// The pointer check ("One fact, one place" in core/modules/how-to-work.md): every pointer in the rule files (SECURITY.md, rule 3) to a
 // file, a section or a numbered point must lead to one that exists, or it fails, saying which. A pointer is read from
 // the forms below; a form it cannot read is listed, never guessed. Node's own modules only.
 //
@@ -10,7 +10,7 @@
 //   "Section", point 6         a numbered point in that section (point 6 of "Section" too)
 //   ("Section"), point 6       with no file: the file the pointer is in; a lone point: its own section's list
 // A run of these joined only by a comma, "and", "in", "of" or an opening bracket is one pointer: one file, its sections
-// and its points. The check is run by tools/copies-test.js, in the copies check's CI step.
+// and its points. The check is run by .github/workflows/copies.yml, its pointers job.
 //
 //   node tools/pointers-test.js
 const fs = require('fs');
@@ -23,7 +23,8 @@ const files = new Set(tracked), dirs = new Set(tracked.flatMap(f => f.split('/')
 const plain = s => s.toLowerCase().replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/\s+/g, ' ').trim();
 
 // A file's anchors: its headings and bold lead-ins, each with the lines it spans (to the next heading of its level or
-// above), and its numbered points by line.
+// above), and its numbered points by line (a list item, or a paragraph led by its bold number, as the core's floor
+// writes its rules).
 const parsed = new Map();
 function parse(file) {
   if (parsed.has(file)) return parsed.get(file);
@@ -40,7 +41,7 @@ function parse(file) {
 }
 // "Reviews" leads to "Reviews: only a 10 passes", "Status" to "Status (3 November 2026): ...".
 const section = (file, title) => parse(file).anchors.find(a => a.title === title || /^[:,( ]/.test(a.title.slice(title.length)) && a.title.startsWith(title));
-const hasPoint = (file, from, to, n) => parse(file).lines.slice(from, to).some(l => new RegExp(`^\\s*${n}\\.\\s`).test(l));
+const hasPoint = (file, from, to, n) => parse(file).lines.slice(from, to).some(l => new RegExp(`^\\s*(\\*\\*)?${n}\\.\\s`).test(l));
 
 // The atoms of a block (a paragraph or a list item, its lines joined): files, quoted titles and numbered points.
 function atoms(text) {

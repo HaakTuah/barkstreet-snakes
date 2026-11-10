@@ -2,11 +2,11 @@
 // commit by .github/workflows/pages.yml as it publishes the site (main's and
 // each preview's); anywhere else it stays 'dev', and nothing updates. update.js
 // asks for this file afresh to learn whether a newer version is out.
-// news: one line per milestone, newest first, written with it (50 characters
-// at most: with "New: " in front it takes the start card's intro line for a
-// few rounds after the update, so no longer than the intro, as the ui suite
-// checks). A milestone without its line just shows the last one to whoever has
-// not seen it yet.
+// news: one line per change a player would notice, newest first, written by
+// the PR that makes it, since every merge goes live (50 characters at most:
+// with "New: " in front it takes the start card's intro line for a few rounds
+// after the update, so no longer than the intro, as the ui suite checks). A
+// version without its line just shows the last one to whoever has not seen it.
 window.SnakeVersion = {
   build: 'dev',
   news: [

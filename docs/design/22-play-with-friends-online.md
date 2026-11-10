@@ -100,7 +100,7 @@ object literal has) and every event the engine makes, so a new kind can't skip t
 
 ### What stays in step
 
-- **Everything new works online,** with a protocol bump when messages change ("Rules that stand" in `AGENTS.md`). Each
+- **Everything new works online,** with a protocol bump when messages change ("In a game played online, everything new works online" in `core/modules/game-design.md`). Each
   move or rule says what it sends in its own topic file (above); this file holds only the general rules.
 - `tools/online-test.js` checks that a friend's board matches the host's on every tick of whole rounds, crossing every
   kind of event (staging any the rounds bring too few of), and two real browsers matched on every tick of whole rounds.
