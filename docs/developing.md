@@ -18,8 +18,7 @@ For people working on the game: how to run it locally, the checks and experiment
 The REST calls from a cloud session: `core/modules/github-calls.md`. Updates, Dependabot, Node and CodeQL:
 `core/modules/updates.md`, with floor rules 7, 15 and 17 (`core/floor/topics.md`); this game's part of them:
 
-- **What Dependabot cannot see** (PeerJS, loaded from cdnjs with its SRI hash, and the exact Node the setup script
-  installs) is listed in `tools/versions.json`, each read from its own file; `.github/workflows/versions.yml` runs
+- **What Dependabot cannot see** (PeerJS, loaded from cdnjs with its SRI hash) is listed in `tools/versions.json`, each read from its own file; `.github/workflows/versions.yml` runs
   `tools/versions.js` monthly (from `main`) and opens an `enhancement` issue for each one behind the newest stable
   release old enough under floor rule 7. The issue is only a notice: the lane works from what `node tools/versions.js`
   prints on `main`, never from the issue's text.
@@ -32,7 +31,8 @@ The REST calls from a cloud session: `core/modules/github-calls.md`. Updates, De
   place CI's types step, `scripts/cloud-setup.sh` and `scripts/test.sh` read them from (`npm ci --prefix tools`, into
   `tools/node_modules/`, never committed), and Dependabot's npm updates aim at it; each update is audited in
   `tools/licences.json` in the same PR. The game itself ships no dependencies.
-- **Node's version:** the core's rule (`core/modules/updates.md`); here a move also keeps the fingerprints.
+- **Node:** the core's one exact pin, `core/.node-version`, which CI and the cloud setup read ("Node" in
+  `core/modules/updates.md`); here a move also keeps the fingerprints.
 - **The licence check** (`.github/workflows/licences.yml`) runs the core's (`core/scripts/licences.mjs`, with
   `tools/licence-check.json`), which holds every package of the tools' lock and every entry of the audit,
   `tools/licences.json`, to its list. `node tools/licences.js` first checks that nothing the game or its tools use is
