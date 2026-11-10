@@ -1,14 +1,15 @@
 # The game's own checks, on every push and pull request: the rules, online
 # play and the types of its messages, the rivals' chatter, the records and
 # the service worker in Node, the same seeded rounds with and without
-# thinking ahead, and the renderer's, controls' and page's
-# promises in headless Chrome (the runner has it): the page on phones,
+# thinking ahead, and the page's shared scope, its content security policy,
+# and the renderer's and controls' promises in headless Chrome (the runner
+# has it): the page on phones,
 # tablets and desktops too. The jobs run side by side.
 # Each job runs only where it can be affected (the owner, 28 October 2026: "tests
 # should only run where they impact something"): nothing for notes alone
 # (docs/, tools/dev/, .claude/, any .md), the Node checks and the browser's
-# three for any change to the game or its tools, and the page on every screen
-# for a change to what the page shows (index.html, style/, render/, game/,
+# four for any change to the game or its tools, and the page on every screen
+# for a change to what the page shows (index.html, style/, fonts/, render/, game/,
 # chatter/, audio/, online.js, net.js, records.js, lineup.js, scores-screen.js, sw.js, the layout test
 # and its parts, the parts' loader, the browser driver or this file). A
 # skipped job counts as passed.
@@ -47,7 +48,7 @@ jobs:
           files=$(git diff --name-only "$BASE" HEAD)
           echo "$files"
           code=$(echo "$files" | grep -v -E '^(docs/|tools/dev/|\.claude/)|\.md$' | grep -c . || true)
-          page=$(echo "$files" | grep -E '^(index\.html|style/|render/|game/|chatter/|audio/|online\.js|net\.js|records\.js|lineup\.js|scores-screen\.js|sw\.js|tools/layout-test\.js|tools/layout/|tools/parts\.js|tools/browser\.js|\.github/workflows/tests\.yml)' | grep -c . || true)
+          page=$(echo "$files" | grep -E '^(index\.html|style/|fonts/|render/|game/|chatter/|audio/|online\.js|net\.js|records\.js|lineup\.js|scores-screen\.js|sw\.js|tools/layout-test\.js|tools/layout/|tools/parts\.js|tools/browser\.js|\.github/workflows/tests\.yml)' | grep -c . || true)
           echo "code=$([ "$code" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
           echo "page=$([ "$page" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
@@ -109,6 +110,8 @@ jobs:
           node-version: 26
       - name: The page's shared scope
         run: node tools/scope-test.js
+      - name: The content security policy
+        run: node tools/csp-test.js
       - name: Render
         run: node tools/render-test.js
       - name: Controls
