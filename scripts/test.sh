@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 # Run the game's suites one at a time, printing one line per suite and, for a failing one, the end of
-# its output. Full logs go to $TMPDIR (or /tmp). With no arguments, every suite and the online messages'
-# types (tsc, as CI runs it); or name some:
+# its output. Full logs go to a folder of their own under $TMPDIR (or /tmp), one per run, named last.
+# With no arguments, every suite and the online messages' types (tsc, as CI runs it); or name some:
 #   scripts/test.sh rules render
 cd "$(dirname "$0")/.." || exit 2
 [ "$(id -u)" = 0 ] && export CI="${CI:-1}"   # Chrome refuses to run as root with its sandbox
 suites=("$@"); [ ${#suites[@]} -eq 0 ] && suites=(types rules online chatter records sw licences versions scope csp copies render input layout ui)
-dir="${TMPDIR:-/tmp}/barkbite-tests"; mkdir -p "$dir"; fail=0
+# one folder per run, so runs at once never share logs; those of runs no longer running go
+for d in "${TMPDIR:-/tmp}"/barkbite-tests-*; do [ -d "$d" ] && ! kill -0 "${d##*-}" 2>/dev/null && rm -rf "$d"; done
+dir="${TMPDIR:-/tmp}/barkbite-tests-$$"; mkdir -p "$dir"; fail=0
 for s in "${suites[@]}"; do
   log="$dir/$s.log"; start=$(date +%s)
   if [ "$s" = types ]; then # (TypeScript, a check only, at tools/package.json's version: installed there first if it isn't yet)
@@ -25,4 +27,5 @@ for s in "${suites[@]}"; do
     fail=1; echo "FAIL $s (exit $rc, ${t}s; log: $log)"; grep -i -E "fail|error|✗|not ok" "$log" | head -15; tail -n 5 "$log"
   fi
 done
+echo "logs: $dir"
 exit $fail

@@ -27,7 +27,6 @@ The other modules are read when a task needs them, each saying when, among them 
 | --- | --- |
 | What is done and the queue, in order | `docs/PROGRESS.md` |
 | Security: what this game adds to the floor; who might attack it | `SECURITY.md`, `docs/threat-model.md` |
-| What goes to Claude and what to Codex, once Codex builds | `docs/claude-and-codex.md` |
 | Running and checking it: every tool, its updates; each file and where each folder lists its parts ("How it's put together") | `docs/developing.md`; PR pictures: `docs/pr-pictures.md` |
 | The design, one file per topic | `docs/design/` (index: `DESIGN.md` at the root) |
 | Materials the queue points to, with the specs word for word of the entries that name one (`queue-specs.md`) | `docs/handoff/` |
