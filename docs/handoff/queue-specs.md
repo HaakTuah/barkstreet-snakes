@@ -7,9 +7,11 @@ and a pointer here; this text is its spec, as the entry's own words were. When a
 
 ### The shared core (the owner, 5 November 2026; first among the side lanes, before the rule-file audit)
 
-The rules common to every project move to one public repository, `HaakTuah/agent-rules` (the name the design session
-proposed), and each project carries an exact copy of it under `core/`, pinned to one of its commits, generated and never
-edited by hand, as Amarna Letters treats its copy of its design document. What moves: the security baseline, the four
+The rules common to every project move to one public repository, `HaakTuah/agent-core` (renamed from `agent-rules`),
+and each project carries an exact copy of it under `core/`, pinned to one of its commits, generated and never
+edited by hand, as Amarna Letters treats its copy of its design document. It comes in two layers (archive, 9 November 2026): a safety floor every
+project takes whole and can never edit or leave out, and practice modules each project picks in a small manifest of its
+own; this game takes them all. What moves: the security baseline, the four
 pillars, the one inbox, keeping the owner's words, the roles and reviews, helpers, models and effort, the Git flow,
 usage, updates and "No description left untrue". What stays in each project: what it is, its rules that stand, its
 commands, its queue and whatever only it has, each rule file cut to that, with pointers into `core/`. The steps: (1) the
@@ -27,7 +29,10 @@ it went (the core, one game, or dropped with its reason), and a fresh reviewer g
 core finds nothing lost. The design session then checks the result against both games before any game takes a copy; (3)
 each project, in a PR of its own, adds the copy, cuts its rule files to what is its own, and adds a check on every PR
 that the copy matches the core at its pin (a workflow, so the owner's yes in that PR); (4) from then on a core change
-reaches a project only through a sync PR in it, reviewed as any other. No session writes to more than one repository:
+reaches a project only through a sync PR in it, reviewed as any other. Steps 1 to 3 are done (step 3 here: PRs #636 and #637); step 3 took `HaakTuah/agent-core` at its newest `main`, from the
+core's `reports/2026-11-10-step-3-now.md` first, which lists this game's step 3 in order (dropping `develop` just before
+it, in a PR of its own) and holds where the older reports it names disagree. Its workflows had the owner's yes in its
+PR. No session writes to more than one repository:
 the core's own session writes the core, and each project's builders read it and write only their own. Then the rule-file
 audit runs once on the core and once on each project's own rules (archive, 5 November 2026). The same in Amarna Letters.
 
@@ -200,7 +205,7 @@ starves, and rounds feel alike. Each round draws its **food season**, as it draw
 part waits** (after 5), built on the branch `wildcard-shows-its-mix`: two or three traits a round from eight (`TRAITS`
 in `ai.js`), its tag's note ("This round: hungry, reckless and hunts"), a brag as its first line (with its Chinese), a
 Field guide row, protocol 16 with `mix` synced, rules tests, and the simulation's `--signatures` reading each trait's
-trademark. Left to do: merge `develop` into it (its `ai.js` predates 5), re-check the traits that showed weakly in a
+trademark. Left to do: bring it up to date with `main` (its `ai.js` predates 5), re-check the traits that showed weakly in a
 first 40-round look (coward, tail-rider: given Ghost's and Creeper's room weights since), the A/B and head to head,
 pictures, review.
 
@@ -353,12 +358,12 @@ late, it is probably the most uneasecary feature we have discussed here, so leav
 - **Measured:** the simulation counts fights a round (rare is fine, as long as it happens), and deaths near a beetle,
   the one real risk, stay within noise.
 
-### 9. At the very end: the writing pass (the owner, 31 October 2026; Fable 5.1, after everything else, entry 8 included)
+### 9. At the very end: the writing pass (the owner, 31 October 2026; Fable, its newest version, after everything else, entry 8 included)
 
 The owner (31 October 2026): "Also, many of the Snakes dialogue lines are really really bad and corny. some of it are fun pop cultural stuff or wordplays I came up with, but most of it is corny writing by Opus 5.5. I think it would be nice to have a Fable 5.1 run on it at the end, to really piff up the writing. make it more clever and culturally engrossing. Though Trump actually got some good lines! So i don't want it to remove across the lines. remove the funny gags like Mason talking bad latin, or saying vidi vici veni which is a sex joke. but i want it to look at all, and give it a make over. the chinese lines are not as important. if it can, do them too, but most can't read them regardless. concur?" Then, to the design session's take (his gags kept, at the end of the queue, a page
 to choose from): "yes, and let it be creative! i don't want it to strictly look and improve whats there. that contrains it. let it go a bit wild and add stuff to, or make it over. it needs creative control outside of what i protect."
 - **Who and when:** after entry 8, so it covers every line the queue adds (the Charmer, the new moves, the woodpecker's
-  acts). Fable 5.1 holds the creative control but not the volume, since its usage drains far faster, and it gets only
+  acts). Fable holds the creative control but not the volume, since its usage drains far faster, and it gets only
   the parts that need its judgement (archive, 5 November 2026, and "A helper above you gets only what needs it" in
   `CLAUDE.md`): (1) an Opus session at high effort runs the pass and gathers every line, for each rival and for the
   game's own text, into one file per rival with the owner's protected lines marked; (2) from those files alone, Fable at
@@ -390,16 +395,16 @@ to choose from): "yes, and let it be creative! i don't want it to strictly look 
 The owner: "Need a full review and clean up where we look at every file, especially the documents, and ask what does this
 state that it does, and does it do it? If something in it doesn't then it needs to be somewhere else, if anywhere at
 all." Every file, docs first: what does it say it is for, and does it do that? What doesn't belong moves to where it
-does, or goes; code is checked against "Split by meaning" and "Keep it lean" in `AGENTS.md`. The files every session
+does, or goes; code is checked against "Split by meaning" and "Keep it lean" in `core/modules/how-to-work.md`. The files every session
 reads first, then `docs/`, then the code, in a few PRs, each with a table of every file it covered and what happened to
-it, behaviour proven unchanged (suites, fingerprints). Helpers by "Helpers: when they pay" in
-`docs/claude-and-codex.md` (a Haiku search helper per folder).
+it, behaviour proven unchanged (suites, fingerprints). Helpers by
+`core/modules/helpers.md` (a Haiku search helper per folder).
 
 ### The file-by-file review's moves (the workshop lane; found in part 3 of the file-by-file review, PR #337, 2 November 2026)
 
 Part 3 of the review asked of every code file what its header says it holds and whether it holds that. Its headers
 are now right; what sits in the wrong file is listed here, checked against the code, for PRs of their own ("Split by
-meaning" in `AGENTS.md`: a split goes in its own PR, behaviour proven unchanged by the fingerprints and the suites,
+meaning" in `core/modules/how-to-work.md`: a split goes in its own PR, behaviour proven unchanged by the fingerprints and the suites,
 with what it saves said). One folder per PR; `render/world.js` waits for the main lane, as its split does.
 
 - **render/:** `drawSnakes`, `drawPasses`, `drawTrails` (marks.js) to world.js, with the frame; `drawBurning` (marks.js)

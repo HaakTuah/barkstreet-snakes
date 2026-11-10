@@ -1,0 +1,5 @@
+{
+  "lockfiles": ["tools/package-lock.json"],
+  "ships": [],
+  "audit": "tools/licences.json"
+}

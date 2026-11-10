@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Checks the licence gate's audit check (tools/licences.js): it passes the repository as it is, and fails each form
+// Checks the licence check's scan (tools/licences.js), with the core's check it runs: it passes the repository as it is, and fails each form
 // of something unaudited or off the list, each staged in a copy of the repository (every name invented).
 //
 //   node tools/licences-test.js
@@ -36,9 +36,6 @@ const fails = [
   ["GitHub's terms on something not GitHub's", entry({ name: 'mossgrip-cli', licence: 'LicenseRef-GitHub-Terms' })],
   ["GitHub's terms on something that ships", edit('tools/licences.json', '"kind": "github-service",', '"kind": "github-service", "ships": true,')],
   ['an allowed licence grouped with one off the list, in what ships', entry({ name: 'mossgrip-widgets', licence: '(MIT OR GPL-3.0-only) AND GPL-3.0-only', ships: true })],
-  ['a licence on the ship list but not in SECURITY.md\'s', edit('tools/licences.json', '"ships": ["MIT",', '"ships": ["LGPL-2.1-only", "MIT",')],
-  ['a ship-list licence missing from the tools\' list', edit('.github/dependency-review-config.yml', '  - Zlib\n', '')],
-  ['a licence point 10 never allows on the tools\' list', edit('.github/dependency-review-config.yml', '  - MIT\n', '  - MIT\n  - CC-BY-NC-4.0\n')],
   ['AND and OR mixed without brackets', entry({ name: 'mossgrip-widgets', licence: 'MIT AND GPL-3.0-only OR MIT' })],
   ['an action not in the audit', append('.github/workflows/tests.yml', '      - uses: mossgrip/setup-moss@v1\n')],
   ['npm install of a package not in the audit', append('scripts/cloud-setup.sh', 'npm install -g mossgrip-widgets@1.2.3\n')],

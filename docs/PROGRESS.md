@@ -1,7 +1,7 @@
 # Progress
 
 What is done and what comes next, in order (how to work through it: `AGENTS.md`). Mark an item done here, with its PR,
-when it is merged into `develop`; add the owner's new tasks where he places them, with his words quoted.
+when it is merged into `main`; add the owner's new tasks where he places them, with his words quoted.
 
 ## State
 
@@ -19,7 +19,7 @@ merged as it stands), 2y, 2y+, part 5, 2x, 2z, 2u, 2u+, 2q, 2y++ steps 1 to 3 (P
 Everything for the owner is an issue: [questions and readings](https://github.com/HaakTuah/barkstreet-snakes/issues?q=is%3Aopen+label%3Aquestion)
 (`question`), [ideas](https://github.com/HaakTuah/barkstreet-snakes/issues?q=is%3Aopen+label%3Aenhancement) (`enhancement`) and
 [bugs](https://github.com/HaakTuah/barkstreet-snakes/issues?q=is%3Aopen+label%3Abug) (`bug`), by
-"Questions, readings and ideas" in `AGENTS.md`. Answered rows from before 2 November 2026: `docs/archive/progress-done/owner-answered.md`,
+`core/modules/inbox.md`. Answered rows from before 2 November 2026: `docs/archive/progress-done/owner-answered.md`,
 "For the owner, answered".
 
 ## The polish lane
@@ -41,7 +41,7 @@ the second account until its usage is spent; on the main account the brake close
      the PR shows ten lines before and after, so the owner can set the bar.
   4. **A cheap guard after:** a test that fails when too many lines in one voice share one shape (the same opening
      words and punctuation), so the formula cannot creep back.
-  Each kind of text is reviewed as every review is ("Reviews" in `docs/claude-and-codex.md`); here a 10 means
+  Each kind of text is reviewed as every review is (`core/modules/reviews.md`); here a 10 means
   nothing reads machine-made, every voice is its own and no formula repeats. The owner's read of the ten lines before
   and after is the final word. One PR per voice group or screen, in this lane.
   *Done so far* (3 November 2026), one line a merge:
@@ -93,15 +93,14 @@ the owner's notes of 2 November and the portals blue and orange, among them).
   check's point (2) (this file 10 KB, `AGENTS.md` 20 KB, 2 November; condensed again from 23.6 to 19.8 KB, PR #360)
   and point (5), the unused-code check (PR #331):
   `docs/archive/progress-done/split-lane.md`, "The split lane, done".
-- **The shared core** (archive, 5 November 2026), first among the side lanes and before the rule-file audit: the rules
-  common to every project move to one repository, each project carrying a checked copy; its spec is in
-  `docs/handoff/queue-specs.md` under the same title. Step 1 is the owner's.
+- **The shared core** (archive, 5 November 2026): the rules common to every project live in one repository, each
+  project carrying a checked copy (here `core/`); its spec is in `docs/handoff/queue-specs.md` under the same title.
+  Step 3 is done (#636, #637).
 - **The browser suites' one ending** (#526): `tools/render-test.js` and `tools/input-test.js` end with `report.end(b)`
   like the others, once entry 2u, which holds them, merges.
-- **The rule-file audit's larger moves** (the workshop check's point 6; archive, 3 November 2026): (1)
-  `docs/claude-and-codex.md` (23 KB) is past the 20 KB warning: the sections that wait until Codex can build, "What goes
-  to Codex" to "When Codex is not there", into a file of their own; (2) the slop bar a home of its own, since
-  `docs/review-guidelines.md` points to the slop audit's entry in this file, which moves to the archive when done.
+- **The rule-file audit's larger moves** (the workshop check's point 6; archive, 3 November 2026): the slop
+  bar a home of its own, since `core-manifest.md`'s *slop bar* points to the slop audit's entry in this file, which
+  moves to the archive when done.
 - **Waiting for a gap, a split by meaning:** `render/world.js` (40 KB), the file-by-file review's last part, in a PR
   of its own when no open lane touches it, proven by fingerprints and suites.
 
@@ -182,9 +181,9 @@ As planned: up to 4 players, key sets, gamepads, and local and online play toget
 
 Two beetles that meet fight a shoving match, and a snake that gets there in time can catch them while they do; last of the rules, before the writing pass. Spec: `docs/handoff/queue-specs.md`, "8. Near the end: beetles who meet, fight".
 
-### 9. At the very end: the writing pass (the owner, 31 October 2026; Fable 5.1, after everything else, entry 8 included)
+### 9. At the very end: the writing pass (the owner, 31 October 2026; Fable, its newest version, after everything else, entry 8 included)
 
-Every rival's lines given a make-over, Fable 5.1 holding the creative control (voice guides, samples, spot-checks) and Opus writing the bulk, outside what the owner protects: his own lines, the lines he likes, and the gags (Mason's bad Latin, "vidi vici veni"). After everything else, so it covers every line the queue adds. Spec: `docs/handoff/queue-specs.md`, "9. At the very end: the writing pass".
+Every rival's lines given a make-over, Fable holding the creative control (voice guides, samples, spot-checks) and Opus writing the bulk, outside what the owner protects: his own lines, the lines he likes, and the gags (Mason's bad Latin, "vidi vici veni"). After everything else, so it covers every line the queue adds. Spec: `docs/handoff/queue-specs.md`, "9. At the very end: the writing pass".
 
 ## Noted, not yet queued
 
