@@ -1,4 +1,4 @@
-// ---------------------------------------------------------------- round six B, part 5: gold portals for the wrap
+// ---------------------------------------------------------------- round six B, part 5: portals for the wrap
 // (DESIGN "Portals for the wrap".) Going off an edge while the edges wrap for you opens a pair of portals there;
 // anyone may follow you through while your body passes and for PORTAL_MS after. People here, through the same engine
 // calls a rival makes; the rivals' part is below.

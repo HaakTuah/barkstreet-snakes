@@ -2,10 +2,9 @@
 // Going off an edge while the edges wrap for it, a snake opens a pair, as
 // in the game Portal: the entry a glowing blue oval turning in where it went
 // off, the exit a glowing orange one spilling out where it came in, each
-// with a thin gold trim for the golden mushroom (their shape, a half oval on
-// the edge, keeps them apart from the jump's sky blue and the flash's
-// ember). They fade over the PORTAL_MS a portal stays open once its owner
-// has passed. With reduced motion they stand still.
+// with a thin gold trim for the golden mushroom (design 40, "Portals for the
+// wrap", says why). They fade over the PORTAL_MS a portal stays open once its
+// owner has passed. With reduced motion they stand still.
 
 // May s's body run across an edge (drawn partly on each side, a segment
 // moving across one)? Once the edges have wrapped for it this round, or
@@ -40,6 +39,12 @@ function portalSwirl({ cx, cy, ix, iy }, fade, now, out) {
   ctx.save();
   ctx.translate(cx, cy);
   ctx.rotate(turn);
+  ctx.beginPath(); // (the thin gold trim, just outside the ring)
+  ctx.ellipse(0, 0, along + 2.5, deep + 2.5, 0, 0, Math.PI);
+  ctx.lineWidth = 1.2;
+  ctx.strokeStyle = '#f5c542';
+  ctx.globalAlpha = fade;
+  ctx.stroke();
   ctx.beginPath();
   ctx.ellipse(0, 0, along, deep, 0, 0, Math.PI);
   ctx.closePath();
@@ -50,24 +55,16 @@ function portalSwirl({ cx, cy, ix, iy }, fade, now, out) {
   ctx.globalAlpha = 0.85 * fade;
   ctx.fillStyle = haze;
   ctx.fill();
-  ctx.globalAlpha = fade;
-  ctx.shadowColor = ring; // (the glow)
-  ctx.shadowBlur = CELL * 0.5;
-  ctx.lineWidth = 4;
-  ctx.strokeStyle = ring;
+  ctx.strokeStyle = ring; // (the glow: a wide faint stroke under the ring, as the canvas has no blur)
+  ctx.lineWidth = 10;
+  ctx.globalAlpha = 0.3 * fade;
   ctx.stroke();
-  ctx.shadowBlur = 0;
+  ctx.globalAlpha = fade;
+  ctx.lineWidth = 4;
+  ctx.stroke();
   ctx.lineWidth = 1.5;
   ctx.strokeStyle = light;
   ctx.stroke();
-  ctx.beginPath(); // (the thin gold trim, just outside the ring)
-  ctx.ellipse(0, 0, along + 2.5, deep + 2.5, 0, 0, Math.PI);
-  ctx.lineWidth = 1.2;
-  ctx.strokeStyle = '#f5c542';
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.ellipse(0, 0, along, deep, 0, 0, Math.PI);
-  ctx.closePath();
   ctx.clip();
   const t = reduced ? 0.3 : (now / 1000) % 1;
   ctx.lineWidth = 2;
