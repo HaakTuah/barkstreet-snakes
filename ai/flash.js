@@ -41,7 +41,7 @@ function flashOpt(d, gold) {
   const agg = (w.aggression || 0) + (w.hunt ? 0.5 : 0);
   const body = i => myCells[i] === stampM || (mineFree[i] > 1 && (!holes.has(i) || (fire.has(i) && others.some(o => o.body.some(q => q.y * N + q.x === i))))); // (mine, or a rival's that'll still be there, on fire too)
   let cut = 0, got = false, fires = 0, run = 0;
-  ownCut = -1; cutKills = false; covered = 0;
+  ownCut = -1; cutKills = false; cutTarget = false; covered = 0;
   for (let i = 0; i < n; i++) {
     const c = path[i];
     if (holes.has(c) && !fire.has(c)) return null; // (a hole, or the woodpecker's mark: it'd fail or blow up, or soon)
@@ -54,7 +54,7 @@ function flashOpt(d, gold) {
       for (let k = 0, x = c % N, y = (c - x) / N; k < r && i + k < n; k++, x += d.x, y += d.y) { // (a layer beyond its reach isn't cut: it's only why it can't go on)
         if (myCells[cellAt(x, y)] === stampM) { // (my own: my tail drops, only to get out of a trap)
           const j = me.body.findIndex(q => q.x === x && q.y === y);
-          if (j < TUNE.MIN_LENGTH || !trapped) return null; // (only when it's that or the end: dropped any sooner (boxed), rivals dropped 5 tails a round and starved small)
+          if (j < TUNE.MIN_LENGTH || !dropping) return null; // (only when it's that or the end, or boxed in, planned (see dropping): dropped any sooner, rivals dropped 5 tails a round and starved small)
           if (ownCut < 0 || j + n - 1 < ownCut) ownCut = j + n - 1;
           continue;
         }
@@ -63,15 +63,17 @@ function flashOpt(d, gold) {
         if (!o || j0 === 0) return null; // (a head, or where one may be)
         const j = j0 + Math.max(0, age - (o.stun || 0)); // (where it's cut: it's moved on since I saw it)
         const mark = o.id === memory.victimId ? 2 : 1; // (my target, twice over: Sniper cuts off its target, Mute its boxed one)
+        if (mark === 2) cutTarget = true; // (2u+: a cut through my target goes at half the flash's price, as a race does)
         if (j < TUNE.MIN_LENGTH) cutKills = true; // (it's out)
         cut += mark * (j < TUNE.MIN_LENGTH ? KILL * (0.5 + agg) : Math.min(CUT_TAIL, Math.max(0, o.body.length - j)) * 0.1 * (0.5 + agg)); // (in apples: out, or its tail off, up to CUT_TAIL of it: at 0.4 a segment, uncapped, rivals cut 14 times a round and the beads swamped the board; at 0.15, 10 times, and the cut starved small)
       }
       run = r;
     }
     if (run) run--;
-    if (gold) for (const f of food) if (f.y * N + f.x === c && (f.kind === 'golden' || f.kind === 'leaf' || f.kind === 'goldcap' || f.gold)) got = true;
+    if (gold) for (const f of food) if (f.y * N + f.x === c && (f.kind === 'golden' || f.kind === 'leaf' || f.kind === 'goldcap' || f.kind === 'spill' || f.gold)) got = true;
   }
   if (covered & sureCover) cutKills = true; // (it's out, near enough sure)
+  if (ownCut >= 0 && !trapped) cut -= Math.max(0, Math.min(keepLen, me.body.length) - ownCut); // (2h: planned, what it drops below the length worth keeping, an apple a segment)
   if (gold && !cut && !got && !trapped && ownCut < 0) { // (just for speed: only a habit's, and at anyone's price, so only for a real gain; free, it spent both at once, a zig-zag that got it nothing)
     if (!habit.dashSpend) return null;
     idle = true;

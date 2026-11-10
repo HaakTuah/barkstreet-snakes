@@ -8,6 +8,16 @@ window.TUNING = Object.freeze({
 
   // ------------------------------------------------------------------ food
   APPLES: 2,                // green apples on the board at all times (eaten or rotted, another drops somewhere): two since round six A, with beetles carrying more of the food (three was "a bit too plentiful")
+  // Each round's food season (2i), drawn at the start (SEASON_ODDS of each) and shown in a banner: apples on top of
+  // APPLES (or SNOW_APPLES; never below one), beetles coming out at this many times BEETLE_CHANCE, and a meal
+  // keeping a snake this many times as long (meal). Lean rounds starve snakes now and then; plentiful ones grow
+  // them long, and crowd the log.
+  SEASON_ODDS: Object.freeze({ lean: 1, normal: 2, plentiful: 1 }),
+  SEASONS: Object.freeze({
+    lean: Object.freeze({ apples: -1, beetles: 0.5, meal: 0.7 }),
+    normal: Object.freeze({ apples: 0, beetles: 1, meal: 1 }),
+    plentiful: Object.freeze({ apples: 1, beetles: 1.5, meal: 1 }),
+  }),
   APPLE_TICKS: 110,         // an apple rots away after about this many ticks (give or take a quarter: about 8-16 s), and another drops somewhere
   MUSHROOMS: 2,             // red mushrooms on the board at all times
   MUSHROOM_TICKS: 180,      // a mushroom withers (and regrows elsewhere) after this many ticks
@@ -33,19 +43,21 @@ window.TUNING = Object.freeze({
   // tap; E, Shift or a swipe the way you're going). A jump hops islands: up
   // over what's right in front (a body, a hole or fire) and up to
   // LEAP_REACH cells of it, a cell a tick, landing on the first free cell
-  // beyond, for the tip of your tail; then it needs a moment. A flash goes FLASH_LENGTH
-  // cells in one tick along the ground, free, then rests. Round six B: a
+  // beyond. A flash goes FLASH_LENGTH cells in one tick along the ground.
+  // Both spend from one stamina (2u): no tail, only the bar. Round six B: a
   // flash cuts through a body FLASH_THICK thick (a dash, DASH_THICK) with
   // free log beyond (anyone's, your own too: the part behind the cut falls
   // to beads; fewer than MIN_LENGTH left in front of it, and it's out), and
   // a flash that runs into what it can't get through has failed.
-  LEAP_COST: 1,             // a leap costs this many segments off the tail (and needs more than MIN_LENGTH)...
-  LEAP_COOLDOWN_MS: 4000,   // ...and can't be done again for this long
+  STAMINA_MS: 11500,        // one stamina for both plain powers (37-one-stamina): the bar, in ms of refill from empty to full...
+  JUMP_STAMINA_MS: 5800,    // ...a plain jump takes this much of it...
+  DASH_STAMINA_MS: 9500,    // ...a plain flash this much (each goes only with that much in the bar; golden ones take none)
+  STAMINA_FOOD_MS: 300,     // 2u+: each segment a meal grows you puts this much back in it...
+  STAMINA_BANK: 3,          // ...banking above the full bar up to this many bars (1: no bank); a golden apple fills the bar, and its growth's share banks
+  GOLDEN_SHIELD_MS: 10000,  // 2u+: a golden apple's shield, held this long: it takes the next crash you live through (no tail lost; still stunned); boxed in, it does you no good
   LEAP_WINDOW: 5,           // a jump pressed for waits this many ticks for something right in front to hop, and somewhere to land within reach (so a press made with a hurdle 4 or 5 cells ahead still goes; 3 before round six B), for rivals too
   LEAP_REACH: 3,            // round six B, the island hop: a jump goes over up to this many cells of anything it hops (bodies, holes, fire; one before), a cell a tick in the air, and comes down on the first free cell beyond: over three, it's up three ticks and lands on the fourth
   FLASH_LENGTH: 2,          // a flash: this many cells in one tick, along the ground (it eats on the way, cuts a body one thick with free log beyond, and puts out the first fire it passes)...
-  FLASH_COST: 0,            // ...for this many segments off the tail (free: a cost made rounds longer and starved snakes, in simulation)...
-  FLASH_COOLDOWN_MS: 12000, // ...and then it rests this long (6 s before it cut: round six B wants 10 to 12 s; at 11, rivals cut 10 times a round)
   FLASH_THICK: 1,           // a flash cuts through a body this many cells thick, a dash DASH_THICK; with nothing free beyond, or thicker, or a head, it fails
   FAIL_LOSS: 5,             // a failed flash (into the edge, a hole, a head, a body it can't cut) costs this many segments off the tail, not CRASH_LOSS...
   FAIL_STUN_TICKS: 6,       // ...and stuns this long, not STUN_TICKS (a golden one into the edge or a hole still blows up)
@@ -57,6 +69,8 @@ window.TUNING = Object.freeze({
   LEAF_TICKS: 90,           // ...it blows away after this many ticks
   DASH_CHARGES: 2,          // ...this many (up to DASH_MAX held): golden flashes, three cells in one tick, cutting through a body up to DASH_THICK thick and putting out every fire (the edge or a hole: you blow up)
   DASH_MAX: 3,
+  SPILL_TICKS: 90,          // round six B, dropped charges: a snake knocked out holding golden jumps or dashes spills them where its head fell, one golden pickup anyone can grab (all of them, up to LEAP_MAX and DASH_MAX); it fades after this many ticks. Not on a bump: only out
+  SPILL_NEAR: 3,            // ...on the nearest free cell within this many of the head (never a hole, fire or a body; none, and they're lost)
   DASH_LENGTH: 3,
   DASH_THICK: 2,
   GOLDCAP_CHANCE: 0.55,     // rain: once in a while a golden mushroom comes up (one a spell, at most)...
@@ -68,10 +82,12 @@ window.TUNING = Object.freeze({
   MIN_LENGTH: 3,            // ...but never below this
   // Round six B: a mushroom comes back up. Swallowed, it sits in the cheek
   // (the mouth full: nothing else is eaten) for CHEEK_TICKS, then it's spat
-  // SPIT_REACH cells ahead of the head, over anything between, a shade
-  // stronger: one segment more each time it comes back up, to SHRINK_MAX.
-  CHEEK_TICKS: 9,           // about a second: the ring 3 ahead shows where it'll land, for anyone to dodge
-  SPIT_REACH: 3,
+  // straight ahead, flying SPIT_SPEED cells a tick up to SPIT_REACH, till it
+  // hits something (3b+), a shade stronger: one segment more each time it
+  // comes back up, to SHRINK_MAX.
+  CHEEK_TICKS: 9,           // about a second: the dotted line ahead shows where it'll fly, for anyone to step out of
+  SPIT_REACH: 5,
+  SPIT_SPEED: 2,
   SHRINK_MAX: 5,
   SPIT_WILT_MIN: 20,        // a spat mushroom wilts in half the time it had left, but lies at least this many ticks
   OWN_SPIT_TICKS: 6,        // (2x) the spitter slides over its own spat mushroom this many moves, as a full mouth goes over food: straight on, it would swallow it again
@@ -125,21 +141,38 @@ window.TUNING = Object.freeze({
   RAMP_MS: 120000,          // ...reached after this much game time (a gentle speed-up: about a third faster)
   MUSIC_MID_MS: 45000,      // the soundtrack picks up (shaker, faster) after this much game time
 
-  // ---------------------------------------------------------- sudden death
-  SUDDEN_DEATH_MS: 120000,  // the woodpecker arrives after two minutes; nothing new grows after that but the last apples (SD_APPLE_GAP), though beetles still come out
-  PECK_ARRIVE_TICKS: 12,    // it lands, has a look round...
-  PECK_CHUNK: 12,           // ...then takes out a patch of this many cells somewhere on the log...
-  PECK_AIM_TICKS: 17,       // ...eyeing it this long first (everyone sees where: about a second and a half)...
+  // ------------------------------------------------- the woodpecker's acts
+  // (entry 6) Each act starts at a seeded random time inside its window, so a round is never quite predictable; a
+  // playtest's ?acts=70,140,200 pins them (seconds). 0, calm, from the start: as before the woodpecker. (Why these:
+  // 38-the-woodpecker.md, "Its three acts".)
+  ACT_WATCH_MS: [50000, 75000],  // 1, the watcher: it lands outside the board and scouts it, no pecks, its gaze a tell...
+  ACT_PECKS_MS: [40000, 60000],  // 2, the first pecks, this long after it came: a few cells a peck, a long rest between...
+  ACT_FRENZY_MS: [35000, 50000], // 3, the frenzy, this long after act 2: sudden death, nothing new grows but the last apples (SD_APPLE_GAP), though beetles still come out
+  WATCH_LOOKS: [2, 4],      // act 1: it changes its vantage this many times (the first look as it lands)...
+  WATCH_LAST: 1.6,          // ...the last look this many times as long as each of the others (where it watches longest, act 2's first cut starts from)
+  GAZE_NEAR: 4,             // act 2's first outline starts within this many cells of where it looked last, while it can
+  // Part 2: it cuts shapes along an outline (engine/outline.js), a few cells a peck, and the piece falls once cut loose...
+  CUT_OF_REGION: 0.25,      // ...a piece (and its cut) this share of the most log any snake has to itself (its region)...
+  CUT_MIN: 8,               // ...at least this many cells...
+  CUT_SHARE_MAX: 1 / 8,     // ...and at most this share of the log (a third, if it must), never halving the trunk...
+  CUT_SEEDS: 10,            // ...the best of this many tries, its cut the least of it (round the edges and old hollows)
+  CUT_STEP_2: 2,            // act 2: a peck takes this many cells of the outline...
+  FIRST_REST_TICKS: 50,     // ...and rests this long between pecks (about 5 s), while food still grows
+  CUT_STEP_3: 3,            // act 3: this many cells, a cell more for each piece fallen in the frenzy, up to CUT_STEP_MAX
+  CUT_STEP_MAX: 5,
+  CUT_GIVEUP_TICKS: 100,    // while no cell of its outline may go (a head too near, or it would drop one that couldn't get off), it waits; this long, and it plans elsewhere
+  FALL_REACT_TICKS: 5,      // the peck that cuts a piece loose: every head on it can get off in its warning less this (half a second to see it)
+  FLOOR_PER_LENGTH: 2,      // the floor: it cuts only while the log is CUT_MIN more than this many times the snakes' lengths together...
+  FLOOR_MIN: 24,            // ...or this many cells, whichever's more; there, in the frenzy, it fights (engine/fight.js):
+  FIGHT_GAP: 2,             // ...aimed where the head of the snake with the most log will be at the strike, its plus (the tile and the four round it) more than this from every head as it aims, shutting nobody in...
+  FIGHT_REST_TICKS: 30,     // ...and this long between (a head in the plus at the strike: a crash)
+  PECK_AIM_TICKS: 17,       // each peck it eyes this long first (everyone sees where: about a second and a half)...
   PECK_PROMISE_TICKS: 5,    // ...and this many moves before it strikes, where the food in its mark will land is a promise (the rings stop moving; on the tick before, a ring could still hop in the last 0.2 s)
-  PECK_REST_TICKS: 30,      // ...and resting this long after its first strike (about 3 s)...
-  PECK_HUNGRIER: 0.85,      // ...but it gets hungrier: each rest this much of the one before (down to PECK_REST_MIN)...
-  PECK_REST_MIN: 10,
-  PECK_CHUNK_MAX: 20,       // ...and each patch a cell bigger than the last (up to this): fewer, rounder holes fill the log as fast as the old 9 to 16 with longer rests
-  PECK_CLEARANCE: 4,        // it aims more than this far from every head (nobody can be in a fresh mark before they can see it), and never shuts anyone in, while there's such a spot; food in the mark is knocked aside at the strike
-  PECK_NO_ORPHANS: 2,       // a crumb this small cut loose (2s: it falls with the strike, as any piece cut loose) may lie near a head, never under one; a bigger piece keeps the patch's clearance
-  PECK_FALL_SOFT: 12,       // the log stays one piece (2s): a patch that cuts a piece loose takes it too (it falls with the strike, shown in the mark); it aims to cut loose none bigger than this, but takes any if it must
-  PECK_UNDER_BODY: 0.33,    // this share of strikes starts under a body (a body lying over a fresh hole bridges it; only a head falls in)
-  PECK_WIDEN: 0.5,          // this share widens an old hollow (fewer, bigger hollows)
+  PECK_REST_TICKS: 20,      // ...resting this long after a peck in the frenzy (about 2 s)...
+  PECK_HUNGRIER: 0.85,      // ...but it gets hungrier: each rest this much of the one before for each piece fallen in the frenzy (down to PECK_REST_MIN)
+  PECK_REST_MIN: 8,
+  PECK_CLEARANCE: 4,        // it pecks more than this far from every head (nobody can be in a fresh mark before they can see it), and never shuts anyone in, while it can; food in the mark is knocked aside at the strike
+  PECK_NO_ORPHANS: 2,       // a crumb this small its outline would leave goes with its piece
   SD_APPLE_GAP: 20,         // sudden death: with no apple on the board, the next falls this many ticks after the last went, times its number (about 2 s, 4 s, 6 s...)
 
   // --------------------------------------------------------------- burrows
@@ -167,7 +200,7 @@ window.TUNING = Object.freeze({
   WINDFALL_MAX: 3,          // ...up to this many apples more than usual
   RAIN_MUSHROOMS: 2,        // rain: this many more mushrooms sprout
   RAINBOW_CHANCE: 0.5,      // when rain stops: a rainbow, with a golden apple at its end
-  SNOW_APPLES: 1,           // winter, the lean season: one apple (rotting twice as fast), no new mushrooms, no golden apples...
+  SNOW_APPLES: 1,           // winter, a hungry spell: one apple (rotting twice as fast), no new mushrooms, no golden apples...
   SNOW_HUNGER: 1.75,        // ...and everyone gets hungry this many times as fast (it's cold)
   AFTER_STORM_RAIN: 0.6,    // a storm is often followed by rain
   STRIKE_MIN_MS: 2000,      // storm: lightning this often...
@@ -187,10 +220,18 @@ window.TUNING = Object.freeze({
   EMBER_FIRE_TICKS: 22,     // ...then burns this long, a small fire that doesn't spread
 
   // --------------------------------------------------------------------- AI
-  REACTION_MS: 240,         // how stale every AI's view of the other snakes is
-  HISTORY: 8,               // board snapshots kept for that delay
+  AI_CUT_RISK: 0.3,         // part 2: the piece its outline cuts round is ground to get off: this much of a rival's soft zone on it
+  AI_GAZE_RISK: 0.5,        // entry 6: the woodpecker's gaze in act 1 is ground to linger in later: this much of a rival's soft zone at its middle, less out to GAZE_NEAR
+  AI_FRENZY_MARGIN: 2,      // ...and in its frenzy, every rival (not desperate) wants this much more spare room
+  REACTION_MS: 240,         // how stale every AI's view of the other snakes is near its own head (and of holes and fire)...
+  REACTION_FAR_MS: 400,     // ...growing with how far the snake is, to this at REACTION_FAR_CELLS or more away (2q: noticed as a person would)...
+  REACTION_FAR_CELLS: 24,   // ...(steps from its head to that snake's nearest cell)...
+  REACTION_JITTER_MS: 50,   // ...give or take up to this, moment to moment...
+  REACTION_DRIFT_TICKS: 8,  // ...drawn afresh this often and blended between, so it drifts rather than flickers
+  HISTORY: 8,               // board snapshots kept for those delays
   AI_HUNGRY_MS: 10000,      // with this long left before starving, an AI starts looking for food, harder as it gets closer
   AI_DESPERATE_MS: 11000,   // with less than this much life left by hunger (its own clock, shrinking included), an AI drops its errands and takes its chances for food
+  AI_CROWD_KEEP: 3,         // in a plentiful season (2i), an AI weighs growth past MIN_LENGTH + this many times its endgame keep against the room it costs, as it does from the woodpecker on
   LAND_REACH: 0.5,          // a cell is Sovereign's or a colony's land when its centre is within the field's radius plus this of the field's centre (one rule: AI, chatter, HUD, borders)
 
   // ------------------------------------------------------------- the round
@@ -206,7 +247,7 @@ window.TUNING = Object.freeze({
   // ----------------------------------------------------------------- input
   QUEUE: 3,                 // turns you can queue ahead
   CHORD_MS: 60,             // a reversal pressed this soon before the turn it needs (a U-turn's keys rolled together) still counts
-  POWER_AFTER_TURN_MS: 300, // a fresh swipe the way the last swipe turned you, this soon after that one lifted (or while it's down), is the turn swiped twice to make sure, not a flash (a double flick puts its second touch down 150-280 ms after the first lifts; keys only steer: no such guard)
+  POWER_AFTER_TURN_MS: 300, // a fresh swipe the way the last swipe turned you, this soon after that one lifted (or while it's down), is the turn swiped twice to make sure, not a flash (a double flick puts its second touch down 150-280 ms after the first lifts); a fresh keydown the way the last key turned you, this soon after it, likewise
   SWIPE_CELLS: 0.5,         // a swipe registers after the finger travels this many cells...
   SWIPE_MIN_PX: 12,         // ...and at least this far (about 3 mm), so a jittery finger doesn't turn
   SWIPE_CHAIN_PX: 8,        // ...but a finger already swiping chains its next turn after this far

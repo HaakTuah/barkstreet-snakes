@@ -80,9 +80,9 @@ const LAYOUT = `(() => {
 // settling in finished first: it drops 6 px as it comes.)
 const BANNERS = [ // (the widest a phone shows: a lesson with no shorter words, round news in its phone words, Go!)
   ['On fire: 3 bites of tail, and at 3 it ends you. Rain helps.', '', 'lesson'],
-  ['Rat-a-tat. The woodpecker has come for the log, a patch at a time.', 'bird', 'round'],
+  ['Sudden death! Nothing grows now, and the bird’s furious.', 'bird', 'round'],
   ['First out: Capricious got cut in two by Metagamer.', 'kill', 'round', { phone: 'First out: Capricious was cut by Metagamer.' }],
-  ['Let the wriggling begin.', 'go', 'round'],
+  ['Here they come.', 'go', 'round'],
 ];
 const BANNER = ([text, kind, level, opts] = [], show = true) => `(() => {
   const t = document.getElementById('toast');
@@ -127,7 +127,7 @@ const REACH = sels => `(() => [...document.querySelectorAll(${JSON.stringify(sel
 // and the room round it, placed with CSS, not the screen.
 const PERCH = (x, y, pose, rects = {}) => `(() => {
   const g = SnakeDebug.game(), R = SnakeRender, E = SnakeEngine, cell = ${y * 24 + x};
-  g.time = Math.max(g.time, TUNING.SUDDEN_DEATH_MS + 1000);
+  g.time = Math.max(g.time, g.acts.frenzy + 1000);
   g.woodpecker = null; SnakeDebug.draw(); // (gone a moment, so it's placed afresh rather than flying over)
   const aim = ${pose !== false}, ms = E.tickMs(g);
   let now = performance.now();
@@ -186,7 +186,7 @@ const SPOTS = [[1, 1], [12, 1], [22, 1], [1, 12], [12, 12], [22, 12], [1, 22], [
 // is still caught.
 const FLIGHT = (x, y, from = [x, y]) => `(() => {
   const g = SnakeDebug.game(), R = SnakeRender, E = SnakeEngine, cell = ${y * 24 + x}, prev = ${from[1] * 24 + from[0]};
-  g.time = Math.max(g.time, TUNING.SUDDEN_DEATH_MS + 1000);
+  g.time = Math.max(g.time, g.acts.frenzy + 1000);
   const L = document.getElementById('bird-layer'), G = L.getContext('2d'), ms = E.tickMs(g);
   const cut = { fly: new Set(), drum: new Set() };
   let now = performance.now();

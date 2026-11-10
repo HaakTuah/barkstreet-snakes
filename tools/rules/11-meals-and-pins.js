@@ -70,7 +70,7 @@
       const view = {
         grid: N, food: [{ kind: 'food', expires: 999, ...scene.food }], age: 2, tick: 10, timeMs: 30000, weather: 'clear',
         holes: new Set((scene.holes || []).map(c => at(c.x, c.y))), fire: new Set(), pecks: new Set(),
-        me: { id: 0, body: scene.me, dir: dirOf(scene.me), grow: 0, hungerLeft: HUNGRY, starveIn: HUNGRY, leaps: 0, dashes: 0, wrap: 0, leapIn: 9999, flashIn: 9999, bumped: -1 },
+        me: { id: 0, body: scene.me, dir: dirOf(scene.me), grow: 0, hungerLeft: HUNGRY, starveIn: HUNGRY, leaps: 0, dashes: 0, wrap: 0, leapIn: 9999, flashIn: 9999, stamina: 0, bumped: -1 },
         others: scene.others.map((o, k) => ({ id: k + 1, body: o, dir: dirOf(o), stun: 0, leaps: 0, dashes: 0, wrap: 0, air: 0 })),
       };
       const h = scene.me[0], f = scene.food, away = Math.abs(h.x - f.x) + Math.abs(h.y - f.y);
@@ -141,7 +141,7 @@
     a.body = line(13, 1, 9).map(([x, y]) => ({ x, y })); a.dir = D.right;
     b.body = line(9, 0, 6).map(([x, y]) => ({ x, y })); b.dir = D.right;
     for (const s of [a, b]) { s.lastAte = g.time; s.nextStarve = g.time + T.HUNGER_MS; } // (fed: it's the hunt that decides)
-    b.flashReadyAt = 1e9; // (its flash resting: rested, it may cut its way out through the hunter, one thick)
+    b.restedAt = 1e9; // (its flash resting: rested, it may cut its way out through the hunter, one thick)
     if (person) { b.isPlayer = true; b.persona = null; b.queue = []; }
     a.memory.victimId = b.id;
     g.food = [{ x: 20, y: 20, kind: 'food', expires: 9999 }];

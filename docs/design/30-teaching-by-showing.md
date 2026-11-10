@@ -4,7 +4,7 @@ How the game teaches: the one-time lessons and how they're chosen and spaced, th
 round's news (its levels, its hold and queue, its place and its words), the Field guide and its doors, the first seconds
 of a round, and the plan to teach by showing rather than telling, as the third pass, round four, round six A and B and
 "Teaching by showing" settled them (their text, with what was measured, is in `docs/archive/design-teaching.md`).
-Every new rule comes with a visible cue, a one-time lesson and a Field guide row ("Rules that stand" in `AGENTS.md`).
+Every new rule comes with a visible cue, a one-time lesson and a Field guide row ("No rule untaught" in `core/modules/game-design.md`, by this game's `core-manifest.md`).
 Elsewhere: each move's, food's and danger's own lesson and Field guide row (`40-powers-and-moves.md`, `41-crashes.md`,
 `04-food-and-the-world.md`, `38-the-woodpecker.md`); the page round the banner and the cards (`31-phones.md`,
 `33-one-screen.md`); a rival's note asked for from its tag ("A rival's note" in `43-the-start-card-and-records.md`);
@@ -80,7 +80,7 @@ lessons too, keeps these rules.
   big leaf-green **Go!**.
 - *Phone words* (`FLAVOR.phone`, and `opts.phone` for lines with names), one line on a 360 px phone: the weather's four
   that took two lines there ("Thunder! Lightning strikes where it crackles.", "Winter. Less food, and hunger comes
-  faster." for both winters, "Snow. Lean times: eat while you can."), the woodpecker's three, the long golden leaf and
+  faster." for both winters, "Snow. Hard times: eat while you can."), the woodpecker's three, the long golden leaf and
   golden mushroom news, the watcher's and the away lines, the friends' lines, and a first out's cause in fewer words
   (`shortCause`: "First out: Capricious was cut by Metagamer."). Where long names (16 characters, the cap) still don't
   fit its line, the first out drops the cause altogether (`opts.short`: "Gran is first out."; several out at once have
@@ -186,10 +186,10 @@ and every lesson where your eyes already are.
 - A jump is offered only over a hurdle that will still be there when you arrive (a tail that will have passed doesn't count).
 - The flash isn't taught at "6 s in" any more, but at its first calm moment.
 - Steering gets taught too ("[↓], and I'll turn!"), with a dashed turn arrow. For someone who doesn't know WASD, that's the most useful line of all.
-- powersFirst, flashKey, leapNothing, leapEarly and youLeapFirst stop being banners. They become the coach and short lines: "Nothing to hop!", "Too soon!", "Hup! That cost my tail tip."
+- powersFirst, flashKey, leapNothing and leapEarly stop being banners. They become the coach and short lines: "Nothing to hop!", "Too soon!".
 
 **4. Pictures on the log,** for the moves you're learning, drawn in two passes (under the snakes and over them), so the pips and faces stay clear.
-- *The jump:* a dotted arc to the landing ring. It's faint from 5 cells away, then bright with a breathing ring once a press would go. An × marks where there's nowhere to land, and dots run out for a press with nothing in reach. A -1 shows at your tail tip on your first jumps.
+- *The jump:* a dotted arc to the landing ring. It's faint from 5 cells away, then bright with a breathing ring once a press would go. An × marks where there's nowhere to land, and dots run out for a press with nothing in reach. Your stamina ring's notches show what each power takes.
 - *The flash:* two ember chevrons and a ghost head two cells on, and an × where it would bump.
 - *The golden flash:* Honey chevrons along its path, the cut line with "Snip!", and a starburst with "Boom!" at an edge or hole. A picture says "never at an edge" better than words.
 - *How long:* these predictive pictures show only while you're learning (until you've used the move 3 times). After that, only the cues drawn for every snake's moves stay, such as PR B's ring once a jump is pressed, so you read the rivals' moves as they read yours. Danger predictions left on for good were rejected: they'd be an aid only you have, and they'd trim the timing skill the moves are meant to need.

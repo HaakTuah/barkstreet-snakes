@@ -124,8 +124,8 @@ addEventListener('resize', fitStartCard);
 
 // What the chips mean, in words (phones have no tooltips).
 function yourPowerWords(s) {
-  const how = (left, gold) => gold ? `${gold} golden` : left === 0 ? 'ready' : left === Infinity ? 'not at 3' : 'resting';
-  return `${touchFirst ? 'A tap' : 'Space or a click'} jumps: ${how(Engine.leapIn(theGame, s), s.leaps)}. ${touchFirst ? 'A swipe ahead' : 'E, Shift or right-click'} dashes: ${how(Engine.flashIn(theGame, s), s.dashes)}.`;
+  const how = (left, gold) => gold ? `${gold} golden` : left === 0 ? 'ready' : 'resting';
+  return `${touchFirst ? 'A tap' : 'Space or a click'} jumps: ${how(Engine.leapIn(theGame, s), s.leaps)}. ${touchFirst ? 'A swipe ahead' : 'E, Shift, right-click or the key ahead'} dashes: ${how(Engine.flashIn(theGame, s), s.dashes)}.`;
 }
 // Golden powers held, as words: ['2 golden jumps', '1 golden flash'].
 const goldWords = s => [s.leaps > 0 && `${s.leaps} golden jump${s.leaps === 1 ? '' : 's'}`, s.dashes > 0 && `${s.dashes} golden dash${s.dashes === 1 ? '' : 'es'}`].filter(Boolean);
@@ -195,13 +195,13 @@ function updateHud(force = false) {
       last.jump = last.flash = null; // (new chips: their rests are written afresh)
     }
     if (mine) {
-      rest(t, 'jump', Engine.leapIn(theGame, s), TUNE.LEAP_COOLDOWN_MS, s.leaps);
-      rest(t, 'flash', Engine.flashIn(theGame, s), TUNE.FLASH_COOLDOWN_MS, s.dashes);
+      rest(t, 'jump', Engine.leapIn(theGame, s), TUNE.JUMP_STAMINA_MS, s.leaps);
+      rest(t, 'flash', Engine.flashIn(theGame, s), TUNE.DASH_STAMINA_MS, s.dashes);
     }
-    // Your plain powers back from their rest: a flick round your head and a
+    // Your stamina back up to a plain power: a flick round your head and a
     // tick (the jump's, or the flash's), unless you're holding golden ones.
-    const jumpBack = mine && s.body.length > TUNE.MIN_LENGTH && theGame.time >= s.leapReadyAt;
-    const flashBack = mine && !(TUNE.FLASH_COST > 0 && s.body.length <= TUNE.MIN_LENGTH) && theGame.time >= s.flashReadyAt;
+    const jumpBack = mine && Engine.leapIn(theGame, s) === 0;
+    const flashBack = mine && Engine.flashIn(theGame, s) === 0;
     if (!force && jumpBack && last.jumpBack === false && !s.leaps) { Render.ready(s, 'jump'); Sound.play('ready'); }
     if (!force && flashBack && last.flashBack === false && !s.dashes) { Render.ready(s, 'flash'); Sound.play('flashReady'); }
     last.jumpBack = jumpBack; last.flashBack = flashBack;
@@ -217,18 +217,17 @@ function chip(kind, n, s) {
     : gold ? (kind === 'jump' ? 'Golden jumps: long ones, free' : 'Golden dashes: three cells at once') : '';
   return `<span class="chip ${kind}${gold ? ' gold' : ''}${isMe(s) ? ' mine' : ''}"${title ? ` title="${title}"` : ''}>${POW_ICON[kind]}${n ? `<b>${n}</b>` : ''}</span>`;
 }
-// Your own chip's rest: filling in tenths (a write a few times a second, not
-// every frame), solid when ready, greyed when you're too small for it.
+// Your own chip's rest: filling in tenths as the stamina comes back to its
+// share (a write a few times a second, not every frame), solid when ready.
 function rest(t, kind, left, full, gold) {
   const el = t[kind];
   if (!el) return;
-  const now = gold ? 'gold' : left === 0 ? 'ready' : left === Infinity ? 'small' : Math.floor((1 - left / full) * 10) * 10;
+  const now = gold ? 'gold' : left === 0 ? 'ready' : Math.floor((1 - left / full) * 10) * 10;
   if (t.last[kind] === now) return;
   t.last[kind] = now;
   el.classList.toggle('ready', now === 'ready');
-  el.classList.toggle('small', now === 'small');
   if (typeof now === 'number') el.style.setProperty('--fill', `${now}%`);
-  if (!gold) el.title = `Your ${kind}${now === 'ready' ? ' is ready' : now === 'small' ? ': too small for it' : ' is resting'} (${kind === 'jump' ? (touchFirst ? 'tap' : 'Space or a click') : touchFirst ? 'swipe ahead' : 'E, Shift or right-click'})`;
+  if (!gold) el.title = `Your ${kind}${now === 'ready' ? ' is ready' : ' is resting'} (${kind === 'jump' ? (touchFirst ? 'tap' : 'Space or a click') : touchFirst ? 'swipe ahead' : 'E, Shift, right-click or the key ahead'})`;
 }
 
 // The chips' icons: small inline drawings in ink (no fallback-font glyphs).
@@ -245,7 +244,7 @@ const POW_ICON = {
 const PERSONA_DOTS = {
   wildcard: 'linear-gradient(135deg, #3c3b6e 0 42%, #b22234 42% 56%, #fff 56% 70%, #b22234 70% 84%, #fff 84%)',
   joker: 'linear-gradient(90deg, #a21caf 50%, #f59e0b 50%)',
-  mason: 'radial-gradient(circle at 68% 30%, #c9a227 0 14%, transparent 15%), radial-gradient(circle at 10% 115%, transparent 0 55%, #8a94a6 56% 66%, transparent 67%), #f1ece2', // (marble: a curl of grey vein and a gold fleck, no stripe straight across)
+  mason: 'radial-gradient(circle at 68% 30%, #b05c68 0 14%, transparent 15%), radial-gradient(circle at 10% 115%, transparent 0 55%, #8a94a6 56% 66%, transparent 67%), #f1ece2', // (marble: a curl of grey vein and a rose fleck, no stripe straight across)
   ghost: 'radial-gradient(circle at 35% 35%, #f8fafc, #b8c4d4)', // (pale, but not an empty ring)
   star: 'radial-gradient(circle at 50% 50%, #f9c22e 0 28%, transparent 30%), conic-gradient(#ef4444, #f97316, #facc15, #22c55e, #3b82f6, #6366f1, #a855f7, #ef4444)', // (a rainbow round its sunflower star)
 };
@@ -280,6 +279,7 @@ function updateControls() {
   // During a round the page holds still under your fingers (see the swipes).
   document.documentElement.classList.toggle('playing', (state === 'running' || state === 'countdown') && playerAlive());
   document.documentElement.classList.toggle('in-round', state === 'running' || state === 'countdown');
+  document.documentElement.classList.toggle('frenzy', (state === 'running' || state === 'paused') && !!theGame && Engine.suddenDeath(theGame)); // (entry 6: the sky dims through the frenzy; set as it starts by the news)
   if (helpEl) updateHelp(); // (watching or playing: the help says what you can do)
   fitColumn(); // (on its side, watching: the help may give the chatter its room)
   keepAwake();

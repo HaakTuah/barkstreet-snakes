@@ -33,10 +33,10 @@ declare namespace Engine {
     autopilot?: boolean;
     persona?: unknown; personaKey?: string;
     stunUntil: number; burnUntil: number; burnFrom: number;
-    leaps: number; leapArmed: number; leapReadyAt: number; dashes: number; wrapUntil: number;
+    leaps: number; leapArmed: number; restedAt: number; bank: number; shieldUntil: number; dashes: number; wrapUntil: number;
     flight: { dir: Dir; over: { x: number; y: number }[]; land: { x: number; y: number }; gold?: Flag; held?: Flag; flown?: number; path?: number[]; ring?: { x: number; y: number; n?: number } } | null;
     jumpHeld?: Flag; leapNow?: Flag; flyFor?: number; flyTurn?: { at: number; dir: Dir } | null; flew?: number; bumped?: boolean;
-    flashReadyAt: number; flashArmed: number;
+    flashArmed: number;
     /** A mushroom in its cheek (round six B): the segments it took, when it's spat, the ticks it had left to wilt. */
     cheek: { power: number; spitAt: number; left: number } | null;
     /** A rival's next way once it's thought, and the tick it thought it for; a person's queued turns. */
@@ -52,8 +52,10 @@ declare namespace Engine {
     dir: Dir; px?: number; py?: number; movedAt: number; scared?: boolean; gold?: Flag; digUntil?: number;
   }
   interface Meal {
-    x: number; y: number; kind: 'food' | 'golden' | 'mushroom' | 'pellet' | 'leaf' | 'goldcap'; expires?: number;
+    x: number; y: number; kind: 'food' | 'golden' | 'mushroom' | 'pellet' | 'leaf' | 'goldcap' | 'spill'; expires?: number;
     color?: string; heat?: number; cooked?: Flag; owner?: number;
+    /** Spilled charges (round six B, part 6): the golden jumps and dashes a knocked-out snake held. */
+    leaps?: number; dashes?: number;
     /** A mushroom come back up: the segments it takes (SHRINK when not set). */
     power?: number;
     /** Who spat it, and the tick from which that snake can swallow it again (before, it slides over it). */
@@ -65,11 +67,17 @@ declare namespace Engine {
   interface Burrow { x: number; y: number; at: number; used?: number; dug?: number | boolean; shutFrom?: number; shutAt?: number }
   /** A gold portal (round six B, part 5): the entry, the way through it, the exit, whose, and when it shuts (0: its owner's body is still through it). */
   interface Portal { x: number; y: number; dx: number; dy: number; tx: number; ty: number; owner: number; shutAt: number; followed?: number[] }
+  /** A mushroom in the air (3b+): where it is, which way it flies, the cells it has left, its strength, the ticks it'll lie, whose, over the edge or not. */
+  interface Spit { x: number; y: number; fx?: number; fy?: number; dir: Dir; left: number; power: number; wilt: number; by: number; wrap: boolean }
   interface Fire { from: number; until: number; strike: boolean; ember?: boolean; group: number }
   interface Weather { kind: string; since: number; until: number }
   interface Woodpecker {
     x: number; y: number; at: number; target: number[]; strikeAt: number; last: number[];
     struckAt: number; restUntil: number; pecks?: number;
+    /** Entry 6: the tick it came; pieces fallen in the frenzy; act 1's look (the cell it watches, and where it looked last after; the tick that look began; looks left; when it moves on, and a look's length, ms). */
+    came: number; fury?: number; gaze: number; lookAt: number; looks: number; lookUntil: number; unit: number;
+    /** Entry 6, part 2: its outline (the cut's cells left in peck order, the piece, the tick it began waiting or -1), and a fight's plus. (fury: pieces fallen in the frenzy.) */
+    plan?: { cut: number[]; piece: number[]; waitFrom: number }; zone?: number[];
     /** [from, to] cells; to -1: the bird eats it. */
     landings?: [number, number][];
     /** 2s: the cells of the pieces its patch cuts loose (in target too): they fall with the strike. */
@@ -82,8 +90,9 @@ declare namespace Engine {
     | { type: 'death'; snake: Snake }
     | { type: 'spawn'; kind: string; x?: number; y?: number; gold?: Flag }
     | { type: 'squash'; snake: Snake; x: number; y: number }
-    | { type: 'spit'; snake: Snake; x: number; y: number; tx: number; ty: number; power: number; hit: number; lx: number | null; ly: number | null }
-    | { type: 'crash'; snake: Snake; x: number; y: number; cause: string; killer: string | null; killerId: number | null; lost: number; failed?: 1; air?: 1 }
+    | { type: 'spit'; snake: Snake; x: number; y: number; power: number }
+    | { type: 'spat'; snake: Snake; x: number; y: number; fx: number; fy: number; power: number; hit: number; lx: number | null; ly: number | null }
+    | { type: 'crash'; snake: Snake; x: number; y: number; cause: string; killer: string | null; killerId: number | null; lost: number; failed?: 1; air?: 1; shield?: 1 }
     | { type: 'leap'; snake: Snake; x: number; y: number; gold?: Flag; reach: number; now?: 1 }
     | { type: 'dash'; snake: Snake; x: number; y: number; n: number; plain?: Flag }
     | { type: 'fizzle'; snake: Snake; why: string; x: number; y: number; flash?: Flag }
@@ -97,8 +106,9 @@ declare namespace Engine {
     | { type: 'weather'; kind: string }
     | { type: 'ember'; x: number; y: number; fx: number; fy: number }
     | { type: 'woodpecker' }
-    | { type: 'peck'; x: number; y: number; cells?: number[]; under?: number[]; fall?: number[] }
+    | { type: 'peck'; x: number; y: number; cells?: number[]; under?: number[]; fall?: number[]; zone?: number[] }
     | { type: 'rot'; x: number; y: number; kind: string; color?: string }
+    | { type: 'spill'; snake: Snake; x: number; y: number; leaps: number; dashes: number }
     | { type: 'starving' | 'alight' | 'singe'; snake: Snake }
     | { type: 'baked' | 'ash'; x: number; y: number; kind: string }
     | { type: 'heal' | 'flown' | 'emerge' | 'gust' | 'charge' | 'strike' | 'rainbow' | 'aim' | 'douse' | 'lastApples'; x: number; y: number };
@@ -114,9 +124,14 @@ declare namespace Engine {
     woodpecker: Woodpecker | null;
     burrows: Burrow[];
     portals: Portal[];
+    spits: Spit[];
     /** By cell. */
     fires: Map<number, Fire>;
     weather: Weather;
+    /** The round's food season (2i): a key of TUNING.SEASONS. */
+    season: 'lean' | 'normal' | 'plentiful';
+    /** Entry 6: when the woodpecker's acts start, ms of game time (drawn by the host, or pinned by ?acts=). */
+    acts: { watch: number; pecks: number; frenzy: number };
     events: Event[];
     /** Whether any rival was chosen, not dealt (set by the game, not the engine). */
     chosen?: boolean;
@@ -161,7 +176,7 @@ interface Window {
   Peer?: PeerJS.PeerClass;
   SnakeAI: { PERSONAS: Record<string, unknown> };
   SnakeRecords: { cleanName(text: unknown): string };
-  TUNING: { GRID: number; SHRINK_MAX: number };
+  TUNING: { GRID: number; SHRINK_MAX: number; SPIT_REACH: number; LEAP_MAX: number; DASH_MAX: number; SEASONS: Record<string, unknown> };
   // Made by these two files (their shapes are the files themselves).
   SnakeNet: unknown;
   SnakeOnline: unknown;

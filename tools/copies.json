@@ -1,0 +1,6 @@
+{
+  "baseline": "tools/copies-baseline.json",
+  "code": ["*.js", ":!tools/dev/", ":!docs/", ":!core/"],
+  "prose": ["docs/developing.md", "core/floor/*.md", "core/modules/*.md"],
+  "proseFromSecurity": true
+}

@@ -70,7 +70,7 @@ for (const d of [CALLS, sized(360, 780), sized(412, 915), sized(375, 667)]) {
     // (one size: perched under the board, flying, and drumming on it)
     const sizes = await ev(`(() => { // (one strike staged on the held board, tick by tick: its aim, the flight out, the drum, the flight back and its rest)
       const g = SnakeDebug.game(), R = SnakeRender, seen = {}, cell = 18 * 24 + 12, t0 = g.tick, S = t0 + 40;
-      g.time = Math.max(g.time, TUNING.SUDDEN_DEATH_MS + 1000); g.woodpecker = null; SnakeDebug.draw();
+      g.time = Math.max(g.time, g.acts.frenzy + 1000); g.woodpecker = null; SnakeDebug.draw();
       g.woodpecker = { x: 12, y: 18, at: g.time, target: [cell], strikeAt: S, last: [], struckAt: -1, restUntil: t0, pecks: 0 };
       let now = performance.now();
       const run = (a, b) => { for (let t = a; t < b; t++) { g.tick = t; for (const u of [0, 0.25, 0.5, 0.75]) { R.frame(u, now += 16); const p = R.birdPose(), k = p.phase + (p.y > ${GRID_PX} ? ' below' : ' on'); (seen[k] ||= new Set()).add(Math.round(p.s * 100) / 100); } } };

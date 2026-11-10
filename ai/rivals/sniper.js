@@ -8,7 +8,7 @@ PERSONAS.sniper = {
   w: {
     space: 1, territory: 0.8, aggression: 0.3,
     food: 6, eat: 80, pellet: 1.5, foodRange: 40, hungryBelow: 16, fedFactor: 0.3,
-    margin: 10, headRisk: 600, zoneRisk: 80, thick: 15, hunt: HUNT, spit: 2.5, landing: 1.5, // (a mushroom for the head shot; a flier's ring, the one place it'll certainly be)
+    margin: 10, headRisk: 600, zoneRisk: 80, thick: 15, hunt: HUNT, spit: 2.5, aim: 3, landing: 1.5, // (a mushroom for the head shot, and it lines that shot up; a flier's ring, the one place it'll certainly be)
   },
 };
 

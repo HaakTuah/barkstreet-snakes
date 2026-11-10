@@ -18,7 +18,7 @@ const PRE = `(() => { const raw = window.requestAnimationFrame.bind(window); win
 const MEASURE = (x, y, state) => `(() => {
   const g = SnakeDebug.game(), R = SnakeRender, E = SnakeEngine, cell = ${y} * 24 + ${x};
   const p2 = typeof R.birdPose === 'function';
-  g.time = Math.max(g.time, TUNING.SUDDEN_DEATH_MS + 1000);
+  g.time = Math.max(g.time, g.acts.frenzy + 1000);
   const ms = E.tickMs(g);
   let now = performance.now() + 5000;
   R.setReducedMotion(false);

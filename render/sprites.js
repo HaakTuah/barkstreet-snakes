@@ -58,8 +58,8 @@ function shadowAt(x, y, scale) {
 // once a kind and size. Kinds: apple, golden, mushroom, goldcap, leaf,
 // beetle, goldbeetle, pellet, roast (a roasted bead), baked (a baked
 // apple), jump, flash, wrap, hole, fire, land, held (a snake holding
-// golden powers: its gold line and a pip of each kind), rests (you, your
-// jump and flash resting: your two half-rings), squash (your own bead
+// golden powers: its gold line and a pip of each kind), spill (a knocked-out snake's spilled charges), rests (stamina: a
+// tired snake and an awake one, wearing your ring: see guideStamina), squash (your own bead
 // squashed flat behind you), cut (a body cut through), failflash (a
 // failed flash's burst and stars),
 // lostflag (a colony's flag falling into its pit), dig (a beetle half
@@ -86,10 +86,12 @@ const DIG_SPRAY = [[-0.62, -0.42, 0.045], [0.6, -0.5, 0.04], [0.66, 0.36, 0.05],
 const GUIDE = {
   apple: g => drawApple(g, 'fresh'),
   baked: g => drawApple(g, 'baked'),
+  season: g => { for (const [x, a] of [[-0.66, 1], [0, 1], [0.66, 0.35]]) { g.save(); g.globalAlpha = a; g.translate(CELL * x, 0); g.scale(0.6, 0.6); drawApple(g, 'fresh'); g.restore(); } }, // (2i: three apples, the third faint: one more, or one fewer)
   golden: g => { guideGlow(g); drawGolden(g); g.translate(CELL * 0.2, -CELL * 0.22); drawStar(g); },
   mushroom: g => { g.scale(1.2, 1.2); drawHaze(g); g.translate(0, CELL * 0.04); drawMushroom(g); }, // (on bark, as on the log: its cream stem vanished on the card; and the purple haze its rule mentions)
   goldcap: g => { guideGlow(g); g.translate(0, CELL * 0.04); drawGoldcap(g); },
   leaf: g => { guideGlow(g); drawGoldLeaf(g); },
+  spill: g => { guideGlow(g); const was = ctx; ctx = g; try { drawSpill(0, 0, 1, 2, 1, 0); } finally { ctx = was; } }, // (spilled charges: two golden jumps and a dash)
   beetle: g => drawGuideBeetle(g, false),
   goldbeetle: g => { guideGlow(g); drawGuideBeetle(g, true); },
   pellet: g => { g.scale(1.5, 1.5); drawBead(g, '#fb923c|'); },
@@ -106,7 +108,7 @@ const GUIDE = {
   },
   land: g => { guideCells(GUIDE_LAND); g.translate(-12 * CELL, -12 * CELL); paintLand(g, null, guideMask, guideNone, '#2563eb', 0, NO_HOLES); },
   held: g => guideSnake(g, '#2563eb', false, (x, y) => drawPips(x, y, Math.PI, CELL * 0.54, 0, 1, 1, false)),
-  rests: g => guideSnake(g, '#4ade80', true, (x, y) => { const rr = CELL * 0.84; restHalf(x, y, rr, -1, 0.6, SKY); restHalf(x, y, rr, 1, 0.3, EMBER); }),
+  rests: g => guideStamina(g), // (see render/stamina.js)
   squash: g => { // (round six B: your own bead squashed flat behind your head, a smear in its colour with a splat round it)
     const c = CELL;
     g.save(); g.scale(1.6, 0.55); g.translate(c * 0.55, 0); drawBead(g, '#4ade80|'); g.restore();

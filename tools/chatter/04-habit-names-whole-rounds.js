@@ -12,7 +12,7 @@
   for (let t = 0; t < 1800; t++) {
     g.tick++; g.time += 100;
     const events = [];
-    if (g.time >= star.flashReadyAt + 100) { star.flashReadyAt = g.time + T.FLASH_COOLDOWN_MS; events.push({ type: 'dash', snake: star, x: 10, y: 12, n: 2, plain: 1 }); }
+    if (g.time >= star.restedAt - (T.STAMINA_MS - T.DASH_STAMINA_MS) + 100) { star.restedAt = g.time + T.STAMINA_MS; events.push({ type: 'dash', snake: star, x: 10, y: 12, n: 2, plain: 1 }); }
     if (t % 40 === 20) events.push({ type: 'leap', snake: star, x: 12, y: 12, gold: 0, reach: 2 });
     g.events = events; heard = [];
     C.update();
@@ -123,7 +123,7 @@
   const board = (personas, spots) => {
     rng = seeded(31);
     const g = E.createGame({ withPlayer: false, personas });
-    g.food = []; g.tick = 100; g.time = T.SUDDEN_DEATH_MS;
+    g.food = []; g.tick = 100; g.time = g.acts.frenzy;
     g.snakes.forEach((s, i) => { lay(s, ...spots[i]); s.lastAte = g.time; s.nextStarve = g.time + T.HUNGER_MS; });
     C.reset(g);
     return g;
@@ -164,7 +164,7 @@
     const g = board(['star', 'wildcard', 'mason', 'copycat'], [[12, 12, 'right'], [4, 4, 'up'], [20, 4, 'up'], [4, 20, 'down']]);
     const knocking = watchKnocks(), [st] = g.snakes;
     for (let t = 0; t < 30; t++) {
-      if (t % 10 === 0) { st.dashes = 1; st.flashReadyAt = g.time; E.flash(g, st); }
+      if (t % 10 === 0) { st.dashes = 1; st.restedAt = 0; E.flash(g, st); }
       E.step(g);
       heard = [];
       C.update();

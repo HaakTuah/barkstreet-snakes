@@ -20,8 +20,8 @@ as it was in `docs/archive/design-realms.md`.
 **Star's mustache** and **Bridges and jumps you can see**: their rules are in `03-the-snake-as-a-character.md` under
 the same names, and their text as it was, with what the bridges and jumps cost, in `docs/archive/design-looks.md`.
 
-**The woodpecker plays fair** (with **No crumbs**, **The log stays one piece**, **It knocks food aside**, **The ring is a
-promise** and **Rounder hollows**): its rules are in `38-the-woodpecker.md` under those names, and its text as it was, with its
+**The woodpecker plays fair** (with **The log stays one piece**, **It knocks food aside** and **The ring is a
+promise**; **No crumbs** and **Rounder hollows** gave way to its outline, "It cuts a shape"): its rules are in `38-the-woodpecker.md` under those names, and its text as it was, with its
 measurements, in `docs/archive/design-woodpecker.md`.
 
 **Rivals see food as it is**, and **Less fruit, more beetles** with **Fewer beetles after all**: their rules are in

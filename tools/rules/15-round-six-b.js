@@ -78,7 +78,7 @@ function hopsWithin(g, n) {
     s.body = [];
     for (let y = 8; y <= 20; y++) s.body.push({ x: 2, y });
     for (let y = 20; y >= 8; y--) s.body.push({ x: 1, y });
-    s.dir = D.up; s.leaps = 1; s.leapReadyAt = rested ? 0 : g.time + 60000; s.grow = 3; // (just ate: its tail stays, so the strip is a dead end)
+    s.dir = D.up; s.leaps = 1; s.restedAt = rested ? 0 : g.time + 60000; s.grow = 3; // (just ate: its tail stays, so the strip is a dead end)
     o.body = [{ x: 20, y: 20 }, { x: 19, y: 20 }, { x: 18, y: 20 }]; o.dir = D.right;
     g.food = [[2, 4], [3, 2], [1, 2]].map(([x, y]) => ({ x, y, kind: 'food', expires: 9999 }));
     g.given = new Set(g.food.map(f => f.y * T.GRID + f.x));

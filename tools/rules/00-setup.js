@@ -31,6 +31,11 @@ function seededWhile(seed, fn) {
 const SEED = process.argv.includes('--seed') ? Number(process.argv[process.argv.indexOf('--seed') + 1]) : 1;
 Math.random = seeded(SEED);
 
+// The woodpecker's acts (entry 6), pinned for every game the tests make, so
+// a test can name an act's time: FRENZY, sudden death.
+const ACTS = [70000, 100000, 120000], FRENZY = ACTS[2];
+{ const make = E.createGame; E.createGame = (o = {}) => make({ acts: ACTS, ...o }); }
+
 let failed = 0, checks = 0;
 function check(name, ok, detail = '') {
   checks++;
@@ -38,9 +43,10 @@ function check(name, ok, detail = '') {
   if (!ok) failed++;
 }
 
-// Two people steered by their queues, with nothing else on the board.
-function board(bodies, { food = [], time = 0 } = {}) {
-  const g = E.createGame({ humans: bodies.map((b, i) => ({ name: `P${i}` })), personas: [] });
+// Two people steered by their queues, with nothing else on the board (in a
+// normal food season, unless another is given).
+function board(bodies, { food = [], time = 0, season = 'normal' } = {}) {
+  const g = E.createGame({ humans: bodies.map((b, i) => ({ name: `P${i}` })), personas: [], season });
   g.snakes = g.snakes.slice(0, bodies.length);
   bodies.forEach(([cells, dir], i) => {
     const s = g.snakes[i];

@@ -12,7 +12,7 @@ const census = () => ({
   cutsPlain: 0, cutsGold: 0, cutsOwn: 0, failed: 0, failedGold: 0, edgeTicks: 0, huggers: 0, huggerWins: 0, huggerPlace: 0, others: 0, otherWins: 0, otherPlace: 0, // (round six B, the flashes cut: cuts by plain flashes and dashes, of them its own tail dropped; failed flashes (golden ones); snake-ticks with the head on the board's edge; snakes whose head was on the edge an eighth of their time or more (twice the field's 6% before part 3) ("huggers"), and the rest: how many, wins, places)
   rides: 0, rideTicks: 0, rideDeaths: 0, rideFalls: 0, // (bridges: rides begun, snake-ticks with a head on another's back over a pit, deaths while on one, and of them falls)
   hop1: 0, hop2: 0, hop3: 0, hopHole: 0, hopFail: 0, hopDie: 0, smallIsle: 0, // (round six B's island hop: jumps by the cells they went over, those over a hole, those whose landing crashed, jumpers out within 3 s of taking off, and jumps down on another island smaller than the jumper (2r))
-  pecks: 0, holes: 0, aims: 0, aimsNear: 0, flashes: 0, jumps: 0, goldLeaps: 0, goldGot: 0, dashes: 0, pickups: 0, greedy: 0,
+  pecks: 0, holes: 0, aims: 0, aimsNear: 0, tellAims: 0, tellKept: 0, flashes: 0, jumps: 0, goldLeaps: 0, goldGot: 0, dashes: 0, pickups: 0, greedy: 0,
   aliveEarly: 0, hungryEarly: 0, starvingEarly: 0, aliveLate: 0, hungryLate: 0, starvingLate: 0, // (snake-ticks before and after the woodpecker: alive, in the hunger warning, starving)
   beads: 0, ownBeads: 0, chokes: 0, chokeRounds: 0, nudges: 0, nudgedBeads: 0, // (beads eaten, and by the snake they broke off; own beads squashed (chokes before round six B); food nudged aside coughing, and the beads among it, before round six B)
   knocks: 0, knockedEaten: 0, knockedTaken: 0, knockedTicks: [], digs: 0, digsCaught: 0, // (food the woodpecker's strike knocked aside, of it what it ate, with nowhere to knock it, and what a snake ate where it landed within 6 s, how many ticks after the strike; beetles digging in, and caught while digging)
@@ -28,18 +28,20 @@ const census = () => ({
   // underground due up with no burrow to come out of; beetles under the beak
   // when it aims, and how each got away (ran off, down a burrow, dug in) or
   // was eaten by it (or caught, or flew off).
+  spills: 0, spillCharges: 0, spillGrabs: 0, spillOut: 0, spillRounds: 0, // (round six B, part 6: spilled charges dropped, the charges in them, those grabbed, grabbers out within 3 s of it, rounds with a spill)
   portals: 0, portalChances: 0, throughs: 0, throughOut: 0, followRounds: 0, ownerOut: 0, // (round six B, part 5: gold portals opened, those a rival could have followed (its head within reach of the entry while it was open), followers through, followers out within 3 s of it, rounds with anyone following, and portals' owners out within 3 s of being followed)
   burrowsOpened: 0, sdTicks: 0, sdBurrowTicks: 0, underWait: 0,
   beakBugs: 0, beakRan: 0, beakCaught: 0, beakDived: 0, beakDug: 0, beakFlown: 0, beakPecked: 0,
-  ticks: 0, burrowTicks: 0, ticksEarly: 0, freeEarly: 0, // (ticks, and burrows open summed over them; before the woodpecker, cells free for an apple summed over them)
+  ticks: 0, burrowTicks: 0, ticksEarly: 0, freeEarly: 0, // (ticks, and burrows open summed over them; before the frenzy, cells free for an apple summed over them)
   // The woodpecker's fairness: aims whose mark left a snake less room than
   // its length (timed: tails leaving), and of them, the snake out by 3 s
   // (30 ticks) after the strike; islands of one or two cells a strike cut
   // off (with food on them, a snake on them); and the rounds whose last
   // snakes ended up on islands of their own, of them how often the one on
   // the biggest won (chance: what a blind pick would get).
-  seals: 0, sealedOut: 0, falls: 0, fallCells: 0, fallBig: 0, fellOut: 0, piecesLeft: 0, split: 0, splitBiggest: 0, splitChance: 0,
+  seals: 0, sealedOut: 0, falls: 0, fallCells: 0, fallBig: 0, bigFalls: [], fights: 0, fightHits: 0, floorRounds: 0, cutDeaths: 0, cutVictim: 0, cutChance: 0, fellOut: 0, piecesLeft: 0, split: 0, splitBiggest: 0, splitChance: 0,
   causesSD: {}, sdTimes: [],
+  ...endgameCounts(),
 });
 
 // The land in sudden death, for the census: 4-connected islands of cells
@@ -116,7 +118,7 @@ function timedGrid(g, N) {
     s.body.forEach((c, j) => { const k = c.y * N + c.x; free[k] = Math.max(free[k], L - j + extra); });
   }
 }
-const totals = () => ({ rounds: 0, timeSum: 0, times: [], sudden: 0, draws: 0, stalled: 0, trace: [], beetles: 0, caught: 0, flown: 0, causes: {}, crashes: 0, alight: 0, cuts: 0, baked: 0, ash: 0, rot: 0, rotBeads: 0, census: census() });
+const totals = () => ({ rounds: 0, timeSum: 0, times: [], sudden: 0, draws: 0, stalled: 0, trace: [], beetles: 0, caught: 0, flown: 0, causes: {}, crashes: 0, alight: 0, cuts: 0, baked: 0, ash: 0, rot: 0, rotBeads: 0, seasons: {}, actDeaths: [0, 0, 0, 0], actReached: [0, 0, 0, 0], census: census() });
 
 // What --signatures measures, per snake (summed over its ticks and rounds;
 // each trademark is read against everyone else's, the field):
@@ -270,7 +272,11 @@ function woodpeckerCensus(g, c, st, dying, N, T) {
       if (st.beak) { for (const f of st.beak) if (g.food.includes(f)) c.beakRan++; st.beak = null; }
       labelLand(g, N);
       const { sizes } = land;
-      if (e.fall) { c.falls++; c.fallCells += e.fall.length; if (e.fall.length > T.PECK_FALL_SOFT) c.fallBig++; } // (2s: pieces cut loose, fallen with the strike; bigger than PECK_FALL_SOFT)
+      if (e.fall) { // (2s: pieces cut loose, fallen with the strike; bigger than CUT_SHARE_MAX of the log then, part 2's cap; the biggest a round)
+        c.falls++; c.fallCells += e.fall.length; if (e.fall.length > T.CUT_SHARE_MAX * (N * N - g.holes.size + e.cells.length)) c.fallBig++;
+        st.bigFall = Math.max(st.bigFall || 0, e.fall.length);
+      }
+      if (e.zone) { c.fights++; if (!st.fought) { st.fought = true; c.floorRounds++; } } // (part 2: a fight's strike, at the floor; and the rounds with one)
       if (sizes.length > 1) c.piecesLeft++; // (2s: a strike that left the log in pieces)
     }
   }

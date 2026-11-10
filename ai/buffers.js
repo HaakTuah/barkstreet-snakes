@@ -4,7 +4,7 @@
 // (-1 off the board), and `queue` holds a breadth-first search, one distance
 // after another. No search visits a cell twice, so N * N is always enough.
 let bufN = 0, mineFree, otherFree, ownFree, risk, strikes, visited;
-let bridgeUntil, ridesWas, foodValue, foodGrow, foodFrom, foodCells, goldCells, beadCells, queue, nbr, necks, reach, lineAt, lineSeen, lineMark, lineIn, lineOut, myCells, marks, leave, leaveStamp, chase, chaseKey;
+let bridgeUntil, ridesWas, foodValue, foodGrow, foodMeal, foodFrom, foodCells, goldCells, beadCells, queue, nbr, necks, reach, lineAt, lineSeen, lineMark, lineIn, lineOut, myCells, marks, leave, leaveStamp, chase, chaseKey;
 let nearStamp, nearHead, nearWho, nearHome, nearGap, nearBeak;
 let markStamp = 0;
 // The board the searches of a search state run on (see evaluate), framed
@@ -37,6 +37,7 @@ function ensureBuffers(N) {
   ridesWas = new Int32Array(size); // (round six B: a rival's body over a pit, a bridge for my head till it leaves, ticks from now; 0: none)
   foodValue = new Float64Array(size); // what eating a cell is worth
   foodGrow = new Int8Array(size);     // what eating a cell does to my length
+  foodMeal = new Float64Array(size);  // of foodValue, the meal's part (growth and hunger), not its power or stamina (2h: see mealAfter)
   foodFrom = new Int32Array(size);    // the first move that can eat it, if it isn't there yet (food the woodpecker will knock there, or a mushroom I just spat, which I slide over till then; 0: it's there)
   foodCells = new Int32Array(size);   // food never shares a cell
   goldCells = new Int32Array(size);

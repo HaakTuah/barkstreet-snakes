@@ -23,7 +23,8 @@ online ("Chatter is the host's" in `22-play-with-friends-online.md`); and the ba
 - **A bubble** follows the speaker's gliding head for 2.6 s (`BUBBLE_MS`, real time, so it goes on time when the round
   is over or napping), one a snake: above the head for a snake going sideways (below it near the top), beside it for
   one going up or down, moving to another side only once that side has been right for 0.45 s, and gliding there. It
-  keeps off the banner and older bubbles, and fades near your own head.
+  keeps off the banner and older bubbles, and a glide that would carry it over one on the way hops straight
+  there instead; it fades near your own head.
 - **On a small board** a line over 32 characters (`COMPACT_CHARS`) goes to the log alone while the log is on screen; a
   reply always gets its bubble (it's the joke).
 - **Last words** of a snake that's out show in a bubble where it went out, for 2 s (`LAST_WORDS_MS`), only where the

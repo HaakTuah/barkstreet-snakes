@@ -7,8 +7,9 @@
 // - Space jumps; E and either Shift flash; a tap jumps; a fresh swipe the way
 //   you're going flashes; a swipe across the way you're going turns, on phones held upright and on
 //   their sides.
-// - Pressing the way you're going, a held key and its auto-repeat, and the
-//   press that starts or wakes a round never fire a power.
+// - A fresh press the way you're going dashes (arrow or WASD); a held key's
+//   auto-repeat, a turn pressed twice quickly, and the press that starts or
+//   wakes a round never fire a power.
 // - Space, E and Shift never start, wake or dismiss anything (a button you
 //   Tabbed to still takes Space).
 // - Two presses in one tick turn on consecutive ticks; a press reaches the
@@ -116,7 +117,7 @@ const INSTRUMENT = `(() => {
     const g = SnakeDebug.game(), me = g.snakes[0];
     me.body = [{ x: 12, y: 12 }, { x: 11, y: 12 }, { x: 10, y: 12 }, { x: 9, y: 12 }, { x: 8, y: 12 }, { x: 7, y: 12 }];
     me.prev = null; me.dir = E.DIRS.right; me.queue.length = 0; me.stunUntil = -1; me.flight = null;
-    me.leapArmed = -1; me.flashArmed = -1; me.leapReadyAt = 0; me.flashReadyAt = 0; me.leaps = 0; me.dashes = 0; me.turnedAt = null; me.heldReverse = null;
+    me.leapArmed = -1; me.flashArmed = -1; me.restedAt = 0; me.leaps = 0; me.dashes = 0; me.turnedAt = null; me.heldReverse = null;
     return 'ok';
   };
   window.dirName = d => Object.keys(E.DIRS).find(k => E.DIRS[k].x === d.x && E.DIRS[k].y === d.y);
@@ -174,6 +175,7 @@ const KEYS = {
   ArrowLeft: { key: 'ArrowLeft', code: 'ArrowLeft', vk: 37 },
   ArrowRight: { key: 'ArrowRight', code: 'ArrowRight', vk: 39 },
   d: { key: 'd', code: 'KeyD', vk: 68, text: 'd' },
+  w: { key: 'w', code: 'KeyW', vk: 87, text: 'w' },
   p: { key: 'p', code: 'KeyP', vk: 80, text: 'p' },
   g: { key: 'g', code: 'KeyG', vk: 71, text: 'g' },
   Enter: { key: 'Enter', code: 'Enter', vk: 13, text: '\r' },

@@ -11,7 +11,7 @@ power food" in "Food on the log"); the woodpecker's holes
 (`39-the-rivals.md`, "Rivals use their powers, when it pays" and "Every rival has a power style"; "Balance targets" there); what each move measured, with the numbers chosen
 (round six B's "chosen numbers" in `docs/archive/design-powers.md`); the keys, swipes, taps and the mouse (`42-controls.md`); teaching
 (`30-teaching-by-showing.md`); Capricious, Copycat and Wildcard (`35-capricious-copycat-and-wildcard.md`); sound in
-general (`21-sound.md`); one stamina for both plain powers, to build (`37-one-stamina.md`); and crashes, head-ons,
+general (`21-sound.md`); one stamina for both plain powers, built (`37-one-stamina.md`); and crashes, head-ons,
 fire on snakes and your own beads squashed (`41-crashes.md`).
 
 ### The words
@@ -27,14 +27,15 @@ The jump and the flash are two presses, so holding a golden flash never turns a 
 into it.
 
 - **Jump:** Space or a click on the board, or a tap on a phone. Golden jumps go first, and are free.
-- **Flash:** E, either Shift or a right-click on the board, or on a phone a swipe the way you're already going. Golden
-  flashes go first.
+- **Flash:** E, either Shift, a right-click on the board or a fresh press of the steering key (arrow or WASD) the way
+  you're already going, or on a phone a swipe that way. Golden flashes go first.
 - **Pressed together,** the jump goes first if it can (something right in front to hop, somewhere to land), because no
   flash gets past that; the flash goes once you're down. A flash pressed in the air goes once you're down too.
-- **Steering keys only steer.** Pressing the way you're already going does nothing. For swipes only,
-  `POWER_AFTER_TURN_MS` (300) stays: a fresh swipe the way the last swipe turned you, while that one's still down or
-  within 300 ms of its lift, is the turn swiped twice, not a flash. Only a swipe that turned counts, so golden flashes
-  swiped back to back still go. Keys need no guard.
+- **The key ahead flashes, behind touch's guard** (the owner, 4 November 2026; it was dropped once because held keys
+  fired it by accident: `docs/archive/design-powers.md`). Only a fresh keydown counts, never a held key's auto-repeat;
+  and `POWER_AFTER_TURN_MS` (300): a fresh press the way the last press turned you, within 300 ms of it (for a swipe,
+  while that one's still down or within 300 ms of its lift), is the turn pressed twice, not a flash. Only a press that
+  turned counts, so golden flashes pressed back to back still go. A press that starts or wakes the round only steers.
 - **Nap is P and Esc** (and the ⏸ button), since Space jumps. Enter, R or an arrow starts and starts over; P and Esc
   don't start a round from the start or round-over card.
 - **Space, E and Shift never start or dismiss anything.** They're the keys you mash in a fight. A button you Tabbed to
@@ -50,16 +51,16 @@ into it.
   began before it came up or within `CARD_TAP_MS` (500 ms) of it, nor one in a run of touches, each within
   `CARD_MASH_MS` (350 ms) of the last, that began then. Mashing jump never plays again.
 - **Teaching it.** The flash's key is taught once a round, from 6 s in, until you've flashed: "Your dash is ready: E,
-  Shift or right-click." (on a phone, "Your dash is ready: swipe the way you’re going."). A short phone teaches both on
+  Shift, or the key you’re going." (on a phone, "Your dash is ready: swipe the way you’re going."). A short phone teaches both on
   the first Go: "Tap jumps. Swipe ahead dashes." The key help reads "Arrow keys steer (or WASD) · Space or click jumps ·
-  E, Shift or right-click dashes · …" ("Swipe to steer · Tap to jump · Swipe ahead to dash" on a phone).
+  E, Shift, right-click or the key you’re going dashes · …" ("Swipe to steer · Tap to jump · Swipe ahead to dash" on a phone).
 
 ### Pressing during a stun
 
 A power you ask for while stunned goes the way you pressed when the stun's over (it counts as steering, if it can go,
 so the snake isn't turned aside first). A power that can't get anywhere says so, with an inked × and, the first time
 in a round, a line ("Nowhere to land.", "Nowhere to dash."; resting, "Your jump needs a moment." or "Your dash needs a
-moment."; too short to pay a jump's tip, "Too small to jump: it costs tail."), and the auto-turn takes you clear. For a
+moment."), and the auto-turn takes you clear. For a
 flash, that's a plain one into what you hit, or a golden one that would blow up at the edge or a hole on its way, or
 crash straight back in; a golden flash at a body one thick still goes, since that's its cut. A power that could go but
 then can't (a jump whose landing another head takes as it goes) gets the auto-turn too.
@@ -72,9 +73,10 @@ Golden powers add up:
 - each golden mushroom adds `WRAP_MS` (12 s) of wrap, up to `WRAP_MAX_MS` (20 s).
 
 You can hold golden jumps and golden flashes at once, since they're different presses. Golden charges are spent before
-the plain power and leave its rest alone. Nobody holds a power the others can't see: a snake holding one wears gold
+the plain power and leave the stamina alone. Nobody holds a power the others can't see: a snake holding one wears gold
 ("Telling powers apart" in `03-the-snake-as-a-character.md`), and the rivals see everyone's golden powers in their view
-(`leaps`, `dashes`, `wrap`), and their own rests (`leapIn`, `flashIn`).
+(`leaps`, `dashes`, `wrap`), their own stamina exactly (`stamina`, `leapIn`, `flashIn`), and each other snake's only
+as its look shows it (`step`: "Stamina on the body" in `03-the-snake-as-a-character.md`).
 
 ### Where golden powers come from
 
@@ -107,17 +109,19 @@ hop rarely reaches the next island across a hollow.
 - **It waits:** a press waits up to `LEAP_WINDOW` (5) moves for something to hop and somewhere to land within reach,
   and isn't spent on open ground ("Too early: a jump waits 5 moves, then gives up."; "Nothing to jump. Jumps clear a
   snake, a hole or fire.").
-- **It costs** the tip of your tail (`LEAP_COST` 1, so it needs more than `MIN_LENGTH`), then rests
-  `LEAP_COOLDOWN_MS` (4 s). A leap is a crash you saw coming, traded for one segment instead of three and a stun.
+- **It costs** its share of the one stamina (`JUMP_STAMINA_MS`; "One stamina for jump and dash",
+  `37-one-stamina.md`), and nothing off your tail (before 2u: the tip of it, and a 4 s rest of its own). A leap is a
+  crash you saw coming, traded for stamina instead of three segments and a stun.
 - *The cue:* the landing cell gets a ring while the jump waits; the flight is the arch, shadow and dust of "Bridges and
-  jumps you can see" (`03-the-snake-as-a-character.md`). While it rests, the left half-ring round your head (in sky)
-  fills; when it's back, one bright flick and a wooden tick.
-- *The lessons:* your first jump, "Hup! A jump costs your tail tip, then a short rest."; the first time you're boxed in
+  jumps you can see" (`03-the-snake-as-a-character.md`). The stamina ring round your head (see "One stamina for
+  jump and dash") has a sky notch at a jump's worth; when the stamina is back up to it, one bright sky flick and a
+  wooden tick.
+- *The lessons:* the first plain jump or dash that leaves you tired, "One stamina: jump or dash, your choice."; the first time you're boxed in
   with a jumpable gap, "Space hops up to three cells. Hop the gap!" ("Tap to hop up to three cells. Hop the gap!" on a
   phone).
 - *The Field guide's Jump row:* "Space or a click on the log: hop snakes, holes or fire, up to 3 cells, to the first
-  free cell: across a gap too. Press twice to leap now, open ground too. A ring shows where you’ll land. It costs your
-  tail’s tip, then rests 4 s. Bump into a flier in the air and you drop: onto a body or into a hole, you’re out. Lie on a
+  free cell: across a gap too. Press twice to leap now, open ground too. A ring shows where you’ll land. It takes two
+  fifths of your stamina. Bump into a flier in the air and you drop: onto a body or into a hole, you’re out. Lie on a
   flier’s ring before it lands and it’s out: rivals will try it on you." (On a phone: "A tap", "Tap twice".)
 - *The sound:* a springy boing up and a whoosh of air.
 - *The rivals* ask for it through the same call (`memory.power` from `decide()`: `leap()` in `engine/powers.js`), with
@@ -169,6 +173,10 @@ who never double-presses.
 
 A flier's ring is where it will come down, so anyone who gets there first, by crawling, a flash or dash through it, or
 a leap now down on it, puts the flier out (it comes down on a body).
+- *The cue:* a ring someone is going for takes that snake's colour (#401), for everyone: the nearest snake on the
+  ground whose head came closer to it on its last move and could crawl onto it before the flier is down, by the
+  lesson's own reach (`inRingReach` in `render/jumps.js`). It eases in and out over 150 ms, so it shows only while the
+  race is on. It says who could get there, never who will, and the flier can read it and steer away.
 - *The lesson:* the first time a flier's ring is in your reach before it comes down, "A flier lands on its ring. Get
   there first and it’s out!"
 - *The rivals* go for a ring they can reach in time, planned from the ring as they saw it (a reaction late), never by
@@ -222,12 +230,14 @@ a leap now down on it, puts the flier out (it comes down on a body).
 
 ### A flash for everyone
 
-Everyone can flash: **two cells in one tick, along the ground, free, then a rest** (`FLASH_LENGTH` 2, `FLASH_COST` 0,
-`FLASH_COOLDOWN_MS` 12 s). It eats what it passes. It goes the next tick the snake moves on the ground (in the air,
-once it's down). *Why free:* a flash that cost a tail segment made rounds longer and starved snakes, in simulation.
-- *The cue:* ember speed lines either side, thinner and shorter than a golden flash's. While it rests, the right
-  half-ring round your head fills; when it's back, a small ember spark.
-- *The Field guide's Dash row:* "E, Shift or a right-click on the log: two cells in a blink, free. Then it rests 12 s."
+Everyone can flash: **two cells in one tick, along the ground, for its share of the one stamina** (`FLASH_LENGTH` 2,
+`DASH_STAMINA_MS`; before 2u it rested 12 s on its own). It eats what it passes. It goes the next tick the snake moves
+on the ground (in the air, once it's down). *Why no tail:* a flash that cost a tail segment made rounds longer and
+starved snakes, in simulation.
+- *The cue:* ember speed lines either side, thinner and shorter than a golden flash's. The stamina ring has an ember
+  notch at a flash's worth; when the stamina is back up to it, an ember flick and a small spark.
+- *The Field guide's Dash row:* "E, Shift, a right-click on the log or the key you’re going: two cells in a blink, for three quarters of
+  your stamina." (each share is written from `tuning.js`)
   (On a phone: "A swipe the way you’re going".)
 - *The sound:* a short whoosh of air, lighter than a golden flash's zip.
 - *The rivals* flash through the same call (`memory.flash`: `flash()`), weighed in their own search
@@ -298,7 +308,8 @@ behind the cut becomes beads, which others can eat and you squash. A cut of your
 snake gets out of a pocket too small for it, at the price of the length.
 - *The lessons:* the first time you're in a pocket smaller than you, your flash ready and your own body one thick in
   front, "Dash through your own tail to drop it."; your first own cut, "Tail dropped: lighter, and out of the pocket."
-- *The rivals* drop their own tail only when trapped.
+- *The rivals* drop their own tail when trapped, and in the endgame plan it once they see themselves boxed in, each in
+  its style ("The endgame: a meal is worth the life it buys" in `39-the-rivals.md`).
 
 ### The wrap
 
@@ -317,6 +328,10 @@ Built in part 5 of round six B (PR #202):
 - Going off an edge while wrapping opens a pair of gold portals, one on each side, trimmed in your colour. The entry
   swirls in and the exit spills out. The frame is gilded while you wrap. Gold, not blue and orange: on this board sky
   blue means jump and ember means flash.
+  *To come* (the owner, 9 November 2026, #592: "A blue and orange color scheme for the portals immediately communicates
+  to a player what it is, and gives them a chuckle."): the entry blue and the exit orange, glowing ovals as in the game
+  Portal, with a thin gold trim for the golden mushroom; their shape keeps them apart from the jump's sky blue and the
+  flash's ember. The polish lane's next find in `docs/PROGRESS.md`.
 - Others may follow you through while your body passes and for a while after (`PORTAL_MS`, 2 s). Coming out
   onto your body is a crash.
 - *Open long enough to matter:* the time a portal stays open after your tail is lengthened, step by step, until
@@ -340,6 +355,36 @@ Built in part 5 of round six B (PR #202):
   Per use (`tools/dev/fork-moves.js --move portal --rest`, seeds 902–904, 232 follows): a follower is 3.1 ± 0.8 cells
   longer 10 s later, but places no better (−0.10 ± 0.10 a follow). The move doesn't matter to places, which is a design
   finding for the owner (#447); it is kept as built until he answers. Every trademark is within noise.
+- **A follower that cuts its owner, measured and dropped** (2y++, PR #591; the owner's call is #592): a follower coming
+  out of the exit snipped the owner's body still lying straight in line beyond it, up to 8 cells (a dash's cut; the
+  head reached, the owner out). The rivals were not taught it. It bit in a third of follows (60 of 181 on seeds
+  902–904), about 6 segments each, and put out 1 or 2 owners in 200 rounds. It moved no places: the follower −0.12
+  place a follow (−0.10 ± 0.10 without it), the owner +0.07 ± 0.10; where it bit, −0.13 and −0.12. Reaching 24 cells
+  instead of 8 bit no more owners. A few segments lost behind the owner don't change who wins, so the rule stays out.
+
+### Dropped charges
+
+Built in part 6 of round six B. Not on every bump: a snake **knocked out** while holding golden jumps or dashes spills
+them where its head fell, one golden pickup anyone can grab (a bump it lives through keeps them).
+- It lands on the nearest free cell within `SPILL_NEAR` (3) of the head: never a hole, fire, a body or other food (out
+  down a hole, it lands on the rim). With none free, the charges are lost. It fades after `SPILL_TICKS` (90).
+- Whoever eats it takes them all, up to what anyone can hold (`LEAP_MAX`, `DASH_MAX`), and it is a meal too (+1 length),
+  as a golden leaf is.
+- *The look:* a gold coin in a golden glow, ringed with the pips it held, as they were on the head (sky dots for golden
+  jumps, ember diamonds for dashes), turning slowly; it fades as a leaf does. The golden sound when eaten.
+- *The lesson:* the first spill anyone sees, "A snake knocked out drops its powers. Grab them!"; grabbing one,
+  what you now hold ("Spilled powers: now 2 golden jumps and 1 golden dash."); Star crows over a grab as over a golden beetle. Its Field guide row is "Spilled powers".
+- *The rivals* want it through the same food search as anything else: each charge they could still hold worth what one
+  from a golden leaf is (`spillWorth` in `ai/food.js`); with no room, only a meal. No persona weights of its own.
+- **Measured** (PR #584): about 0.4 spills a round, in about a third of rounds, 1.7 charges each; a third to 40%
+  grabbed, the grabbers out within 3 s 0 to 6% of the time (no refuge). Too rare to move whole rounds (head to head,
+  seeds 811/813, 1,000 paired rounds against rivals that ignore spills: 0.05 grabs a snake against 0.02, every side
+  row and trademark the same), so it is judged per use (`tools/dev/fork-moves.js --move charges`, seeds 931–934): a
+  grab's charges are worth +0.20 ± 0.07 place and +10 ± 5 points of wins to the grabber, against the same meal
+  without them, as a golden leaf's are (+0.29 ± 0.05, 616 leaves). Of the spills the nearest rival misses (`--move
+  grab`, seeds 921–926, 341 spills: it grabs 33% wanting them, 15% ignoring them), four in five lie far off (12
+  cells, against 5 for those grabbed) and fade or outlast it, one in five another takes, almost none it has no room
+  for: how far a charge is worth going is part 7's pricing.
 
 ### Mushrooms come back up
 
@@ -350,13 +395,14 @@ A mushroom is a weapon you aim:
   (0.22) as the second runs out, and on each of the last three moves it throbs (0.06 bigger as the move starts,
   settling through it), so the spit comes on the beat after the third; with reduced motion it swells, without the
   throbs.
-- **Aim by steering.** While it's in your cheek, a small ring marks the cell `SPIT_REACH` (3) ahead of your head,
-  wherever you face. When the time is up, you spit it there in an arc, over anything between: it leaves at the start of
-  that tick, before anyone moves, from the head and the way it faces then, exactly where the ring has been.
-- **Where it lands:** on bark, it lies there, poisonous; on a head, that snake swallows it (shrinking, and spitting it on
-  in its turn), unless its own mouth is full, when it bounces off as off a body; on a body, food or a burrow, it rolls
-  off by the roll rule ("Where it rolls is a rule, never chance"), and with nowhere to roll it's gone; off the board, in
-  a hole or in a fire, it's gone.
+- **Aim by steering.** While it's in your cheek, a dotted green line runs from your head the way you face, `SPIT_REACH`
+  (5) cells out (to the edge or a hole, if nearer). When the time is up, you spit it along that line: it leaves at the
+  start of that tick, before anyone moves, from the head and the way it faces then, and flies straight on ("The spit
+  flies along the line", below).
+- **Where it stops:** at the first thing in its way. On a head, that snake swallows it (shrinking, and spitting it on in
+  its turn), unless its own mouth is full, when it bounces off as off a body; on a body, food or a burrow, it rolls off
+  by the roll rule ("Where it rolls is a rule, never chance"), and with nowhere to roll it's gone; off the board, in a
+  hole or in a fire, it's gone; with nothing in its way, it lies on the bark `SPIT_REACH` out, poisonous.
 - **You slide over your own.** For `OWN_SPIT_TICKS` (6) moves after the spit, the spitter's head goes over the mushroom
   it spat, as a full mouth goes over food, and it stays; anyone else who comes over it swallows it as ever. (2x, the
   owner's playtest: before, a snake that kept going swallowed it again three moves later, shrank, and spat it again, a
@@ -369,31 +415,54 @@ A mushroom is a weapon you aim:
   log holds no more poison than before.
 - **Eating one on purpose** is a real choice: a few segments for a shot at a rival, best when you're long and they're
   close.
-- *The cue:* the green bulge, the ring, the arc and a "ptoo"; a hit is a green puff on the target's head.
-- *The lessons:* your first, "Bleh! Steer to aim it: it lands three ahead."; your first spit that lies, "Still wet: you
-  slide over your own."; the first time one hits you, "Ptoo! Name
-  got you. Steer to spit it back."
-- *The Field guide's Mushroom row:* "Poison: 3 off your tail (never below 3). A second later it comes back up, three
-  ahead of you: steer to aim it at a head; you slide over it while it's wet. Each time it comes back up it takes one more, up to 5, a shade darker. Keep
-  out of a green ring."
-- *The rivals* (`ai/spit.js`): everyone aims one in the cheek (the last moves before the spit), closes in on where it
-  could hit a head before that, and keeps its head out of any ring due within its search;
-  eating one on purpose is weighed only at a mushroom within 4 of its head with a rival's head close and a line to spit
-  along, as a shot worth its taste for it × 0.35 (`SPIT_HIT`) × half an apple (`SPIT_SEG`) for each segment it would
-  take off ("Mushrooms, to a rival" in `39-the-rivals.md`).
+- *The cue:* the green bulge, the dotted line, the "ptoo", the mushroom flying, spinning, over the snakes; a hit is a
+  green puff on the target's head.
+- *The lessons:* your first, "Bleh! Steer to aim it: it flies straight ahead."; your first spit that lies, "Still wet:
+  you slide over your own."; the first time one hits you, "Ptoo! Name got you. Steer to spit it back."
+- *The Field guide's Mushroom row:* "Poison: 3 off your tail (never below 3). A second later it comes back up and flies
+  straight ahead of you, up to five: steer to aim it at a head; a body in the way stops it. You slide over your own
+  while it's wet. Each time it comes back up it takes one more, up to 5, a shade darker. Step out of a dotted green
+  line."
+- *The rivals* (`ai/spit.js`): everyone aims one in the cheek (the last moves before the spit), leading the head it
+  aims at, closes in on a cell in line with a head before that, and keeps its head out of any line due within its
+  search, and of any mushroom in the air ("The spit flies along the line", below); eating one on purpose is weighed
+  only at a mushroom within 4 of its head with a rival's head close and a line to spit along, as a shot worth its
+  taste for it × 0.35 (`SPIT_HIT`) × half an apple (`SPIT_SEG`) for each segment it would take off ("Mushrooms, to a
+  rival" in `39-the-rivals.md`).
 
 ### The spit flies along the line
 
-To build (3b+ of round six B, in `docs/PROGRESS.md`; the spitter sliding over its own mushroom, 2x, goes first): the
-arc to a ring 3 ahead goes; the mushroom flies straight ahead of you, the way you face when the second is up, up to 5
-cells (`SPIT_REACH`), two cells a tick, and stops at the first thing in its way: a **head** swallows it (poisoned); a
-**body**, yours or anyone's, bounces it off by the roll rule; **food or a burrow** rolls it off; **the edge or a hole**
-and it's gone; nothing in the way, and it lies on the bark 5 cells out. While it's in your cheek, a dotted line marks its
-path from your head instead of the ring, so a target still has its second to get out of the line, and a body between
-you and it is a shield. *The rivals* lead their shots and step out of any line pointed at them, each in its style
-(Sniper's head shots its trademark). *The A/B:* the spitters should come out ahead, and hiding behind a body only blocks
-one line. *The cue:* the dotted line, the mushroom flying, the green puff. *The lesson:* "Bleh! Steer to aim it: it
-flies straight ahead." Online: a protocol bump. First guesses: reach 5, two cells a tick.
+The shot of "Mushrooms come back up" (3b+ of round six B; the owner, 30 October 2026: "3. Agreed, do it expertly!"):
+the mushroom flies straight ahead of the spitter, the way it faced when the second was up, `SPIT_SPEED` (2) cells a
+tick, up to `SPIT_REACH` (5), and stops at the first thing in its way (above, "Where it stops"). Each tick it flies on
+at the start, before anyone moves (the ones already in the air first, then any spat that tick, in seat order); a head
+that moves onto it where it hangs between ticks is hit too, as if it had flown into it. So a head two out is hit at
+once, four out the tick after, and a target has the second of the dotted line, and the flight, to step out of the line;
+a body between the spitter and it is a shield. Over the edge it flies on only where the edges wrapped for the spitter as
+it left; a gold portal is a way through for snakes, not for what they spit. The spitter's own head goes over it in the
+air, as over its own lying wet.
+- **To come** (the owner, 9 November 2026, #583: "Should be improved, but I want it to mainly be something you shoot in
+  front of people, which they can avoid. So it is skill based, not just something that you have no control to avoid."):
+  it lands more between rivals and stays a shot its target can see coming and step out of; entry 3b++ in `docs/PROGRESS.md`.
+- *The rivals* (`ai/spit.js`): each line is the engine's, cell by cell and tick by tick (`spitLine`), on over the edge
+  where it wraps for the spitter as they'd see it, and stopped at a hole, the edge or a body still there. Dodging: from a rival's cheek, every way it might face (straight on
+  the likeliest), and from any mushroom in the air as seen a reaction time ago (2q), and from a cheek whose time has run
+  out though they haven't yet seen it fly. Aiming: the head where it'll be when the mushroom gets there, by two even
+  guesses, where they reckon it and a move further on (they may have noticed it late, 2q), so a line the target walks
+  into is the surest shot (`aimGain`). Each in its style: Sniper works three times as hard as anyone to get in line
+  with a head and lead it (`aim` 3), for the head shot; Joker eats one on purpose most, for the laugh; a weight for
+  turning keeps Mason on its straight runs, a shot or not.
+- **The chosen numbers** (PR #580): `SPIT_REACH` 5, `SPIT_SPEED` 2, as first guessed. *Measured* on fresh seeds 1401
+  and 1403 (1,200 paired rounds, head to head, against the same AI that never aims nor eats one on purpose, both
+  dodging): the spitters win 24.3% to 25.4% (interval −2.1 to +4.3 points), place the same (2.49 to 2.51), live as long
+  (148 s), kill as often, die of the same causes (no refuge); every trademark the same or within noise (as on seeds
+  1201 and 1203 before the review's fixes, 25.1% to 24.7%). In whole rounds 2% of spits hit a head (0.07 a round on
+  seeds 3 and 11; Sniper 0.11 and 0.06, Joker 0.08 and 0.14: too few to tell its head shots from Joker's), and still 2%
+  with every rival's dodging off: the rivals
+  keep their heads apart, so a head is seldom five in line from a spitter when the second runs out. Neither a hedged lead
+  nor closing in three times as hard raised it. Per use (`tools/dev/fork-moves.js --move spit`, seeds 1301–1303, 384
+  spits, each against that mushroom gone unspat): place −0.035 ± 0.123, −0.021 ± 0.115 and +0.054 ± 0.103 a spit, about
+  nothing (a spit against none, so aiming it can add no more). The spitters come out even, a design finding for the owner (#583); kept as built until he answers.
 
 ### Where it rolls is a rule, never chance
 
@@ -410,12 +479,12 @@ else is pushed aside by a head.
 
 ### Online
 
-Everything here crosses to a friend's screen (protocol 22; `VERSION` in `online.js` lists each bump): a power press is its own message
+Everything here crosses to a friend's screen (protocol 28; `VERSION` in `online.js` lists each bump): a power press is its own message
 (`{t:'pow', k}`: `'leap'`, `'flash'`, `'unleap'`, a jump a finger held still asked for, taken back, and `'letgo'`, a
-jump let go); each snake's row carries its golden charges (`leaps`, `dashes`), its rests (`leapReadyAt`,
-`flashReadyAt`), a waiting press (`leapArmed`, `flashArmed`), its wrap (`wrapUntil`), its stun and burn, its flight
+jump let go); each snake's row carries its golden charges (`leaps`, `dashes`), its stamina (`restedAt`, protocol
+25), a waiting press (`leapArmed`, `flashArmed`), its wrap (`wrapUntil`), its stun and burn, its flight
 (`flight`, `land`, `airLeft`, `airGold`, and the ring, `ring` and `ringIn`) and its cheek (`cheek`, `spitAt`); and the
 events carry leaps (golden, how far, a leap now), dashes (plain or golden), fizzles (a press that couldn't go), cuts,
-douses, crashes (a failed flash's, and one in the air, say so), squashes and spits (where it came down, whom it hit,
-where it lies). Bridges and cuts changed no message: they're rules both sides
+douses, crashes (a failed flash's, and one in the air, say so), squashes, spits (where each left from) and where each
+stopped (whom it hit, where it lies); each tick carries the mushrooms in the air, and spilled charges (protocol 28) say how many of each they hold, with a `spill` event where they fell. Bridges and cuts changed no message: they're rules both sides
 play by.

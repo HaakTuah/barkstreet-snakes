@@ -7,9 +7,11 @@ and a pointer here; this text is its spec, as the entry's own words were. When a
 
 ### The shared core (the owner, 5 November 2026; first among the side lanes, before the rule-file audit)
 
-The rules common to every project move to one public repository, `HaakTuah/agent-rules` (the name the design session
-proposed), and each project carries an exact copy of it under `core/`, pinned to one of its commits, generated and never
-edited by hand, as Amarna Letters treats its copy of its design document. What moves: the security baseline, the four
+The rules common to every project move to one public repository, `HaakTuah/agent-core` (renamed from `agent-rules`),
+and each project carries an exact copy of it under `core/`, pinned to one of its commits, generated and never
+edited by hand, as Amarna Letters treats its copy of its design document. It comes in two layers (archive, 9 November 2026): a safety floor every
+project takes whole and can never edit or leave out, and practice modules each project picks in a small manifest of its
+own; this game takes them all. What moves: the security baseline, the four
 pillars, the one inbox, keeping the owner's words, the roles and reviews, helpers, models and effort, the Git flow,
 usage, updates and "No description left untrue". What stays in each project: what it is, its rules that stand, its
 commands, its queue and whatever only it has, each rule file cut to that, with pointers into `core/`. The steps: (1) the
@@ -27,7 +29,10 @@ it went (the core, one game, or dropped with its reason), and a fresh reviewer g
 core finds nothing lost. The design session then checks the result against both games before any game takes a copy; (3)
 each project, in a PR of its own, adds the copy, cuts its rule files to what is its own, and adds a check on every PR
 that the copy matches the core at its pin (a workflow, so the owner's yes in that PR); (4) from then on a core change
-reaches a project only through a sync PR in it, reviewed as any other. No session writes to more than one repository:
+reaches a project only through a sync PR in it, reviewed as any other. Steps 1 to 3 are done (step 3 here: PRs #636 and #637); step 3 took `HaakTuah/agent-core` at its newest `main`, from the
+core's `reports/2026-11-10-step-3-now.md` first, which lists this game's step 3 in order (dropping `develop` just before
+it, in a PR of its own) and holds where the older reports it names disagree. Its workflows had the owner's yes in its
+PR. No session writes to more than one repository:
 the core's own session writes the core, and each project's builders read it and write only their own. Then the rule-file
 audit runs once on the core and once on each project's own rules (archive, 5 November 2026). The same in Amarna Letters.
 
@@ -39,39 +44,6 @@ it holds anywhere else or pull in more. Done when a test shows the policy in pla
 preview or, while previews are down, a round played on a local copy in two browsers (the owner, 6 November 2026;
 #534), and `SECURITY.md` and `docs/developing.md` point to it.
 
-### 2aa. Dash on the key you're going (the owner, 4 November 2026; an input entry, a side lane now)
-
-The owner: "I noticed you don't dash, when you press the arrow keys or wsad in the direction you are moving. I think you
-oughta." Pressing the steering key (arrow or WASD) of the way the snake is already going dashes, as a swipe ahead
-already does on a phone; E, Shift and a right-click stay. It was the old power press, dropped because held keys and
-auto-repeat fired it by accident ("Steering keys only steer" in `docs/archive/design-powers.md`), so it comes back with
-touch's guard, `POWER_AFTER_TURN_MS`: only a fresh keydown dashes, never a held key or auto-repeat (`e.repeat`), and a
-press within 300 ms of the press that turned the snake that way is that turn pressed twice, not a dash. The dash itself
-is unchanged: the same engine call and online message (no protocol change), and the rivals, who already dash, are
-untouched. Updated in the same PR: the hints under the board and on the start card, the dash lesson, the Field guide
-row, the README and `docs/design/40-powers-and-moves.md`. Done when a rules test shows a fresh press ahead dashing, a
-held key and auto-repeat never dashing, and a double-tapped turn turning once.
-
-### 2u+. The stamina economy and the golden apple's worth (the owner, 3 and 4 November 2026; #460; a measurement right after 2u, then an engine-rules entry for what pays)
-
-Right after 2u, on fresh seeds and for every rival, in two steps, each against the game as 2u leaves it. **Where stamina
-comes from** (the owner, 4 November 2026: "anything you eat should give a little stamina recharge"; "stamina maybe
-becomes something that don't recharge by itself, or at least very slowly. But maybe food gives it, and you can reach
-over baseline, save up?"): every food refills it in proportion to how much it grows the snake; on its own it still comes
-back ("It will still slowly recharge"), as built or only slowly, either up to a floor (a first guess of half a bar, so a
-snake far from food is never powerless) or all the way to the full bar; and it banks above the full bar up to a cap
-("Maybe the cap should start at 3x baseline, and be figured out in testing"), shown as the charged look in
-`docs/design/37-one-stamina.md`, never as a bar ("should not show a bar above you"). **The golden apple** (2z, PR #459:
-its +3 costs more time alive than it helps): a full baseline's refill ("Golden apples gives full 1x baseline"), against
-that plus a shield that absorbs one bump ("I only imagined it as absorbing 1 bump. If you have no space to move, it does
-you no good"), kept until used or fading after a while (a first guess of 10 s), and against the supercharge of 3
-November (a first guess of 4 s at a faster refill). What pays is built, with its cue, lesson, Field guide row and
-protocol bump: eating late must come to pay without always paying, plentiful rounds must not turn into power spam, the
-shield must never make anyone safe (if shielded snakes outlive everyone, it is tightened or dropped), every trademark
-holds (Gobbler's food share, Mute's boxing and Creeper's tail-riding above all), and the rivals play it well: eating
-when low, banking before a fight. The dash's worth is retuned too (#536; "No hidden prices" in
-`docs/design/37-one-stamina.md`). Part 7 then prices the powers against the economy that wins.
-
 ### 5. Round six B: the new moves (DESIGN "Round six B")
 
 Moved up by the owner (29 October 2026): "It's the one I am most interested in playing, and it has been pushed back for a
@@ -80,8 +52,7 @@ and 3c. A playable draft PR as early as it can be, so the owner can try it.
 
 *Done so far:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195); their words and detail are in `docs/archive/progress-done/item-5-parts.md`, "Item 5, its done parts".
 
-*Where it stands:* the parts left and their order are in `docs/PROGRESS.md`, item 5 (part 6 is *built and reviewed*
-on `round6b/dropped-charges`: merge `develop` into it, renumber its protocol after part 4's, run its A/B; part 7 is
+*Where it stands:* the parts left and their order are in `docs/PROGRESS.md`, item 5 (part 6 is done, PR #584; part 7 is
 *parked* on `round6b/pricing`; part 3's numbers to watch there: Joker and Sovereign low on single seeds, Gobbler's and
 Vulture's shares a little lower). Mason's double walls are kept (the owner, 29 October 2026). The 29 October status this
 replaced is in git history (the file-by-file review, 2 November 2026).
@@ -116,9 +87,11 @@ design's words for each are in `docs/design/40-powers-and-moves.md` (as first de
    **bumps in the air** (a crash's cost, and you drop where you are: over fire you catch alight too, over a hole you
    fall in, onto a snake you're out, trapped). Its A/B came out even with leap now and the flight measured together, so (the owner, 31 October 2026: "Yes, please, expertly!", to splitting it): the flight and leap now are measured apart; the rivals learn the flight's uses (out of a box, across to food, cutting off, steering planned in the air) until fliers come out ahead; the golden flash is measured on its own in the same pass and its use taught where it falls short; if the flight pays and leap now doesn't, the flight merges without leap now, and leap now comes back to the owner. "The rivals fly it as a person would" and "The golden flash cuts deeper" in `docs/design/29-round-six-b-the-new-moves.md`.
 5. **Gold portals for the wrap:** anyone may follow through for about a second after your body passes. In six test rounds nobody followed, so the time it stays open is lengthened step by step until following makes a gameplay difference from time to time (the owner, 31 October 2026: "Then we can increase the time it is open, until it actually makes a gameplay difference from time to time."), after checking that the rivals see the chance at all: "Open long enough to matter" in `docs/design/29-round-six-b-the-new-moves.md`.
-6. **Dropped charges** on a knockout, as above. *Built and reviewed* on `round6b/dropped-charges` (a spilled gold coin ringed with the pips; rules tests; review fixes in; protocol to renumber when it merges); still to do: the A/B against rivals that ignore spills (a copy is easy: zero the spill's worth in `ai.js`), pictures, the PR.
+6. **Dropped charges** on a knockout, as above (done, PR #584: "Dropped charges" in `docs/design/40-powers-and-moves.md`).
 7. **One pricing model for every power,** as above, last, and built afresh on top of 2u's one stamina, not resumed from the parked pass (the owner, 2 November 2026); the parked pass on `round6b/pricing` is a reference for its findings only (*a first pass is parked* on `round6b/pricing`: the tail tip at length's worth now, rests cheaper while idle with a floor, risk by `headRisk`; on seeds 51/53 the seat-split already shows powers on beating off, 33.6% to 16.4%, with the island hop alone, and this pass did no better, 33.3% to 16.7%, flashing more; a direct head-to-head against today's AI was stopped at look 4, its rounds cached), so it prices every move together, with **each rival's power
    style** ("Every rival has a power style"); the design's "Balance targets" are its measure.
+   Part 7 also prices how far a rival goes for spilled charges (part 6, PR #584: four in five of the spills it misses
+   lie about 12 cells off; a grab's charges are worth what a leaf's are).
    Part 7 also takes two of the improvement audit's finds (31 October 2026; the owner: "Agreed to all, expertly!"): **the trademarks
    that never show** (Mute's boxing and Joker's lures level with the field, Mason's body beside itself below it) get
    measures that catch the behaviour first (Mute's boxing counting the kills it gets by boxing; it leads the kills at
@@ -134,17 +107,6 @@ neck-cut, drop a tail, fly and steer, leap now, take a landing, follow a portal,
 each danger (a landing ring, a flash's line, a bridge's tail end). Rules tests prove each one through the same engine
 calls as a person's, and the head-to-head shows the users ahead ("No ability only people use", "every new move is
 tested both ways"); the pricing part then makes the choices among them as good as they can be.
-
-### 2q. Rivals notice like people (30 October 2026; an AI entry, after 2s)
-
-The owner: "do the snakes have a bit too good reaction time? [...] Just seems they play a bit too well in that regard
-perhaps", and to the take that what is superhuman is not the 240 ms but seeing the whole board at once: "Agreed to
-all!". Every rival's view of another snake is as old as a person's notice of it would be: `REACTION_MS` (240) near its
-own head, growing with distance to about 400 ms across the board (`REACTION_FAR_MS`, first guesses), with a little
-variation from moment to moment, so near things are seen at once and far ones a beat late, as a person sees them
-("Clever rivals, human reactions"; the AI still plans as far ahead as before). Online the same. Measured before and
-after: per-persona win rates, every trademark and the feel numbers within noise or explained, through
-`tools/abtest.js` on fresh seeds; the PR shows the table.
 
 ### 2r. No hop onto a doomed island (30 October 2026; part of item 5's part 4)
 
@@ -243,7 +205,7 @@ starves, and rounds feel alike. Each round draws its **food season**, as it draw
 part waits** (after 5), built on the branch `wildcard-shows-its-mix`: two or three traits a round from eight (`TRAITS`
 in `ai.js`), its tag's note ("This round: hungry, reckless and hunts"), a brag as its first line (with its Chinese), a
 Field guide row, protocol 16 with `mix` synced, rules tests, and the simulation's `--signatures` reading each trait's
-trademark. Left to do: merge `develop` into it (its `ai.js` predates 5), re-check the traits that showed weakly in a
+trademark. Left to do: bring it up to date with `main` (its `ai.js` predates 5), re-check the traits that showed weakly in a
 first 40-round look (coward, tail-rider: given Ghost's and Creeper's room weights since), the A/B and head to head,
 pictures, review.
 
@@ -396,12 +358,12 @@ late, it is probably the most uneasecary feature we have discussed here, so leav
 - **Measured:** the simulation counts fights a round (rare is fine, as long as it happens), and deaths near a beetle,
   the one real risk, stay within noise.
 
-### 9. At the very end: the writing pass (the owner, 31 October 2026; Fable 5.1, after everything else, entry 8 included)
+### 9. At the very end: the writing pass (the owner, 31 October 2026; Fable, its newest version, after everything else, entry 8 included)
 
 The owner (31 October 2026): "Also, many of the Snakes dialogue lines are really really bad and corny. some of it are fun pop cultural stuff or wordplays I came up with, but most of it is corny writing by Opus 5.5. I think it would be nice to have a Fable 5.1 run on it at the end, to really piff up the writing. make it more clever and culturally engrossing. Though Trump actually got some good lines! So i don't want it to remove across the lines. remove the funny gags like Mason talking bad latin, or saying vidi vici veni which is a sex joke. but i want it to look at all, and give it a make over. the chinese lines are not as important. if it can, do them too, but most can't read them regardless. concur?" Then, to the design session's take (his gags kept, at the end of the queue, a page
 to choose from): "yes, and let it be creative! i don't want it to strictly look and improve whats there. that contrains it. let it go a bit wild and add stuff to, or make it over. it needs creative control outside of what i protect."
 - **Who and when:** after entry 8, so it covers every line the queue adds (the Charmer, the new moves, the woodpecker's
-  acts). Fable 5.1 holds the creative control but not the volume, since its usage drains far faster, and it gets only
+  acts). Fable holds the creative control but not the volume, since its usage drains far faster, and it gets only
   the parts that need its judgement (archive, 5 November 2026, and "A helper above you gets only what needs it" in
   `CLAUDE.md`): (1) an Opus session at high effort runs the pass and gathers every line, for each rival and for the
   game's own text, into one file per rival with the owner's protected lines marked; (2) from those files alone, Fable at
@@ -433,16 +395,16 @@ to choose from): "yes, and let it be creative! i don't want it to strictly look 
 The owner: "Need a full review and clean up where we look at every file, especially the documents, and ask what does this
 state that it does, and does it do it? If something in it doesn't then it needs to be somewhere else, if anywhere at
 all." Every file, docs first: what does it say it is for, and does it do that? What doesn't belong moves to where it
-does, or goes; code is checked against "Split by meaning" and "Keep it lean" in `AGENTS.md`. The files every session
+does, or goes; code is checked against "Split by meaning" and "Keep it lean" in `core/modules/how-to-work.md`. The files every session
 reads first, then `docs/`, then the code, in a few PRs, each with a table of every file it covered and what happened to
-it, behaviour proven unchanged (suites, fingerprints). Helpers by "Helpers: when they pay" in
-`docs/claude-and-codex.md` (a Haiku search helper per folder).
+it, behaviour proven unchanged (suites, fingerprints). Helpers by
+`core/modules/helpers.md` (a Haiku search helper per folder).
 
 ### The file-by-file review's moves (the workshop lane; found in part 3 of the file-by-file review, PR #337, 2 November 2026)
 
 Part 3 of the review asked of every code file what its header says it holds and whether it holds that. Its headers
 are now right; what sits in the wrong file is listed here, checked against the code, for PRs of their own ("Split by
-meaning" in `AGENTS.md`: a split goes in its own PR, behaviour proven unchanged by the fingerprints and the suites,
+meaning" in `core/modules/how-to-work.md`: a split goes in its own PR, behaviour proven unchanged by the fingerprints and the suites,
 with what it saves said). One folder per PR; `render/world.js` waits for the main lane, as its split does.
 
 - **render/:** `drawSnakes`, `drawPasses`, `drawTrails` (marks.js) to world.js, with the frame; `drawBurning` (marks.js)

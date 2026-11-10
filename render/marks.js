@@ -71,53 +71,72 @@ function drawPip(x, y, a2, pr, leap) {
   }
 }
 
-// Your two plain rests, as two half-rings round your head, fixed to the
-// screen: your jump's on the left, in sky, and your flash's on the right,
-// in ember. Each shows while it rests, filling from the bottom (a faint
-// track shows how far it has to go), and gives one bright flick when it's
-// back. Where you're looking, not only on your tag. (Holding golden leaps
-// or dashes, that press is ready anyway: no half-ring for it.)
-const REST_GAP = 0.36; // (radians left clear at the top and the bottom, between the halves)
+// Your stamina (2u: one for both plain powers), as a ring round your head,
+// fixed to the screen: it fills from the bottom up both sides at once, like
+// water in a glass, and spending drains it from the top. A notch in sky
+// marks what a jump takes, one in ember what a flash takes, so you see the
+// price before you press; the water is ember with a flash's worth in it,
+// sky with a jump's, else dark. It's faint and thin, yours alone (your
+// snake's look, as everyone's, shows the step: see render/stamina.js), fainter
+// still when full; each power coming back gives one bright flick, sky or
+// ember. Where you're looking, not only
+// on your tag. (Holding golden leaps and dashes both, every press is ready
+// anyway: no ring.)
 function drawRests(s, a, now) {
   const x = a.pts[0], y = a.pts[1], rr = a.rad[0] + CELL * 0.3;
-  const canJump = !s.leaps && s.body.length > T.MIN_LENGTH, canFlash = !s.dashes && (T.FLASH_COST <= 0 || s.body.length > T.MIN_LENGTH);
-  const jump = canJump && shownTime < s.leapReadyAt, flash = canFlash && shownTime < s.flashReadyAt;
-  if (a.jc && !jump && canJump && !(now - a.readyAt < 600)) a.readyAt = now; // (back: the flick)
-  if (a.fc && !flash && canFlash && !(now - a.flashFx < 600)) a.flashFx = now;
-  a.jc = jump; a.fc = flash;
-  if (jump) restHalf(x, y, rr, -1, 1 - (s.leapReadyAt - shownTime) / T.LEAP_COOLDOWN_MS, SKY);
-  if (flash) restHalf(x, y, rr, 1, 1 - (s.flashReadyAt - shownTime) / T.FLASH_COOLDOWN_MS, EMBER);
-  if (a.readyAt && now - a.readyAt < 450) restFlick(x, y, rr, -1, (now - a.readyAt) / 450, SKY);
-  if (now - a.flashFx < 450) restFlick(x, y, rr, 1, (now - a.flashFx) / 450, EMBER);
+  const used = Math.max(0, T.STAMINA_MS - SnakeEngine.stamina(game, s, shownTime)); // (of the bar: what's banked shows on the body, not here)
+  const jumpOk = s.leaps > 0 || SnakeEngine.staminaIn(game, s, T.JUMP_STAMINA_MS, shownTime) === 0, flashOk = s.dashes > 0 || SnakeEngine.staminaIn(game, s, T.DASH_STAMINA_MS, shownTime) === 0;
+  if (a.jc && jumpOk && !s.leaps && !(now - a.readyAt < 600)) a.readyAt = now; // (back: the flick)
+  if (a.fc && flashOk && !s.dashes && !(now - a.flashFx < 600)) a.flashFx = now;
+  a.jc = !jumpOk; a.fc = !flashOk;
+  if (!(s.leaps > 0 && s.dashes > 0)) restRing(x, y, rr, 1 - used / T.STAMINA_MS, used > 0 ? 0.7 : 0.35);
+  if (a.readyAt && now - a.readyAt < 450) restFlick(x, y, rr, (now - a.readyAt) / 450, SKY);
+  if (now - a.flashFx < 450) restFlick(x, y, rr, (now - a.flashFx) / 450, EMBER);
 }
-// A half-ring round (x, y) on the left (side -1) or right (1), from the
-// bottom up to k of the way to the top (the path only).
-function halfArc(x, y, r, side, k) {
-  const g = REST_GAP / 2, a0 = Math.PI / 2 - side * g;
+// The ring's arc up to level k (0 to 1) from the bottom, on one side (-1
+// left, 1 right): the path only.
+function levelArc(x, y, r, side, k) {
   ctx.beginPath();
-  ctx.arc(x, y, r, a0, a0 - side * (Math.PI - 2 * g) * Math.max(0, Math.min(1, k)), side > 0);
+  ctx.arc(x, y, r, Math.PI / 2, Math.PI / 2 + side * Math.PI * Math.max(0, Math.min(1, k)), side > 0 ? false : true);
 }
-function restHalf(x, y, r, side, k, col) {
+// The stamina ring at level k, at opacity alpha.
+function restRing(x, y, r, k, alpha) {
+  const was = ctx.globalAlpha;
+  ctx.globalAlpha = was * alpha;
   ctx.lineCap = 'round';
-  halfArc(x, y, r, side, 1); // (the track)
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); // (the track)
   ctx.strokeStyle = 'rgba(58,38,20,0.45)';
-  ctx.lineWidth = 4.4;
+  ctx.lineWidth = 2.6;
   ctx.stroke();
-  if (k <= 0) return;
-  halfArc(x, y, r, side, k);
-  ctx.strokeStyle = 'rgba(58,38,20,0.85)';
-  ctx.lineWidth = 5.6;
-  ctx.stroke();
-  ctx.strokeStyle = col;
-  ctx.lineWidth = 3.2;
-  ctx.stroke();
+  if (k > 0) {
+    const col = k >= T.DASH_STAMINA_MS / T.STAMINA_MS ? EMBER : k >= T.JUMP_STAMINA_MS / T.STAMINA_MS ? SKY : 'rgba(58,38,20,0.6)';
+    for (const side of [-1, 1]) {
+      levelArc(x, y, r, side, k);
+      ctx.strokeStyle = 'rgba(58,38,20,0.85)';
+      ctx.lineWidth = 3.4;
+      ctx.stroke();
+      ctx.strokeStyle = col;
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+    }
+  }
+  ctx.lineCap = 'butt'; // (the notches: what each power takes, as a level)
+  for (const [cost, col] of [[T.JUMP_STAMINA_MS, SKY], [T.DASH_STAMINA_MS, EMBER]]) {
+    for (const side of [-1, 1]) {
+      const ang = Math.PI / 2 + side * Math.PI * cost / T.STAMINA_MS, cx = Math.cos(ang), cy = Math.sin(ang);
+      ctx.beginPath(); ctx.moveTo(x + cx * (r - 4), y + cy * (r - 4)); ctx.lineTo(x + cx * (r + 4), y + cy * (r + 4));
+      ctx.strokeStyle = INK; ctx.lineWidth = 2.6; ctx.stroke();
+      ctx.strokeStyle = col; ctx.lineWidth = 1.2; ctx.stroke();
+    }
+  }
+  ctx.globalAlpha = was;
 }
-// Back: the whole half-ring, bright, going out on its side and fading (with
-// reduced motion it stays where it is, fading).
-function restFlick(x, y, r, side, t, col) {
+// Back: the whole ring, bright, going out and fading (with reduced motion
+// it stays where it is, fading).
+function restFlick(x, y, r, t, col) {
   const was = ctx.globalAlpha;
   ctx.lineCap = 'round';
-  halfArc(x, y, r + (reduced ? 0 : CELL * 0.5 * t), side, 1);
+  ctx.beginPath(); ctx.arc(x, y, r + (reduced ? 0 : CELL * 0.5 * t), 0, Math.PI * 2);
   ctx.globalAlpha = was * (1 - t);
   ctx.strokeStyle = col;
   ctx.lineWidth = 5 * (1 - t) + 2;
@@ -307,7 +326,7 @@ function veinSprite(i, r) {
   const half = r + 2, px = Math.max(2, Math.ceil(2 * half * k)), g = (s = makeLayer(px, px)).getContext('2d');
   g.setTransform(px / (2 * half), 0, 0, px / (2 * half), px / 2, px / 2);
   g.lineCap = 'round';
-  g.strokeStyle = i % 4 === 3 ? 'rgba(201,162,39,0.75)' : 'rgba(100,116,139,0.55)';
+  g.strokeStyle = i % 4 === 3 ? 'rgba(176,92,104,0.75)' : 'rgba(100,116,139,0.55)';
   g.lineWidth = i % 4 === 3 ? 1.1 : 1.4;
   g.beginPath();
   marbleVein(g, 0, 0, r, i);
@@ -379,10 +398,11 @@ const STAR_INK = 1.3, STAR_RIM = 2; // (its ink outline and its orange rim, in u
 const STAR_SUN = '#f9c22e', STAR_SUN_RIM = '#e8890c', STAR_DIM = '#b0893a', STAR_DIM_RIM = '#8a5c24';
 const RAINBOW_STEP = 28; // (degrees of hue from one segment to the next)
 // As the engine's flashIn sees it (golden flashes go anyway), on the clock as drawn.
-const flashReady = s => s.dashes > 0 || (!(T.FLASH_COST > 0 && s.body.length <= T.MIN_LENGTH) && shownTime >= s.flashReadyAt);
-// How far through its flash's rest it is, on the clock as drawn: 0 as it
-// flashes, 1 once the flash is back (holding golden flashes, 1).
-const restOf = s => s.dashes > 0 ? 1 : Math.max(0, Math.min(1, 1 - (s.flashReadyAt - shownTime) / T.FLASH_COOLDOWN_MS));
+const flashLeft = s => s.dashes > 0 ? 0 : SnakeEngine.staminaIn(game, s, T.DASH_STAMINA_MS, shownTime);
+const flashReady = s => flashLeft(s) === 0;
+// How far its stamina is back to a flash's worth, on the clock as drawn: 0
+// with none left for one, 1 once the flash is back (holding golden flashes, 1).
+const restOf = s => 1 - Math.min(1, flashLeft(s) / T.DASH_STAMINA_MS);
 // Its face is upright whichever way it heads, as in the owner's picture
 // (brows, eyes, then the big mustache: heading up, turned with its
 // heading, the mustache sat over its eyes and read as huge angry brows),
@@ -410,14 +430,15 @@ function starTrace(g, x, y, t0, r, grow) {
 // Its tell: a countdown on its five points. Its middle is always its
 // sunflower. As it flashes, its points go dim (in a moment, and its
 // twinkles burst off them: see onTick's dash), and they light again one
-// by one as its rest runs down, a point for each fifth of it (1.2 s),
+// by one as its stamina comes back to a flash's worth, a point for each
+// fifth of a flash's share (1.7 s),
 // going round from its back point, each lighting over the last STAR_FADE
 // of its step; the fifth lights as the flash is back, and while it's
 // ready two twinkles go round its points. (Lit only while its flash was
 // ready, it was dim nearly all the time: it flashes the moment it can, so
 // lit lasted a tick, a blink with reduced motion.) Holding golden flashes,
 // all five are lit. With reduced motion a point lights at once. Its brows
-// knit as it flashes, and relax through the first part of its rest (see
+// knit as it flashes, and relax through the first part of its wait (see
 // its face).
 const STAR_FADE = 0.2;
 // Its head: the star (a sprite for each count of its points lit, heading
@@ -682,9 +703,10 @@ function drawPasses(from, to, now, halos) {
         if (pass === 0) { if (i >= to) drawHalo(s, a); else drawOutline(s, a, !!halos); }
         else if (pass === 1) drawBody(s, a, now, false);
         else if (pass === 2) { if (s.burnUntil > game.tick) drawBurning(s, a, now); }
-        else { // queasy after a mushroom: a sickly green wash, fading; starving, a pale one
+        else { // queasy after a mushroom: a sickly green wash, fading; tired, a gray one (charged, a warm one); starving, a pale one
           const q = a.queasyAt ? 1 - (now - a.queasyAt) / 1400 : 0;
           if (q > 0 && q <= 1) { ctx.fillStyle = rgba('#65a30d', 0.38 * q); silhouette(a, 0.5); }
+          staminaWash(a); // (tired: a little grayer; charged, a warm glow: see render/stamina.js)
           drawPale(a); // (starving: it pales, see hungerLook; its colour floods back as a meal goes down, see mealSwell)
         }
         if (ox || oy) ctx.translate(-ox, -oy);

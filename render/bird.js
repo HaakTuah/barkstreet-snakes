@@ -10,7 +10,7 @@
 // drums too fast to see), its beak open (gape), how high in the air (for
 // its shadow), and what it's doing (phase) and looking at (fx, fy).
 const pose = { x: 0, y: 0, s: 1, flip: 1, rot: 0, crouch: 0, wing: 0, stroke: 1, sweep: 0, near: 1, far: 1, feet: 1, turn: 0, thrust: 0, blur: 0, gape: 0, alpha: 1, air: 0, blink: false,
-  phase: '', free: false, up: 1.2, fx: 0, fy: 0, drum: null, blows: 0, t: 0, tp: 0, u: 0 };
+  phase: '', free: false, up: 1.2, fury: 0, crest: 0, fx: 0, fy: 0, drum: null, blows: 0, t: 0, tp: 0, u: 0 };
 // What it keeps between frames: its head's jerks and tilts, what it's
 // watching, its eye, its blinks, its grip; where it was drawn (to clear).
 const bird = { turn: 0, turnTo: 0, hold: 0, cock: 0, cockAt: 0, gx: 1, gy: 0, focus: null, focusUntil: 0, spot: { x: 0, y: 0 },
@@ -58,7 +58,7 @@ function drumTable(strike) {
 const plan = { strikeAt: -1, spot: -1, prev: -1, pecks: -1, layout: -1, ms: 0, aim: 0, lively: true,
   tx: 0, ty: 0, from: null, hop: null, drum: null, times: [], D: 0, F: 0, H: 0, H0: 0, aimMs: 0, depart: 0, chose: -1 };
 function aimPlan(w, ms, to = Infinity) {
-  const A = plan, spot = spotIn(w.target), prev = w.last.length ? spotIn(w.last) : ARRIVAL_SPOT, pecks = w.pecks || 0, lively = !reduced;
+  const A = plan, spot = spotIn(w.target), prev = w.last.length ? spotIn(w.last) : w.gaze >= 0 ? w.gaze : ARRIVAL_SPOT, pecks = w.pecks || 0, lively = !reduced;
   if (A.strikeAt === w.strikeAt && A.spot === spot && A.prev === prev && A.pecks === pecks && A.layout === birdLayout && A.ms === ms && A.aim === T.PECK_AIM_TICKS && A.lively === lively) {
     if (A.chose !== game.tick && A.aimMs - to >= A.H && to > A.depart + B_TAKEOFF) { // (still on its perch: look again)
       A.chose = game.tick;
@@ -109,6 +109,8 @@ function posture(w, tp, now) {
   const P = pose, ms = tickMs(), lively = !reduced;
   P.alpha = 1; P.thrust = 0; P.blur = 0; P.gape = 0; P.air = 0; P.wing = 0; P.stroke = 1; P.sweep = 0; P.near = P.far = 1; P.feet = 1; P.crouch = 0; P.rot = 0;
   P.free = false; P.up = 1.2; P.drum = null; P.blows = 0; P.blink = false; P.rim = false;
+  P.fury = clamp01((game.time - game.acts.frenzy) / 1500); // (entry 6: its frenzy's look, coming over it in a second and a half; steady, never flickering)
+  P.crest = Math.max(P.fury, w.gaze >= 0 && SnakeEngine.actOf(game) === 1 ? 1 : 0); // (raised while it watches, ruffled in the frenzy)
   AX = AY = 0; AFREE = Infinity;
   if (w.target.length) {
     const to = (w.strikeAt - tp) * ms, A = aimPlan(w, ms, to), into = A.aimMs - to;
@@ -135,10 +137,11 @@ function posture(w, tp, now) {
   }
   const to = perchAt(restSpot(w));
   if (!w.last.length && w.struckAt < 0) {
-    // Coming in from far off, small, as sudden death starts ("kik! kik!
-    // kik!"), the moment the engine has it come (its first patch is
-    // PECK_ARRIVE_TICKS on).
-    const msA = (tp - (w.restUntil - T.PECK_ARRIVE_TICKS)) * ms;
+    // Coming in from far off, small, as act 1 starts ("kik! kik! kik!"),
+    // the moment the engine has it come (w.came); then, each time it
+    // moves on, a flight to its next vantage (w.lookAt), where it watches
+    // the spot (its gaze: act 2's first cut starts where it looked last).
+    const msA = (tp - w.came) * ms;
     if (msA >= 0 && msA < B_ARRIVE) {
       if (!lively) { perched(to, P, 'rest'); P.alpha = clamp01(msA / 400); return; }
       const F = B_ARRIVE - B_SETTLE;
@@ -149,9 +152,25 @@ function posture(w, tp, now) {
       if (msA < 390) P.gape = 0.3 * Math.sin(Math.PI * Math.min(1, (msA % 130) / 70)); // (its three calls: its beak opens on each)
       return;
     }
+    if (w.gaze >= 0) {
+      if (vantage.lookAt !== w.lookAt) { vantage.from = vantage.to || to; vantage.lookAt = w.lookAt; }
+      vantage.to = to;
+      const gx = w.gaze % GRID;
+      P.fx = gx * CELL + CELL / 2; P.fy = (w.gaze - gx) / GRID * CELL + CELL / 2;
+      const msL = (tp - w.lookAt) * ms, F = flightMs(Math.hypot(to.x - vantage.from.x, to.y - vantage.from.y));
+      if (w.lookAt > w.came && msL >= 0 && msL < F + B_SETTLE && vantage.from !== to && lively) {
+        if (msL < F) flight(vantage.from, to, msL / F, F, P, 'out', 0, 0);
+        else landing(to, (msL - F) / B_SETTLE, P, 'settle');
+        return;
+      }
+      perched(to, P, 'eye'); // (watching its spot, head cocked this way and that)
+      return;
+    }
   }
   perched(to, P, 'rest');
 }
+// Act 1: the vantage it last flew from, and the one it's at (by its look's tick).
+const vantage = { lookAt: -1, from: null, to: null };
 function perched(p, P, phase) {
   P.x = p.x; P.y = p.y; P.s = p.s; P.flip = p.flip; P.rot = 0; P.feet = 1; P.wing = 0; P.up = p.up ?? 1.2; P.phase = phase; P.rim = !!p.rim;
 }

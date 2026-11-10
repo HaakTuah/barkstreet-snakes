@@ -5,10 +5,14 @@
 
    Once style.css, split into the files of style/, linked in this order by
    index.html (sw.js keeps them), so the cascade is the same:
-     font.css     the lettering, Fredoka, served from fonts/
-     base.css     the colours, type, buttons, the header, the tags, the board
-     panels.css   the cards, the friends' lobby, below the board, the Hall of Fame
-     screens.css  small screens, and every other size and shape of screen */
+     font.css         the lettering, Fredoka, served from fonts/
+     base.css         the colours, type, buttons, the header, the tags, the board
+     panels.css       the cards, the friends' lobby, below the board, the Hall of Fame
+     small-boards.css the cards on a small board
+     phones.css       phones held upright
+     beside.css       the column beside the board, and phones on their side
+     header.css       the header's buttons, over the board and beside it
+     access.css       touch, reduced motion, high contrast */
 :root {
   --night-moss: #131d15;
   --night-moss-2: #1f3022;
@@ -60,6 +64,9 @@ html, body {
     var(--night-moss);
   overscroll-behavior: none; /* no pull-to-refresh mid-round */
 }
+/* The woodpecker's frenzy (entry 6): the sky dims round the log, and the canopy's light goes. */
+html.frenzy { --night-moss: #0c110e; --night-moss-2: #171c1a; }
+html.frenzy, html.frenzy body { background: radial-gradient(ellipse at top, var(--night-moss-2), var(--night-moss) 70%) fixed, var(--night-moss); }
 /* During a round, swipes steer anywhere on the page, so nothing scrolls or zooms. */
 html.playing, html.playing body { touch-action: none; }
 
@@ -363,7 +370,6 @@ header { min-width: 0; }
 .scoreboard .chip.mine { --rest: #a8dcf5; --line: #2f6f96; background: linear-gradient(90deg, var(--rest) var(--fill, 100%), rgba(58, 38, 20, 0.16) var(--fill, 100%)); }
 .scoreboard .chip.flash.mine { --rest: #f7a866; --line: #b5531d; }
 .scoreboard .chip.mine.ready { background: var(--rest); box-shadow: inset 0 0 0 1px var(--line); }
-.scoreboard .chip.mine.small { background: rgba(58, 38, 20, 0.08); color: var(--ink-soft); }
 .scoreboard .chip.gold { background: #fde68a; box-shadow: inset 0 0 0 1px #d4a017; }
 .scoreboard .chip.gold.jump svg { color: #2f6f96; }
 .scoreboard .chip.gold.flash svg { color: #b5531d; }

@@ -154,10 +154,11 @@ function update() {
       for (const v of alive) if (v.personaKey === 'vulture' && Math.random() < 0.6) chatSay(v, 'death', victim);
     } else if (e.type === 'eat' && e.snake.persona && e.kind !== 'goldcap') { // (a golden mushroom has its own lines: below)
       if (e.kind === 'golden') chatSay(e.snake, 'golden', null, true);
-      else if ((e.gold || e.kind === 'leaf') && showsOff(e.snake)) {
+      else if ((e.gold || e.kind === 'leaf' || e.kind === 'spill') && showsOff(e.snake)) {
         // Golden power food, for Star's habit. A leaf's golden flashes it
         // spends there and then (a tick later, mostly: too soon for another
-        // word), so it cheers them now; a golden beetle, it crows over.
+        // word), so it cheers them now; a golden beetle, or a knocked-out
+        // snake's spilled charges, it crows over.
         ownMoment(e.snake);
         if (e.kind === 'leaf') showOff(e.snake, 'dash', null, true); else chatSay(e.snake, 'stash', null, true);
       } else if (e.kind === 'beetle') chatSay(e.snake, 'caught', null, true);
@@ -325,7 +326,7 @@ function update() {
     // Star's flash back from its rest: raring to go, once it's been back a
     // moment (if it flashes or jumps by then, it's resting again: no word).
     if (showsOff(s)) {
-      const resting = chatGame.time < s.flashReadyAt;
+      const resting = window.SnakeEngine.flashIn(chatGame, s) > 0;
       if (was.resting && !resting) was.readyAt = chatGame.time + READY_AFTER;
       if (resting) was.readyAt = null;
       else if (was.readyAt != null && chatGame.time >= was.readyAt) { was.readyAt = null; showOff(s, 'ready'); }
@@ -374,7 +375,7 @@ function update() {
   // Small talk now and then. (Star, while its flash rests, grumbles as often as not.)
   if (chatGame.time - lastAny > 3500 && Math.random() < 0.04) {
     const s = chatPick(alive);
-    if (s) chatSay(s, showsOff(s) && chatGame.time < s.flashReadyAt && Math.random() < 0.5 ? 'resting' : 'idle', anyone(s));
+    if (s) chatSay(s, showsOff(s) && window.SnakeEngine.flashIn(chatGame, s) > 0 && Math.random() < 0.5 ? 'resting' : 'idle', anyone(s));
   }
 }
 

@@ -5,7 +5,7 @@
 // | { type: 'crash', snake, x, y, cause, killer, killerId, lost } (it bounced, lost `lost` segments, and is stunned)
 // | { type: 'leap', snake, x, y, gold, reach } (it took off over the cell x, y; reach: the cells it flies over, a tick each, landing the tick after)
 // | { type: 'dash', snake, x, y, n, plain } (it went n cells from x, y: plain 1, a flash; else a golden dash) | { type: 'douse', x, y } (a dash put a fire out)
-// | { type: 'fizzle', snake, why, x, y, flash } (asked to jump, or flash (flash: 1), but couldn't: 'resting', 'small' or
+// | { type: 'fizzle', snake, why, x, y, flash } (asked to jump, or flash (flash: 1), but couldn't: 'resting' or
 //   'landing'; x, y the cell it faced, off the board at the edge)
 // | { type: 'alight', snake } (crawled into fire) | { type: 'singe', snake } (lost a segment to the flames)
 // | { type: 'starving', snake } | { type: 'woodpecker' } (it came) | { type: 'aim', x, y }
@@ -13,6 +13,7 @@
 // | { type: 'knock', kind, x, y, tx, ty, gold, color } (food the strike knocked from x, y to tx, ty, or eaten: tx, ty null;
 //   gold: 1, a golden beetle; color: a bead's)
 // | { type: 'cut', snake, x, y, lost, by } (a dash (by: who) cut it: its tail fell off) | { type: 'flown', x, y } (a beetle got away)
+// | { type: 'spill', snake, x, y, leaps, dashes } (a snake out spilled the golden jumps and dashes it held: a pickup at x, y)
 // | { type: 'rot', x, y, kind, color } (an apple (kind 'apple') or a bead ('pellet', in its color) rotted away)
 // | { type: 'lastApples', x, y } (sudden death's first apple fell: the last apples come one at a time)
 // | { type: 'baked', x, y, kind } | { type: 'ash', x, y, kind } (food in the fire)
@@ -36,8 +37,8 @@ function step(game) {
     if (hungerLeft(game, s) > -T.STARVE_EVERY_MS) game.events.push({ type: 'starving', snake: s });
   }
 
-  // Mushrooms in cheeks whose time is up come back up, before anyone moves:
-  // from where the ring has shown it would land all along.
+  // Mushrooms in the air fly on, and those in cheeks whose time is up come
+  // back up, before anyone moves: along the dotted line shown all along.
   spit(game);
 
   const alive = game.snakes.filter(s => s.alive);
@@ -46,6 +47,7 @@ function step(game) {
   const moving = [], fallback = new Map(), held = new Map(); // (fallback: the auto-turn, for a power asked for over a crash that may not go after all; held: a flash there that can't go, and why)
   for (const s of alive) {
     s.tailMoves = false; s.air = false; s.landing = false; s.boom = false; s.failed = false; s.passed = null; s.bumped = false;
+    s.shielded = s.shieldUntil > game.time; // (2u+: a crash this tick costs it no tail: see lossOf)
     if (s.stunUntil > game.tick) { s.next = null; continue; }
     let land = null;
     const f = s.flight;
@@ -281,6 +283,11 @@ function step(game) {
   }
   const room = s => {
     if (roomAfterStun(game, s, out)) return true;
+    if (s.shielded) { // (2u+: a shield that'd keep it boxed, its tail kept, isn't spent: it pays the crash as anyone would)
+      s.shielded = false;
+      if (roomAfterStun(game, s, out)) return true;
+      s.shielded = true;
+    }
     const h = s.body[0], back = s.body[1];
     for (const d of CRAWL) { // (a cell heads met in: the others there are out, or have room of their own)
       const { x, y } = ahead(game, s, h.x, h.y, d);
@@ -314,18 +321,14 @@ function step(game) {
       dying.push(s);
       continue;
     }
-    s.queue.length = 0; // (a crash: whatever was pressed before it was for a board that's gone)
-    const lost = Math.min(lossOf(s), s.body.length - T.MIN_LENGTH);
-    for (let n = 0; n < lost; n++) { const t = s.body.pop(); drops.push({ x: t.x, y: t.y, color: s.color, owner: s.id }); }
-    s.stunUntil = game.tick + 1 + stunOf(s);
-    if (s.flashArmed > game.tick) s.flashArmed = s.stunUntil; // (a flash waiting on a jump, or on its landing: it goes when it moves again, as one pressed in a stun does)
+    const { lost, shield } = crashCost(game, s, drops);
     if ((s.landing || s.bumped) && burning(game, key(s.body[0].x, s.body[0].y))) { // (come down on fire: alight)
       if (!(s.burnUntil > game.tick)) { s.burnFrom = game.tick; game.events.push({ type: 'alight', snake: s }); }
       s.burnUntil = game.tick + T.BURN_TICKS;
     }
     s.bounce = c.headOn ? { x: s.next.x, y: s.next.y, by: c.killerId } : null;
     if (c.headOn) s.bumpedBy = { id: c.killerId, tick: game.tick };
-    game.events.push({ type: 'crash', snake: s, x: s.next.x, y: s.next.y, cause: c.cause, killer: c.killer, killerId: c.killerId, lost, ...(s.failed ? { failed: 1 } : {}), ...(c.air ? { air: 1 } : {}) });
+    game.events.push({ type: 'crash', snake: s, x: s.next.x, y: s.next.y, cause: c.cause, killer: c.killer, killerId: c.killerId, lost, ...(s.failed ? { failed: 1 } : {}), ...(c.air ? { air: 1 } : {}), ...(shield ? { shield: 1 } : {}) });
   }
 
   for (const s of moving) {
@@ -339,6 +342,7 @@ function step(game) {
   }
   for (const s of dying) s.alive = false;
 
+  spitCaught(game);
   eat(game);
   for (const s of starving) {
     if (!s.alive || s.ateTick === game.tick) continue; // crashed anyway, or reached food in time
@@ -348,7 +352,7 @@ function step(game) {
   singe(game, dying, drops);
 
   crawl(game);
-  peck(game, dying);
+  peck(game, dying, drops);
   fallIn(game, dying);
 
   // Dead snakes fall to beads (every other segment: see leavesBead), and
@@ -367,6 +371,7 @@ function step(game) {
       const expires = game.tick + Math.round(T.PELLET_TICKS * (cooked ? T.PELLET_COOKED : 1) * between(0.75, 1.25));
       game.food.push(cooked ? { x, y, kind: 'pellet', color, owner, expires, cooked: 1 } : { x, y, kind: 'pellet', color, owner, expires });
     };
+    for (const s of dying) spill(game, s); // (first: the beads keep off its cell)
     for (const s of dying) {
       s.diedAt = game.tick;
       game.events.push({ type: 'death', snake: s });
@@ -388,5 +393,5 @@ function step(game) {
 
 window.SnakeEngine = {
   GRID, PLAYER_COLOR, PERSONAS, DIRS, WEATHER,
-  createGame, step, tickMs: tickLength, hungerLeft, hungerWarning, aiView, canThinkAhead, thinkAhead, suddenDeath, leap, letGo, leapIn, flash, flashIn, rollSide, knockTo, knocks, beakDepth, beakGap,
+  createGame, step, tickMs: tickLength, hungerLeft, hungerWarning, aiView, canThinkAhead, thinkAhead, suddenDeath, actOf, planCut, planFits, regions, leap, letGo, leapIn, flash, flashIn, stamina, staminaIn, staminaStep, seasonApples, rollSide, knockTo, knocks, beakDepth, beakGap,
 };

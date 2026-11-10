@@ -11,6 +11,12 @@
 //   mushroom                      worth of a mushroom, which shrinks you (default and at most -SHRINK: it costs that many apples' worth of length)
 //   contested                     how much food a rival reaches first still counts (0-1, true = 1; hunger raises it)
 //   hungryBelow, fedFactor        at this length or more, food matters only fedFactor as much
+//   keep                          in the endgame (from the woodpecker on), the length worth keeping over
+//                                   MIN_LENGTH, a crash and hunger buffer (default KEEP); beyond it a meal is
+//                                   worth only the hunger it stops (2h, see readAppetite)
+//   drop                          when I drop my own tail with a flash: 'late' only when every crawl
+//                                   crashes; 'ready' once the search sees me boxed in, all round (default:
+//                                   so in the endgame, before that only when every crawl crashes; 2h)
 //   margin, headRisk, zoneRisk    spare room wanted / fear of a rival's next move / of where it might be (required)
 //   nerve                         { base, hungry }: at a cell with food on it, how much of a rival's
 //                                   threat (headRisk and zoneRisk as read there) I set aside (0-1):
@@ -38,7 +44,9 @@
 //                                   (2y; default 0.6, times 0.5 + my aggression, see ringCover)
 //   spit                          how much a shot with a mushroom is worth to me, when I weigh eating
 //                                   one on purpose (round six B; default SPIT)
-//   powers                        { price, risk, everyWay, jumpAny, dashSpend }: a power habit (see
+//   aim                           how hard I work to land one I've got in my cheek: getting in line with a
+//                                   head and leading it (3b+; default 1)
+//   powers                        { price, risk, everyWay, jumpAny, dashSpend, keepFlash }: a power habit (see
 //                                   powerPick). price: what every power costs me, as a share of what it
 //                                   costs anyone else, wherever it ends with no more risk than `risk`
 //                                   (beyond that, the full price); everyWay: the flash weighed every way,
@@ -46,7 +54,9 @@
 //                                   with somewhere free to land that no rival could reach first, not
 //                                   just out of a crash or onto food; dashSpend: golden dashes spent on
 //                                   speed too (at the full price), and not kept for a trap (or a cut
-//                                   that puts a rival out) as everyone else's
+//                                   that puts a rival out) as everyone else's; keepFlash: the reserve
+//                                   I keep is a flash's worth, for flashes, and a jump that leaves less
+//                                   costs this share of the wait it costs anyone (2u)
 //   golden                        { power, apple, contested }: golden power food (golden beetles, leaves,
 //                                   golden mushrooms) worth this many times what it's worth to anyone
 //                                   else, and a golden apple this many; contested: how much golden power
@@ -75,7 +85,7 @@ const DRIVERS = {};  // (the drivers by name, likewise)
 const WEIGHTS = {
   space: undefined, territory: undefined, aggression: undefined,
   food: undefined, eat: undefined, pellet: undefined, foodRange: undefined, normalFood: undefined, mushroom: undefined,
-  contested: undefined, hungryBelow: undefined, fedFactor: undefined,
+  contested: undefined, hungryBelow: undefined, fedFactor: undefined, keep: undefined, drop: undefined,
   margin: undefined, headRisk: undefined, zoneRisk: undefined, nerve: undefined, distance: undefined,
   hunt: undefined, home: undefined, lure: undefined, turn: undefined, tail: undefined, mimic: undefined,
   colony: undefined, goal: undefined, thrill: undefined, coil: undefined, thick: undefined, powers: undefined, golden: undefined, hurry: undefined,

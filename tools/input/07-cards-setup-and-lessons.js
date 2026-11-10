@@ -82,8 +82,8 @@ check(watched.s === 'countdown' && watched.keys.length === 4 && chosen.every((k,
 const LESSON_LENGTHS = `(() => {
   const F = SnakeDebug.flavor(), T = TUNING, out = [];
   const add = (k, v) => { if (typeof v === 'string') out.push([k, v]); else if (Array.isArray(v)) v.forEach(x => add(k, x)); else if (v && typeof v === 'object') for (const x of Object.values(v)) add(k, x); };
-  for (const k of ['youCrash', 'youCrashToThree', 'youAtThree', 'youAlight', 'youPeckedUnder', 'cutLoose', 'youSquash', 'youCutFirst', 'youFlashFailed', 'neckCut', 'dropTail', 'youDropTail', 'youWoodpecker', 'birdBeetle', 'portalFollow', 'youDig', 'digBurrow', 'digAndBurrow', 'burrowHeal', 'lostColony', 'lostCapital', 'lastApples', 'flashKey', 'powersFirst', 'leapNothing', 'leapEarly', 'youLeapFirst', 'youDashFirst', 'youHungry', 'youStarvingSmall', 'fizzle', 'fizzleFlash']) add(k, F[k]);
-  for (const [k, arg] of [['youGoldBeetle', T.LEAP_MAX], ['youLeaf', T.DASH_MAX], ['youGoldcap', Math.round(T.WRAP_MAX_MS / 1000)], ['wrapEnding', Math.round(T.WRAP_WARN_MS / 1000)], ['youSnipped', 'Ouroboros']]) add(k, F[k](arg));
+  for (const k of ['youCrash', 'youCrashToThree', 'youAtThree', 'youAlight', 'youPeckedUnder', 'cutLoose', 'youSquash', 'youCutFirst', 'youFlashFailed', 'neckCut', 'dropTail', 'youDropTail', 'youWatched', 'youWoodpecker', 'outline', 'fight', 'birdBeetle', 'spillFirst', 'portalFollow', 'youDig', 'digBurrow', 'digAndBurrow', 'burrowHeal', 'lostColony', 'lostCapital', 'lastApples', 'flashKey', 'powersFirst', 'leapNothing', 'leapEarly', 'youStamina', 'youCharged', 'youShield', 'youDashFirst', 'youHungry', 'youStarvingSmall', 'fizzle', 'fizzleFlash']) add(k, F[k]);
+  for (const [k, arg] of [['seasonRule', 'lean'], ['seasonRule', 'plentiful'], ['youGoldBeetle', T.LEAP_MAX], ['youLeaf', T.DASH_MAX], ['youSpill', { leaps: T.LEAP_MAX, dashes: T.DASH_MAX }], ['youGoldcap', Math.round(T.WRAP_MAX_MS / 1000)], ['wrapEnding', Math.round(T.WRAP_WARN_MS / 1000)], ['youSnipped', 'Ouroboros']]) add(k, F[k](arg));
   return { touch: matchMedia('(pointer: coarse)').matches, lines: out.map(([k, v]) => [k, v, v.length]) };
 })()`;
 const lengths = [];
@@ -95,6 +95,27 @@ for (const mobile of [true, false]) {
 const tooLong = lengths.flatMap(l => l.lines.filter(x => x[2] > 60).map(([k, v, n]) => `${l.touch ? 'touch' : 'keys'} ${k} ${n}: “${v}”`));
 check(lengths.map(l => l.touch).join() === 'true,false' && lengths.every(l => l.lines.length > 30) && !tooLong.length, 'every lesson is 60 characters or fewer, on a touch screen and with keys',
   tooLong.join('; ') || lengths.map(l => `${l.touch ? 'touch' : 'keys'}: ${l.lines.length} lines, the longest ${Math.max(...l.lines.map(x => x[2]))}`).join('; '));
+
+// 2i: a lean or plentiful round names its season after Go, its rule following the first time; a normal round says
+// nothing of it. (The season set during the countdown, as the host's draw would have it.)
+const seasonSaid = async season => {
+  await ev(`window.__autoRaf = true; 'ok'`);
+  await b.go(site.url + '?debug', { settle: 0 });
+  await ev('new Promise(r => __raf(() => __raf(r)))');
+  return ev(`(() => {
+    window.__autoRaf = false; document.getElementById('start').click();
+    SnakeDebug.game().season = '${season}';
+    for (let i = 0; i < 600 && SnakeDebug.state() !== 'running'; i++) SnakeDebug.frames(1, ${P});
+    const F = SnakeDebug.flavor(), mine = t => [...(F.season.lean || []), ...(F.season.plentiful || []), F.seasonRule('lean'), F.seasonRule('plentiful')].includes(t);
+    return SnakeDebug.banners().filter(x => (x.fate === 'shown' || x.fate === 'queued') && mine(x.text)).map(x => x.text); // (in line behind Go, on the page's own timers)
+  })()`);
+};
+{
+  const lean = await seasonSaid('lean'), plenty = await seasonSaid('plentiful'), normal = await seasonSaid('normal');
+  const F = await ev(`(() => { const F = SnakeDebug.flavor(); return { lean: F.season.lean, plentiful: F.season.plentiful, leanRule: F.seasonRule('lean'), plentyRule: F.seasonRule('plentiful') }; })()`);
+  check(lean.length === 2 && F.lean.includes(lean[0]) && lean[1] === F.leanRule && plenty.length === 2 && F.plentiful.includes(plenty[0]) && plenty[1] === F.plentyRule && !normal.length,
+    '2i: a lean or plentiful round names its season after Go, its rule following; a normal round says nothing of it', `lean: ${lean.join(' / ')}; plenty: ${plenty.join(' / ')}; normal: ${normal.join(' / ')}`);
+}
 
 
 // On a phone held upright a banner is one line, over the header's title
@@ -108,9 +129,9 @@ const BANNERS_FIT = `(() => {
   const F = SnakeDebug.flavor(), T = TUNING, rival = 'Capricious', friend = 'Bartholomew Lark', out = [];
   const add = (v, opts = {}, kind = '') => { if (typeof v === 'string') out.push([v, opts, kind]); else if (Array.isArray(v)) v.forEach(x => add(x, opts, kind)); else if (v && typeof v === 'object') Object.values(v).forEach(x => add(x, opts, kind)); };
   for (const k of ['go', 'goWatch', 'wakeBeat']) add(F[k], {}, 'go');
-  for (const k of ['weather', 'weatherWatch', 'strike', 'rainbow', 'rainbowWatch', 'golden', 'woodpecker', 'woodpeckerWatch', 'beetle', 'goldBeetle', 'goldBeetleWatch', 'leaf', 'leafWatch', 'goldcap', 'goldcapWatch', 'baked', 'bakedWatch', 'youMushroomSpit', 'youSpitWet', 'youBumped', 'youGoldFly', 'ringRace', 'youRingRaced', 'leapNow', 'watchingFirst', 'youAway', 'takeBack',
-    'youCrash', 'youCrashToThree', 'youAtThree', 'youAlight', 'youPeckedUnder', 'cutLoose', 'youSquash', 'youCutFirst', 'youFlashFailed', 'neckCut', 'dropTail', 'youDropTail', 'youWoodpecker', 'birdBeetle', 'portalFollow', 'youDig', 'digBurrow', 'digAndBurrow', 'burrowHeal', 'lostColony', 'lostCapital', 'lastApples', 'flashKey', 'powersFirst', 'leapNothing', 'leapEarly', 'youLeapFirst', 'youDashFirst', 'youHungry', 'youStarvingSmall', 'fizzle', 'fizzleFlash']) add(F[k]);
-  for (const [k, arg] of [['youGoldBeetle', T.LEAP_MAX], ['youLeaf', T.DASH_MAX], ['youGoldcap', Math.round(T.WRAP_MAX_MS / 1000)], ['wrapEnding', Math.round(T.WRAP_WARN_MS / 1000)], ['youSnipped', rival], ['youSnip', rival], ['youSpatOn', rival], ['friendBack', friend]]) add(F[k](arg));
+  for (const k of ['weather', 'weatherWatch', 'strike', 'rainbow', 'rainbowWatch', 'golden', 'woodpecker', 'woodpeckerPecks', 'woodpeckerFrenzy', 'beetle', 'goldBeetle', 'goldBeetleWatch', 'leaf', 'leafWatch', 'goldcap', 'goldcapWatch', 'baked', 'bakedWatch', 'youMushroomSpit', 'youSpitWet', 'youBumped', 'youGoldFly', 'ringRace', 'youRingRaced', 'leapNow', 'watchingFirst', 'youAway', 'takeBack',
+    'youCrash', 'youCrashToThree', 'youAtThree', 'youAlight', 'youPeckedUnder', 'cutLoose', 'youSquash', 'youCutFirst', 'youFlashFailed', 'neckCut', 'dropTail', 'youDropTail', 'youWatched', 'youWoodpecker', 'outline', 'fight', 'birdBeetle', 'spillFirst', 'portalFollow', 'youDig', 'digBurrow', 'digAndBurrow', 'burrowHeal', 'lostColony', 'lostCapital', 'lastApples', 'flashKey', 'powersFirst', 'leapNothing', 'leapEarly', 'youStamina', 'youCharged', 'youShield', 'youDashFirst', 'youHungry', 'youStarvingSmall', 'fizzle', 'fizzleFlash']) add(F[k]);
+  for (const [k, arg] of [['youGoldBeetle', T.LEAP_MAX], ['youLeaf', T.DASH_MAX], ['youSpill', { leaps: T.LEAP_MAX, dashes: T.DASH_MAX }], ['youGoldcap', Math.round(T.WRAP_MAX_MS / 1000)], ['wrapEnding', Math.round(T.WRAP_WARN_MS / 1000)], ['youSnipped', rival], ['youSnip', rival], ['youSpatOn', rival], ['friendBack', friend]]) add(F[k](arg));
   add(F.field.home(rival)); add(F.field.colony(rival));
   for (const k of ['friendJoined', 'friendLeft', 'friendAway']) add(F[k](friend), { phone: F[k + 'Phone'](friend) });
   const t = document.getElementById('toast'), rows = [];

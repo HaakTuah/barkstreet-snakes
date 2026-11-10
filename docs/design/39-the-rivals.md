@@ -16,10 +16,17 @@ in `25-round-four-measured.md`, "Round five, measured" in `26-round-five-star.md
 
 ### What a rival sees
 
-- **A person's reaction time.** A rival sees the other snakes, the holes, fire and the woodpecker's mark as they were
-  `REACTION_MS` (240, about a quarter of a second, and never less than a tick) ago. It knows its own body, hunger and
-  powers exactly, and sees food, burrows, the weather and the woodpecker's strike and promised landings as they are now
-  ("Rivals see food as it is" in `04-food-and-the-world.md`). All of it comes through `aiView()` (`engine/view.js`).
+- **A person's reaction time.** A rival sees the holes, fire and the woodpecker's mark as they were `REACTION_MS`
+  (240, about a quarter of a second, and never less than a tick) ago, and another snake as late as a person would
+  notice it (2q): `REACTION_MS` near its own head, growing with the steps to that snake's nearest cell to
+  `REACTION_FAR_MS` (400) at `REACTION_FAR_CELLS` (24) or more, give or take up to `REACTION_JITTER_MS` (50), drifting
+  from moment to moment (`REACTION_DRIFT_TICKS`), and near it averages `REACTION_MS` as the ticks fall. What it sees
+  of a snake never goes back in time, even when its own head jumps (over a wrapped edge, in a flight): it remembers
+  the moment it last saw each. It reckons where a snake seen later has got to as for any snake, from its look then;
+  its turns since, it doesn't see. The variation is drawn from the tick and the two snakes' ids, so every copy of the
+  game, online too, sees the same. It knows its own body, hunger and powers exactly, and sees food, burrows, the
+  weather and the woodpecker's strike and promised landings as they are now ("Rivals see food as it is" in
+  `04-food-and-the-world.md`). All of it comes through `aiView()` (`engine/view.js`).
 - **Nobody is singled out.** A rival is never told which snake is a person: every snake is an id and a body, and it reads
   a person by what they do, as any snake ("Rules that stand" in `AGENTS.md`).
 - **What shows, it reads:** a snake's stun (its stars), the golden leaps and dashes it holds, its wrap, the ring of a
@@ -50,6 +57,12 @@ a line eats (`MEAL_PLIES`), a neck's allowance is 2 ticks (`MEAL_DAWDLE`): only 
 soon as the snake (one that could cut it off) makes it a trap. A jump or a flash that eats on its way counts as a meal
 too. Everywhere else the neck test is as above.
 
+Apples by the edge rot six times as often as the rest (#324, measured in entry 2b), though only about 2% of apples
+rot at all. What turns rivals from an apple on the edge row, fed and with no rival near, is territory: from the edge,
+more of the board is nearer a rival's head. Two exceptions for a line that has just eaten were measured: wanting no
+room to spare beyond its length left about a sixth fewer apples to rot with nothing lost, but no staged board showed
+it deciding a move, so it was left out; a floor under territory made every rival contest apples more, and was dropped.
+
 ### Hunters close easy pins
 
 - **The neck test reads the rivals on the line's own board.** Where `reach` says a rival could shut a gap, the AI looks
@@ -68,10 +81,12 @@ too. Everywhere else the neck test is as above.
 ### Rivals read heads better
 
 Every persona fears the cells a rival could strike next (`headRisk`) and where it may be by now (`zoneRisk`), read so:
-- **A rival's flash I fear only when it has a reason to flash.** A plain flash costs its rest: a snake spends one racing
+- **A rival's flash I fear only when it has a reason to flash.** A plain flash costs stamina: a snake spends one racing
   for food on its line, not to cross a cell it can't crawl to. So its flash cells count (half a head's risk) only with
   food straight ahead of it within the flash's reach and one cell more, or when it holds a golden leap or dash, or faces
   something it could hop.
+- **A tired rival can't reach further** (2u): while it looks tired (its stamina step, `step` in `aiView()`'s others,
+  nothing more exact), it can afford neither plain power, so only its golden ones reach past the next cell.
 - **Only cells it can step into:** not back into its neck, a hole or a body still there.
 - **Fear by when I'd get there.** A cell beside a rival's head is a head-on on my first move, and, for the next `age`
   moves, its body if it went there (I can't see that yet). After that, I'd see where it went in time to turn, so it
@@ -81,17 +96,24 @@ Every persona fears the cells a rival could strike next (`headRisk`) and where i
 
 ### Nerve at a contested apple
 
-- **A persona's nerve:** `nerve: { base, hungry }`, the share of a rival's threat set aside at a cell with food on it.
-  It covers both the head-on fear and the zone fear, as they are read for that cell in the search; the maps themselves
-  are not changed, so every other cell, and the risk where a power lands, reads as before. `hungry` adds that much more
-  for every share of the hunger clock (`HUNGER_MS`) gone since the last meal. The nerve is never more than 0.85
-  (`NERVE_MAX`): the odds still count, even starving.
-- **Desperado:** 0.7, always.
-- **Gobbler:** 0.3, plus 0.7 of its hunger. Its head-on fear is the highest of all, so it takes the gamble only once
-  it's hungry.
+- **A meal is worth what it saves, for every rival** (entry 2b): the length it adds and, hungry, the length it stops
+  the rival losing, from nothing 10 s before its first shrink (`AI_HUNGRY_MS`) to one more at the shrink and two a
+  while into starving. At a cell with food on it, the threat is counted over that worth (times 1 / (1 + what it
+  saves)), so a hungry rival contests an apple because it is worth more, not by a rule of its own. Each persona's
+  fear still shapes it: in a staged duel, nearly starving, Sniper, Sovereign and Joker take an apple a rival's head is
+  beside, and Ghost still gives way.
+- **A persona's nerve:** `nerve: { base, hungry }`, the share of a rival's threat set aside at a cell with food on it,
+  on top of the worth above. It covers both the head-on fear and the zone fear, as they are read for that cell in the
+  search; the maps themselves are not changed, so every other cell, and the risk where a power lands, reads as before.
+  `hungry` adds that much more for every share of the hunger clock (`HUNGER_MS`) gone since the last meal. The nerve
+  is never more than 0.85 (`NERVE_MAX`): the odds still count, even starving.
+- **Desperado:** 0.7, always; and, an adrenaline junkie, less afraid of heads and of where they may be everywhere
+  (`headRisk` 450, `zoneRisk` 25). Its skims come from its taste for the thrill (`thrill`), not from that fear: they
+  stayed the same with less of it.
+- **Gobbler:** 0.5 at any hunger, plus 0.7 of its hunger, so it contests even fed. Its head-on fear is the highest of
+  all, so it takes a sure head-on only from half-way hungry.
 - **Everyone else:** no nerve, the hunters included. Capricious borrows Gobbler's or Desperado's whole weights with its
   mood, nerve and all.
-- To build: a contested apple worth what it saves, for every rival (entry 2b in `docs/PROGRESS.md`).
 
 ### Stuns, head-ons and food that won't keep
 
@@ -100,13 +122,44 @@ Every persona fears the cells a rival could strike next (`headRisk`) and where i
 - Baked food is worth what it's worth, a golden beetle half again for its leaps, and an apple that'll have rotted before
   the rival gets there isn't chased.
 
-### Nobody's picky in sudden death
+### The endgame: a meal is worth the life it buys
 
-Past a length of its own (`hungryBelow`), a fed rival wants food only `fedFactor` as much. Once the woodpecker's here
-(`SUDDEN_DEATH_MS`) nothing new grows but the last apples, so the "fed" state switches off for everyone and every snake
-eats what it can. Hunger trumps it too: with under 10 s before it starts starving (`AI_HUNGRY_MS`), any rival goes
-looking for food, harder the closer it gets. Ghost, which stays small on purpose, keeps small but not starvation-small:
-food counts in full for it under 18 cells (`hungryBelow` 18, `fedFactor` 0.4).
+Past a length of its own (`hungryBelow`), a fed rival wants food only `fedFactor` as much. Once the woodpecker's frenzy starts
+(sudden death, its third act: `view.act` 3) nothing new grows but the last apples, so the "fed" state switches off for everyone (and all
+round in a lean food season; a plentiful one starts the weighing below before the woodpecker: "Food seasons" in
+`04-food-and-the-world.md`). Hunger trumps
+it too: with under 10 s before it starts starving (`AI_HUNGRY_MS`), any rival goes looking for food, harder the closer
+it gets. Ghost, which stays small on purpose, keeps small but not starvation-small: before the woodpecker food counts
+in full for it under 18 cells (`hungryBelow` 18, `fedFactor` 0.4), and in the endgame it keeps the least (below), and hungry it keeps its distance from heads less (none, desperate), so its
+distance doesn't cost it the meals it needs.
+
+In the endgame a meal is worth the life it buys against the room it costs (2h, the owner, 29 and 31 October 2026).
+There's no clock to run out then (the round ends when one snake is left), so length is worth a crash buffer (a crash
+costs 3, and one at the smallest puts a snake out) and a hunger buffer, and no more; beyond that it only fills the
+room a snake needs to turn in.
+- **The length worth keeping:** `keep` segments over the smallest (`KEEP`, 10, by default: two crashes and four
+  shrinks). Past it a meal is worth only the hunger it stops: one bead to stop hunger, not the whole heap, and along a
+  line of moves the meals after the first count only their stamina or power. With room to spare (`ROOMY`: four times its length of free
+  log a snake, and more) food counts as before. Gobbler stays the greediest (`keep` 24: its food share is its
+  trademark), Mason keeps 16 (its walls, two thick, need the length), and Ghost, which keeps small on purpose, is the
+  most sparing (7); the default is already sparing for the rest.
+- **The tail drop planned ahead:** a drop needs the flash rested, a body one thick and a free cell beyond, and a boxed
+  snake rarely has all three. So in the endgame a rival weighs dropping its tail as soon as the search sees it boxed in
+  (every crawl ends in less room than it needs, or only through a gap a rival could shut), not only once every crawl
+  crashes; what it drops below the length worth keeping costs an apple a segment. Each in its style (`drop`): Creeper
+  readily, all round; Ouroboros and Mason late, only out of a crash (Mason's walls are its body: dropping it planned,
+  its body lay beside itself 3.5 points less).
+- **The denial play, tried and left out:** a rival seen starving (a segment off, as anyone sees one shrink) made food
+  within 8 moves of its head worth eating to keep from it, whatever the eater's length, and a bead of the eater's own
+  there worth squashing. Head to head both ways (seeds 71 and 73, 800 paired rounds), its users came out even (win% a
+  snake −1.8 points, [−4.2, +0.5]; place the same within 0.1), so it stays out, as the owner's rule for it says.
+- **Measured** (PR #596, seeds 71 and 73, head to head against the AI 2b left, 800 paired rounds): win% a snake +12.2
+  points, place 0.23 better, and every rival's win% up; deaths into its own body down from 23% to 14%, head-ons up from
+  1.2% to 2.9%. Both ways, the length worth keeping +11.7 points of win% and the planned drop +10.5. In sudden death
+  (`--census`, "the endgame (2h)") a snake averages 32 long instead of 39, it lasts about 9 s longer, drops its tail
+  about 2.9 times a woodpecker round instead of 0.3 (nine in ten alive 5 s on), and the deaths in a pocket smaller than
+  itself fall from 89% to about 79%. Every trademark within noise. Its numbers are measured again after the
+  woodpecker's makeover (entry 6), which changes the endgame's timing.
 
 ### A starving rival takes its chances
 
@@ -132,11 +185,12 @@ spit flies along the line" in `40-powers-and-moves.md`. Desperate, it takes no s
 Each power is weighed as a move in the rival's own search, from where the power leaves it and to the same horizon, plus
 what it eats on the way, less the risk where it ends and a price in apples (what an apple is worth to it now), and
 pressed only when it beats crawling (`powerPick` in `ai/powers.js`):
-- *The plain flash:* two apples, or one to win a race for food (food a rival could reach as soon as it would crawl
+- *The plain flash and jump* spend one stamina (2u), priced by what they take of it: see `ai/powers.js`.
+- *The plain flash:* its price, or half to win a race for food (food a rival could reach as soon as it would crawl
   there, but not as soon as it flashes) or to get out of a crash. Weighed the way the rival would crawl anyway (any way,
   out of a crash; the hunters and the aggressive, a cut to the side too).
-- *The plain jump:* out of a crash or a box, to another island, or to come down on food or just short of it, priced at
-  1.5 apples (`LEAP_COST` and a rest).
+- *The plain jump:* out of a crash or a box, to another island, or to come down on food or just short of it, at its
+  price.
 - *Golden jumps:* whenever one pays, at a third of an apple (0.35).
 - *Golden dashes:* 0.6 of an apple, pressed out of a trap or for a cut that puts a rival out.
 - Desperate, every power is half the price.
@@ -215,13 +269,15 @@ shows what they can do; a shooting star dragging a rainbow is the most natural h
 
 It prices powers far below anyone else, by the same rules and the same engine calls, through two persona weights that
 are off for everyone else, so rounds without Star play exactly as if it didn't exist:
-- **`w.powers`** `{ price: 0, risk: 350, everyWay, jumpAny, dashSpend }`. Its powers are free to it, unless one ends
+- **`w.powers`** `{ price: 0, risk: 350, everyWay, jumpAny, dashSpend, keepFlash: 0.01 }`. Its powers are free to it, unless one ends
   where its risk is over 350 (a rival could strike there: in reach of its powers, or nearer), and there it pays the
   full price, as anyone would. A power still has to beat crawling by a point.
-  - **Flashes:** whenever it's rested and the flash doesn't run into anything, weighed every way, not just the way it
-    would crawl: about four times as often as anyone else.
+  - **Flashes:** whenever it has a flash's worth of stamina and the flash doesn't run into anything, weighed every
+    way, not just the way it would crawl: about three times as often as the median rival.
   - **Jumps:** any hurdle with somewhere free to land beyond it that no rival could get to before it's down, not just
-    out of a crash or onto food.
+    out of a crash or onto food: over twice as often as the median rival. What it keeps is a flash's worth of stamina
+    (`keepFlash`): a jump that leaves less costs it a hundredth of the wait it costs anyone, so its jumps don't eat
+    its flashes, and both stay in the band (2u).
   - **Golden dashes:** spent on speed too, not only on cuts and golden things, but at anyone's price for one (0.6 of
     an apple), so only for a real gain, such as beating a rival to an apple.
 - **`w.golden`** `{ power: 6, apple: 1.5, contested: 0.5 }`. It craves golden things above everything, to feed the
@@ -242,8 +298,8 @@ build (part 7 of round six B, with one pricing model for every power, in `docs/P
 below, is its measure.
 - **Built so far:** Star's habit ("Star"); a style's own price for a leap now and for a flier's ring (`leapNow`,
   `landing`: "Rivals use their powers, when it pays") and for a mushroom shot (`spit`: "Mushrooms, to a rival");
-  everyone's island hop, and a tail dropped only when trapped ("The plain jump hops islands" and "Dropping your tail"
-  in `40-powers-and-moves.md`).
+  everyone's island hop, and a tail dropped when trapped, or planned once boxed in the endgame ("The plain jump hops
+  islands" and "Dropping your tail" in `40-powers-and-moves.md`; "The endgame: a meal is worth the life it buys").
 - **To build, each its own:** Sniper cuts off its target; Mute seals boxes; Gobbler races for food; Vulture flashes to
   beads; Ghost keeps a flash ready to escape. Sovereign and Colonist chase intruders off their land; Mason finishes
   walls; Creeper flashes in behind tails; Desperado for the thrill; Joker springs its lures; Ouroboros jumps its own

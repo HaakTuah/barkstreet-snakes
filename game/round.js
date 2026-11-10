@@ -14,7 +14,7 @@ function newGame({ personas, aiOnly = false, humans = null, chosen = false } = {
   const unplayed = theGame && !theGame.spent ? theGame.dealt || [] : [];
   if (!personas) Records.undeal(SnakeAI.POOL, unplayed);
   const dealt = personas ? null : dealLineUp(Math.max(0, TUNE.OPPONENTS + 1 - people.length));
-  theGame = Engine.createGame({ personas: personas || dealt.keys, humans: people });
+  theGame = Engine.createGame({ personas: personas || dealt.keys, humans: people, acts: pinnedActs });
   theGame.chosen = dealt ? dealt.chosen : !!chosen;
   const keys = theGame.snakes.filter(s => s.persona).map(s => s.personaKey);
   if (personas) Records.undeal(SnakeAI.POOL, unplayed.filter(k => !keys.includes(k)));
@@ -141,6 +141,11 @@ function go() {
   if (guesting() && online.seat < 0) toast(FLAVOR.watchingFirst, 3000);
   else if (touchFirst && theGame.withPlayer && !powersTold && (!helpEl.getClientRects().length || helpEl.getBoundingClientRect().bottom > innerHeight + 0.5)) { powersTold = true; toast(FLAVOR.powersFirst, 3000, 'you', 'lesson'); } // (the help under the board isn't shown, or isn't wholly on the screen; how to steer is beside YOU. A lesson's banner, not Go!'s big one: it fits, and keeps out of the heads' way)
   else toast(pick(theGame.withPlayer && online?.seat !== -1 ? FLAVOR.go : FLAVOR.goWatch), 1300, 'go');
+  const season = theGame.season; // (2i: a lean or plentiful round says so, and its rule the first time)
+  if (FLAVOR.season[season]) {
+    toast(pick(FLAVOR.season[season]), 2800, season, 'round');
+    if (!seasonsTold.has(season)) { seasonsTold.add(season); toast(FLAVOR.seasonRule(season), 3200, season, 'lesson', { follows: true }); }
+  }
   flashFrame('go');
   acc = 0;
   lastFrame = 0;
@@ -327,7 +332,7 @@ Chatter.onBubble((s, text) => {
   Sound.play('babble', { voice: s.personaKey, chars: text.length, tight: state === 'running' ? dangerNow : 0, ...at(s.body[0].x) });
 });
 // The sound of each thing you eat (anything else is an apple).
-const EAT_CUES = { goldcap: 'wrap', golden: 'golden', leaf: 'leaf', pellet: 'meat', mushroom: 'mushroom', beetle: 'crunch' };
+const EAT_CUES = { goldcap: 'wrap', golden: 'golden', leaf: 'leaf', spill: 'golden', pellet: 'meat', mushroom: 'mushroom', beetle: 'crunch' };
 // Apples eaten in quick succession climb a scale: a streak you can hear.
 let streak = 0, streakAt = -1e9;
 // The snake whose head is nearest a cell (the one a beetle there is fleeing, as the engine reckons it).
@@ -347,7 +352,8 @@ function cornering(x, y) {
 // asked a moment ahead, so it's placed on the audio clock where the blow
 // is drawn, and started late, the knocks already past are left out); and
 // its "kik!" as it settles back on its perch after a strike, when the
-// drawing has it land (R.birdHome). Watched faster, both come faster.
+// drawing has it land (R.birdHome), and as it moves to each new vantage
+// while it watches (entry 6, act 1). Watched faster, both come faster.
 let drumDue = -1, drumGame = null, kikAt = -1, kikGame = null;
 function birdSounds() {
   const w = theGame?.woodpecker;
@@ -360,6 +366,9 @@ function birdSounds() {
     if (to > 40 * rate) return;
     drumDue = w.strikeAt; drumGame = theGame;
     if (-to < long) Sound.play('drum', { strike: w.pecks || 0, rate, delay: Math.max(0, to) / rate / 1000, from: Math.max(0, -to), ...at(w.x) });
+  } else if (w.gaze >= 0 && w.struckAt < 0 && w.lookAt > w.came && !(kikAt === -2 - w.lookAt && kikGame === theGame)) { // (entry 6: watching, a soft "kik!" as it lands at each new vantage)
+    kikAt = -2 - w.lookAt; kikGame = theGame;
+    if ((tp - w.lookAt) * ms < 900 * rate) Sound.play('call', { settle: true, ...at(w.x) });
   } else if (w.struckAt >= 0 && !(kikAt === w.struckAt && kikGame === theGame)) {
     const since = (tp - w.struckAt) * ms, home = Render.birdHome();
     if (since < home) return;
@@ -402,10 +411,8 @@ function sounds(dying, wasAlive) {
     else if (e.type === 'baked') Sound.play('bake', at(e.x));
     else if (e.type === 'ash') Sound.play('ash', at(e.x));
     else if (e.type === 'cut') Sound.play('snip', at(e.x));
-    else if (e.type === 'spit') { // (a mushroom come back up: the gag, "ptoo" and its landing; hit, the poison's own cue for the one it hit)
-      Sound.play('choke', { rival: !isMe(e.snake), ...at(e.x) });
-      if (e.hit >= 0 && isMe(theGame.snakes[e.hit])) Sound.play('mushroom', at(e.tx));
-    }
+    else if (e.type === 'spit') Sound.play('choke', { rival: !isMe(e.snake), ...at(e.x) }); // (a mushroom come back up: the gag and "ptoo")
+    else if (e.type === 'spat' && e.hit >= 0 && isMe(theGame.snakes[e.hit])) Sound.play('mushroom', at(e.x)); // (it hit you: the poison's own cue)
     else if (e.type === 'squash') { // (your own bead, squashed)
       Sound.play('squash', { rival: !isMe(e.snake), ...at(e.x) });
       if (isMe(e.snake)) streakAt = -1e9; // (no meal: the apples' scale starts again)

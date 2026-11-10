@@ -95,7 +95,7 @@ const headerChecks = async (tag, d) => {
 // (Before the page was one screen tall, this ran only on its side, where
 // the column was the screen's height: the log was cut at its last whole
 // row, by a clip, at its box, the chatter's or the page's bottom.)
-// Beside the board on a desktop (style/screens.css, game/screen.js
+// Beside the board on a desktop (style/beside.css, game/screen.js
 // fadeChatter), a round's 40 lines: the panel runs down to the board's
 // bottom edge, the newest at its bottom, whole; a line cut by the log's
 // top edge doesn't show (faded to nothing), the ones under the fade

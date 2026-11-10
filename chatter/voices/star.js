@@ -13,7 +13,7 @@ addVoice('star', {
   leap: ['Up and over, sonny!', 'Hup! Old star, new tricks!', 'Look at me! A shooting star!', 'Over we go! Ho ho!', 'These old springs still work!'],
   dash: ['Golden zoom! Oh, that’s the good stuff!', 'Out of my way, I’m golden!'], // (and for a golden leaf: it spends its flashes there and then)
   flash: { first: ['Early star gets the apple, {who}!', 'Beat you to it, {who}!'], past: ['Mind the mustache, {who}!', 'Feel that breeze, {who}? That was me.'] },
-  stash: ['Golden! Straight in the tank.', 'More gold for the old star!', 'Ooh, gold. Don’t tell the young’uns.'], // (a golden beetle)
+  stash: ['Golden! Straight in the tank.', 'More gold for the old star!', 'Ooh, gold. Don’t tell the young’uns.'], // (a golden beetle, or spilled charges)
   golden: ['Golden! Matches my trophies.'],
   caught: ['Gotcha, bug! Nothing gets past me.'],
   goldbug: ['A golden bug! Come to Grandpa!', 'A golden beetle! Oh, I need that.'],
@@ -22,7 +22,7 @@ addVoice('star', {
   mushroom: ['Bleh. That’s slowing-down food.', 'Shrunk! Still quick, though.'],
   kill: ['Sorry, {who}! I don’t do brakes.', 'Whoops! That’s speed for you.'],
   weather: { wind: ['Wind at my back! Whee!'], storm: ['Lightning! Now there’s a flash I respect.'], rain: ['Rain! You know what comes after rain…'], sun: ['Sunshine! Twinkle weather.'], snow: ['Brr! Cold’s no good for old stars.'] },
-  woodpecker: ['Peck away, bird. You’ll never catch me!'],
+  woodpecker: ['Watch me all you like, bird. Everyone does!'],
   last: ['The last apples! Race you all!'],
   rainbow: ['Family!', 'Oh, look at you! You’ve grown!', 'There’s my trail! I wondered where it went.'],
   bonk: ['Oof! Tripped on my own mustache.', 'Ow! Who moved the log?', 'Ho! Still in one piece.'],
@@ -103,7 +103,7 @@ addVoice('star', {
   "Rain! You know what comes after rain…": "下雨了！你知道雨后会有什么……",
   "Sunshine! Twinkle weather.": "出太阳了！闪亮的好天气。",
   "Brr! Cold’s no good for old stars.": "好冷！冷天对老星星可不好。",
-  "Peck away, bird. You’ll never catch me!": "使劲啄吧，鸟儿。你永远抓不到我！",
+  "Watch me all you like, bird. Everyone does!": "随便看吧，鸟儿。大家都在看我！",
   "The last apples! Race you all!": "最后的苹果！大家比比谁快！",
   "Family!": "一家人！",
   "Oh, look at you! You’ve grown!": "哦，看看你！长这么大了！",

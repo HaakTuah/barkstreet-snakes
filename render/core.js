@@ -39,7 +39,10 @@
 //
 //   core.js       setup, colours, the bark (the static layer, snow, embers, leaves)
 //   sprites.js    cached sprites, the Field guide's pictures, beetles, particles
-//   looks.js      each snake's animation state, its looks, its costume change, its gaze, its jumps and their landing rings
+//   looks.js      each snake's animation state, its looks, its costume change, its mouth and colours
+//   gaze.js       each snake's gaze
+//   hunger.js     hunger on each body: slimming, the pale wash, the growl, a meal going down
+//   jumps.js      jumps and their landing rings, and bodies over holes
 //   lead.js       drawing half a tick ahead: where bodies go, and their shape
 //   shadows.js    the veil, shadows on the bark and the light in a pit
 //   bodies.js     outlines, the gold line of a power, and the body itself
@@ -47,9 +50,10 @@
 //                 and every snake drawn in turn, its passes and trails
 //   tongues.js    every look's tongue (or gag)
 //   faces.js      eyes, lids, mouths, hats and beaks, and every look's face
+//   stamina.js    stamina on the snake: tired, awake or game on, in its body and eyes
 //   land.js       Sovereign's realm and Colonist's colonies: land on a map
 //   flags.js      land made ahead of a strike, its dashes, banners, flags, ripples and hues
-//   food.js       the food and its pictures, a mushroom's spit rings and cheeks
+//   food.js       the food and its pictures, a mushroom's dotted line, its flight and cheeks
 //   burrows.js    the beetles' burrows, their cracks, growing shut and healing, and the bore
 //   weather.js    fire and scorch, a snake on fire, the sky, rain, lightning, rainbows
 //   bird-perch.js the woodpecker's size and growth, its perch, its aim and its layer
@@ -57,6 +61,8 @@
 //   bird-drum.js  how it clings to drum, and what of the board it hides
 //   bird-draw.js  the woodpecker drawn
 //   holes.js      its aim and patch on the board, and the holes and pits it leaves
+//   watch.js      the spot it watches in act 1, a pale pool on the log
+//   cut.js        the outline it's cutting (a nick on each cell to go), and its fight's ring
 //   portals.js    the gold portals a wrapping snake opens going off an edge
 //   blasts.js     a snake going out with a pop: the starburst, its ring and pieces
 //   edges.js      the wrap seam round the board and a dash's speed-line streaks
@@ -406,7 +412,7 @@ function drawSnow(now) {
   if (sky.snow < 0.02) return;
   if (!snowTile) snowTile = buildSnowTile();
   const n = RAIN_TILE;
-  if (reduced) { // (held still, not taken away, like the rain: snow is a rule too, it puts fire out and starts the lean season)
+  if (reduced) { // (held still, not taken away, like the rain: snow is a rule too, it puts fire out and starts the hungry spell)
     ctx.globalAlpha = sky.snow * 0.6;
     for (let y = 0; y < SIZE; y += n) for (let x = 0; x < SIZE; x += n) ctx.drawImage(snowTile, x, y, n, n);
     ctx.globalAlpha = 1;

@@ -2,6 +2,13 @@
 
 ## The queue, done
 
+### 2aa. Dash on the key you're going (the owner, 4 November 2026; an input entry, a side lane now)
+
+The steering key of the way you're going dashes again, as a swipe ahead does, behind touch's guard: its spec is in
+`docs/handoff/queue-specs.md` under the same title.
+
+*Done* (PR #557): a fresh keydown of the steering key the snake is already going dashes, through a swipe ahead's path (the same engine call and online message, so no protocol change and no rival change), behind touch's guard: never auto-repeat, and a press the way the last press turned you within `POWER_AFTER_TURN_MS` is that turn pressed twice. The hints, the dash lesson, the Field guide row, the README and `docs/design/40-powers-and-moves.md` ("The key ahead flashes, behind touch's guard") say so; the input suite proves it.
+
 ### 2x. The spitter slides over its own mushroom (the owner, 2 November 2026; an engine-rules entry, after part 5)
 
 Taken out of 3b+ and moved to the front, since it still bites (the owner: "Still get the bug with swallowing a mushroom over and over again after puking it up."): the spec is 3b+'s "The spitter slides over its own mushroom" in `docs/handoff/queue-specs.md`, entry 5.
@@ -344,3 +351,38 @@ Done (PR #186): bent flags are drawn over the snakes while they lean, and a nort
 cloth's side, so it shows beside the body. Drawing only: no simulation. See "Flags that bend under a snake" in
 `docs/design/32-the-owners-playtest.md`.
 
+### 2b. Hunger's worth at a contested apple, for every rival (the owner, 29 October 2026; an AI entry)
+
+Done (PR #593): a meal is worth what it saves, for every rival, so a hungry rival contests an apple by its worth;
+Gobbler's nerve is 0.5 at any hunger; Desperado fears heads less everywhere; hungry, Ghost keeps less of its distance
+(#325). Apples by the edge (#324) were measured both ways, and no change was kept; what is left is #595. What it
+measured is in the PR; the rules are in `docs/design/39-the-rivals.md`, "Nerve at a contested apple" and "A meal isn't
+a pin".
+
+### 2h. The endgame: eat what keeps you alive, not what boxes you in (the owner, 29 October 2026; an AI entry, after 2b)
+
+Done (PR #596): from the woodpecker on, a meal past the length worth keeping (a crash and hunger buffer, `keep`) is
+worth only the hunger it stops, and a rival weighs dropping its tail once it sees itself boxed in (Creeper all round,
+Ouroboros only out of a crash). The denial play came out even both ways and was left out. Its numbers come again after
+entry 6. What it measured is in the PR; the rules are in `docs/design/39-the-rivals.md`, "The endgame: a meal is worth
+the life it buys".
+
+### 2i. Food seasons: lean, normal and plentiful rounds (the owner, 29 October 2026; an engine-rules entry, after 2h)
+
+Done (PR #599): each round draws its food season (lean one in four, normal one in two, plentiful one in four), named in
+a banner after Go with a lesson and a Field guide row, sent online with the weather (protocol 29), and played by the
+rivals. A lean season has one apple fewer, beetles half as often and meals that keep a snake 70% as long; a plentiful
+one an apple more and beetles half again as often. Starving went from 3% of deaths to 5 to 6% (15 to 18% of a lean round's). What
+it measured is in the PR; the rules are in `docs/design/04-food-and-the-world.md`, "Food seasons".
+
+### 2ab. Rivals skip the marginal dash (the owner, 7 November 2026; #569; an AI entry, right after 2u+, before part 7)
+
+Rivals pushed to dash more live about 3 s less than rivals pushed to jump more (PR #560), though each power is the more
+useful in about half the moments (design 37): the extra dashes are poor picks. Each rival learns to pass up a dash that
+does not pay, in its own style, the rules unchanged; done when that gap closes within noise, trademarks kept. Before
+part 7, whose pricing needs rivals that judge a dash well.
+
+**Stopped** (the owner, 9 November 2026, #574: "Yes to all, expertly!", to stopping it): no AI change; only the `pdash` fork mode of draft PR #572 merges, for part 7. On fresh seeds (631, 632; 1200 pairs) the gap is −1.3 s [−3.5, +1.0], under
+half of #560's. Two fixes did not move it: no plain dash when boxed (−1.1 s, and 0.4 fewer flashes a minute) and three
+times the reserve when boxed (−1.7 s). Neither price change alone differs from develop (cheaper dash −0.2 s, dearer jump
++0.3 s), and no rival stands out. The brief and the `pdash` fork mode are on draft PR #572.

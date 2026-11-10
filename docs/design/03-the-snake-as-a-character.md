@@ -111,7 +111,7 @@ Everything that comes out is drawn with a dark outline or a bright colour so it 
 - **Vulture:** black, with a bald pink head and a white neck ruff. It glares from under slanting brows over a big hooked
   beak, pale horn with a dark tip, outlined so it reads at phone size, that gapes at a meal.
 - **Mason is Caesar in marble:** a warm white body with grey veins wandering across every segment (every fourth
-  segment's vein is gold), so with his laurel wreath his head reads as a marble bust.
+  segment's vein is rose: gold is for powers alone, #431), so with his laurel wreath his head reads as a marble bust.
 - **Metagamer:** red-and-cyan 3D glasses in a card frame, outlined so it reads on its cyan head.
 - **Wildcard** wears the Stars and Stripes behind an orange tan and a white collar: two segments of navy with white
   stars, then red and white stripes. Under a big fluffy golden pompadour ("Wildcard's hair"), it squints, pouts, wears
@@ -240,8 +240,8 @@ A shooting star dragging a rainbow, inspired by the stars of the original Paper 
 An addict's weakness is the comedown.
 - **Its middle is always its sunflower.**
 - **As it flashes,** its points go dim (`#b0893a`, rimmed `#8a5c24`) and its twinkles burst off them.
-- **As its rest runs down,** they light again one by one, a point for each fifth of the rest (2.4 s, with
-  `FLASH_COOLDOWN_MS` at 12000), from its back point round.
+- **As its stamina comes back to a flash's worth,** they light again one by one, a point for each fifth of the
+  way (`DASH_STAMINA_MS` over five; 2u), from its back point round.
 - **The fifth lights when the flash is back,** and two twinkles go round its points. Holding golden flashes, all five
   are lit.
 - **Its brows** knit as it flashes and relax early in its rest.
@@ -304,9 +304,12 @@ appear only on power marks.
   Gobbler's orange and sky on Metagamer's cyan (0.14 of a cell, 0.12 with three or more, then the rings). The diamonds
   are slim lozenges pointing along the arc's spokes, spaced so they never touch. At the board's edge the whole arc
   moves in, so no pip is cut off, and the stun stars sit a little further out to clear them.
-- **Your rests:** your two plain rests show as two half-rings round your head, fixed to the screen: jump on the left in
-  sky, flash on the right in ember. Each fills from the bottom over a faint track as it rests (not shown while you hold
-  golden ones of that kind) and gives one bright flick when it's ready. A stunned press shows the jump's hop or the
+- **Your stamina** (2u: one for jump and flash; every snake's shows in its look, `37-one-stamina.md`): yours alone also
+  has a faint, thin ring round your head, fixed to the screen. It fills from the bottom
+  up both sides at once, like water in a glass, over a faint track, and spending drains it from the top. A sky notch
+  marks a jump's worth, an ember notch a flash's; the water is ember with a flash's worth in it, sky with a jump's,
+  else dark. Full, it shows fainter still; each power coming back gives one bright flick in its colour. Holding golden jumps
+  and flashes both, no ring. A stunned press shows the jump's hop or the
   flash's double chevron in its accent (Honey when golden), and a press that can't go an inked × in it.
 - **Tags:** one 6 px chip per power, with small inline icons in ink (a hop, a double chevron, a loop): golden jumps sky,
   golden flashes ember, both on Honey with the count. Your own tag always shows your plain jump and flash, filling in
@@ -328,7 +331,7 @@ appear only on power marks.
   the pit floor, 0.2 and 0.28 cells further off, a little bigger, and leaves the bark once half way over. The floor
   round where the shadow falls catches a little light (four faint steps), and the shadow lies dark in it. A span between
   rims sags, up to 22.5% smaller in its middle; a tail end past the rim droops, up to 30% smaller and darker, until it
-  leaves the cell, smoothly between (`sinkOf()` in `render/looks.js`). What's up in the air doesn't sag.
+  leaves the cell, smoothly between (`sinkOf()` in `render/jumps.js`). What's up in the air doesn't sag.
 
 Both read at phone size. Nothing new is clipped or veiled: shadows over a pit go in the bark's veil, and what's near a
 hole is worked out once a tick.
@@ -349,7 +352,7 @@ A span over a pit is slimmer but as smooth as on the bark, and shaded as one bod
 
 ### Hunger on the body
 
-Every snake shows its hunger on its body, read from the clock its tag reads (`hungerLook` in `render/looks.js`), so you
+Every snake shows its hunger on its body, read from the clock its tag reads (`hungerLook` in `render/hunger.js`), so you
 see it where your eyes already are, on yourself and on every rival:
 - **It slims** as its last meal runs out: its body (not its head) up to 22% thinner (`HUNGER_SLIM`), by the share of the
   meal gone to the power 1.5, so a snake just fed looks as it always did, a hungry one is plainly thinner, and the
@@ -370,3 +373,23 @@ see it where your eyes already are, on yourself and on every rival:
 
 The rivals are shown nothing new (their own clock is in `aiView()`, as a person sees their bar); online, the tag
 carries `lastAte` and `mealMs`, so a guest sees the same.
+
+### Stamina on the body
+
+Every snake wears the step its stamina is at (`render/stamina.js`; the steps are `SnakeEngine.staminaStep`, read on the
+clock as drawn, and the rule is `37-one-stamina.md`), on yourself and on every rival, never as a bar over it:
+- **Tired**, while it can afford neither power: a low gray wash over its shape (`staminaWash`, in the last pass with
+  hunger's pale one) and its body 7% thinner (`TIRED_SHRIVEL`, its head as it was), and heavy lids, its head's colour a
+  shade darker with an ink edge, down over most of each eye from the back (`heavyLids`), sagging slowly (1.7 s) unless
+  motion is reduced.
+- **Awake**, once it can afford one: as it always looked.
+- **Game on**, at a full bar: bright eyes, the shared eyes' whites a little wider and their catchlights bigger
+  (`lightOf`, `wideOf`); eyes with no catchlight of their own (Drab, Creeper, Copycat, Ouroboros) get one
+  (`brightSpecks`), and Ghost's and Wildcard's glints grow.
+- A step eases in over 250 ms (`STAMINA_FADE`), at once with reduced motion; a dead snake wears none. The face helpers
+  in `render/faces.js` read the step from `staminaFace`, set before each face is drawn, so every look gets it; Sniper's
+  one eye is behind its scope, so it shows tired by its body alone.
+- The Field guide's Stamina row shows a tired snake above an awake one wearing your ring (`guideStamina`).
+
+The rivals see each snake's step as people do, and never more (`step` in `aiView()`'s others; what they make of it is in
+`39-the-rivals.md`); online, the look follows the synced `restedAt`, so a guest sees the same.

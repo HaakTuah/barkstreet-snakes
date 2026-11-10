@@ -170,7 +170,7 @@ function drawBody(s, a, now, dead) {
     drawTie(a);
   }
   const coat = coatOf(s); // (Capricious's mood is a costume on its head, not its body)
-  if (coat === 'mason') { // Caesar in marble: grey veins wandering across every segment, now and then a gold one
+  if (coat === 'mason') { // Caesar in marble: grey veins wandering across every segment, now and then a rose one
     ctx.lineCap = 'round'; // (as the veins always left it, for the wreath)
     for (let i = 1; i < n; i++) {
       // (each segment's own sprite, drawn at the segment's size before any gulp, and scaled)
@@ -248,6 +248,7 @@ function drawBody(s, a, now, dead) {
   const faceScale = 1.1 * (1 + a.bump) * (1 + a.swell);
   ctx.scale(faceScale * (1 - 0.22 * a.squash), faceScale * (1 + 0.12 * a.squash)); // (come down from a jump: squashed along the way it's going, a moment)
   const change = dead ? -1 : costumeChange(s, a, now); // (how far through a costume change, or -1)
+  staminaFace(a, color); // (its stamina's step, for its eyes: see render/stamina.js)
   if (a.isPlayer) drawPlayerFace(s, a, now, blinking);
   else if (change < 0) drawFace(s, look, color, blinking, a);
   else drawChange(s, a, look, color, blinking, change);
@@ -270,6 +271,7 @@ function drawBody(s, a, now, dead) {
   const leaps = dead ? 0 : s.leaps, dashes = dead ? 0 : s.dashes;
   if (leaps || dashes) drawPips(pts[0], pts[1], Math.atan2(a.hs, a.hc) + Math.PI, a.star ? rad[0] * STAR_TIP : rad[0], a.swell, leaps, dashes, !a.offs); // (not across a wrapped edge: there it shows at the other)
   if (!dead && s.id === viewerId && game) drawRests(s, a, now);
+  if (!dead) drawShield(s, a, now); // (a golden apple's shield: see render/shield.js)
   if (dizzy) { // three stars going round, cream and inked (gold by a head means a power), clear of its pips and the edge: see starsOff
     const t = reduced ? 0 : now / 240, cy = pts[1] + starsOff(s);
     ctx.fillStyle = '#fffbea';

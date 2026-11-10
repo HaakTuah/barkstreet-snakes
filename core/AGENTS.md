@@ -1,0 +1,36 @@
+# agent-core
+
+The shared core of the owner's agent-built projects: a floor every project takes whole and modules each project picks
+(`README.md`). Codex: read `modules/codex.md` at the start of every task.
+
+## The core this repository takes
+
+The floor whole, and the modules that fit a repository of documents. Read whole at the start of every task (Claude Code
+imports them):
+
+@floor/security.md
+@modules/how-to-work.md
+@modules/inbox.md
+
+Read when needed: `floor/topics.md`, `floor/threat-model.md`, `modules/roles.md`, `modules/helpers.md`,
+`modules/reviews.md`, `modules/review-guidelines.md` and `modules/github-calls.md`.
+
+The slots here: the *progress file* and the *report*: this repository's open PRs and `reports/` (one file per change,
+`<date>-<name>.md`); the archive is `archive/instructions.md`, cited "(core archive N)"; the *settling references* and
+the *descriptions*: `README.md`; the *large file*: past about 50 KB.
+
+## How changes are made here
+
+- **A branch of its own, with a draft PR into `main`, pushed after every commit.** A PR that changes a rule says what it
+  changes in every project.
+- **Every PR gets Codex's code and security reviews;** one that changes the floor needs the owner's yes in it.
+- **The design session writes and merges changes here,** each carried into every project by that project's sync PR.
+- **A rule moves here only when it holds in every project,** with the owner's words behind it in the archive. The core
+  names no project outside its archive and reports.
+- **Never create a repository named `agent-rules`,** the core's old name: links to it redirect here (core archive 121).
+- **Usage:** no status line runs here, so a session neither measures usage nor mentions it.
+
+## Review guidelines
+
+Every reviewer reads `modules/review-guidelines.md` whole and judges the change by it, with the floor. Here, a rule
+that changes what any project must do without saying so in the PR is a departure from the PR's description, and blocks.

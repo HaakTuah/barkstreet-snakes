@@ -67,7 +67,7 @@
 //                 length    the median round
 //                 sd        sudden death: its median length (of the rounds that reached it), and how many did
 //                 deaths    what snakes died of (each cause's share of the deaths)
-//                 starving  the share of snake-time starving, before the woodpecker and after
+//                 starving  the share of snake-time starving, before the frenzy and after
 //                 powers    plain flashes a minute alive, plain jumps, golden leaps used, golden dashes and golden power food a round
 //                 win       each personality's win rate (of the rounds it played; shown, not waited for)
 //                 place     each personality's average place (shown, not waited for)
@@ -82,7 +82,7 @@
 //                 (win and place shown, not waited for, as above). Not with --at
 //   --at MS     fast-forward: store every round at game time MS as A plays it (simulate.js
 //               --save-at), and play both on from there; for questions about the late game
-//               (2:00, the woodpecker, is 120000). Only what happens after MS can differ
+//               (2:00 is 120000; each round draws its own acts, the woodpecker's and its frenzy's: tuning.js's ACT_*). Only what happens after MS can differ
 //   --alpha P   1 - the confidence, for the whole table (default 0.05: any verdict wrong at most 5% of the time)
 //   --margin ROW=X  a difference smaller than X doesn't matter, for a row (sd, win.Star...) or a group (win=5)
 //   --workers N passed on to simulate.js
@@ -117,7 +117,7 @@ function valuesOf(res) {
 // even seats, then the odd), as A's snakes' values and B's, each with its
 // snakes' numbers added up (per: by personality, as in a plain round).
 function sidesOf(...plays) {
-  const side = () => ({ h2h: true, per: {}, snakes: 0, wins: 0, placeSum: 0, aliveMs: 0, eaten: 0, kills: 0, causes: {}, flashes: 0, jumps: 0, leaps: 0, dashes: 0, golden: 0 });
+  const side = () => ({ h2h: true, per: {}, snakes: 0, wins: 0, placeSum: 0, aliveMs: 0, eaten: 0, kills: 0, causes: {}, flashes: 0, jumps: 0, leaps: 0, dashes: 0, golden: 0, grabs: 0 });
   const out = { A: side(), B: side() };
   for (const res of plays) {
     for (const [name, p] of Object.entries(res.per)) {
@@ -127,7 +127,7 @@ function sidesOf(...plays) {
         else t[k] = (t[k] || 0) + x;
       }
       v.snakes += p.rounds; v.aliveMs += p.aliveMs; // (whole ms: the same AI on both sides sums to exactly the same)
-      for (const k of ['wins', 'placeSum', 'eaten', 'kills', 'flashes', 'jumps', 'leaps', 'dashes', 'golden']) v[k] += p[k];
+      for (const k of ['wins', 'placeSum', 'eaten', 'kills', 'flashes', 'jumps', 'leaps', 'dashes', 'golden', 'grabs']) v[k] += p[k] || 0;
       for (const [c, n] of Object.entries(p.deaths)) v.causes[c] = (v.causes[c] || 0) + n;
     }
   }
@@ -152,13 +152,14 @@ function rowsFor(As, Bs, groups = USUAL, margins = new Map()) {
     add('powers', 'leaps', 'golden leaps a snake', '', { num: v => v.leaps, den: snakes }, 0.05);
     add('powers', 'dashes', 'golden dashes a snake', '', { num: v => v.dashes, den: snakes }, 0.05);
     add('powers', 'golden', 'golden power food a snake', '', { num: v => v.golden, den: snakes }, 0.05);
+    add('powers', 'grabs', 'spilled charges grabbed a snake', '', { num: v => v.grabs, den: snakes }, 0.02);
   } else {
   add('length', 'length', 'round length, median', 's', { median: v => v.length }, 3);
   add('sd', 'sd', 'sudden death length, median', 's', { median: v => v.sd }, 4);
-  add('sd', 'reached', 'rounds reaching the woodpecker', '%', { num: v => v.reached, den: () => 1, scale: 100 }, 2);
+  add('sd', 'reached', 'rounds reaching the frenzy', '%', { num: v => v.reached, den: () => 1, scale: 100 }, 2);
   const causes = [...new Set([...As, ...Bs].flatMap(v => Object.keys(v.causes)))].sort();
   for (const k of causes) add('deaths', 'deaths.' + k, `deaths: ${k}`, '%', { num: v => v.causes[k] || 0, den: v => v.deaths, scale: 100 }, 3);
-  add('starving', 'starving.early', 'starving, before the woodpecker', '%', { num: v => v.starvingEarly, den: v => v.aliveEarly, scale: 100 }, 0.5);
+  add('starving', 'starving.early', 'starving, before the frenzy', '%', { num: v => v.starvingEarly, den: v => v.aliveEarly, scale: 100 }, 0.5);
   add('starving', 'starving.late', 'starving, after', '%', { num: v => v.starvingLate, den: v => v.aliveLate, scale: 100 }, 0.5);
   add('powers', 'flashes', 'plain flashes a minute alive', '', { num: v => v.flashes, den: v => v.minutes }, 0.2);
   add('powers', 'jumps', 'plain jumps a round', '', { num: v => v.jumps, den: () => 1 }, 0.5);

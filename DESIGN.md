@@ -1,23 +1,18 @@
 # Design: Barkstreet Snakes
 
-Split into one file per topic under `docs/design/` on 26 October 2026, word for word, so that a session reads only the
-topics its task needs. The text as it stood before the split is in git history. Code comments that cite DESIGN
-"Section" name a heading: find it with `grep -rn "## Section" docs/design`. When a design call is made, write it in
-the file of its topic; a new round or topic gets its own file and a line here.
+One file per topic under `docs/design/`; the rules for finding and writing a design call are in `AGENTS.md`
+("Starting a task", "How to work, here").
 
 Since "The design by topic, not by round" (#336), the round files keep their headings as pointers, and only the records
 nobody looks up as a rule: the censuses and measurements (10, 11, 14, 15, 18, 24's opening, 25, 26, 27, 29's opening,
-32), 28's tools, and 34's guidelines with their reasons, which 13, 21 and 45 cite; 37 is a queued spec, into 40 once
-built; 02, 05, 09, 35 and 36 are topic files. Noticed and left: 30's plan keeps combos in "With PR C" (entry 6's
-outline wins, as 30 says), its step 2 (the bird) looks done, and Mason's gold vein sits against "gold means power"
-(03), for the owner.
+32), 28's tools, and 34's guidelines with their reasons, which 13, 21 and 45 cite; 37 is the one stamina's spec (built, entry 2u); 02, 05, 09, 35 and 36 are topic files.
 
 | File | Covers |
 | --- | --- |
 | [`docs/design/01-the-vision-in-one-paragraph.md`](docs/design/01-the-vision-in-one-paragraph.md) | The vision in one paragraph |
 | [`docs/design/02-art-direction-storybook-bark-on-a-mossy-log.md`](docs/design/02-art-direction-storybook-bark-on-a-mossy-log.md) | Art direction: "storybook bark", on a mossy log, with reduced motion, and borders and frames (its cast palette is now in 03) |
 | [`docs/design/03-the-snake-as-a-character.md`](docs/design/03-the-snake-as-a-character.md) | The snake as a character: how the snakes look, your snake and how you're told apart, the cast palette, faces, what each looks at, the tongue gags, each rival's look (Ouroboros, Mute's mood ring, Wildcard's hair, Copycat's red and face, a costume change, Star with its tell, mustache and rainbow), gold and the power marks, jumps and bodies over a pit, and hunger on the body |
-| [`docs/design/04-food-and-the-world.md`](docs/design/04-food-and-the-world.md) | Food and the world: food and its looks (mushrooms that look poisonous), apples that rot and food that cooks, how much there is and hunger, the rivals and food, beetles and their dig, burrows and their growing shut, beetles and the woodpecker, holes, remains, and what food and beetles send online (the realms and colonies: 44) |
+| [`docs/design/04-food-and-the-world.md`](docs/design/04-food-and-the-world.md) | Food and the world: food and its looks (mushrooms that look poisonous), apples that rot and food that cooks, how much there is and hunger, food seasons (lean, normal and plentiful rounds), the rivals and food, beetles and their dig, burrows and their growing shut, beetles and the woodpecker, holes, remains, and what food and beetles send online (the realms and colonies: 44) |
 | [`docs/design/05-weather.md`](docs/design/05-weather.md) | Weather, with rainbows upright |
 | [`docs/design/06-keeping-it-smooth.md`](docs/design/06-keeping-it-smooth.md) | Keeping it smooth (now in 45) |
 | [`docs/design/07-borders-and-frames.md`](docs/design/07-borders-and-frames.md) | Borders and frames (now in 02) |
@@ -50,7 +45,7 @@ outline wins, as 30 says), its step 2 (the bird) looks done, and Mason's gold ve
 | [`docs/design/34-skipped-or-adapted-guidelines.md`](docs/design/34-skipped-or-adapted-guidelines.md) | Skipped or adapted guidelines |
 | [`docs/design/35-capricious-copycat-and-wildcard.md`](docs/design/35-capricious-copycat-and-wildcard.md) | Capricious, Copycat and Wildcard: every rival by turns, copying the winner's play, a few strong traits a round (to build), and the rules that stand for all three (a costume change is now in 03) |
 | [`docs/design/36-updating.md`](docs/design/36-updating.md) | Updating: the newest version by itself between rounds, and what changed |
-| [`docs/design/37-one-stamina.md`](docs/design/37-one-stamina.md) | One stamina for jump and dash: shown in how each snake looks, no tail cost, each power a third to two thirds of uses (to build, entry 2u) |
+| [`docs/design/37-one-stamina.md`](docs/design/37-one-stamina.md) | One stamina for jump and dash: shown in how each snake looks, no tail cost, each power a third to two thirds of uses (built, entry 2u) |
 | [`docs/design/38-the-woodpecker.md`](docs/design/38-the-woodpecker.md) | The woodpecker: when it comes, how it picks and marks its patch, playing fair (no shutting in, no crumbs, the log in one piece, food knocked to its ring), the strike and its holes, its flight, drum, size and perch, cues, lessons, voice, the rivals' read and online |
 | [`docs/design/39-the-rivals.md`](docs/design/39-the-rivals.md) | The rivals: what they see, looking ahead (the tail and neck tests, meals and pins), reading heads and their nerve, hunger and desperation, mushrooms, powers when they pay, the cornered move, the board split and double walls, the cast's trademarks, Ouroboros, Star, every rival's power style and Gobbler's endgame, the band, the balance targets, how a change is measured, how they think quickly, and the line-up |
 | [`docs/design/40-powers-and-moves.md`](docs/design/40-powers-and-moves.md) | Powers and moves: two presses, golden powers held and earned, the jump (the island hop, leap now, the golden flight, taking a landing), bridges, bumps in the air, the flash (cuts, the neck cut, a failed flash, the edge, the golden flash, dropping your tail), the wrap and its portals, mushrooms that come back up and the roll rule, and online (crashes are in 41) |

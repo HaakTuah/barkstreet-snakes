@@ -90,7 +90,7 @@ const jumps = await ev(`(() => {
     for (const s of g.snakes) s.nextStarve = 1e15;
     setBody(ma, [[2, 22], [1, 22], [0, 22]], 'right'); ma.stunUntil = 1e9;
     setBody(sn, [[6, 22], [5, 22], [4, 22]], 'right'); sn.stunUntil = 1e9;
-    setBody(you, Array.from({ length: 8 }, (_, i) => [9 - i, 12]), 'right'); you.leapReadyAt = 0;
+    setBody(you, Array.from({ length: 8 }, (_, i) => [9 - i, 12]), 'right'); you.restedAt = 0;
     setBody(gob, Array.from({ length: 9 }, (_, i) => [10, 8 + i]), 'down'); gob.stunUntil = 1e9;
     if (gold) { setBody(sn, Array.from({ length: 9 }, (_, i) => [11, 16 - i]), 'up'); you.leaps = 2; }
     show(g); R.setViewer(99); R.setLead(0.5); drawN(10, 1); // (no rests round its head, nor halo: they'd pass for the trail)

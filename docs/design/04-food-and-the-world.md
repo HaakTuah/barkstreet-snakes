@@ -5,7 +5,7 @@
 - **The golden apple** bobs too, in a glow that breathes, with a small rotating sparkle star (a non-hue cue) and glints twinkling round it. Instead of blinking before it rots, it dims calmly.
 - **Mushrooms** sway on their stems, breathe, and let go of a spore now and then. In their last few seconds they wilt: they lean over, shrink and fade.
 - **Beetles** (your Flåklypa idea): a jewel beetle, emerald with a gold rim, that comes out where it's quiet and walks the bark cell by cell with scuttling legs. Each step sets off and settles (step, pause: a beetle's walk), and it turns smoothly. Between steps it's never quite still: its feelers wave, it breathes, and every few seconds it lifts its wing cases and buzzes its clear wings, as if about to fly off. Scared, it trembles and its feelers twitch. It pops in when it comes out. It's the one food that moves, so it adds a chase to the core loop. **Tuned in the simulator (250 seeded rounds per setting):** a beetle that bolts as fast as a snake was a death trap (rounds 75 s -> 57 s, and 20% of deaths happened within 4 cells of a beetle, as snakes followed it into tight spots); one that scurries at half a snake's speed from any head within 4 cells leaves rounds as they were (72 s, deaths near a beetle 5%) and still makes you chase: 89% are caught, after about 4 s of pursuit. The AIs value one at what it's worth (two apples) and, since round six A, see it as it is (they used to see it through their usual reaction delay, and chased where it had been). A skitter when one appears, a crunch when you catch it, and Gobbler, Desperado, Sniper and Mason have something to say about it (Mason: "Scarabaeus captus!"). (*Since round six A* up to two are out at once, in sudden death too, one scurries from a head within 6 cells, and a cornered one digs in: see "Less fruit, more beetles".)
-- **Remains:** a dead snake falls to pieces: glossy beads in its own colours and markings, popping in from head to tail. Wildcard leaves the Stars and Stripes (and an orange-tan head), Mute the colour of its last mood, Joker purple and amber, Vulture black with a white ruff and a pink head, Mason marble, Colonist its cream strap, Copycat dashed rings, Ghost pale see-through beads, Star and Copycat their rainbow as it ran down the body when they went (the pieces they burst into too), and a friend online its spots. They bob gently, each on its own beat. A light rim and a dark edge keep every bead readable on the bark. (They used to be roast drumsticks, ringed in the snake's colour: the same for every snake, and a snake turning into chicken was a strange thing to see.) **Since round four** a dead snake leaves a bead on every other segment (at least 3), not one on each. **Since 2 November 2026** each bead stands for its stretch of the body, from its own segment to the next bead's: it takes the fills those segments had as last drawn, half and half (its own upper left, the next's lower right), and their markings (Mason's gold vein if either has it, Colonist's two straps crossed), so Joker's beads are purple and amber, Wildcard's run collar, stars and red and white stripes, and nothing is squeezed. A crash's and a cut's beads take their own segment's look the same way. Beads go off as their time runs out (about 14 s), as apples do: a dull film and brown spots come over them (a dark bead, Vulture's black or Wildcard's navy, grows a pale mould instead, a grey film and grey-beige spots, so its rot shows as early as any other's), they shrink and dim, and go in a puff of their own colour. You squash your own beads (see "Choking on your own tail" in `41-crashes.md`).
+- **Remains:** a dead snake falls to pieces: glossy beads in its own colours and markings, popping in from head to tail. Wildcard leaves the Stars and Stripes (and an orange-tan head), Mute the colour of its last mood, Joker purple and amber, Vulture black with a white ruff and a pink head, Mason marble, Colonist its cream strap, Copycat dashed rings, Ghost pale see-through beads, Star and Copycat their rainbow as it ran down the body when they went (the pieces they burst into too), and a friend online its spots. They bob gently, each on its own beat. A light rim and a dark edge keep every bead readable on the bark. (They used to be roast drumsticks, ringed in the snake's colour: the same for every snake, and a snake turning into chicken was a strange thing to see.) **Since round four** a dead snake leaves a bead on every other segment (at least 3), not one on each. **Since 2 November 2026** each bead stands for its stretch of the body, from its own segment to the next bead's: it takes the fills those segments had as last drawn, half and half (its own upper left, the next's lower right), and their markings (Mason's rose vein if either has it, Colonist's two straps crossed), so Joker's beads are purple and amber, Wildcard's run collar, stars and red and white stripes, and nothing is squeezed. A crash's and a cut's beads take their own segment's look the same way. Beads go off as their time runs out (about 14 s), as apples do: a dull film and brown spots come over them (a dark bead, Vulture's black or Wildcard's navy, grows a pale mould instead, a grey film and grey-beige spots, so its rot shows as early as any other's), they shrink and dim, and go in a puff of their own colour. You squash your own beads (see "Choking on your own tail" in `41-crashes.md`).
 - **Burrows** (the beetles' homes): an oval opening in the bark, splintered round its rim with a little sawdust, and cracks that spread from it over about half a minute, each burrow's its own. Wood splits along its grain, so the cracks run along the log either way from the hole, tapering, now and then forking (they used to fan out in every direction, and with a beetle beside them they looked like a spider's legs). The first beetle cracks one open where it's quiet; later ones come out of a free burrow or, half the time, open another (up to three). A scared beetle runs for a burrow within 6 cells and dives in (it shrinks away into the hole), then comes out of another a second or so later. Burrows are safe to cross, and nothing grows on them. **Tuned in the simulator (300 seeded rounds):** beetles are still caught 90% of the time (91% before), and rounds are as long (68 s median, 69 before). **Since round six A** a cornered beetle's dig leaves a burrow too, freshly bored rather than popping open, and past three the one unused longest closes over (sawdust and moss fill it; since the owner's playtest it grows shut over 6 to 14 s first, beetles going in but none coming out: see "Burrows grow shut"); knocked food never lands on one, nor, since the verify pass, a dead snake's beads or a tail a crash knocks off (before, a bead on a burrow sat there 2 to 3 s a round). A bead a choke spits, or food a cough nudges, can still roll onto one (the roll's rule has no burrow in it, and the rivals work rolls out by the same rule): about once in 40 rounds. See "Less fruit, more beetles".
 - **Holes** are pits in the log, one per hollow, traced along the cell edges: a torn inked lip, a dark floor, the far wall lit from the upper left, splinters over the rim and sawdust round it, and at the board's edge a notch bitten out of the log. They lie on the static layer under everything, so a body bridging a hole is drawn across it. A strike paints again only the box round its new holes. (Until round four they were ragged gouges, then one dark disc a cell, which read as bubble wrap.)
 - **The corner leaves move onto the frame** and never cover playable cells.
@@ -19,13 +19,17 @@
 How much food there is and how long a meal keeps you, as round four and round six A settled it (their text, with what
 was tried and measured, is in `docs/archive/design-food.md`).
 
-- **Two apples all round** (`APPLES`; one in winter, `SNOW_APPLES`: see "Weather"): eaten or rotted, another drops
-  somewhere. Beetles carry more of the food (see "Less fruit, more beetles").
+- **Two apples all round** (`APPLES`; one in winter, `SNOW_APPLES`: see "Weather"; a food season adds or takes one:
+  see "Food seasons"): eaten or rotted, another drops somewhere. Beetles carry more of the food (see "Less fruit, more
+  beetles").
 - **A meal keeps you 20 s** (`HUNGER_MS`) in the opening and once the woodpecker has come, and **12 s mid-round**
   (`HUNGER_MID_MS`, from 0:45, `HUNGER_MID_FROM_MS`), so hunger matters in the middle of the round too. Each snake keeps
   how long its last meal keeps it (`mealMs`, carried online), and its tag's bar is measured against that, so it's full
   after any meal. Under `HUNGER_WARN_MS` (6 s) left, the tag shows it's starving: the bar in Berry, a ring pulsing round
   the tag, and "starving" for a screen reader.
+  *To come* (the owner, 9 November 2026, #616: "Is it not good to have a bit of consistency throughout, expert?", then
+  "Yes to all, expertly!"): one hunger clock for the whole round, no longer back to 20 s once the woodpecker comes,
+  its length tuned so that in the endgame neither always nor never eating wins; entry 6, part 3.
 - **Starving is decided after eating:** a snake whose head reaches food on the tick it would starve eats instead
   (`ateTick`, in `engine/food.js` and `engine/step.js`). A mushroom doesn't save it, nor does its own bead, which it
   squashes.
@@ -52,6 +56,48 @@ was tried and measured, is in `docs/archive/design-food.md`).
   owner, its heat and whether it's cooked, and a spat mushroom's strength (`MealRow` in `online.js`), and each snake's
   row its `mealMs`; the events say what was eaten, what rotted (an apple or a bead, and the bead's colour), what baked
   or burned to ash, what came, and where the last apples started to fall (`lastApples`).
+
+### Food seasons
+
+Each round draws its food season, as it draws its weather, so rounds don't feel alike (the owner, 29 October 2026, in
+`docs/handoff/queue-specs.md`, "2i"): lean one round in four, normal one in two, plentiful one in four (`SEASON_ODDS`;
+what each changes: `SEASONS` in `tuning.js`).
+- **Lean:** one apple fewer (never none: in winter it stays one), beetles half as often, and a meal keeps you 70% as
+  long (12 s mid-round becomes 8.4).
+- **Plentiful:** one apple more and beetles half again as often (winter keeps two). Snakes grow long, and the log crowds.
+- **Seen and taught:** a lean or plentiful round says so in a banner after Go ("A lean season…", "A season of
+  plenty!"), its colour dry bark or fresh leaves, and the first time each comes in a visit a lesson follows with its
+  rule; a normal round says nothing. The Field guide's "Seasons" row (after the apple) holds the rule. Everyone, the
+  rivals included, sees the season (`aiView().season`).
+- **The rivals play it** (`readAppetite` in `ai/food.js`): in a lean round none is ever too fed to eat (Ghost's and
+  Sniper's `hungryBelow` doesn't apply), and in a plentiful one each weighs growth past `AI_CROWD_KEEP` times its
+  endgame keep against the room it costs, as everyone does from the woodpecker on ("The endgame: a meal is worth the
+  life it buys", `39-the-rivals.md`). A lean round's sparing needs no rule of its own: with fewer meals less stamina
+  comes back (2u+), and its snakes use their powers about a fifth less.
+- **Online** the host draws the season and sends it with the weather (`sky`, protocol 29).
+- **Measured** (the shipped build, 200 rounds each on seeds 3 and 11; develop had 3% of deaths starved, and every
+  round's middle half ran about 172 to 187 s):
+  - **Starving** is 5 to 6% of all deaths: 15 to 18% of a lean round's, 3% of a normal one's, 1 to 2% of a plentiful
+    one's. Fewer apples and beetles alone moved a lean round only to 8% (beads are most of the food), hence the
+    shorter meal.
+  - **Length:** snakes are about 28 long when the woodpecker comes in a lean round, 38 in a normal one and 40 to 42 in a
+    plentiful one. Meals (bites, not growth) run about 19, 26 and 29 to 32 a snake-minute.
+  - **Deaths by cause** shift by season: a lean round has fewer deaths against bodies (30 to 33% against 45 to 49%)
+    and more neck cuts (15 to 16% against 7 to 8%) besides the starving; a plentiful one has 19 to 26% self-crashes (a normal
+    one 21%).
+  - **Round lengths** barely move (medians 180 to 184 s each): the woodpecker at 2:00 and sudden death set them, and
+    every round but one or two in 200 reaches the woodpecker. A lean round's middle half runs 170 to 189 s.
+  - **Powers:** a plentiful round's snakes use theirs 4 to 12% more a minute than a normal round's (4.7 to 4.9 against
+    4.4 to 4.5): more, not spam, since meals put stamina back (2u+). Rivals blind to the season used 15% more, and at
+    `AI_CROWD_KEEP` 2 the weighing cancelled most of the season (meals 7% over a normal round), so it is 3. A lean
+    round's use theirs about a fifth less (3.4 to 3.7).
+  - **Every trademark** keeps its place against the field (`--signatures`), and per-rival wins move within the noise
+    of about 90 rounds each (at most 13 points either way, as many up as down; Gobbler 20 to 9%, Creeper 19 to 32%,
+    Ghost 34 to 24% and Sniper 39 to 27% are the ones to watch). Ghost's and Sniper's drop isn't their lean play: the
+    same rounds with their fed restraint kept in a lean round give them 0 to 2 points more.
+  - **The season play, head to head** (rivals that play it against a copy blind to it, 600 paired rounds on seeds 21
+    and 22, at `AI_CROWD_KEEP` 2): even in wins, place, time alive and kills, eating 2 less a snake a round, so the play
+    is a matter of character, not an edge (#602 asks the owner whether to keep it).
 
 ### Apples rot
 
@@ -84,7 +130,8 @@ A mushroom shrinks whoever eats it, so it looks it, as the first seconds settled
 
 ### Rivals see food as it is
 
-Rivals see other snakes a quarter of a second late, like a person's reaction, and food as it is now (seen late, they
+Rivals see other snakes as a person would notice them, a quarter of a second late near them and later across the log
+("What a rival sees" in `39-the-rivals.md`), and food as it is now (seen late, they
 chased where a beetle had been).
 
 - A rival aims where a fleeing beetle is heading, from the way it faces and its pace, which anyone can see: straight on,
@@ -223,5 +270,20 @@ The golden apple (+3) doesn't pay. The rivals eat every one, 19 ticks after it c
 (another head within 5 cells). Played on from each eat with and without it (`tools/dev/fork-moves.js --move golden`; 903
 eats on seeds 101 to 104), eating one gains −0.01 ± 0.05 places and costs 2.9 ± 1.2 s alive: the length outweighs the
 meal. "The apple of vigour" (both rests refilled as well) adds +0.01 ± 0.02 places, since the rests are mostly ready when
-it's eaten (0.36 of 2 still resting). So the apple stays as it is for now, and is measured again with the one stamina
-refilled once 2u merges. The owner's question is #460.
+it's eaten (0.36 of 2 still resting). So 2z left the apple as it was, to be measured again against the one stamina
+(the owner's question, #460; answered, and built by 2u+ below).
+
+**2u+ (PR #560):** the golden apple now also fills the bar (only its growth's share of stamina banks) and gives a
+shield (`GOLDEN_SHIELD_MS`, 10 s): the next crash you live through costs no tail (the stun stays: without it, snakes
+bounced straight back into what they hit), and the shield is gone; boxed in, it can't save you, and where only the
+tail a crash sheds would leave you room it isn't spent (you pay the crash as anyone would). Its cue is a cream ring
+round the head (`render/shield.js`), flickering over its last 2 s and bursting when it takes a crash; its lesson comes
+with your first golden apple. Forked at each eat as it ships (seeds 524 and 525, about 237 eats each), the full bar
+comes out a hair below even (0.000 ± 0.027 and −0.111 ± 0.037 places: rivals flash more than pays, #536, and a full
+bar invites it), and the shield on top even (−0.025 and +0.017 ± 0.030 places) while saving a fifth of a segment at
+10 s: it never makes anyone safe. The +3 itself is a little ahead of a plain +1 there, within noise (+0.15 ± 0.10 places on each seed),
+where on 2u it cost (−10.5 ± 4.1 points of wins on seed 521). Neither extra moves whole rounds; they are built as
+the owner asked, and part 7 prices every power. Everyone sees a shield by its ring, the rivals too (`aiView()`), and
+each knows its own: a rival gives a shielded head twice the berth (`ai/risk.js`), so nobody can ram rivals with it.
+Shielded itself, a rival keeps its usual berth: fearing a head-on half as much then cost it 0.12 ± 0.04 places a
+golden apple.

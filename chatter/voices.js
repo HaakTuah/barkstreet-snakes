@@ -29,7 +29,7 @@
 // dug in and got away under the bark; knocked, food it was after, the
 // woodpecker knocked aside, and {who} ate it. Star's own: zoom, any
 // flash of its own; ready, its flash back from its rest; resting, small
-// talk while it rests; stash, a golden beetle it ate (a golden leaf's
+// talk while it rests; stash, a golden beetle or spilled charges it ate (a golden leaf's
 // flashes, it spends at once: a dash line). showoff: an answer to Star's
 // showing off ({who} is Star). The land's: realm.capital, the woodpecker
 // pecked Sovereign's capital and the realm moved; colony.lost, it pecked a

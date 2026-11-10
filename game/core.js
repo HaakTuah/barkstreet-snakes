@@ -49,6 +49,8 @@ const touchFirst = matchMedia('(pointer: coarse)').matches;
 const reducedMQ = matchMedia('(prefers-reduced-motion: reduce)');
 const params = new URLSearchParams(location.search);
 const DEV = params.has('debug') || params.has('perf');
+// A playtest's pins (entry 6): ?acts=70,140,200 starts the woodpecker's acts at those seconds (three rising times; anything else is ignored).
+const pinnedActs = params.has('acts') ? params.get('acts').split(',').map(n => Number(n) * 1000) : null;
 
 // ----------------------------------------------------------------- words
 
@@ -64,22 +66,22 @@ const pick = list => {
 };
 const inWords = n => ['none', 'one', 'two', 'three', 'four', 'five'][n] ?? String(n);
 const FLAVOR = {
-  intro: 'Three rivals. One mossy log. Last snake wriggling wins.',
+  intro: 'You, three rivals and a mossy log. Last one wriggling wins.',
   // (The arrows first: anyone knows them. A click is the mouse's left button on the board. A first-timer's
   // Hall of Fame is empty: the Field guide's key, G, is in its place before a first round, both under the board.)
-  hintStart: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click dashes · P naps · Enter starts · G opens the Field guide',
-  hintKeys: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click dashes · P or Esc naps, any key wakes · Enter starts over · H opens the Hall of Fame · G opens the Field guide · M mutes · N toggles the music · V the voices',
-  hintOnline: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click dashes · M mutes · N toggles the music · V the voices',
+  hintStart: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift, right-click or the key you’re going dashes · P naps · Enter starts · G opens the Field guide',
+  hintKeys: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift, right-click or the key you’re going dashes · P or Esc naps, any key wakes · Enter starts over · H opens the Hall of Fame · G opens the Field guide · M mutes · N toggles the music · V the voices',
+  hintOnline: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift, right-click or the key you’re going dashes · M mutes · N toggles the music · V the voices',
   hintOnlineTouch: 'Swipe to steer · Tap to jump · Swipe ahead to dash',
   hintTouch: 'Swipe to steer · Tap to jump · Swipe ahead to dash · Tap ⏸ to nap',
   // Watching (Watch AIs, or after you're out): nothing of yours to steer.
   hintWatch: '1, 2, 4 set the speed · P naps, any key wakes · Enter plays · H opens the Hall of Fame · G opens the Field guide · M mutes · N toggles the music · V the voices',
   hintWatchTouch: 'The speed buttons set 1×, 2× or 4× · Tap ⏸ to nap',
   rivals: ['Your rivals today:', 'Up on the log with you:', 'Sharing your bark:'],
-  spectators: ['Tonight on the bark:', 'In the ring today:', 'Place your bets:'],
+  spectators: ['Tonight on the bark:', 'On the log today:', 'Place your bets:'],
   go: ['Slither!', 'Off you go.', 'Mind the edges.'],
-  goWatch: ['And they’re off.', 'Off they slither.', 'Let the wriggling begin.'],
-  pause: ['Snakes need rest too.', 'Curled up in a warm patch of bark.', 'The log will wait.'],
+  goWatch: ['And they’re off.', 'Off they slither.', 'Here they come.'],
+  pause: ['Forty winks on the log.', 'Curled up in a warm patch of bark.', 'The log will wait.'],
   wake: touchFirst ? 'Tap to wake up.' : 'Any key to wake up.',
   // (Bonk! is for a knock you survive, Snip! for a cut you survive: a
   // death's title is a word that means out.)
@@ -97,10 +99,18 @@ const FLAVOR = {
     wind: ['The wind’s up. Apples are falling.', 'A blustery spell: windfall apples.'],
     rain: ['Rain. The mushrooms are sprouting.', 'Here comes the rain, and the mushrooms with it.'],
     storm: ['A storm’s brewing. Watch for the crackle.', 'Thunder on the bark. Lightning strikes where it crackles.'],
-    snow: ['Winter. Less food, and you’ll get hungry faster.', 'Snow on the bark. Lean times: eat while you can.'],
+    snow: ['Winter. Less food, and you’ll get hungry faster.', 'Snow on the bark. Hard times: eat while you can.'],
   },
   // (A line that talks to "you", when you're not in the round: the same news, for everyone.)
-  weatherWatch: { snow: ['Winter. Less food, and everyone gets hungry faster.', 'Snow on the bark. Lean times for everyone.'] },
+  weatherWatch: { snow: ['Winter. Less food, and everyone gets hungry faster.', 'Snow on the bark. Hard times for everyone.'] },
+  // The round's food season (2i), after Go (none for a normal one), and its rule, the first time each comes.
+  season: {
+    lean: ['A lean season. Food is scarce this round.', 'Lean times on the log: little food about.'],
+    plentiful: ['A season of plenty!', 'Plenty on the log this round.'],
+  },
+  seasonRule: k => k === 'lean' // (one idea, 60 characters at most, as every lesson)
+    ? `Lean: ${inWords(Engine.seasonApples(k))} apple, fewer beetles, short meals. Some starve.`
+    : `Plenty: ${inWords(Engine.seasonApples(k))} apples, more beetles. Mind the crowd.`,
   strike: ['Lightning! The bark’s on fire.', 'Crack! Fire on the bark.'],
   rainbow: ['A rainbow! And at its foot, something golden.', 'After the rain, a rainbow. Follow it to the gold.'],
   rainbowWatch: ['A rainbow! And at its foot, something golden.', 'After the rain, a rainbow. Gold at its foot.'],
@@ -109,8 +119,10 @@ const FLAVOR = {
   golden: ['A golden apple! Everyone pretends not to have seen it.', 'A golden apple just dropped onto the log.'],
   // The first time in a round you cross a rival's border.
   field: { home: name => `You’re in ${name}’s realm now. It noticed.`, colony: name => `That’s one of ${name}’s colonies. It’s seen you.` },
-  woodpecker: ['The woodpecker is here. Keep out of wherever it’s looking.', 'Rat-a-tat. The woodpecker has come for the log, a patch at a time.'],
-  woodpeckerWatch: ['The woodpecker is here. Everyone, keep clear of its mark.', 'Rat-a-tat. The woodpecker is at work on the log.'],
+  // The woodpecker's three acts (entry 6), as each starts: it comes and watches, it starts pecking, it's in a frenzy.
+  woodpecker: ['The woodpecker has landed. It’s sizing up the log.', 'A woodpecker, watching the log. Kik!'],
+  woodpeckerPecks: ['It’s started pecking! Keep off its mark.', 'Rat-a-tat. The woodpecker’s at the log.'],
+  woodpeckerFrenzy: ['Sudden death! The woodpecker’s in a frenzy.', 'Sudden death! Nothing grows now, and the bird’s furious.'],
   // The new rules, as they first happen to you in a round: one idea each, short.
   // (A no-break space keeps "At 3" together: split, it reads as two statements.)
   youCrash: ['Crashes cost tail. At length\u00a03, or boxed in, one ends you.', 'That crash cost tail. At length\u00a03, or boxed in, you’re out.'],
@@ -119,9 +131,14 @@ const FLAVOR = {
   youAlight: ['On fire: 3 bites of tail, and at\u00a03 it ends you. Rain helps.', 'Burning, and losing bits of you. At\u00a03 it ends you.'],
   youPeckedUnder: 'Pecking under you! Only your head can fall in.', // (a body over a fresh hole bridges it)
   cutLoose: 'The shaded piece is cut loose and will fall. Get off it!', // (2s: the first mark that cuts a piece loose, or its strike)
+  outline: 'It’s cutting a piece out: get off before it falls!', // (part 2: its first peck along an outline, the nicks showing the rest)
+  fight: 'Little log left: now it pecks at snakes. Dodge!', // (part 2: its first fight, at the floor: a head in the ring at the strike crashes)
   youSquash: 'Your own beads feed nobody.', // (round six B: your first own bead squashed)
-  youWoodpecker: 'Food in the woodpecker’s mark flies to its ring.', // (once a round, as it comes, once its own banner has had its time: the one idea you can act on, in one line on a phone; that it won't shut you in if it can help it is the Field guide's)
+  youWatched: 'The woodpecker’s watching… Mind where it looks.', // (entry 6: as it comes, its gaze a tell: its first cut starts where it looked last)
+  youWoodpecker: 'Food in the woodpecker’s mark flies to its ring.', // (once a round, as it starts pecking, once its own banner has had its time: the one idea you can act on, in one line on a phone; that it won't shut you in if it can help it is the Field guide's)
   birdBeetle: 'The woodpecker eats beetles too.', // (round six B, 2m: the first beetle you see the bird eat, one that didn't get off its mark in time)
+  spillFirst: 'A snake knocked out drops its powers. Grab them!', // (round six B, part 6: the first spill anyone sees)
+  youSpill: s => `Spilled powers: now ${[s.leaps ? `${s.leaps} golden jump${s.leaps === 1 ? '' : 's'}` : '', s.dashes ? `${s.dashes} golden dash${s.dashes === 1 ? '' : 'es'}` : ''].filter(Boolean).join(' and ')}.`, // (what you hold after the grab, not what it gave: full already, it gives nothing)
   portalFollow: 'Anyone can follow you through a portal, for a moment.', // (round six B, part 5: the first time anyone follows anyone through a gold portal)
   youDig: 'A cornered beetle digs in. Grab it before it’s gone!', // (the first one near enough your head to catch: see DIG_NEAR)
   digBurrow: 'A beetle that digs in leaves a burrow behind.', // (the first burrow a dig leaves in a round, anywhere on the log, once the dig's own lesson is told)
@@ -132,7 +149,7 @@ const FLAVOR = {
   lostCapital: 'The woodpecker took a capital: its realm moves.',
   lastApples: 'The last apples are falling.',
   // Your flash, ready and never used yet: the key, once a round (until you've flashed).
-  flashKey: touchFirst ? 'Your dash is ready: swipe the way you’re going.' : 'Your dash is ready: E, Shift or right-click.', // (what it does is the Field guide's: a lesson is 60 characters at most)
+  flashKey: touchFirst ? 'Your dash is ready: swipe the way you’re going.' : 'Your dash is ready: E, Shift, or the key you’re going.', // (what it does is the Field guide's: a lesson is 60 characters at most)
   // Beside the YOU arrow, as a round starts (until you steer).
   steerHint: touchFirst ? 'Swipe to steer' : 'Arrow keys to steer (or WASD)',
   leapNothing: 'Nothing to jump. Jumps clear a snake, a hole or fire.',
@@ -148,7 +165,9 @@ const FLAVOR = {
   goldBeetleWatch: ['A golden beetle! Whoever catches it jumps far.', 'A golden beetle is scuttling about.'],
   youGoldBeetle: n => `Golden: ${n} long jump${n === 1 ? '' : 's'}, free. ${touchFirst ? 'Tap' : 'Space or a click'} to jump.`,
   bridgeFirst: 'A snake across a pit is a bridge, until its tail passes.', // (the first time a snake lies across a pit near you: round six B's bridges)
-  youLeapFirst: 'Hup! A jump costs your tail tip, then a short rest.',
+  youStamina: 'One stamina: jump or dash, your choice.', // (2u: the first plain jump or dash that leaves you tired, the spec's words; the ring round your head is the bar, and the looks are on every snake: see render/stamina.js)
+  youShield: 'Golden apple: full stamina and a shield for one bump.', // (2u+: your first golden apple; the bubble round your head is the shield: see render/shield.js)
+  youCharged: 'Meals top up stamina. Past full, it banks: you glow.', // (2u+: the first meal that banks some above the full bar, the glow on your snake while you read: see render/stamina.js)
   youDashFirst: 'Golden dashes cut bodies two thick and put out fire.',
   youCutFirst: 'A dash cuts through a thin body.', // (round six B: your first cut)
   youFlashFailed: 'Too thick! A failed dash costs 5 off your tail.', // (your first failed flash)
@@ -169,19 +188,18 @@ const FLAVOR = {
   ringRace: 'A flier lands on its ring. Get there first and it’s out!', // (2y: the first time a flier's ring is in your reach before it comes down)
   youRingRaced: 'A rival could get to your ring first. Steer away!', // (2y: the first time a rival could reach your ring before you're down)
   leapNow: 'Press twice to leap now, anywhere!', // (the first time a flier comes down just ahead of you: you could have cut it off)
-  youMushroomSpit: 'Bleh! Steer to aim it: it lands three ahead.', // (round six B: your first mushroom, which comes back up)
+  youMushroomSpit: 'Bleh! Steer to aim it: it flies straight ahead.', // (round six B: your first mushroom, which comes back up)
   youSpitWet: 'Still wet: you slide over your own.', // (2x: the first time you spit one, as it lies)
   youSpatOn: name => `Ptoo! ${name} got you. Steer to spit it back.`, // (the first time one hits your head)
   youHungry: ['Your tummy is rumbling. Time for a snack.', 'Getting peckish… find food soon.'],
   youStarvingSmall: 'Starving at\u00a03, with nothing to spare. Eat now.',
   // A press that couldn't go (the first time each way, in a round): a jump, or a flash.
-  // (A flash is free, FLASH_COST 0, so it's never too small; it has nowhere
-  // to go only over a crash: straight back in, or blown up at the edge or a hole.)
-  fizzle: { resting: 'Your jump needs a moment.', small: 'Too small to jump: it costs tail.', landing: 'Nowhere to land.' },
+  // (A flash has nowhere to go only over a crash: straight back in, or blown up at the edge or a hole.)
+  fizzle: { resting: 'Your jump needs a moment.', landing: 'Nowhere to land.' },
   fizzleFlash: { resting: 'Your dash needs a moment.', landing: 'Nowhere to dash.' },
   newBest: n => `New best: ${n}!`,
   startOver: 'Start over?',
-  startOverText: key => key ? `${key} again starts over. P, Esc or an arrow keeps going.` : 'This round’s gone if you do.',
+  startOverText: key => key ? `${key} again to start over; P, Esc or an arrow to keep going.` : 'This round’s gone if you do.',
   awake: 'Awake.',
   friendWin: ['Bragging rights: yours.', 'Rematch?', 'Fair and square.'],
   friendKill: ['No hard feelings. Well, a few.', 'So much for teamwork.', 'They’ll remember that.'],
@@ -192,14 +210,14 @@ const FLAVOR = {
   roomGone: name => `${name} closed the room.`,
   roomLost: 'Lost the connection to the room.',
   friendLeft: name => `${name} left. An AI takes over their snake.`,
-  friendJoined: name => `${name} is here. Their best rounds join your Hall of Fame.`,
+  friendJoined: name => `${name} is here. Their best rounds go in your Hall of Fame too.`,
   friendAway: name => `${name} went quiet. An AI steers until they’re back.`,
   friendBack: name => `${name} is back.`,
   youAway: 'You went quiet for a moment, so an AI steered for you.',
-  tapTip: touchFirst ? 'Tap names to swap, tags to see how they play.' : 'Click names to swap, tags to see how they play.', // (no "above": on a phone on its side the tags are beside the log)
+  tapTip: touchFirst ? 'Tap a name to swap it, a tag to see how it plays.' : 'Click a name to swap it, a tag to see how it plays.', // (no "above": on a phone on its side the tags are beside the log)
   takeBack: 'An AI kept your snake going. Steer to take it back.',
   watchingFirst: 'This round’s already going. You’re in from the next one.',
-  rivals0: 'Just friends today. No mercy:',
+  rivals0: 'Just friends on the log today:',
   // On a phone held upright a banner has one line, over the header's title
   // row (DESIGN "Teaching by showing"): the longest round news, in fewer
   // words there; the full words everywhere else, and for a screen reader.
@@ -208,11 +226,10 @@ const FLAVOR = {
   phone: {
     'Thunder on the bark. Lightning strikes where it crackles.': 'Thunder! Lightning strikes where it crackles.',
     'Winter. Less food, and you’ll get hungry faster.': 'Winter. Less food, and hunger comes faster.',
-    'Snow on the bark. Lean times: eat while you can.': 'Snow. Lean times: eat while you can.',
+    'Snow on the bark. Hard times: eat while you can.': 'Snow. Hard times: eat while you can.',
     'Winter. Less food, and everyone gets hungry faster.': 'Winter. Less food, and hunger comes faster.',
-    'The woodpecker is here. Keep out of wherever it’s looking.': 'The woodpecker is here. Keep out of its sight.',
-    'Rat-a-tat. The woodpecker has come for the log, a patch at a time.': 'Rat-a-tat. The woodpecker has come for the log.',
-    'The woodpecker is here. Everyone, keep clear of its mark.': 'The woodpecker is here. Everyone, mind its mark.',
+    'The woodpecker has landed. It’s sizing up the log.': 'The woodpecker has landed.',
+    'Sudden death! Nothing grows now, and the bird’s furious.': 'Sudden death! Nothing grows now.',
     'A golden leaf blew onto the log: golden dashes, for the taking.': 'A golden leaf blew in: golden dashes to take.',
     'A golden leaf on the wind: golden dashes, for whoever eats it.': 'A golden leaf: golden dashes, for whoever eats it.',
     'A golden mushroom came up. Eat it: no edges for a while.': 'A golden mushroom came up: no edges for a while.',
@@ -270,6 +287,7 @@ let acc = 0, tickLen = TUNE.OPENING_TICK, lastFrame = 0, drawAlpha = 1, dirty = 
 // weather): the frame clock, but at 2x or 4x when you're watching that fast.
 let boardClock = performance.now();
 let helpText = ''; // (the help under the board, as last written)
+const seasonsTold = new Set(); // (the food seasons whose rule a Go has told, 2i: once each a visit)
 let powersTold = false; // (the first Go on a short phone has said how to jump and flash)
 let flashedEver = false; // (you've flashed, or pressed to: the flash's key needn't be told again this visit)
 let beatsLeft = 0, beatTimer = 0, waking = false; // (waking: the one beat back from a nap)
@@ -301,7 +319,8 @@ function musicStage() {
   mood.danger = state === 'running' ? dangerNow : 0;
   mood.watching = spectating();
   mood.paused = state === 'paused' || waking;
-  return alive <= 2 ? 'duel' : Engine.suddenDeath(theGame) ? 'sudden' : theGame.time > TUNE.MUSIC_MID_MS ? 'mid' : 'early';
+  const act = Engine.actOf(theGame); // (entry 6: the woodpecker's acts each have their own)
+  return alive <= 2 ? 'duel' : act === 3 ? 'sudden' : act === 2 ? 'pecks' : act === 1 ? 'watch' : theGame.time > TUNE.MUSIC_MID_MS ? 'mid' : 'early';
 }
 
 // -------------------------------------------------------------- the loop

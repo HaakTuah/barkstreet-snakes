@@ -69,7 +69,7 @@ const marks = await ev(`(() => {
     const g = stage(['creeper', 'ghost', 'mason']), [you, o] = g.snakes;
     setBody(you, Array.from({ length: 8 }, (_, i) => [10 - i, 13]), 'right');
     setBody(o, Array.from({ length: 7 * thick }, (_, i) => { const r = Math.floor(i / 7), j = i % 7; return [r % 2 ? 13 - j : 7 + j, 12 - r]; }), 'left'); o.stunUntil = 1e9;
-    you.stunUntil = g.tick + 2; you.queue = [E.DIRS.up]; you.leapReadyAt = you.flashReadyAt = 0;
+    you.stunUntil = g.tick + 2; you.queue = [E.DIRS.up]; you.restedAt = 0;
     E.leap(g, you); E.flash(g, you);
     show(g); drawN(10);
     const d = pixels(9, 10.5, 3, 2.5).data, near = (i, c) => Math.abs(d[i] - c[0]) < 30 && Math.abs(d[i + 1] - c[1]) < 30 && Math.abs(d[i + 2] - c[2]) < 30;

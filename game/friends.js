@@ -69,6 +69,9 @@ function renderRecords() {
 // The Field guide: every food, power and danger, with its picture (drawn by
 // the renderer, as it is on the log) and its rule in a line or two.
 const secs = ms => Math.round(ms / 1000);
+// A power's share of the stamina, in words, near enough: 'two fifths', 'three quarters'.
+const SHARES = [[1 / 4, 'a quarter'], [1 / 3, 'a third'], [2 / 5, 'two fifths'], [1 / 2, 'half'], [2 / 3, 'two thirds'], [3 / 4, 'three quarters'], [4 / 5, 'four fifths'], [1, 'all']];
+const share = ms => SHARES.find(([f]) => Math.abs(ms / TUNE.STAMINA_MS - f) < 0.04)?.[1] ?? `${Math.round(100 * ms / TUNE.STAMINA_MS)}%`;
 const GUIDE_ROWS = [
   // (How to play opens here: the round in four lines, before the things on the log.)
   ['The basics', [
@@ -78,31 +81,33 @@ const GUIDE_ROWS = [
     ['basic-hunger', 'Hunger', `A hungry snake grows thin, then growls; one gone pale is shrinking. At ${TUNE.MIN_LENGTH} it starves. Your bar is under your name.`],
   ]],
   ['Food', [
-    ['apple', 'Apple', `Worth 1, and a full tummy. ${inWords(TUNE.APPLES).replace(/^./, c => c.toUpperCase())} on the log at a time; leave one too long and it rots.`],
-    ['golden', 'Golden apple', `Worth ${TUNE.GOLDEN_GROWTH}, and everyone saw it land.`],
+    ['apple', 'Apple', `Worth 1, and a full tummy. ${inWords(TUNE.APPLES).replace(/^./, c => c.toUpperCase())} on the log at a time (a season can change that); leave one too long and it rots.`],
+    ['season', 'Seasons', `Each round has its food season; a lean or plentiful one is named after Go. A lean one: ${inWords(Engine.seasonApples('lean'))} apple at a time, fewer beetles, and shorter meals, so some snakes starve. Plenty: ${inWords(Engine.seasonApples('plentiful'))} apples and more beetles, so snakes grow long and the log crowds. The rest are normal.`],
+    ['golden', 'Golden apple', `Worth ${TUNE.GOLDEN_GROWTH}, a full bar of stamina, and a shield round your head for ${secs(TUNE.GOLDEN_SHIELD_MS)} s: it takes your next bump (no tail lost). Boxed in, it can’t save you. Everyone saw it land.`],
     ['beetle', 'Beetles', `Worth ${TUNE.BEETLE_GROWTH}, up to ${inWords(TUNE.BEETLE_MAX ?? 2)} out at once, even in sudden death. They scurry from heads at half your speed. A cornered one digs in: come straight at it and it’s gone, so be nearer, or cut it off from its burrow. They flee the woodpecker’s mark too, and it eats any still on it when it strikes.`],
     ['dig', 'Burrows', `${TUNE.BURROW_FROM_DIG ? 'A beetle that digs in leaves a burrow, taking the place of any burrow near it (burrows keep apart). ' : ''}A burrow left unused grows shut (past ${inWords(TUNE.BURROW_MAX)}, the one unused longest): beetles still go in, but none come out.`],
     [['pellet', 'squash'], 'Beads', `What a crash knocks off, and what a dead snake leaves (${TUNE.CORPSE_EVERY === 2 ? 'every other segment' : TUNE.CORPSE_EVERY === 1 ? 'all of it' : `one segment in ${TUNE.CORPSE_EVERY}`}). Worth 1 each, and they rot. Your own beads you squash flat as you pass, so they feed nobody: run them over to keep them from the others.`],
     [['baked', 'roast'], 'Baked and roast', `Food left in a fire bakes: worth ${TUNE.COOKED_GROWTH}, if you can take the heat. Then it’s ash.`],
-    ['mushroom', 'Mushroom', `Poison: ${TUNE.SHRINK} off your tail (never below ${TUNE.MIN_LENGTH}). A second later it comes back up, ${inWords(TUNE.SPIT_REACH)} ahead of you: steer to aim it at a head; you slide over it while it's wet. Each time it comes back up it takes one more, up to ${TUNE.SHRINK_MAX}, a shade darker. Keep out of a green ring.`],
+    ['mushroom', 'Mushroom', `Poison: ${TUNE.SHRINK} off your tail (never below ${TUNE.MIN_LENGTH}). A second later it comes back up and flies straight ahead of you, up to ${inWords(TUNE.SPIT_REACH)}: steer to aim it at a head; a body in the way stops it. You slide over your own while it's wet. Each time it comes back up it takes one more, up to ${TUNE.SHRINK_MAX}, a shade darker. Step out of a dotted green line.`],
   ]],
   ['Golden things', [
-    ['goldbeetle', 'Golden beetle', `${TUNE.LEAP_CHARGES} golden jumps: free, no rest. Tap for the plain hop; hold the jump and you fly ${TUNE.GOLD_FLY} cells, always, steering in the air to land where it's safe. Hold up to ${TUNE.LEAP_MAX}.`],
+    ['goldbeetle', 'Golden beetle', `${TUNE.LEAP_CHARGES} golden jumps: free, no stamina. Tap for the plain hop; hold the jump and you fly ${TUNE.GOLD_FLY} cells, always, steering in the air to land where it's safe. Hold up to ${TUNE.LEAP_MAX}.`],
     ['leaf', 'Golden leaf', `${TUNE.DASH_CHARGES} golden dashes: three cells at once, cutting through a body up to ${TUNE.DASH_THICK} thick and putting out every fire. Never at an edge or a hole: you blow up.`],
     ['goldcap', 'Golden mushroom', `Up in the rain. The edges wrap round for you, ${secs(TUNE.WRAP_MS)} s a mushroom (up to ${secs(TUNE.WRAP_MAX_MS)}). Going off one opens gold portals: anyone may follow you through, for a moment.`],
+    ['spill', 'Spilled powers', `Knocked out (never just bumped), a snake drops the golden jumps and dashes it held where its head fell: a gold coin ringed with its pips. Grab it before it fades and they’re yours, up to ${TUNE.LEAP_MAX} of each.`],
   ]],
   ['Your powers', [
-    ['jump', 'Jump', `${touchFirst ? 'A tap' : 'Space or a click on the log'}: hop snakes, holes or fire, up to ${TUNE.LEAP_REACH} cells, to the first free cell: across a gap too. ${touchFirst ? 'Tap twice' : 'Press twice'} to leap now, open ground too. A ring shows where you’ll land. It costs your tail’s tip, then rests ${secs(TUNE.LEAP_COOLDOWN_MS)} s. Bump into a flier in the air and you drop: onto a body or into a hole, you’re out. Lie on a flier’s ring before it lands and it’s out: rivals will try it on you.`],
-    ['flash', 'Dash', `${touchFirst ? 'A swipe the way you’re going' : 'E, Shift or a right-click on the log'}: two cells in a blink, free. Then it rests ${secs(TUNE.FLASH_COOLDOWN_MS)} s.`],
+    ['jump', 'Jump', `${touchFirst ? 'A tap' : 'Space or a click on the log'}: hop snakes, holes or fire, up to ${TUNE.LEAP_REACH} cells, to the first free cell: across a gap too. ${touchFirst ? 'Tap twice' : 'Press twice'} to leap now, open ground too. A ring shows where you’ll land. It takes ${share(TUNE.JUMP_STAMINA_MS)} of your stamina. Bump into a flier in the air and you drop: onto a body or into a hole, you’re out. Lie on a flier’s ring before it lands and it’s out: rivals will try it on you.`],
+    ['flash', 'Dash', `${touchFirst ? 'A swipe the way you’re going' : 'E, Shift, a right-click on the log or the key you’re going'}: two cells in a blink, for ${share(TUNE.DASH_STAMINA_MS)} of your stamina.`],
     ['cut', 'Cuts', 'A dash cuts through a body one thick with free log beyond: the part behind falls to beads. Leave fewer than 3 in front and that snake is out. Your own body too: drop your tail to fit a pocket. Along the edge, or against a hole or another body, nothing can be cut from that side.'],
     ['failflash', 'Failed dash', `Dash into a head, a body too thick, the edge or a hole and it fails: ${TUNE.FAIL_LOSS} off your tail and a longer stun.`],
     ['held', 'Golden powers', 'Gold round a snake: it holds golden powers. Sky dots are golden jumps, ember diamonds golden dashes.'],
-    ['rests', 'Resting', 'Two half-rings round your head: your jump (left) and your dash (right) coming back.'],
+    ['rests', 'Stamina', `The ring round your head: one stamina for jump and dash, full again ${secs(TUNE.STAMINA_MS)} s after it runs dry, sooner the more you eat. The sky notch is a jump’s worth, the ember one a dash’s. Spend it on one and it’s not there for the other. Eat past full and it banks, up to ${TUNE.STAMINA_BANK} bars. Every snake wears its own: grayer and heavy-eyed when it can’t afford either, bright-eyed when it’s full, glowing warm with some banked.`],
   ]],
   ['The log', [
     ['fire', 'Fire', 'Lightning lights it. Crawl in and it takes 3 bites of tail; rain puts it out.'],
-    ['knock', 'Woodpecker', 'From 2:00 it pecks out patches, and won’t shut you in if it can help it. A piece it cuts loose from the log is shaded in its mark, and falls with the strike: the log stays one piece. Food in its mark is knocked to the nearest free cell, shown by a ring; a beetle still in its mark gets eaten.'],
-    ['hole', 'Holes', 'The woodpecker’s, from 2:00. Bumping one is a crash, like the edge; a peck right under your head is the end.'],
+    ['knock', 'Woodpecker', 'It comes in three acts. From about 1:00 it watches the log, a pale pool where it looks: where it looks last, it starts cutting. Then it cuts a piece out a few cells a peck, along a nicked line; the piece, shaded as its last peck is aimed, falls with the strike, so get off it. In its frenzy (sudden death) it cuts faster, down to the room the snakes need, then pecks at you: a head in its red ring at the strike crashes. It won’t shut you in if it can help it. Food in its mark flies to a ring; a beetle still in it gets eaten.'],
+    ['hole', 'Holes', 'The woodpecker’s, once it starts pecking. Bumping one is a crash, like the edge; a peck right under your head is the end (in its fight, a crash).'],
     ['bridge', 'Bridges', 'A snake lying across a pit is a bridge: crawl onto its back there, or land on it from a jump. Get off onto bark before its tail passes, or you fall in.'],
     ['land', 'Borders', 'Sovereign’s realm and Colonist’s colonies. Cross one and its owner notices, and says so.'],
     ['lostflag', 'Lost flags', 'A flag the woodpecker pecks out is lost: the colony goes, and a capital moves.'],
@@ -114,7 +119,7 @@ const GUIDE_ROWS = [
 ];
 // (Until the renderer can draw a picture, a stand-in: it draws a kind it
 // doesn't know as an apple. Every kind has one, in case its picture fails.)
-const GUIDE_STAND_IN = { capricious: '🎭', copycat: '🐱', 'basic-win': '👑', 'basic-steer': '🐍', 'basic-crash': '💥', 'basic-hunger': '🍽️', apple: '🍎', golden: '🌟', beetle: '🪲', goldbeetle: '🪲', dig: '🪲', pellet: '🟢', squash: '💦', baked: '🍎', roast: '🍖', mushroom: '🍄', goldcap: '🍄', leaf: '🍂', jump: '⤴️', flash: '⚡', cut: '✂️', failflash: '💫', wrap: '🔁', held: '✨', rests: '⏳', fire: '🔥', knock: '🍎', hole: '🕳️', bridge: '🌉', land: '🚩', lostflag: '🚩' };
+const GUIDE_STAND_IN = { capricious: '🎭', copycat: '🐱', 'basic-win': '👑', 'basic-steer': '🐍', 'basic-crash': '💥', 'basic-hunger': '🍽️', apple: '🍎', season: '🧺', golden: '🌟', beetle: '🪲', goldbeetle: '🪲', dig: '🪲', pellet: '🟢', squash: '💦', baked: '🍎', roast: '🍖', mushroom: '🍄', goldcap: '🍄', leaf: '🍂', spill: '🪙', jump: '⤴️', flash: '⚡', cut: '✂️', failflash: '💫', wrap: '🔁', held: '✨', rests: '⏳', fire: '🔥', knock: '🍎', hole: '🕳️', bridge: '🌉', land: '🚩', lostflag: '🚩' };
 const GUIDE_UNDRAWN = new Set();
 function renderGuide() {
   const px = Math.round(36 * (window.devicePixelRatio || 1));
@@ -483,7 +488,7 @@ async function joinRoom(text) {
   const code = codeIn(text);
   if (!Online.isCode(code)) {
     if (state !== 'lobby') openFriends(); // (a bad ?join= link: show where the problem is)
-    return setStatus('Room codes are five characters, like K7QXM.', true);
+    return setStatus('That’s not a room code: they’re five characters, like K7QXM.', true);
   }
   saveLobbyName();
   const attempt = ++joinAttempt;
@@ -637,7 +642,7 @@ click(lobbyCopy, async () => {
     setStatus('Link copied. Send it to your friends.');
   } catch {
     lobbyLink.select();
-    setStatus('Select the link and copy it.');
+    setStatus('Couldn’t copy it. Select the link and copy it yourself.');
   }
 });
 lobbyCopy.textContent = navigator.share && touchFirst ? 'Share link' : 'Copy link';

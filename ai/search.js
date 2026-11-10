@@ -37,7 +37,7 @@ function move(body, len, grow, d, depth, t, bonus) {
   const was = foodValue[i], muted = t + 1 <= mute, late = foodFrom[i] > t + 1, here = late ? 0 : was;
   let caught = -1;
   if (!muted) for (let b = 0; b < bugCount; b++) if (bugCell[b * BUG_SLOTS + t] === i) { caught = b; break; }
-  const v = muted ? 0 : here + (caught >= 0 ? bugV[caught] : 0);
+  const v = muted ? 0 : mealAfter(i, here, len + grow) + (caught >= 0 ? bugV[caught] : 0); // (2h: a second meal on this line, past my length worth keeping)
   const change = muted ? 0 : (late ? 0 : foodGrow[i]) + (caught >= 0 ? TUNE.BEETLE_GROWTH : 0);
   const muteWas = mute;
   if (change < 0) { // a mushroom: pending growth goes first, then the tail (and my mouth is full a while)
@@ -61,15 +61,12 @@ function move(body, len, grow, d, depth, t, bonus) {
   // (A rival's head beside a cell: a head-on on my first move; on my
   // next `age`, its body, if it went there, which I can't see yet; after
   // that I'd see where it went in time to turn.)
-  const keep = v > 0 ? nerveKeep : 1; // (my nerve over food; times 1, the very same numbers)
+  const keep = v > 0 ? nerveKeep : 1; // (over food: my nerve, and what the meal is worth to me; elsewhere times 1, the very same numbers)
   let gain = v * (foodW * w.foodRange + eatW * (ahead ? SOONER[t] : Math.pow(0.85, t))) - risk[i] * keep * (ahead ? RISK_AHEAD[t] : Math.pow(0.6, t)) - (t <= age ? strikes[i] * keep * RISK_AHEAD[t] : 0);
   if (turning && w.turn) gain -= w.turn * (ahead ? TURN_AHEAD[t] : Math.pow(0.9, t));
   // (A mushroom coming up: mine aimed at a head, as I face after this
-  // move; a rival's ring, my head kept out of it.)
-  if (t + 1 === mySpitAt && aim.length) {
-    const ax = nx + d.x * TUNE.SPIT_REACH, ay = ny + d.y * TUNE.SPIT_REACH;
-    if (inGrid(ax, ay)) { const a = ay * N + ax; for (let n = 0; n < aim.length; n += 2) if (aim[n] === a) gain += aim[n + 1]; }
-  }
+  // move; a rival's line, or one in the air, my head kept out of it.)
+  if (t + 1 === mySpitAt && aim.length) gain += aimGain(nx, ny, d);
   for (let n = 0; n < dodge.length; n += 3) if (dodge[n] === t + 1 && dodge[n + 1] === i) gain -= dodge[n + 2];
   if (rings.length) gain -= ringRisk(i, t + 1);
   if (closeOn.length && t + 1 === steps) { // (on my way to where I'd spit from: there by the time it comes up)

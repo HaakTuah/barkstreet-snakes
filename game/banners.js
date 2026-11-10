@@ -54,11 +54,26 @@ function news(dying) {
   }
   const me = player();
   const once = key => !theGame.told?.[key] && ((theGame.told ||= {})[key] = true); // (the first time this round)
+  // The woodpecker's acts (entry 6), each news as it starts, with its lesson
+  // after it: it comes and watches (its gaze, the tell), its first mark
+  // (food there flies to its ring), and the frenzy (sudden death).
   for (const e of theGame.events) if (e.type === 'woodpecker') {
     flashFrame('bird', true);
     toast(lineFor('woodpecker'), 2800, 'bird', 'round');
-    if (me?.alive && once('fairPecks')) toast(FLAVOR.youWoodpecker, 3000, 'bird', 'lesson', { still: () => me.alive, follows: true }); // (its rule: it waits its turn, after the news, its moment the news's)
+    if (me?.alive && once('watched')) toast(FLAVOR.youWatched, 3000, 'bird', 'lesson', { still: () => me.alive, follows: true }); // (its rule: it waits its turn, after the news, its moment the news's)
     return;
+  }
+  if (theGame.events.some(e => e.type === 'aim') && once('firstPecks')) {
+    flashFrame('bird', true);
+    toast(pick(FLAVOR.woodpeckerPecks), 2800, 'bird', 'round');
+    if (me?.alive && once('fairPecks')) toast(FLAVOR.youWoodpecker, 3000, 'bird', 'lesson', { still: () => me.alive, follows: true });
+    return;
+  }
+  if (Engine.suddenDeath(theGame) && once('frenzy')) {
+    flashFrame('bird', true);
+    updateControls(); // (the sky dims: html.frenzy, set there)
+    Sound.play('stinger');
+    return toast(pick(FLAVOR.woodpeckerFrenzy), 2800, 'bird', 'round');
   }
   if (dying.length && alive.length === 2) {
     const [a, b] = isMe(alive[0]) ? [alive[1], alive[0]] : alive;
@@ -103,22 +118,27 @@ function news(dying) {
     if (e.type === 'spawn' && e.kind === 'leaf') { flashFrame('gold'); if (newsOnce('leaf')) return toast(lineFor('leaf'), 2400, 'gold'); }
     if (e.type === 'spawn' && e.kind === 'goldcap') { flashFrame('gold'); if (newsOnce('goldcap')) return toast(lineFor('goldcap'), 2400, 'gold'); }
     if (e.type === 'knock' && e.kind === 'beetle' && e.tx == null && newsFree() && once('birdBeetle')) return toast(FLAVOR.birdBeetle, 2400, 'bird', 'lesson'); // (round six B, 2m: the first beetle the bird eats, anyone's to catch)
+    if (e.type === 'peck' && theGame.woodpecker?.plan && newsFree() && once('outline')) return toast(FLAVOR.outline, 2600, 'bird', 'lesson'); // (part 2: its outline, as its first peck along one shows the rest of it nicked)
+    if (e.type === 'aim' && theGame.woodpecker?.zone && newsFree() && once('fight')) return toast(FLAVOR.fight, 2600, 'bird', 'lesson'); // (part 2: its first fight, at the floor)
     if ((e.type === 'aim' ? theGame.woodpecker?.fall?.length : e.type === 'peck' && e.fall?.length) && newsFree() && once('cutLoose')) return toast(FLAVOR.cutLoose, 2600, 'bird', 'lesson'); // (2s: the first piece cut loose, as its mark shows it, or as it falls if the banner was busy)
+    if (e.type === 'spill' && newsFree() && once('spillFirst')) { flashFrame('gold'); return toast(FLAVOR.spillFirst, 2800, 'gold', 'lesson'); } // (round six B, part 6: the first spill anyone sees)
     if (e.type === 'through' && newsFree() && once('portalFollow')) return toast(FLAVOR.portalFollow, 2600, 'gold', 'lesson'); // (round six B, part 5: the first time anyone follows anyone through a gold portal)
     if (e.type === 'peck' && me?.alive && e.under?.includes(me.id) && once('peckedUnder')) return toast(FLAVOR.youPeckedUnder, 2800, 'bird', 'lesson'); // (struck under your body: a bridge, not a cut)
     if (e.type === 'death' && e.snake.fatal === 'cut' && newsFree() && once('neckCut')) return toast(FLAVOR.neckCut, 2400, 'warn', 'lesson'); // (the first neck cut you see, anyone's)
     if (e.type === 'dig' && me?.alive && Math.abs(me.body[0].x - e.x) + Math.abs(me.body[0].y - e.y) <= DIG_NEAR && newsFree() && once('dig')) return toast(FLAVOR.youDig, 2600, 'beetle', 'lesson'); // (it's over in a second: shown now or kept for the next one, never left waiting)
-    if (e.type === 'spit' && me?.alive && e.hit === me.id && once('spatOn')) { once('mushroom'); return toast(FLAVOR.youSpatOn(who(e.snake, true)), 2800, 'warn', 'lesson'); } // (round six B: hit by one; it teaches the aim, as a first mushroom would)
+    if (e.type === 'spat' && me?.alive && e.hit === me.id && once('spatOn')) { once('mushroom'); return toast(FLAVOR.youSpatOn(who(e.snake, true)), 2800, 'warn', 'lesson'); } // (round six B: hit by one; it teaches the aim, as a first mushroom would)
     if (!me || !isMe(e.snake || {}) && e.by !== me.id) continue; // (the rest is about you)
     if (e.type === 'squash' && once('squash')) return toast(FLAVOR.youSquash, 2600, 'you', 'lesson');
     if (e.type === 'eat' && e.gold) { flashFrame('gold', true); return toast(FLAVOR.youGoldBeetle(e.snake.leaps), 3000, 'gold', 'lesson'); }
+    if (e.type === 'eat' && e.kind === 'spill') { flashFrame('gold', true); return toast(FLAVOR.youSpill(e.snake), 2800, 'gold', 'lesson'); }
     if (e.type === 'eat' && e.kind === 'leaf') { flashFrame('gold', true); return toast(FLAVOR.youLeaf(e.snake.dashes), 3200, 'gold', 'lesson'); }
     if (e.type === 'eat' && e.kind === 'goldcap') { flashFrame('gold', true); return toast(FLAVOR.youGoldcap(Math.round((me.wrapUntil - theGame.time) / 1000)), 3000, 'gold', 'lesson'); } // (a second one adds to the first: the real total)
     if (e.type === 'eat' && e.kind === 'beetle') flashFrame('beetle');
-    if (e.type === 'eat' && e.kind === 'golden') flashFrame('gold', true);
-    if (e.type === 'spit' && e.lx != null && once('spitWet')) return toast(FLAVOR.youSpitWet, 2400, 'warn', 'lesson'); // (2x: your first spit that lies: wet, you slide over it)
+    if (e.type === 'eat' && e.kind === 'golden') { flashFrame('gold', true); if (TUNE.GOLDEN_SHIELD_MS && once('shield')) return toast(FLAVOR.youShield, 3000, 'gold', 'lesson'); } // (2u+: the bubble shows while you read)
+    if (e.type === 'spat' && e.lx != null && once('spitWet')) return toast(FLAVOR.youSpitWet, 2400, 'warn', 'lesson'); // (2x: your first spit that lies: wet, you slide over it)
     if (e.type === 'eat' && e.kind === 'mushroom' && once('mushroom')) return toast(FLAVOR.youMushroomSpit, 2600, 'warn', 'lesson'); // (round six B: it comes back up, aimed by steering)
-    if (e.type === 'leap' && !e.gold && once('leap')) return toast(FLAVOR.youLeapFirst, 3000, 'you', 'lesson');
+    if (e.type === 'eat' && e.snake.bank > 0 && once('charged')) return toast(FLAVOR.youCharged, 3000, 'you', 'lesson'); // (2u+: the first meal that banks stamina: you're charged as you read)
+    if ((e.type === 'leap' && !e.gold || e.type === 'dash' && e.plain) && Engine.staminaStep(theGame, e.snake) === 0 && once('stamina')) return toast(FLAVOR.youStamina, 3000, 'you', 'lesson'); // (the first plain power that leaves you tired: the look shows while you read, and wakes as the bar comes back)
     if (e.type === 'dash' && e.snake === me) flashedEver = true; // (you know the key: no more telling)
     if (e.type === 'dash' && !e.plain && once('dash')) return toast(FLAVOR.youDashFirst, 2800, 'gold', 'lesson');
     const refused = e.type === 'fizzle' && (e.flash ? FLAVOR.fizzleFlash : FLAVOR.fizzle)[e.why];
@@ -206,7 +226,7 @@ const landingOf = o => o.flight.ring || o.flight.land;
 // The fliers whose rings s's head could crawl onto before they're down (2y: a body there takes the landing).
 function ringsInReach(s) {
   const h = s.body[0];
-  return theGame.snakes.filter(o => o !== s && o.alive && o.flight?.ring && o.flight.ring.n >= 2 && Math.abs(o.flight.ring.x - h.x) + Math.abs(o.flight.ring.y - h.y) <= o.flight.ring.n - 1);
+  return theGame.snakes.filter(o => o !== s && o.alive && o.flight?.ring && inRingReach(h, o.flight.ring)); // (see render/jumps.js)
 }
 function tailToDrop(s) {
   const G = GRID_SIZE, h = s.body[0], taken = new Set();

@@ -40,6 +40,9 @@
 //             made (out within 3 s of the strike, of sudden death's), islands
 //             of one or two cells it cut off, and how often the snake on the
 //             biggest island won once the last ones were each on their own;
+//             the endgame (2h): how often a snake is boxed in a pocket smaller
+//             than itself in sudden death, the deaths there, meals eaten boxed
+//             in and its own tail drops;
 //             and a table of it for each
 //             personality: its flashes and jumps a minute, golden power food
 //             picked up, golden leaps and dashes used, chokes, crashes
@@ -62,8 +65,8 @@
 //             plays both halves; given this very copy, the rounds come out
 //             exactly as without it (the same fingerprint). Not with
 //             --save-at or --from
-//   --save-at MS  fast-forward: play each round only to game time MS (2:00,
-//             when the woodpecker comes, is 120000) and store it as it stands
+//   --save-at MS  fast-forward: play each round only to game time MS (2:00
+//             is 120000; each round draws its own acts, tuning.js's ACT_*) and store it as it stands
 //             then, the game and where its random numbers had got to (a round
 //             over before then is stored whole). Needs --seed. The rounds are
 //             kept with the cache (its file is printed; again with the same
@@ -81,7 +84,7 @@
 //   --no-wait don't wait for another run on the machine to finish
 //
 // The simulation is in tools/sim/, one file per part: 00 setup (the game loaded, the seeded
-// randomness), 01 the census and the trademarks' signatures, 02 a round played, 03 the report, 04
+// randomness), 01 the census and the trademarks' signatures (01b, the endgame's census), 02 a round played, 03 the report, 04
 // the store of rounds, 05 the run (the cache, the cores) and a core. They are joined in name order
 // into one text and run as this file (module.joined), so a core is handed that very text, as the run
 // began, and the cache's key is that of the code played. (An error's line is the joined text's.)

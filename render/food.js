@@ -1,6 +1,6 @@
 // The renderer (see render/core.js): the food (tossed, knocked, the dust
-// and steam about it) and its pictures, and the spit rings and cheeks of a
-// mushroom. The beetles' burrows and their bore are in burrows.js.
+// and steam about it) and its pictures, and a spat mushroom's dotted line,
+// flight and cheeks. The beetles' burrows and their bore are in burrows.js.
 
 // ------------------------------------------------------------ the food
 
@@ -44,40 +44,17 @@ function trackFood(now) {
   fresh = false;
 }
 
-// Food moved aside (see onTick): something spat from (x, y) to (tx, ty)
-// in a little arc (or, with nowhere to go, tossed up where it was: since
-// round six B nothing is, until a mushroom comes back up); or food
-// the woodpecker's strike knocked out of its patch, flying there in an
-// arc, higher and longer the further it goes. Its look goes with it (a
-// bead keeps its markings), and it's drawn going there (see drawFood); a
+// Food moved aside (see onTick): a mushroom in the air coming down where
+// it stopped, or off what it hit, in a little arc (SPAT_MS); or food the
+// woodpecker's strike knocked out of its patch, flying there in an arc,
+// higher and longer the further it goes. Its look goes with it (a bead
+// keeps its markings), and it's drawn going there (see drawFood); a
 // beetle scurries there (see drawBeetle). With reduced motion it's simply
 // there.
-// Something spat is in its mouth while its cheeks puff (so
-// the face shows the gag: on a phone a bead over it was the whole head),
-// and it's spat out on the "ptoo" (SPIT_WAIT), out of its cheek on the
-// side it lands (its head has gone on by then, and the bead lands beside
-// its neck: from the front of its mouth it flew back over its face),
-// small at first, full size as it clears the head, landing on the tok
-// (SPAT_MS from the spit, as the sound has it).
-const SPAT_MS = 320, ROLL_MS = 280, FLY_CELL_MS = 70, FLY_MAX_MS = 620, SPIT_WAIT = 120, SPIT_SIDE = 0.7, SPIT_AHEAD = 0.25;
-// How far on its way a piece moved aside is (0..1; -1 while it's still in
-// the mouth that spat it), and, as it leaves, where from.
-function movedU(b, now) {
-  const t = now - b.movedAt - b.wait;
-  if (t < 0) return -1;
-  if (b.by) { // (its cheek on that side, as drawn: or, landing straight ahead or behind, the front of its mouth)
-    const a = anim.get(b.by);
-    if (a && a.n) {
-      const hx = a.pts[0], hy = a.pts[1], c = a.hc, s = a.hs, side = Math.sign(Math.round(c * ((b.ty + 0.5) * CELL - hy) - s * ((b.tx + 0.5) * CELL - hx)));
-      const ox = side ? SPIT_AHEAD * c - SPIT_SIDE * side * s : SPIT_SIDE * c, oy = side ? SPIT_AHEAD * s + SPIT_SIDE * side * c : SPIT_SIDE * s;
-      b.fx = hx / CELL + ox - 0.5; b.fy = hy / CELL + oy - 0.5;
-    }
-    b.by = null;
-  }
-  return t / ((b.spat ? b.fly : ROLL_MS) - b.wait);
-}
-// Up in the air: over the snakes (a bead's spat over its own head; food
-// flies over whatever's in the way), bigger the higher it is (its shadow's
+const SPAT_MS = 320, ROLL_MS = 280, FLY_CELL_MS = 70, FLY_MAX_MS = 620;
+// How far on its way a piece moved aside is (0..1).
+const movedU = (b, now) => (now - b.movedAt) / (b.spat ? b.fly : ROLL_MS);
+// Up in the air: over the snakes (food flies over whatever's in the way), bigger the higher it is (its shadow's
 // on the ground: see drawFood). A bead is rimmed in ink and parchment in
 // the air, so one in your own colour reads against your body under it.
 function drawTossed(now) {
@@ -89,7 +66,7 @@ function drawTossed(now) {
     if (!b || !b.spat || !b.movedAt) continue;
     const u = movedU(b, now);
     if (u <= 0 || u >= 1) continue;
-    const e = 1 - (1 - u) * (1 - u), up = Math.sin(u * Math.PI), sz = (1 + 0.3 * up) * (b.wait ? Math.min(1, 0.5 + 2 * u) : 1);
+    const e = 1 - (1 - u) * (1 - u), up = Math.sin(u * Math.PI), sz = 1 + 0.3 * up;
     const x = (b.fx + (f.x - b.fx) * e + 0.5) * CELL, y = (b.fy + (f.y - b.fy) * e + 0.5) * CELL - up * b.hop;
     if (f.kind === 'pellet') {
       ctx.fillStyle = 'rgba(28,16,6,0.85)'; circle(x, y, CELL * 0.43 * sz);
@@ -105,6 +82,7 @@ function flyingSprite(f, b) {
   if (f.kind === 'mushroom') return mushroomSprite(f.power);
   if (f.kind === 'leaf') return goldLeafSprite();
   if (f.kind === 'goldcap') return goldcapSprite();
+  if (f.kind === 'spill') return goldenSprite(); // (spilled charges knocked aside: a glint of gold in the air)
   const left = f.expires != null ? f.expires - game.tick : 999;
   return appleSprite(f.cooked ? 'baked' : left > 50 ? 'fresh' : left > 22 ? 'bruised' : 'rotten');
 }
@@ -115,13 +93,13 @@ function flyingSprite(f, b) {
 // way, made a throw over two bodies a flat zip, and one beside the patch
 // a slow toss.) The game's knock sound lands with it (knockFlight).
 const knockFly = d => Math.min(FLY_MAX_MS, SPAT_MS + FLY_CELL_MS * d), knockHop = d => Math.min(1.5, 0.6 + 0.22 * d);
-function moveFood(x, y, tx, ty, now, spat, knocked = false, by = null) {
+function moveFood(x, y, tx, ty, now, spat, knocked = false) {
   const from = y * GRID + x, to = ty * GRID + tx, f = game.food.find(o => o.x === tx && o.y === ty && o.kind !== 'beetle');
   if (!f) return;
   const b = born.get(from), d = Math.hypot(tx - x, ty - y);
   if (from !== to) born.delete(from);
   born.set(to, { kind: f.kind, at: now - POP_MS, i: 0, next: 0, gen: bornGen, v: b && b.kind === f.kind ? b.v : (f.color || '#a16207') + '|', fell: false, fx: x, fy: y, movedAt: now, spat,
-    fly: knocked ? knockFly(d) : SPAT_MS, hop: CELL * (knocked ? knockHop(d) : 0.6), by, wait: by ? SPIT_WAIT : 0, tx, ty }); // (by: the snake that spat it)
+    fly: knocked ? knockFly(d) : SPAT_MS, hop: CELL * (knocked ? knockHop(d) : 0.6) });
 }
 
 // Through the woodpecker's aim, the food in its mark trembles (see
@@ -212,7 +190,7 @@ function beadOf(s, i, j = i + 1) {
       : look === 'colonist' ? (k % 2 ? 'strap' : 'strap2')
       : look === 'ouroboros' ? 'diamond'
       : s.personaKey === 'copycat' ? 'copy' : '';
-    if (!mark || m === 'marble2') mark = m || mark; // (a gold vein shows)
+    if (!mark || m === 'marble2') mark = m || mark; // (a rose vein shows)
     else if (m && m !== mark && look === 'colonist') mark = 'cross'; // (both straps: its cross-belts)
   }
   const a = fill(i), b = fill(j - 1);
@@ -474,7 +452,6 @@ function drawFood(alpha, now) {
     let x = f.x * CELL + CELL / 2, y = f.y * CELL + CELL / 2;
     if (b && b.movedAt) { // (spat, knocked or nudged aside: on its way from where it was, see moveFood)
       const u = reduced ? 1 : movedU(b, now);
-      if (u < 0) continue; // (still in the mouth that spat it)
       if (u >= 1) b.movedAt = 0;
       else {
         const e = 1 - (1 - u) * (1 - u);
@@ -521,8 +498,9 @@ function drawFood(alpha, now) {
         b.next = now + 250 + Math.random() * 300; // (poison spores, puffing off it)
         mote(x + (Math.random() - 0.5) * CELL * 0.5, y - CELL * 0.12, (Math.random() - 0.5) * 8, -12 - Math.random() * 8, 1700, 1.8 + Math.random() * 1.2, 0);
       }
-    } else if (f.kind === 'leaf' || f.kind === 'goldcap') {
-      // Golden powers: a glow, a gentle flutter (the leaf) or bob (the mushroom), and glints.
+    } else if (f.kind === 'leaf' || f.kind === 'goldcap' || f.kind === 'spill') {
+      // Golden powers: a glow, a gentle flutter (the leaf), a bob (the mushroom) or a slow turn (a knocked-out
+      // snake's spilled charges, round six B part 6: a gold coin ringed with the pips it held), and glints.
       const left = f.expires != null ? f.expires - game.tick : 999;
       const fade = left > 20 ? 1 : 0.4 + 0.6 * Math.max(0, left) / 20;
       const glow = pop * (1.1 + (lively ? 0.16 * Math.sin(t * 4) : 0)), w = SPRITE * CELL * glow;
@@ -534,6 +512,11 @@ function drawFood(alpha, now) {
         shadowAt(x + 2, y + CELL * 0.3, pop * 0.7);
         ctx.globalAlpha = fade;
         blitAbout(goldLeafSprite(), x, y - CELL * 0.05 + lift, 0, 0, pop, pop * (lively ? 0.94 + 0.06 * Math.cos(t * 2.2) : 1), tilt * 0.5);
+        ctx.globalAlpha = 1;
+      } else if (f.kind === 'spill') {
+        shadowAt(x + 1, y + CELL * 0.3, pop * 0.7);
+        ctx.globalAlpha = fade;
+        drawSpill(x, y, pop, f.leaps, f.dashes, lively ? t * 0.8 : 0);
         ctx.globalAlpha = 1;
       } else {
         const bob = lively ? Math.sin(t * 2.5) * CELL * 0.04 : 0;
@@ -677,6 +660,22 @@ const drawGoldLeaf = g => {
 // its cap in the golden leaf's Honey and inked like it, with white spots
 // (ringed, so they show on the pale gold) and a shine.
 const goldcapSprite = () => sprite('goldcap', '', drawGoldcap);
+// Spilled charges at x, y, scaled by k: a gold coin ringed with a sky pip
+// for each golden jump and an ember one for each dash, as they were on the
+// head that held them, turned by `turn`. (The Field guide draws it too.)
+function drawSpill(x, y, k, leaps, dashes, turn) {
+  const r = CELL * 0.3 * k;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, TAU);
+  ctx.fillStyle = '#facc15'; ctx.fill(); // (the crown's gold)
+  ctx.strokeStyle = INK; ctx.lineWidth = CELL * 0.07 * k; ctx.stroke();
+  ctx.beginPath(); ctx.arc(x, y, r * 0.6, 0, TAU); ctx.strokeStyle = HONEY; ctx.lineWidth = CELL * 0.05 * k; ctx.stroke(); // (its rim)
+  ctx.beginPath(); ctx.arc(x - r * 0.35, y - r * 0.35, r * 0.18, 0, TAU); ctx.fillStyle = GLINT; ctx.fill();
+  const n = leaps + dashes;
+  for (let i = 0; i < n; i++) {
+    const a = turn + TAU * i / n - Math.PI / 2;
+    drawPip(x + Math.cos(a) * CELL * 0.46 * k, y + Math.sin(a) * CELL * 0.46 * k, a, CELL * 0.09 * k, i < leaps);
+  }
+}
 const drawGoldcap = g => {
   const c = CELL;
   g.lineJoin = 'round';
@@ -724,7 +723,7 @@ const drawMushroom = (g, v = '') => {
 // colours and markings (Star's rainbow, Mason's marble, Colonist's
 // strap, a friend's spots), so no two snakes leave the same remains. A light
 // rim and a dark edge keep every bead readable on the bark.
-// variant: 'fill|mark' or two-tone 'fill|mark|fill2' (see beadOf), mark one of '', marble, marble2 (a gold vein), strap, strap2, cross (both straps), stars, spots, rings, dots, copy, ghost.
+// variant: 'fill|mark' or two-tone 'fill|mark|fill2' (see beadOf), mark one of '', marble, marble2 (a rose vein), strap, strap2, cross (both straps), stars, spots, rings, dots, copy, ghost.
 // (Star's rainbow runs through every hue, so bead sprites are kept for the
 // beads in use: as many as the board has cells, one bead to a cell, so every
 // bead on it stays drawn from its own, whatever a peer sends; past that the
@@ -749,7 +748,7 @@ const drawBead = (g, v) => {
   g.stroke();
   g.fillStyle = 'rgba(30,41,59,0.6)';
   if (mark === 'marble' || mark === 'marble2') {
-    g.strokeStyle = mark === 'marble2' ? 'rgba(201,162,39,0.85)' : 'rgba(100,116,139,0.6)';
+    g.strokeStyle = mark === 'marble2' ? 'rgba(176,92,104,0.85)' : 'rgba(100,116,139,0.6)';
     g.lineWidth = c * 0.03;
     g.lineCap = 'round';
     g.beginPath();
@@ -784,28 +783,61 @@ const drawBead = (g, v) => {
   g.fillStyle = 'rgba(255,255,255,0.55)'; // the gloss
   g.beginPath(); g.ellipse(-r * 0.32, -r * 0.38, r * 0.3, r * 0.2, -0.6, 0, TAU); g.fill();
 };
-// Mushrooms come back up (round six B). While one's in a snake's cheek:
-// a small green ring on the cell SPIT_REACH ahead of its head, the way it
-// faces (where it'll land: steering aims it), drawing in as the second
-// runs out, for everyone to see and dodge; and its cheeks puffed green (see
-// drawCheeks), a shade darker the stronger it was swallowed (as the mushroom's own shade).
-const SPIT_RING = '#a3e635', CHEEKS = ['#84cc16', '#65a30d', '#4d7c0f'];
-function drawSpitRings(now) {
+// Mushrooms come back up (round six B), and fly along the line (3b+).
+// While one's in a snake's cheek: a dotted green line from its head, the
+// way it faces, SPIT_REACH cells out (to the edge, or a hole: there it's
+// gone), where it'll fly (steering aims it), the dots swelling as the
+// second runs out, for everyone to see and step out of; and its cheeks
+// puffed green (see drawCheeks), a shade darker the stronger it was
+// swallowed (as the mushroom's own shade).
+const SPIT_DOTS = '#a3e635', CHEEKS = ['#84cc16', '#65a30d', '#4d7c0f'];
+function drawSpitLines(now) {
   if (!game) return;
   const t = reduced ? 0 : now / 1000;
   for (const s of game.snakes) {
     if (!s.alive || !s.cheek) continue;
-    const h = s.body[0], wrap = s.wrapUntil > game.time; // (the edges wrap for it: it lands on the far side)
-    let x = h.x + s.dir.x * T.SPIT_REACH, y = h.y + s.dir.y * T.SPIT_REACH;
-    if (wrap) { x = (x + GRID) % GRID; y = (y + GRID) % GRID; }
-    if (x < 0 || y < 0 || x >= GRID || y >= GRID) continue; // (over the edge: it's gone, nothing to dodge)
+    const wrap = s.wrapUntil > game.time; // (the edges wrap for it: it flies on from the far side)
     const left = Math.max(0, Math.min(1, (s.cheek.spitAt - game.tick) / T.CHEEK_TICKS));
-    const cx = (x + 0.5) * CELL, cy = (y + 0.5) * CELL, r = CELL * (0.24 + 0.14 * left + 0.03 * Math.sin(t * 12));
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.strokeStyle = INK; ctx.lineWidth = CELL * 0.18; ctx.stroke();
-    ctx.strokeStyle = SPIT_RING; ctx.lineWidth = CELL * 0.09; ctx.stroke();
+    let { x, y } = s.body[0];
+    for (let n = 1; n <= T.SPIT_REACH; n++) {
+      x += s.dir.x; y += s.dir.y;
+      if (wrap) { x = (x + GRID) % GRID; y = (y + GRID) % GRID; }
+      if (x < 0 || y < 0 || x >= GRID || y >= GRID || game.holes.has(y * GRID + x)) break; // (over the edge or into a hole: it's gone, nothing further to step out of)
+      const r = CELL * (0.07 + 0.06 * (1 - left) + 0.015 * Math.sin(t * 12 - n));
+      ctx.beginPath();
+      ctx.arc((x + 0.5) * CELL, (y + 0.5) * CELL, r, 0, Math.PI * 2);
+      ctx.fillStyle = SPIT_DOTS; ctx.fill();
+      ctx.strokeStyle = INK; ctx.lineWidth = CELL * 0.05; ctx.stroke();
+    }
   }
+}
+// A mushroom in the air: on its way from where it was at the start of the
+// tick to where it is (SPIT_SPEED cells a tick), over the snakes, spinning,
+// its shadow on the ground; and the last of its flight, to where it stopped
+// (see spitStopped).
+const lastLegs = [];
+function drawSpitsInAir(alpha, now) {
+  if (!game || !(game.spits.length || lastLegs.length)) return;
+  const u = reduced ? 1 : Math.min(1, alpha);
+  for (const m of game.spits) {
+    const fx = m.x - m.dir.x * T.SPIT_SPEED, fy = m.y - m.dir.y * T.SPIT_SPEED, over = fx < 0 || fy < 0 || fx >= GRID || fy >= GRID; // (over: through the wrapped edge, drawn there)
+    drawSpitAt(over ? m.x : fx + (m.x - fx) * u, over ? m.y : fy + (m.y - fy) * u, m.power, now);
+  }
+  for (let i = lastLegs.length - 1; i >= 0; i--) {
+    const l = lastLegs[i], v = reduced ? 1 : (now - l.at) / l.ms;
+    if (v >= 1) { lastLegs.splice(i, 1); continue; }
+    drawSpitAt(l.fx + (l.x - l.fx) * v, l.fy + (l.y - l.fy) * v, l.power, now);
+  }
+}
+function drawSpitAt(x, y, power, now) {
+  const px = (x + 0.5) * CELL, py = (y + 0.5) * CELL;
+  shadowAt(px + 1, py + CELL * 0.36, 0.7);
+  blitAbout(mushroomSprite(power), px, py - CELL * 0.3, 0, CELL * 0.2, 0.8, 0.8, reduced ? 0 : now / 90);
+}
+// Where one stopped: it flies the last of the way (from fx, fy) in the tick's time, unless it's to lie there or
+// roll off what it hit, which the food's own toss draws (see moveFood).
+function spitStopped(e, now) {
+  if (e.lx == null && Math.abs(e.x - e.fx) + Math.abs(e.y - e.fy) > 0) lastLegs.push({ fx: e.fx, fy: e.fy, x: e.x, y: e.y, power: e.power, at: now, ms: tickMs() });
 }
 // The bulge counts down to the spit (the owner, 2 November 2026: "Really not
 // easy to tell either when your character will spit it"): it swells from a

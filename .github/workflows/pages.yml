@@ -67,12 +67,12 @@ jobs:
           # (and for the same reason, any closed pull request's preview still up goes)
           open=" $(gh api "repos/$GITHUB_REPOSITORY/pulls?state=open&per_page=100" --paginate --jq '.[].number' | tr '\n' ' ') "
           for d in pr-[0-9]*; do [ -d "$d" ] && [[ "$open" != *" ${d#pr-} "* ]] && rm -rf "$d"; done
-          # A preview: the game's own files, without the tools and the notes.
+          # A preview: the game's own files, without the core, the tools and the notes.
           if [ -n "$PR" ]; then
             rm -rf "pr-$PR"
             if [ "$GONE" != true ]; then
               mkdir "pr-$PR"
-              git -C "$GITHUB_WORKSPACE" archive "$src" | tar -x -C "pr-$PR" --exclude=tools --exclude=docs --exclude=scripts --exclude=.claude --exclude=.github --exclude='*.md'
+              git -C "$GITHUB_WORKSPACE" archive "$src" | tar -x -C "pr-$PR" --exclude=core --exclude=tools --exclude=docs --exclude=scripts --exclude=.claude --exclude=.github --exclude='*.md'
               stamp "pr-$PR" "${src:0:7}"
             fi
           fi

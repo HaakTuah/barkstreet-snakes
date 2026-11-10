@@ -19,7 +19,9 @@
 //   beetles.js     beetles, their burrows, their crawl and going under
 //   weather.js     the weather, spells, rainbows, lightning, fire and cooking
 //   pits.js        bridges over holes, and falling in
-//   woodpecker.js  the woodpecker's peck: choosing and shaping its patch, how deep it digs
+//   woodpecker.js  the woodpecker's peck: its acts, the strike, a piece cut loose, how deep it digs
+//   outline.js     where it cuts: each snake's region, the floor, the outline it plans and its next peck
+//   fight.js       at the floor, its fight: a tile aimed ahead of a snake, and the crash it gives
 //   landings.js    where snakes in a patch land: rooms, knock-aside and the promised landings
 //   portals.js     the gold portals a wrapping snake opens going off an edge, which anyone may follow through
 //   view.js        what a snake sees (snapshot, aiView) and what it thinks ahead
@@ -67,8 +69,10 @@ function makeSnake(id, spawn, props) {
     // stunUntil: the tick it moves again after a crash; burnUntil, burnFrom: on fire (from, until)
     stunUntil: -1, burnUntil: -1, burnFrom: -1,
     // Powers. leaps: golden leaps held (golden beetles); dashes: golden
-    // flashes held (golden leaves); both can be held at once. leapReadyAt,
-    // flashReadyAt: when it can next jump, or flash, plainly (game time);
+    // flashes held (golden leaves); both can be held at once. restedAt:
+    // when its stamina is full again (game time; see the engine's leapIn),
+    // bank: what it has banked above the full bar (2u+, ms of stamina);
+    // shieldUntil: its golden apple's shield holds till then (game time);
     // wrapUntil: the edges wrap round for it till then (a golden mushroom);
     // flight: while its head is in the air, { dir, over: [the cells it
     // still flies over, a tick each], land: { x, y } (where it comes down,
@@ -77,8 +81,8 @@ function makeSnake(id, spawn, props) {
     // it asked for goes (the next one it moves). cheek: a mushroom in its
     // cheek (round six B), { power: the segments it'll take next, spitAt:
     // the tick it's spat, left: the ticks it had left to wilt }, or null.
-    leaps: 0, dashes: 0, leapReadyAt: 0, flashReadyAt: 0, wrapUntil: -1, flight: null, leapArmed: -1, flashArmed: -1, cheek: null,
-    queue: [], cause: null, killer: null, killerId: null, diedAt: null, memory: {}, planned: null, plannedTick: -1, ...props,
+    leaps: 0, dashes: 0, restedAt: 0, bank: 0, shieldUntil: -1, wrapUntil: -1, flight: null, leapArmed: -1, flashArmed: -1, cheek: null,
+    queue: [], cause: null, killer: null, killerId: null, diedAt: null, memory: {}, noticed: {}, planned: null, plannedTick: -1, ...props, // (noticed: the tick of the moment it last saw each other snake, by id: see aiView)
   };
 }
 const aiSnake = (id, spawn, key) => {
@@ -95,8 +99,12 @@ function pickOpponents(n) {
 // an input queue): one by default, none for an AI-only round, up to four
 // online. AI snakes fill the other seats, from persona keys (random by
 // default). Names are made unique, so a person called "Sniper" can't be
-// mistaken for the rival of that name.
-function createGame({ humans = null, withPlayer = true, personas = null } = {}) {
+// mistaken for the rival of that name. season: the round's food season
+// (2i: a key of SEASONS; drawn by SEASON_ODDS if not given, as the host
+// draws it for everyone online). acts: when the woodpecker's acts start
+// (entry 6: [watch, pecks, frenzy], ms of game time, as ?acts= pins them;
+// drawn in their windows if not given, as the host draws them).
+function createGame({ humans = null, withPlayer = true, personas = null, season = null, acts = null } = {}) {
   const people = (humans || (withPlayer ? [{ name: 'Green', color: PLAYER_COLOR }] : [])).slice(0, SPAWNS.length);
   const wanted = T.OPPONENTS + 1 - people.length;
   const keys = (personas || pickOpponents(wanted)).filter(k => Object.prototype.hasOwnProperty.call(PERSONAS, k)).slice(0, wanted);
@@ -127,14 +135,34 @@ function createGame({ humans = null, withPlayer = true, personas = null } = {}) 
     // many it has caught over its life. weatherBag: the spells still to come
     // before any kind repeats (see spell). sdApples: apples fallen since the
     // woodpecker came; sdAppleAt: the tick the next falls.
-    // portals: the gold portals open now (see portals.js).
-    portals: [], burrows: [], unders: [], fires: new Map(), fireGroups: new Map(), fireTotals: new Map(), fireGroup: 0,
+    // portals: the gold portals open now (see portals.js); spits: mushrooms flying (see spit).
+    portals: [], spits: [], burrows: [], unders: [], fires: new Map(), fireGroups: new Map(), fireTotals: new Map(), fireGroup: 0,
     weather: { kind: 'clear', since: 0, until: T.WEATHER_FIRST_MS, nextGust: 0, nextStrike: 0 }, weatherBag: [],
     sdApples: 0, sdAppleAt: null,
+    season: Object.prototype.hasOwnProperty.call(T.SEASONS, season) ? season : drawSeason(),
+    acts: drawActs(acts),
   };
   fillFood(game);
   snapshot(game);
   return game;
+}
+// A round's food season, SEASON_ODDS of each.
+function drawSeason() {
+  const odds = Object.entries(T.SEASON_ODDS);
+  let r = Math.random() * odds.reduce((a, [, n]) => a + n, 0);
+  for (const [k, n] of odds) if ((r -= n) < 0) return k;
+  return 'normal';
+}
+// When the woodpecker's acts start (entry 6): { watch, pecks, frenzy }, ms
+// of game time, each at a random time inside its window after the one
+// before (ACT_WATCH_MS, ACT_PECKS_MS, ACT_FRENZY_MS), or as pinned (three
+// rising times, ms).
+function drawActs(pinned) {
+  if (Array.isArray(pinned) && pinned.length === 3 && pinned.every((t, i) => Number.isFinite(t) && t >= 0 && (!i || t > pinned[i - 1]))) {
+    return { watch: pinned[0], pecks: pinned[1], frenzy: pinned[2] };
+  }
+  const watch = Math.round(between(...T.ACT_WATCH_MS)), pecks = watch + Math.round(between(...T.ACT_PECKS_MS));
+  return { watch, pecks, frenzy: pecks + Math.round(between(...T.ACT_FRENZY_MS)) };
 }
 // How long the next tick lasts. The opening ticks ease from OPENING_TICK down
 // to START_TICK, then the speed ramps gently toward MIN_TICK.
@@ -144,7 +172,10 @@ function tickLength(game) {
   }
   return Math.max(T.MIN_TICK, T.START_TICK - (T.START_TICK - T.MIN_TICK) * game.time / T.RAMP_MS);
 }
-const suddenDeath = game => game.time >= T.SUDDEN_DEATH_MS;
+// The act a round is in (entry 6): 0 calm, 1 the watcher, 2 the first
+// pecks, 3 the frenzy, which is sudden death.
+const actOf = (game, at = game.time) => (at >= game.acts.frenzy ? 3 : at >= game.acts.pecks ? 2 : at >= game.acts.watch ? 1 : 0);
+const suddenDeath = game => game.time >= game.acts.frenzy;
 // Milliseconds until a snake starts starving (negative once it has).
 // (lastAte is when it ate as the clock counts it: a meal that lasts less
 // than HUNGER_MS counts as eaten that much earlier, and winter moves it on.)
@@ -167,7 +198,7 @@ const hungerWarning = (game, s, now = game.time) => {
 // How long a meal keeps a snake from shrinking: HUNGER_MS in the opening
 // and once the woodpecker's here, HUNGER_MID_MS between, when food is
 // everywhere (with a long clock, hunger hardly ever mattered then).
-const mealLasts = game => game.time >= T.HUNGER_MID_FROM_MS && !suddenDeath(game) ? T.HUNGER_MID_MS : T.HUNGER_MS;
+const mealLasts = game => (game.time >= T.HUNGER_MID_FROM_MS && !suddenDeath(game) ? T.HUNGER_MID_MS : T.HUNGER_MS) * T.SEASONS[game.season].meal; // (shorter in a lean season: 2i)
 // Mark every living body cell in the occupancy grid (with a fresh stamp).
 function markBodies(game) {
   stamp++;

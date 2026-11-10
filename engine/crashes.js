@@ -54,14 +54,11 @@ function recoil(game, s, shut) {
   }
   return best;
 }
-// Facing what it hit, with a power asked for: why it can't go ('resting',
-// 'small' or 'landing'), or null if it can. A jump needs to be ready (or
+// Facing what it hit, with a power asked for: why it can't go ('resting'
+// or 'landing'), or null if it can. A jump needs to be ready (or
 // golden), and somewhere to land.
 function leapWontGo(game, s) {
-  if (!(s.leaps > 0)) {
-    if (s.body.length <= T.MIN_LENGTH) return 'small';
-    if (game.time < s.leapReadyAt) return 'resting';
-  }
+  if (leapIn(game, s) > 0) return 'resting';
   for (let c = ahead(game, s, s.body[0].x, s.body[0].y, s.dir), i = 0; i < T.LEAP_REACH; i++) {
     c = ahead(game, s, c.x, c.y, s.dir);
     if (!inside(c.x, c.y)) break;
@@ -76,8 +73,7 @@ function leapWontGo(game, s) {
 // it goes, and meets what it meets.
 function flashWontGo(game, s, shut) {
   const golden = s.dashes > 0, first = ahead(game, s, s.body[0].x, s.body[0].y, s.dir);
-  if (!golden && T.FLASH_COST > 0 && s.body.length <= T.MIN_LENGTH) return 'small';
-  if (!golden && game.time < s.flashReadyAt) return 'resting';
+  if (flashIn(game, s) > 0) return 'resting';
   if (shut && s.bounce.x === first.x && s.bounce.y === first.y) return 'landing';
   if (golden) for (let c = first, i = 1; i <= T.DASH_LENGTH; i++, c = ahead(game, s, c.x, c.y, s.dir)) if (!inside(c.x, c.y) || game.holes.has(key(c.x, c.y))) return 'landing';
   const owner = c => leavingNow(game, c.x, c.y) ? null : game.snakes.find(o => o.alive && o.body.some(b => b.x === c.x && b.y === c.y));
@@ -158,8 +154,25 @@ function freeBy(game, o, j, wake) {
   return wait + L - j + o.grow <= wake;
 }
 // What a crash this tick costs a snake, and how long it stuns it: more
-// for a failed flash.
-const lossOf = s => s.failed ? T.FAIL_LOSS : T.CRASH_LOSS;
+// for a failed flash. A golden apple's shield (2u+) takes the tail it'd
+// lose, not the stun (bouncing on at once, it ran back into what it hit),
+// unless only that tail leaves it room: then the shield stays unspent and
+// it pays as anyone would (see room, in step).
+const lossOf = s => s.shielded ? 0 : s.failed ? T.FAIL_LOSS : T.CRASH_LOSS;
+// What a crash costs a snake that lives: whatever it pressed (for a board
+// that's gone), a golden apple's shield (2u+: it takes the crash, and is
+// gone) or the tail it loses, as beads (drops), and the stun; a flash
+// waiting on a jump goes when it moves again. Returns { lost, shield }.
+function crashCost(game, s, drops) {
+  s.queue.length = 0;
+  const shield = s.shielded;
+  if (shield) s.shieldUntil = -1;
+  const lost = Math.min(lossOf(s), s.body.length - T.MIN_LENGTH);
+  for (let n = 0; n < lost; n++) { const t = s.body.pop(); drops.push({ x: t.x, y: t.y, color: s.color, owner: s.id }); }
+  s.stunUntil = game.tick + 1 + stunOf(s);
+  if (s.flashArmed > game.tick) s.flashArmed = s.stunUntil; // (as one pressed in a stun does)
+  return { lost, shield };
+}
 const stunOf = s => s.failed ? T.FAIL_STUN_TICKS : T.STUN_TICKS;
 // A head that gets to (x, y) this tick (it doesn't crash), if one does.
 function arrivalAt(x, y) {

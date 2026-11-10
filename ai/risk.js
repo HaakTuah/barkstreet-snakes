@@ -6,7 +6,10 @@
 // read with when I'd get there, see evaluate), and its wider reach since
 // I last saw it (soft zone, `risk`).
 // (A rival still stunned next tick can't strike; one I just met head-on,
-// I give twice the berth for a while, so we don't go for the same cell again.)
+// I give twice the berth for a while, so we don't go for the same cell again.
+// 2u+: a golden apple's shield takes a bump for nothing, so a shielded head
+// I give twice the berth. Shielded myself, I keep my usual berth: fearing a
+// head-on half as much cost the shielded 0.12 places a golden apple.)
 // Only cells it can step into: not back into its neck, a hole or a body
 // still there. (One I saw in the air comes down on its ring on the move
 // its ring says: a head-on then; a move either side at half (a flight
@@ -18,7 +21,7 @@ function readRisk() {
   rings = [];
   ringRisk = (i, t) => { let v = 0; for (let n = 0; n < rings.length; n += 3) if (rings[n + 1] === i && Math.abs(rings[n] - t) <= 1) v += rings[n] === t ? rings[n + 2] : rings[n + 2] / 2; return v; };
   others.forEach((o, k) => {
-    const strike = stunLeft(o) > 1 ? 0 : w.headRisk * (o.id === me.bumped ? 2 : 1);
+    const strike = stunLeft(o) > 1 ? 0 : w.headRisk * (o.id === me.bumped ? 2 : 1) * (o.shield && !me.shield ? 2 : 1);
     const wrapO = o.wrap > 0, at = v => wrapO ? (v + N) % N : v; // (the edges wrap for it a while)
     for (const d of DIR_LIST) {
       if (d.x === -o.dir.x && d.y === -o.dir.y) continue; // (its neck)
@@ -28,9 +31,9 @@ function readRisk() {
     }
     // (Its powers reach further straight on: a dash three cells; anyone's
     // flash two, and anyone's leap LEAP_REACH + 1 if there's something in
-    // front to hop (a golden one, whatever's in front). It may be resting
-    // them: I can't tell.
-    // But a plain flash costs its rest, so a snake spends one racing for
+    // front to hop (a golden one, whatever's in front). Tired (2u: it
+    // looks it), it can't afford either: none of that.
+    // But a plain flash costs stamina, so a snake spends one racing for
     // food straight ahead of it, not to cross a cell it can't crawl to:
     // its flash I fear only with food on that line within its reach.)
     // (Straight on, cell by cell, as the engine goes: over the edge where
@@ -47,7 +50,7 @@ function readRisk() {
     if (o.air - age >= 1 && o.land >= 0) rings.push(o.air - age, o.land, strike);
     else if (o.air > 0 && o.land >= 0) strikes[o.land] += strike; // (down on its ring since I saw it: its head is there now)
     const on = f => { for (let n = 1; n <= far + 1; n++) if (line[n].x === f.x && line[n].y === f.y) return true; return false; };
-    if (gold || hop || food.some(f => f.kind !== 'mushroom' && on(f))) for (let i = 2; i <= far; i++) {
+    if (o.step !== 0 && (gold || hop || food.some(f => f.kind !== 'mushroom' && on(f)))) for (let i = 2; i <= far; i++) {
       const { x: nx, y: ny } = line[i];
       if (inGrid(nx, ny)) strikes[ny * N + nx] += strike * 0.5;
     }
@@ -69,6 +72,19 @@ function readRisk() {
       }
     }
   });
+  // The woodpecker watching a spot (entry 6, act 1): its first cut will
+  // start there, so it's ground I'd rather not linger in, the nearer its
+  // middle the more (as a person reads its gaze).
+  // The piece the woodpecker's outline cuts round (part 2): ground to get
+  // off before it falls, as a person sees its dotted cut close.
+  for (const k of view.piece || EMPTY) risk[k] += w.zoneRisk * TUNE.AI_CUT_RISK;
+  if (view.gaze >= 0) {
+    const gx = view.gaze % N, gy = (view.gaze - gx) / N, r = TUNE.GAZE_NEAR;
+    for (let y = Math.max(0, gy - r); y <= Math.min(N - 1, gy + r); y++) for (let x = Math.max(0, gx - r); x <= Math.min(N - 1, gx + r); x++) {
+      const d = Math.abs(x - gx) + Math.abs(y - gy);
+      if (d <= r) risk[y * N + x] += w.zoneRisk * TUNE.AI_GAZE_RISK * (1 - d / (r + 1));
+    }
+  }
 }
 
 // Reach: the soonest (in ticks from now) any rival could be in each cell,
