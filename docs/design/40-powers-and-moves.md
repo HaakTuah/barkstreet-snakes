@@ -322,16 +322,14 @@ ends (`WRAP_WARN_MS`), you're warned ("The edges are back in 2 seconds.").
 - *The rivals:* while the edges wrap for one, its look-ahead wraps too, and every rival allows for a rival that can come
   in over the edge.
 
-### Gold portals for the wrap
+### Portals for the wrap
 
 Built in part 5 of round six B (PR #202):
-- Going off an edge while wrapping opens a pair of gold portals, one on each side, trimmed in your colour. The entry
-  swirls in and the exit spills out. The frame is gilded while you wrap. Gold, not blue and orange: on this board sky
-  blue means jump and ember means flash.
-  *To come* (the owner, 9 November 2026, #592: "A blue and orange color scheme for the portals immediately communicates
-  to a player what it is, and gives them a chuckle."): the entry blue and the exit orange, glowing ovals as in the game
-  Portal, with a thin gold trim for the golden mushroom; their shape keeps them apart from the jump's sky blue and the
-  flash's ember. The polish lane's next find in `docs/PROGRESS.md`.
+- Going off an edge while wrapping opens a pair of portals, one on each side, drawn as in the game Portal (the owner,
+  9 November 2026, #592: a blue and orange scheme tells a player at once what they are): the entry a glowing blue half
+  oval that swirls in, the exit a glowing orange one that spills out, each with a thin gold trim for the golden
+  mushroom. Their shape, a half oval on the edge, keeps them apart from the jump's sky blue and the flash's ember. The
+  frame is gilded while you wrap.
 - Others may follow you through while your body passes and for a while after (`PORTAL_MS`, 2 s). Coming out
   onto your body is a crash.
 - *Open long enough to matter:* the time a portal stays open after your tail is lengthened, step by step, until
@@ -439,7 +437,7 @@ at the start, before anyone moves (the ones already in the air first, then any s
 that moves onto it where it hangs between ticks is hit too, as if it had flown into it. So a head two out is hit at
 once, four out the tick after, and a target has the second of the dotted line, and the flight, to step out of the line;
 a body between the spitter and it is a shield. Over the edge it flies on only where the edges wrapped for the spitter as
-it left; a gold portal is a way through for snakes, not for what they spit. The spitter's own head goes over it in the
+it left; a portal is a way through for snakes, not for what they spit. The spitter's own head goes over it in the
 air, as over its own lying wet.
 - **To come** (the owner, 9 November 2026, #583: "Should be improved, but I want it to mainly be something you shoot in
   front of people, which they can avoid. So it is skill based, not just something that you have no control to avoid."):

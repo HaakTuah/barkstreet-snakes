@@ -47,13 +47,11 @@ the second account until its usage is spent; on the main account the brake close
   and 11), so nothing that changes play slips in; merged once reviewed, one line per fix under this lane. A fix not finished when usage ends is left as the brake says
   (`core/modules/claude.md`), its find noted for the next session.
 
-*Next find:* the portals drawn blue and orange, as in the game Portal (the owner, 9 November 2026, #592): the entry
-blue, the exit orange, glowing ovals with a thin gold trim, every text that calls them gold portals updated (design 40,
-"Gold portals for the wrap"). Then look for more by playing, as "How" says.
+*Next find:* the code comments in `engine/`, `ai/`, `online.js`, `tuning.js` and the simulation tools that still say "gold portals", renamed to "portals" once #615 (open on those files) has merged; then look for more by playing, as "How" says.
 
 *Done in the lane:* each fix's line is in `docs/archive/progress-done/polish-lane.md`, "The polish lane, done" (the README for
 players, any key wakes, the woodpecker bigger on a phone, the flash become the dash, the room card and Join on a phone,
-and the owner's notes of 2 November, among them).
+the owner's notes of 2 November and the portals blue and orange, among them).
 
 ## The workshop lane (splits by meaning, leftovers, the file-by-file review)
 
@@ -87,7 +85,7 @@ landing is almost never contestable. The flight stays as built for now, and no r
    Even taking a landing worth ten times as much took no more of them: a ring is almost never reachable in time, so the
    ring costs a flier little.
 3. **Portals with a real cost** (#447): done, PR #591; no rule changed. A follower snipping its owner's body out of the
-   exit bit in a third of follows but moved no places either way ("Gold portals for the wrap" in design 40); the
+   exit bit in a third of follows but moved no places either way ("Portals for the wrap" in design 40); the
    owner's call is #592.
 4. **Measured again after 2u and part 7,** whose stamina and pricing change what a flight costs. Only if it is still
    even then does a bigger change go to the design session: a longer flight, or the ring shown before take-off.
