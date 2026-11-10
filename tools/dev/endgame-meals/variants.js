@@ -8,8 +8,9 @@
 //   node tools/abtest.js . <copy> --head-to-head --seed 81 --seed 83 --metrics side,deaths
 //
 // always: in the endgame (the frenzy, act 3) a meal counts in full, however
-// long the snake is (the length worth keeping still prices a planned tail
-// drop, as in 2h). never: in the endgame nothing is worth eating,
+// long the snake is, and hunger is read from the clock alone, as before the
+// weighing read it against the length worth keeping (which still prices a
+// planned tail drop, as in 2h). never: in the endgame nothing is worth eating,
 // starving or not (a mushroom still worth keeping away from; the weights that
 // scale every other gain kept).
 const fs = require('fs'), path = require('path');
@@ -21,6 +22,7 @@ if (!dir || !['always', 'never'].includes(which) || !fs.existsSync(file)) {
 }
 const EDITS = {
   always: [
+    ['const spare = endgame ?', 'const spare = false ?'],
     ['growShare = myLen < keepLen ? 1 :', 'growShare = endgame || myLen < keepLen ? 1 :'],
     ['ateAt > -HOLE && len >= keepLen ?', 'ateAt > -HOLE && !endgame && len >= keepLen ?'],
   ],
