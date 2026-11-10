@@ -1,8 +1,6 @@
-# The licence gate (SECURITY.md, point 10), on every pull request, Dependabot's included. GitHub's dependency review
-# fails one that adds or updates a package under a licence off the tools' list (.github/dependency-review-config.yml),
-# since every package it sees is a tool; tools/licences.js holds everything else, what ships to the strict list and
-# tools that only run to the tools', through its audit, tools/licences.json (PeerJS from cdnjs, the font, the tools the
-# workflows fetch). Its own file, so it never collides with tests.yml. Read-only, and no secrets.
+# The licence check (floor rule 10, and SECURITY.md, rule 10), on every pull request, Dependabot's included: the core's,
+# with this game's config (tools/licence-check.json), and this game's own scan that nothing it uses is left out of its
+# audit (tools/licences.js, which runs the core's check too) with that scan's test. Read-only, and no secrets.
 name: licences
 
 on:
@@ -12,21 +10,22 @@ permissions:
   contents: read
 
 jobs:
-  packages:
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v7 # (the config file is read from the checkout)
-      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
-        with:
-          config-file: ./.github/dependency-review-config.yml
+  licences:
+    uses: HaakTuah/agent-core/.github/workflows/licences.yml@2d13e39d7d6062a5524852a9b2107e86b33c5353
+    with:
+      config: tools/licence-check.json
 
   audit:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
-      - name: Everything used is audited, under a licence on the list
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7 # (it loads the core's script by require, which needs Node 22.12 or later)
+        with:
+          node-version: 26
+      - name: Everything used is audited
         run: node tools/licences.js
-      - name: The audit check fails on every form of something unaudited (invented names)
+      - name: The scan fails on every form of something unaudited (invented names)
         run: node tools/licences-test.js
