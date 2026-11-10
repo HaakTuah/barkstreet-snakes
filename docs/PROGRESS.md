@@ -97,7 +97,8 @@ and the owner's notes of 2 November, among them).
   `docs/archive/progress-done/split-lane.md`, "The split lane, done".
 - **The shared core** (archive, 5 November 2026), first among the side lanes and before the rule-file audit: the rules
   common to every project move to one repository, each project carrying a checked copy; its spec is in
-  `docs/handoff/queue-specs.md` under the same title. Step 3 is next.
+  `docs/handoff/queue-specs.md` under the same title. Step 3 is done here (PR #637, the core at `2d13e39`,
+  after #636 carried `develop` into `main`); next is the rule-file audit, and each later core change comes as a sync PR.
 - **The browser suites' one ending** (#526): `tools/render-test.js` and `tools/input-test.js` end with `report.end(b)`
   like the others, once entry 2u, which holds them, merges.
 - **The rule-file audit's larger moves** (the workshop check's point 6; archive, 3 November 2026): the slop
