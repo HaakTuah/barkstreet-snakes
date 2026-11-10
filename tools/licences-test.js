@@ -39,7 +39,7 @@ const fails = [
   ['AND and OR mixed without brackets', entry({ name: 'mossgrip-widgets', licence: 'MIT AND GPL-3.0-only OR MIT' })],
   ['an action not in the audit', append('.github/workflows/tests.yml', '      - uses: mossgrip/setup-moss@v1\n')],
   ['npm install of a package not in the audit', append('scripts/cloud-setup.sh', 'npm install -g mossgrip-widgets@1.2.3\n')],
-  ['an audited package fetched at another version', edit('scripts/cloud-setup.sh', 'node@26.12.1', 'node@26.13.0')],
+  ['an audited package fetched at another version', append('scripts/cloud-setup.sh', 'npm install -g playwright@1.65.0\n')],
   ["the tools' lock file holding a package at another version than audited", edit('tools/package-lock.json', '"version": "1.64.1"', '"version": "1.65.0"')],
   ["the tools' package.json adding a package not in the audit", edit('tools/package.json', '"devDependencies": {', '"devDependencies": { "mossgrip-widgets": "1.2.3",')],
   ['a lock file holding a package at another version than audited', dir => fs.writeFileSync(path.join(dir, 'package-lock.json'), JSON.stringify({ packages: { '': {}, 'node_modules/typescript': { version: '6.0.3' } } }))],

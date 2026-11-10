@@ -24,7 +24,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@v7 # (it loads the core's script by require, which needs Node 22.12 or later)
         with:
-          node-version: 26
+          node-version-file: core/.node-version # the core's one exact Node ("Node" in core/modules/updates.md)
       - name: Everything used is audited
         run: node tools/licences.js
       - name: The scan fails on every form of something unaudited (invented names)
