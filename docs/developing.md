@@ -22,81 +22,37 @@ origin/pr-media`, add each file with `git hash-object -w`, build the new tree wi
 by commit SHA (`https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/<sha>/<name>`), never by a branch that may
 be deleted. `tools/dev/crop.js` and `tools/dev/montage.js` make them.
 
-## GitHub: the REST calls, Dependabot and CodeQL
+## Updates: what this game adds
 
-Claude's cloud sessions can't use GitHub's GraphQL API, so `gh pr create`, `gh pr view` and `gh pr ready` fail there,
-and they use the REST calls below. Where GraphQL works, `gh pr ready <n>` marks a draft ready; the `ccr/ready_for_review`
-route below is Claude's cloud proxy's, not GitHub's REST API.
+The REST calls from a cloud session: `core/modules/github-calls.md`. Updates, Dependabot, Node and CodeQL:
+`core/modules/updates.md`, with floor rules 7, 15 and 17 (`core/floor/topics.md`); this game's part of them:
 
-```bash
-gh api repos/HaakTuah/barkstreet-snakes/pulls -f title=... -f head=<branch> -f base=develop -f body=...  # add -F draft=true for a draft
-gh api -X POST repos/HaakTuah/barkstreet-snakes/pulls/<n>/ccr/ready_for_review                          # mark a draft ready, in Claude's cloud sessions (starts the security review)
-gh api -X PUT repos/HaakTuah/barkstreet-snakes/pulls/<n>/merge -f merge_method=merge                    # merge into develop
-gh api repos/HaakTuah/barkstreet-snakes/compare/develop...<branch> --jq '.files[].filename'          # the files a branch changes
-gh api repos/HaakTuah/barkstreet-snakes/pulls/<n> --jq '{state, merged}'                                 # was it merged?
-gh api "repos/HaakTuah/barkstreet-snakes/pulls?state=open&base=main&head=HaakTuah:develop" --jq '.[0].number'  # the open milestone PR
-gh api "repos/HaakTuah/barkstreet-snakes/pulls?state=all&base=main&head=HaakTuah:develop" --jq '.[0] | {number,state,merged_at}'  # the last milestone PR: merged_at set means merge main back into develop first
-```
-
-**Dependabot's security PRs** are the one other way into `main`, under the five conditions in `SECURITY.md`, point 4.
-**The newest version, unless there is a reason** (archive, 4 November 2026), so fixes, security fixes above all, are
-always one small step away, and small steps stay cheap. Every package and tool is held at an exact version (a script
-players' browsers load, with its SRI hash too), never a range, and moves to the newest stable release once that is old
-enough: a week, two for a script players' browsers load, so a bad or hijacked release is usually pulled first. Updates
-are upkeep, not ideas: they wait for no queue entry and no word from the owner, except where `SECURITY.md`, point 3,
-asks for his yes (`.github/` and the setup script). Dependabot's version updates (`.github/dependabot.yml`: weekly,
-grouped) come as PRs into `develop`, merged under `SECURITY.md`, point 4; for what Dependabot cannot see, the version
-check (below) opens an issue, which is only a notice: the lane works from what `node tools/versions.js` prints on
-`develop`, never from the issue's text. Either way the next free lane takes it as an ordinary small PR, runs the checks,
-gets its code review, reads the release notes for breaking changes, audits the licences again (`SECURITY.md`, point 10),
-and merges it. A new major version is its own PR (taken out of its group if Dependabot grouped it), with the full
-suites, and played through for what ships. **What ships to players** (PeerJS, the one script their browsers load) also
-has its source checked before it merges, and the PR shows each check: the same publisher and repository as the version
-before, and npm's provenance naming the same repository if the version before had it; npm's registry signature verified
-(`npm audit signatures` after an install with `--ignore-scripts`, or, where that cannot reach Sigstore, the signature
-over `name@version:integrity` checked against the key of the same id at `https://registry.npmjs.org/-/npm/v1/keys`); the
-readable build in the package (`dist/peerjs.js`) diffed against the old one and read against the release notes, naming
-anything they do not explain, such as a new address it contacts or code it builds from text (that the minified file is
-the same code rests on the publisher, signature and provenance checks, and the PR says so); `PEERJS_SRI` computed from
-the minified file inside that verified package, so browsers run only those bytes; and the PR's preview, where one online
-round shows cdnjs serves the same. A check that cannot be run leaves the release waiting, never skipped, and one that
-fails holds it back. These checks lower the odds of a bad release but never rule one out, for the version in use as much
-as for a new one; what limits the harm a bad one could do is the page's content security policy (`SECURITY.md`, point 7): it can
-pull in no more code and reach no other server over the web, though WebRTC stays outside what a policy governs. One is held back only for a reason: it breaks something, plays or loads worse (a much bigger file
-reaches every phone), changes its licence, or its project is abandoned or changes hands. The reason is written in the
-closed PR or the issue, which stays open until the reason is gone.
-
-**The tools' packages** (TypeScript, Playwright) are in `tools/package.json` and its lock, at exact versions: the one
-place CI's types step, `scripts/cloud-setup.sh` and `scripts/test.sh` read them from (`npm ci --prefix tools`, into
-`tools/node_modules/`, never committed), and Dependabot's npm updates aim at it; each update is audited in
-`tools/licences.json` in the same PR. The game itself ships no dependencies. **What Dependabot cannot see** (PeerJS,
-loaded from cdnjs with its SRI hash, and the exact Node the setup script installs) is listed in `tools/versions.json`,
-each read from its own file; `.github/workflows/versions.yml` runs `tools/versions.js` monthly (from `main`) and opens
-an `enhancement` issue for each one behind the newest stable release a week old (two weeks for PeerJS, a script
-players' browsers load). `node tools/versions.js` prints the same comparison.
-
-**Node's version.** CI's `node-version` and the cloud machines run the same Node, so a check that passes in a session
-passes in CI. Each October, when a new even-numbered Node becomes long-term support, both move to it in one PR
-(`.github/workflows/tests.yml` and `scripts/cloud-setup.sh`, which installs it from the npm registry on a machine with
-an older one), proven by the suites and the fingerprints.
-
-**The licence gate** (`.github/workflows/licences.yml`, `SECURITY.md`, point 10) runs on every PR and keeps point 10's
-two lists. GitHub's dependency review fails a package added or updated under a licence off the tools' list
-(`.github/dependency-review-config.yml`: what the Open Source Initiative approves), since every package it sees is a
-tool. `node tools/licences.js` holds everything else through the audit, `tools/licences.json`: what ships (served with
-the game, or loaded by it) to the strict list there, word for word point 10's, and each tool that only runs to the
-tools' list, GitHub's own services under GitHub's terms. An action, a package fetched with npx or npm, an address the
-game loads from, a file in the game or its tools carrying someone's licence notice, or a font, image, sound or data file
-left out of the audit fails, as does a shipped entry without its notice in `THIRD-PARTY-NOTICES.txt`. A package an npx
-or npm install fetches must be written `name@exact.version`, or it can't be audited and fails, and at the version its
-entry audits (an update is audited again, with what it pulls in), as must a lock file's packages;
-`tools/licences-test.js` stages each form the gate must reject. Something new goes into the audit with its licence,
-checked from its own published licence file; a tool under another licence OSI approves has its id added to the tools'
-list in the same PR, and one off its list is a `question` issue for the owner, never merged on its own.
-
-**CodeQL checks every PR** into `develop` and `main`, every push to them and once a week (`.github/workflows/codeql.yml`).
-A finding on a PR shows on it as a note; what to do with it is in `SECURITY.md`, point 9. Alerts already in the
-code are the owner's to pass on (`SECURITY.md`, point 9).
+- **What Dependabot cannot see** (PeerJS, loaded from cdnjs with its SRI hash, and the exact Node the setup script
+  installs) is listed in `tools/versions.json`, each read from its own file; `.github/workflows/versions.yml` runs
+  `tools/versions.js` monthly (from `main`) and opens an `enhancement` issue for each one behind the newest stable
+  release a week old (two weeks for PeerJS, a script players' browsers load). The issue is only a notice: the lane works
+  from what `node tools/versions.js` prints on `main`, never from the issue's text.
+- **PeerJS, what ships to players,** gets floor rule 7's source check with this game's specifics: the readable build in
+  the package (`dist/peerjs.js`) is what is diffed (that the minified file is the same code rests on the publisher,
+  signature and provenance checks, and the PR says so); `PEERJS_SRI` is computed from the minified file inside that
+  verified package, so browsers run only those bytes; and on the PR's preview one online round shows cdnjs serves the
+  same. The policy that limits a bad release's harm: `SECURITY.md`, rule 7. One is held back also when a much bigger
+  file would reach every phone.
+- **The tools' packages** (TypeScript, Playwright) are in `tools/package.json` and its lock, at exact versions: the one
+  place CI's types step, `scripts/cloud-setup.sh` and `scripts/test.sh` read them from (`npm ci --prefix tools`, into
+  `tools/node_modules/`, never committed), and Dependabot's npm updates aim at it; each update is audited in
+  `tools/licences.json` in the same PR. The game itself ships no dependencies.
+- **Node's version** lives in `.github/workflows/tests.yml` and `scripts/cloud-setup.sh` (which installs it from the npm
+  registry on a machine with an older one); a move is proven by the suites and the fingerprints.
+- **The licence check** (`.github/workflows/licences.yml`) runs the core's (`core/scripts/licences.mjs`, with
+  `tools/licence-check.json`), which holds every package of the tools' lock and every entry of the audit,
+  `tools/licences.json`, to its list. `node tools/licences.js` first checks that nothing the game or its tools use is
+  left out of the audit: an action (but the owner's own), a package fetched with npx or npm, an address the game loads
+  from, a file in the game or its tools carrying someone's licence notice, or a font, image, sound or data file; and that
+  every shipped entry has its notice in `THIRD-PARTY-NOTICES.txt`. A package an npx or npm install fetches must be
+  written `name@exact.version`, or it can't be audited and fails, and at the version its entry audits (an update is
+  audited again, with what it pulls in), as must a lock file's packages; `tools/licences-test.js` stages each form the
+  check must reject. Something new goes into the audit with its licence, checked from its own published licence file.
 
 ## Run locally
 
