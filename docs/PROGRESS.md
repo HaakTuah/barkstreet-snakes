@@ -17,9 +17,9 @@ claimed by a draft PR.
 
 ## For the owner
 
-Everything for the owner is an issue: [questions and readings](https://github.com/HaakTuah/barkstreet-snakes/issues?q=is%3Aopen+label%3Aquestion)
-(`question`), [ideas](https://github.com/HaakTuah/barkstreet-snakes/issues?q=is%3Aopen+label%3Aenhancement) (`enhancement`) and
-[bugs](https://github.com/HaakTuah/barkstreet-snakes/issues?q=is%3Aopen+label%3Abug) (`bug`), by
+Readings taken are in each PR, for the owner to read when he likes; nothing waits for him but what floor rules 3 and
+14 name. Issues hold [ideas](https://github.com/HaakTuah/barkstreet-snakes/issues?q=is%3Aopen+label%3Aenhancement)
+(`enhancement`) and [bugs](https://github.com/HaakTuah/barkstreet-snakes/issues?q=is%3Aopen+label%3Abug) (`bug`), by
 `core/modules/inbox.md`. Answered rows from before 2 November 2026: `docs/archive/progress-done/owner-answered.md`,
 "For the owner, answered".
 
@@ -88,7 +88,7 @@ landing is almost never contestable. The flight stays as built for now, and no r
    exit bit in a third of follows but moved no places either way ("Portals for the wrap" in design 40); the
    owner's call is #592.
 4. **Measured again after 2u and part 7,** whose stamina and pricing change what a flight costs. Only if it is still
-   even then does a bigger change go to the owner as a question: a longer flight, or the ring shown before take-off.
+   even then does a bigger change go to the design session: a longer flight, or the ring shown before take-off.
 
 ### 5. Round six B: the new moves (DESIGN "Round six B")
 

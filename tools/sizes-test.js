@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// The reading-size check ("Read little" and "Split by meaning" in core/modules/how-to-work.md; the workshop check's
-// points 2 and 3 in core/modules/workshop-check.md, measured on every PR). Its marks are in tools/sizes.json, and it fails:
+// The reading-size check ("Read little" and "Split by meaning" in core/modules/how-to-work.md, measured on every PR).
+// Its marks are in tools/sizes.json, and it fails:
 //   - when a file every session reads is past its mark (about 20 KB; one past that has a mark of its own, its size,
 //     which may only shrink: when the file shrinks, the mark comes down with it), or their total is past its mark;
 //   - when the PR changes a file past about 50 KB (Step 0: split it by meaning first), unless `past` lists it with a

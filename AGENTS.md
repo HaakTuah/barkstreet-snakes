@@ -39,8 +39,8 @@ The other modules are read when a task needs them, each saying when, among them 
 1. Take the main lane's next entry, as "State" in `docs/PROGRESS.md` names it. Its entry there, the section of
    `docs/handoff/queue-specs.md` it names where it names one, and the design sections it names are the spec.
 2. Read only those sections: `grep -rn "## Section" docs/design` finds a section that code or the queue names.
-3. What is read again before the PR (`core/modules/work-flow.md`, point 1): the task's entry in `docs/PROGRESS.md` and
-   its `question` issues; a large change goes in as its own entry right after the task.
+3. What is read again before the PR (`core/modules/work-flow.md`, point 1): the task's entry in `docs/PROGRESS.md`; a
+   large change goes in as its own entry right after the task.
 
 ## How to work, here
 
