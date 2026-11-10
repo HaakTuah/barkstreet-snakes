@@ -34,7 +34,8 @@ with the owner's yes): it takes `HaakTuah/agent-rules` at its newest `main` (`60
 reports in this order: `reports/2026-11-09-first-core.md` (this game's manifest, the map of the lines the core
 replaces, the owner's answers), `reports/2026-11-09-shared-scripts.md` and `reports/2026-11-10-before-step-3.md` ("What
 each game changes at step 3", and the fragments its dry run found that whole-line cuts leave behind, each with its
-rewrite). Its workflows need the owner's yes in its PR. No session writes to more than one repository:
+rewrite), then `reports/2026-11-10-lean-pass.md` ("What each game changes at step 3": where a cut line's home in the core
+moved). Its workflows need the owner's yes in its PR. No session writes to more than one repository:
 the core's own session writes the core, and each project's builders read it and write only their own. Then the rule-file
 audit runs once on the core and once on each project's own rules (archive, 5 November 2026). The same in Amarna Letters.
 
