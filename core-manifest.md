@@ -1,6 +1,6 @@
 # Core manifest
 
-Core: HaakTuah/agent-core at cecbe3b035047f23ae8525b83ed4398dff504f91, copied whole under core/ (never edited here).
+Core: HaakTuah/agent-core at 31f3d51bd9aff281b1608bad1f7426997f4a4a19, copied whole under core/ (never edited here).
 Paths: in the core's files, one into floor/, modules/, scripts/, setup/, archive/ or reports/ is under core/; any other is ours.
 Floor: whole. Modules: all.
 
@@ -25,7 +25,7 @@ Floor: whole. Modules: all.
 | *planning design* | the rivals' planning |
 | *hard work* | the AI's planning, the engine's rules and online sync (not a big-file split: its fingerprints and suites check it) |
 | *measurements* | `tools/abtest.js`, a census, the fingerprints |
-| *slop bar* | the slop audit in `docs/PROGRESS.md` (a 10: nothing reads machine-made); finds fixed in the polish lane; the formula test in the chatter suite |
+| *slop bar* | `docs/slop-bar.md` (a 10: nothing reads machine-made); finds fixed in the polish lane; the formula test in the chatter suite |
 | *major version checks* | the full suites, and played through for what ships |
 | *Codex's checks* | `scripts/test.sh`, and `scripts/sim.sh` with the fingerprint for a change that should keep behaviour |
 | *Codex environment* | made: a legacy Codex cloud environment, its internet access limited to read-only methods |

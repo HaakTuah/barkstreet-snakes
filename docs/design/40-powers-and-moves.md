@@ -11,7 +11,7 @@ power food" in "Food on the log"); the woodpecker's holes
 (`39-the-rivals.md`, "Rivals use their powers, when it pays" and "Every rival has a power style"; "Balance targets" there); what each move measured, with the numbers chosen
 (round six B's "chosen numbers" in `docs/archive/design-powers.md`); the keys, swipes, taps and the mouse (`42-controls.md`); teaching
 (`30-teaching-by-showing.md`); Capricious, Copycat and Wildcard (`35-capricious-copycat-and-wildcard.md`); sound in
-general (`21-sound.md`); one stamina for both plain powers, to build (`37-one-stamina.md`); and crashes, head-ons,
+general (`21-sound.md`); one stamina for both plain powers, built (`37-one-stamina.md`); and crashes, head-ons,
 fire on snakes and your own beads squashed (`41-crashes.md`).
 
 ### The words

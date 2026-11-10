@@ -41,3 +41,52 @@ How they are kept, and where each item lives: `archive/instructions.md`.
 
      Told yes: the escalation step keeps extra effort where the stuck builder already runs at high, as Claude's table
      sets it.
+
+129. **10 November 2026** (the core). Told that the fallback security review of a game's sync to the core found three
+     gaps left in the setup guide's test box (it covered only a project's install, build and tests; its instructions
+     reached only Claude, though Codex runs the tests too; and only an instruction made the agents use it), that a
+     security finding in a PR's own change blocks it until fixed, so the game's PR cannot merge with them open, and
+     asked whether to fix the guide in the core now:
+
+     > Yes, expertly!
+
+130. **10 November 2026** (the core), on a game's ruleset page, which required neither code scanning nor code quality
+     results:
+
+     > Why not require quality and scanning checks, and such, expert?
+
+     Told that code scanning results are worth requiring (a false alarm then waits for him to dismiss it), that code
+     quality results would block every merge, as no Code Quality check runs, and that Copilot's code review spends his
+     Copilot credits on every PR and is no review the rules count; shown his choice (code scanning blocking on security
+     alerts High or higher and alerts Errors, status checks with branches up to date, Copilot's review on):
+
+     > I think I'll set it like this then, expert.
+
+     Told to leave code quality off, and asked whether the floor's false-alarm line should say the PR waits for his
+     dismissal where the ruleset blocks on the alert, with the same setting in every project, and whether Copilot's
+     review should be advisory in the rules:
+
+     > Yes, expertly to all!
+
+     On the report's line that code quality results are not required, since no project runs GitHub's Code Quality
+     check and GitHub warns that requiring them without it can block every merge:
+
+     > I did set it this to required:
+     > "Code quality results are not required: no project runs GitHub's Code Quality check, and GitHub warns that
+     > requiring them without it can block every merge."
+     >
+     > If I don't have it, then surely it won't trigger.
+
+131. **10 November 2026** (the core). Told that a game's builder had skipped the design session's comments on its PR,
+     taking every comment from his account with Claude Code's attribution line for its own, and asked whether to add a
+     rule that such a comment is not necessarily the reader's own:
+
+     > Yes, though you could just drop the signature also? But if I use another chat session, then I'd have to remember
+     > to tell it, so your fix is probably better, expert.
+
+132. **10 November 2026** (the core). Told that the next security review of the game's sync found three small gaps
+     left in the test box (plain `node` on the host was held back by the instruction alone; files returned from the box
+     could rewrite a script the host then runs, where a sign-in is in reach; and the box user was not said to be kept
+     from Codex's account), and asked whether to fix them in the core before the game merges:
+
+     > Yes, expertly.

@@ -1,6 +1,6 @@
 ## One stamina for jump and dash
 
-To build (entry 2u, 2 November 2026). The owner: "Yes, I would like us to go there. Doesn't have to be now, but I want
+Built (entry 2u, 2 November 2026). The owner: "Yes, I would like us to go there. Doesn't have to be now, but I want
 them balanced so they both have their use. You don't have to organically use them 50-50, but a band of 33-66, i want
 them to stay in, ideally. That seems better to me. separate currencies is the paradox approach to make you use every
 power at your disposal. I want them to be genuinly different tools for different situations, and different playstyles,
