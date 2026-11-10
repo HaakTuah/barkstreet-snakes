@@ -47,7 +47,8 @@ the second account until its usage is spent; on the main account the brake close
   and 11), so nothing that changes play slips in; merged once reviewed, one line per fix under this lane. A fix not finished when usage ends is left as the brake says
   (`core/modules/claude.md`), its find noted for the next session.
 
-*Next find:* the code comments in `engine/`, `ai/`, `online.js`, `tuning.js` and the simulation tools that still say "gold portals", renamed to "portals" once #615 (open on those files) has merged; then look for more by playing, as "How" says.
+*Next find:* first the portals drawn to look like Portal's own (the owner, 10 November 2026; how, in design 40,
+"Portals for the wrap"), with before-and-after pictures on a phone and on desktop. Then the code comments in `engine/`, `ai/`, `online.js`, `tuning.js` and the simulation tools that still say "gold portals", renamed to "portals" once #615 (open on those files) has merged; then look for more by playing, as "How" says.
 
 *Done in the lane:* each fix's line is in `docs/archive/progress-done/polish-lane.md`, "The polish lane, done" (the README for
 players, any key wakes, the woodpecker bigger on a phone, the flash become the dash, the room card and Join on a phone,
