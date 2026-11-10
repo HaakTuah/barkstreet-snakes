@@ -29,16 +29,10 @@ it went (the core, one game, or dropped with its reason), and a fresh reviewer g
 core finds nothing lost. The design session then checks the result against both games before any game takes a copy; (3)
 each project, in a PR of its own, adds the copy, cuts its rule files to what is its own, and adds a check on every PR
 that the copy matches the core at its pin (a workflow, so the owner's yes in that PR); (4) from then on a core change
-reaches a project only through a sync PR in it, reviewed as any other. Steps 1 and 2 are done, and step 3 is next (core PR 19, merged 10 November,
-with the owner's yes): it takes `HaakTuah/agent-rules` at its newest `main` (`607b683` or later), from the core's
-reports in this order: `reports/2026-11-09-first-core.md` (this game's manifest, the map of the lines the core
-replaces, the owner's answers), `reports/2026-11-09-shared-scripts.md` and `reports/2026-11-10-before-step-3.md` ("What
-each game changes at step 3", and the fragments its dry run found that whole-line cuts leave behind, each with its
-rewrite), then `reports/2026-11-10-lean-pass.md` ("What each game changes at step 3": where a cut line's home in the core
-moved). Its workflows need the owner's yes in its PR. Step 3 also drops `develop` (core archive 113, core PR 37): a
-last `develop` -> `main` PR, then every open PR retargeted to `main`, and this game's rule files, workflows, previews
-and `.claude/settings.json` changed from `develop` to `main`; once it merges, the owner sets `main`'s rules on GitHub
-and deletes `develop`. No session writes to more than one repository:
+reaches a project only through a sync PR in it, reviewed as any other. Steps 1 and 2 are done, and step 3 is next: it takes `HaakTuah/agent-rules` at its newest `main`, from the
+core's `reports/2026-11-10-step-3-now.md` first, which lists this game's step 3 in order (dropping `develop` just before
+it, in a PR of its own) and holds where the older reports it names disagree. Its workflows need the owner's yes in its
+PR. No session writes to more than one repository:
 the core's own session writes the core, and each project's builders read it and write only their own. Then the rule-file
 audit runs once on the core and once on each project's own rules (archive, 5 November 2026). The same in Amarna Letters.
 
