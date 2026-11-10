@@ -1,7 +1,6 @@
 # The slop bar
 
-What "nothing reads machine-made" means for everything a player reads, and how it is held (the owner, 2 November 2026,
-archive: "Are these 2 games ai sloppy?", then "Yes, please, expertly!"). Reviews of text pass at a 10 only when
+What "nothing reads machine-made" means for everything a player reads, and how it is held (archive, 2 November 2026). Reviews of text pass at a 10 only when
 nothing reads machine-made, every voice is its own and no formula repeats (`core/modules/reviews.md`, "Only a 10
 passes").
 

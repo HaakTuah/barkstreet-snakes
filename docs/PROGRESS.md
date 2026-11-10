@@ -10,7 +10,7 @@ The first open entry below is next. The older state notes (27 October 2026) are 
 
 **The main lane is 6** (round six C: the woodpecker in three acts; parts 1 and 2 done, part 3 next, PR #615), the first
 open entry that waits on nothing (3c waits on 3b's Wildcard part, 3d on 3c, and 4 on 5). Item 5's part 7 (one pricing
-model, built afresh) is next after it, as the queue's order says; 2y++'s last step waits on part 7. The entries before
+model, built afresh) is next once 6's part 3 (PR #615) merges, as the queue's order says; 2y++'s last step waits on part 7. The entries before
 these are done (`docs/archive/progress-done/queue-done.md`). The polish lane and the workshop lane run beside it, each
 claimed by a draft PR.
 

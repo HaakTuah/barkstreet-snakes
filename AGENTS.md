@@ -44,11 +44,11 @@ The other modules are read when a task needs them, each saying when, among them 
 
 ## How to work, here
 
-- **A design call** goes into its topic file in `docs/design/`.
+- **A design call** goes into its topic file in `docs/design/`; a new topic gets its own file and a line in `DESIGN.md`.
 - **Every file is also a script tag and an `sw.js` entry,** one more cost of a file.
 - **The smallest setup** here is a scripted board with only the snakes and food it needs, for a few ticks. Full rounds
-  only in the simulation's fingerprint and `--check` and the online round trip; long measurements (`tools/abtest.js`; censuses through
-  `scripts/sim.sh`) only by hand.
+  only in the simulation's fingerprint and `--check` and the online round trip; long measurements
+  (`tools/abtest.js`; censuses through `scripts/sim.sh`) only by hand.
 - **An AI entry waits for the last AI change to merge,** so each head-to-head compares against a settled AI.
 - **The news line:** a PR that makes a change a player would notice puts its line of what is new at the top of
   `version.js`'s news, since every merge goes live.
@@ -71,10 +71,9 @@ This game's own, beside the core's (`core/modules/game-design.md`, whose section
   `tools/sim/03-report.js`).
 - **Optimizations may change decisions only if nothing noticeable is lost,** all within noise: skill (per-persona win
   rates, and old against new AI coming out even), character (every trademark) or feel (round length, deaths by cause,
-  starving and crashes survived). Visuals too: a look-alike is fine if nobody would see a difference. Measure skill, character and feel with
-  `tools/abtest.js` on fresh seeds (`--metrics … trademarks`).
-- **Conditional goods** ("No solutions, only trade-offs"): neither always nor never using a good may win, checked by
-  simulation; the mushrooms are the example (archive, 31 October 2026).
+  starving and crashes survived). Visuals too: a look-alike is fine if nobody would see a difference. Measure skill,
+  character and feel with `tools/abtest.js` on fresh seeds (`--metrics … trademarks`).
+- **Conditional goods** ("No solutions, only trade-offs"): checked by simulation; the mushrooms are the example (archive, 31 October 2026).
 - **Never create a repository named `snake-game`:** old links redirect from it.
 
 ## Commands
