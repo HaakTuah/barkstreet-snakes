@@ -17,10 +17,10 @@ floor's numbers, what only this game has and what the floor leaves to it; who mi
      `tools/sizes-test.js`, `tools/sizes.json` and `tools/rule-files.js`), the licence check's config
      (`tools/licence-check.json`) and the calibration log (`docs/calibration.md`).
 5. **Untrusted input, and its checks:**
-   - **Online peers** (PeerJS, `net.js` and `online.js`): anyone with a room code. Every message is checked against its
-     pinned shape (`tools/online-test.js`, `tools/protocol-shapes.json`) and size before use; names go through the one
-     cleaner (`SnakeRecords.cleanName`); a colour, kind or id is one of the game's own values, never free text; a peer
-     that sends junk is dropped, and nothing it sends can stall the host's tick (caps on counts and lengths).
+   - **Online peers** (PeerJS, `net.js` and `online.js`): anyone with a room code. Their checks: each
+     message's pinned shape (`tools/online-test.js`, `tools/protocol-shapes.json`); names through the one cleaner
+     (`SnakeRecords.cleanName`); a colour, kind or id one of the game's own values; caps on counts and lengths, so
+     nothing a peer sends stalls the host's tick.
    - **Shared records and Halls of Fame** (`records.js`): what friends send is cleaned (`cleanShared`) before it is
      stored or shown.
    - **URL parameters and room codes:** cleaned to their own alphabet and length (`cleanCode`).

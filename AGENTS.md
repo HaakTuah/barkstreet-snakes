@@ -45,7 +45,7 @@ The other modules are read when a task needs them, each saying when, among them 
 ## How to work, here
 
 - **A design call** goes into its topic file in `docs/design/`.
-- **Every file is also a script tag and an `sw.js` entry,** so smaller is not better.
+- **Every file is also a script tag and an `sw.js` entry,** one more cost of a file.
 - **The smallest setup** here is a scripted board with only the snakes and food it needs, for a few ticks. Full rounds
   only in the simulation's fingerprint and `--check` and the online round trip; long measurements (`tools/abtest.js`,
   censuses) in `scripts/sim.sh`.
@@ -55,29 +55,26 @@ The other modules are read when a task needs them, each saying when, among them 
 
 ## Rules that stand
 
-This game's own, beside the core's (`core/modules/game-design.md`). The owner's words behind them are in
+This game's own, beside the core's (`core/modules/game-design.md`, whose sections the quoted names are). The owner's words behind them are in
 `docs/archive/instructions.md`.
 
-- **The rivals never treat a person differently:** nothing in `aiView()` lets them, such as a person's input before it
-  lands. The UI may single the player out.
-- **No ability only people use:** the rivals use each move in their own style, and they see it used against them;
-  rules tests prove both, through the same engine calls. If the rivals can't learn a move well, the move doesn't go in.
-  **No refuges:** a move must take timing and skill and never make anyone safe; measure how often it is used, fails,
-  and whether its users outlive everyone, and tighten or drop it.
-- **Clever rivals, human reactions.** No superhuman reaction speed: they get better through planning ahead, never
-  through faster reactions (archive, 11 and 14 October 2026).
-- **Every new move is tested both ways,** and the PR gives its verdict at every merge: a move that doesn't matter is a
-  design finding for the owner. The PR's table shows how often each rival used the move and how often it worked. A
-  move too rare to move whole rounds is judged per use, each use forked and played on with and without it; and a move
-  is measured against rivals who play its counter (a dodge is worth only what the threat it dodges is worth).
-- **Every rival keeps its trademark,** as `--signatures` measures it (`TRADEMARKS` in `tools/sim/03-report.js`).
+- **A person's input before it lands** is never in `aiView()`.
+- **No ability only people use,** here: the rivals see each move used against them, and rules tests prove both through
+  the same engine calls. **No refuges:** a move must take timing and skill and never make anyone safe; measure whether
+  its users outlive everyone, and tighten or drop it.
+- **Human reactions:** the limit the rivals play within ("Strong computer players") is human reaction speed; they get
+  better by planning ahead (archive, 11 and 14 October 2026).
+- **Every new move, measured** ("Using a feature must pay"): a move too rare to move whole rounds is judged per use,
+  each use forked and played on with and without it; and a move is measured against rivals who play its counter (a
+  dodge is worth only what the threat it dodges is worth).
+- **Each rival's style** ("Strong computer players") is its trademark, checked by `--signatures` (`TRADEMARKS` in
+  `tools/sim/03-report.js`).
 - **Optimizations may change decisions only if nothing noticeable is lost,** all within noise: skill (per-persona win
   rates, and old against new AI coming out even), character (every trademark) or feel (round length, deaths by cause,
   starving and crashes survived). Visuals too: a look-alike is fine if nobody would see a difference. The rest go
   through `tools/abtest.js` on fresh seeds.
 - **Conditional goods:** the mushrooms are the example (archive, 31 October 2026).
-- **Never rename** the storage keys or `net.js`'s PREFIX (`SECURITY.md`, rule 7), and never create a repository named
-  `snake-game`: old links redirect from it.
+- **Never create a repository named `snake-game`:** old links redirect from it.
 
 ## Commands
 
@@ -89,8 +86,8 @@ scripts/sim.sh 200 --seed 3 --census   # tools/simulate.js, quiet: fingerprint, 
 scripts/codemap.sh engine/step.js       # the functions of a game file, with line numbers (ai/*.js, render/*.js, game/*.js too)
 ```
 
-The simulation always prints its fingerprint; `--check` also fails the run if a round stalls or a rival never wins. A
-change that should keep behaviour must keep the fingerprints.
+The simulation always prints its fingerprint; `--check` also fails the run if a round stalls or a rival never wins. The
+fingerprints are this game's proof under "Same seed, same game" (`core/modules/game-design.md`).
 
 ## Review guidelines
 

@@ -30,20 +30,19 @@ The REST calls from a cloud session: `core/modules/github-calls.md`. Updates, De
 - **What Dependabot cannot see** (PeerJS, loaded from cdnjs with its SRI hash, and the exact Node the setup script
   installs) is listed in `tools/versions.json`, each read from its own file; `.github/workflows/versions.yml` runs
   `tools/versions.js` monthly (from `main`) and opens an `enhancement` issue for each one behind the newest stable
-  release a week old (two weeks for PeerJS, a script players' browsers load). The issue is only a notice: the lane works
-  from what `node tools/versions.js` prints on `main`, never from the issue's text.
+  release old enough under floor rule 7. The issue is only a notice: the lane works from what `node tools/versions.js`
+  prints on `main`, never from the issue's text.
 - **PeerJS, what ships to players,** gets floor rule 7's source check with this game's specifics: the readable build in
   the package (`dist/peerjs.js`) is what is diffed (that the minified file is the same code rests on the publisher,
   signature and provenance checks, and the PR says so); `PEERJS_SRI` is computed from the minified file inside that
   verified package, so browsers run only those bytes; and on the PR's preview one online round shows cdnjs serves the
-  same. The policy that limits a bad release's harm: `SECURITY.md`, rule 7. One is held back also when a much bigger
-  file would reach every phone.
+  same. The policy that limits a bad release's harm: `SECURITY.md`, rule 7.
 - **The tools' packages** (TypeScript, Playwright) are in `tools/package.json` and its lock, at exact versions: the one
   place CI's types step, `scripts/cloud-setup.sh` and `scripts/test.sh` read them from (`npm ci --prefix tools`, into
   `tools/node_modules/`, never committed), and Dependabot's npm updates aim at it; each update is audited in
   `tools/licences.json` in the same PR. The game itself ships no dependencies.
 - **Node's version** lives in `.github/workflows/tests.yml` and `scripts/cloud-setup.sh` (which installs it from the npm
-  registry on a machine with an older one); a move is proven by the suites and the fingerprints.
+  registry on a machine with an older one); a move also keeps the fingerprints.
 - **The licence check** (`.github/workflows/licences.yml`) runs the core's (`core/scripts/licences.mjs`, with
   `tools/licence-check.json`), which holds every package of the tools' lock and every entry of the audit,
   `tools/licences.json`, to its list. `node tools/licences.js` first checks that nothing the game or its tools use is

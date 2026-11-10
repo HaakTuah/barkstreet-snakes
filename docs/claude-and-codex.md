@@ -7,7 +7,7 @@ other.
 | Claude decides and builds | Codex builds |
 | --- | --- |
 | The AI's planning and every rival's trademark | Layout and interface fixes |
-| Engine rules and new moves (the A/B judgment: "Every new move is tested both ways") | Render bugs that come with a repro |
+| Engine rules and new moves (the A/B judgment: "Using a feature must pay" in `core/modules/game-design.md`) | Render bugs that come with a repro |
 | Online sync and the protocol | Splitting files and tests, proven by fingerprints and the suites |
 | Chatter lines and lesson texts (the voice) | Keeping the browser suites working |
 | What a change should feel like, from the owner's feedback | What Claude has specified as tests: a move's cue and lesson wiring, a rule's implementation, A/B runs and their tables |
