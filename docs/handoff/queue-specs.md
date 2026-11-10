@@ -29,9 +29,9 @@ it went (the core, one game, or dropped with its reason), and a fresh reviewer g
 core finds nothing lost. The design session then checks the result against both games before any game takes a copy; (3)
 each project, in a PR of its own, adds the copy, cuts its rule files to what is its own, and adds a check on every PR
 that the copy matches the core at its pin (a workflow, so the owner's yes in that PR); (4) from then on a core change
-reaches a project only through a sync PR in it, reviewed as any other. Steps 1 and 2 are done, and step 3 is next: it takes `HaakTuah/agent-core` at its newest `main`, from the
+reaches a project only through a sync PR in it, reviewed as any other. Steps 1 to 3 are done (step 3 here: PRs #636 and #637); step 3 took `HaakTuah/agent-core` at its newest `main`, from the
 core's `reports/2026-11-10-step-3-now.md` first, which lists this game's step 3 in order (dropping `develop` just before
-it, in a PR of its own) and holds where the older reports it names disagree. Its workflows need the owner's yes in its
+it, in a PR of its own) and holds where the older reports it names disagree. Its workflows had the owner's yes in its
 PR. No session writes to more than one repository:
 the core's own session writes the core, and each project's builders read it and write only their own. Then the rule-file
 audit runs once on the core and once on each project's own rules (archive, 5 November 2026). The same in Amarna Letters.
