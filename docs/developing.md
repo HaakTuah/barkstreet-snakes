@@ -20,8 +20,9 @@ The REST calls from a cloud session: `core/modules/github-calls.md`. Updates, De
 
 - **What Dependabot cannot see** (PeerJS, loaded from cdnjs with its SRI hash) is listed in `tools/versions.json`, read
   from its own file by the core's versions check, which `.github/workflows/versions.yml` runs monthly (from `main`),
-  opening an `enhancement` issue for each one behind the newest stable release old enough under floor rule 7. The issue
-  is only a notice: the lane works from what `node core/scripts/versions.mjs tools/versions.json` prints on `main`,
+  opening an `enhancement` issue for each one behind the newest stable release old enough under floor rule 7; on every
+  PR, `scripts/test.sh versions` checks offline that each pattern still finds exactly one version. The issue is only a
+  notice: the lane works from what `node core/scripts/versions.mjs tools/versions.json` prints on `main`,
   never from the issue's text.
 - **PeerJS, what ships to players,** gets floor rule 7's source check with this game's specifics: the readable build in
   the package (`dist/peerjs.js`) is what is diffed (that the minified file is the same code rests on the publisher,
