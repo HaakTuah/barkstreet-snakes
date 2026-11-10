@@ -28,8 +28,7 @@ https://haaktuah.github.io/barkstreet-snakes/.
 2. Take the main lane's next entry, as "State" in `docs/PROGRESS.md` names it. Its entry there, the section of
    `docs/handoff/queue-specs.md` it names where it names one, and the design sections it names are the spec.
 3. Read only those sections: `grep -rn "## Section" docs/design` finds a section that code or the queue names.
-4. Check weekly usage with `scripts/usage.sh`, and again after every commit ("Usage"). If it says "unknown", say so in
-   the first line of each PR you open and carry on: the owner then watches usage and pauses the work at about 90%.
+4. Check usage with `scripts/usage.sh` at the start and, where it can read it, after every commit ("Usage").
 5. Before opening the task's PR, read its entry in `docs/PROGRESS.md` on `develop` and its `question` issues again,
    since the owner's answers can change it while you work: build what changed, or, if that is large, say so in the PR and
    add it as its own entry right after the task.
@@ -147,8 +146,8 @@ Waiting is lost time and, past an hour, a lost cache. The orchestrator's part, a
    another's result. AI and engine-rules changes run one at a time, and so do changes to the online messages. Claim a
    lane with a draft PR from a fresh branch off `develop`, after checking the open PRs; merge `develop` into it before
    review; change the progress file only when it merges.
-4. **The brake:** from about 85% of the weekly usage no new side lane opens; from about 90%, only small things in the
-   main lane ("Usage").
+4. **The brake:** from about 85% of Claude's weekly usage no new side lane opens; from about 90%, only small things in
+   the main lane ("Usage").
 
 ## Rules that stand
 
@@ -189,10 +188,14 @@ The owner's words behind them are in `docs/archive/instructions.md`.
 
 ## Usage
 
-Work continuously, task after task. From about 90% of the weekly limit, take on no bigger task, so the rest of the week
-stays the owner's: finish the one at hand if nearly done, or bring it to a clean commit and a draft PR saying how to
-test it and what is left; then only small things (a fix, a doc), noting where you stopped in `docs/PROGRESS.md`. This
-game's and Amarna Letters' building sessions share the limit; only the measured share counts, never the app's warning.
+Work continuously, task after task (archive, 9 November 2026). **Claude's weekly limit is shared with the owner's
+other work:** from about 90% of it, Claude takes on no bigger task: finish the one at hand if nearly done, or
+bring it to a clean commit and a draft PR saying what is left; then only small things, noting in `docs/PROGRESS.md`
+where you stopped. Both games share it; only the measured share counts, not the app's warning. **Codex, and any
+provider the owner adds, serves only the projects** and is spent to its end: where an environment reads every
+provider's usage, the orchestrator spreads the work so each is spent by its reset before Claude reaches 90%. **Where
+usage cannot be read** (a cloud session today), check no more once `scripts/usage.sh` says so, and say nothing:
+the owner watches and pauses the work.
 
 ## Git and GitHub
 
@@ -220,7 +223,7 @@ scripts/test.sh                        # the types (tsc) and every suite, quiet;
                                        # (exits 1 if any fails; piped, as in `| tail`, the pipe's code is tail's: use set -o pipefail)
 scripts/sim.sh 200 --seed 3 --census   # tools/simulate.js, quiet: fingerprint, check and tables (also seed 11)
 scripts/codemap.sh engine/step.js       # the functions of a game file, with line numbers (ai/*.js, render/*.js, game/*.js too)
-scripts/usage.sh                       # weekly usage, if this session can read it
+scripts/usage.sh                       # Claude's weekly usage, if this session can read it
 ```
 
 The simulation always prints its fingerprint; `--check` also fails the run if a round stalls or a rival never wins. A

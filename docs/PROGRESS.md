@@ -97,7 +97,7 @@ and the owner's notes of 2 November, among them).
   `docs/archive/progress-done/split-lane.md`, "The split lane, done".
 - **The shared core** (archive, 5 November 2026), first among the side lanes and before the rule-file audit: the rules
   common to every project move to one repository, each project carrying a checked copy; its spec is in
-  `docs/handoff/queue-specs.md` under the same title. Step 1 is the owner's.
+  `docs/handoff/queue-specs.md` under the same title. Step 3 is next.
 - **The browser suites' one ending** (#526): `tools/render-test.js` and `tools/input-test.js` end with `report.end(b)`
   like the others, once entry 2u, which holds them, merges.
 - **The rule-file audit's larger moves** (the workshop check's point 6; archive, 3 November 2026): (1)
@@ -184,9 +184,9 @@ As planned: up to 4 players, key sets, gamepads, and local and online play toget
 
 Two beetles that meet fight a shoving match, and a snake that gets there in time can catch them while they do; last of the rules, before the writing pass. Spec: `docs/handoff/queue-specs.md`, "8. Near the end: beetles who meet, fight".
 
-### 9. At the very end: the writing pass (the owner, 31 October 2026; Fable 5.1, after everything else, entry 8 included)
+### 9. At the very end: the writing pass (the owner, 31 October 2026; Fable, its newest version, after everything else, entry 8 included)
 
-Every rival's lines given a make-over, Fable 5.1 holding the creative control (voice guides, samples, spot-checks) and Opus writing the bulk, outside what the owner protects: his own lines, the lines he likes, and the gags (Mason's bad Latin, "vidi vici veni"). After everything else, so it covers every line the queue adds. Spec: `docs/handoff/queue-specs.md`, "9. At the very end: the writing pass".
+Every rival's lines given a make-over, Fable holding the creative control (voice guides, samples, spot-checks) and Opus writing the bulk, outside what the owner protects: his own lines, the lines he likes, and the gags (Mason's bad Latin, "vidi vici veni"). After everything else, so it covers every line the queue adds. Spec: `docs/handoff/queue-specs.md`, "9. At the very end: the writing pass".
 
 ## Noted, not yet queued
 
