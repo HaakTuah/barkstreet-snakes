@@ -325,11 +325,14 @@ ends (`WRAP_WARN_MS`), you're warned ("The edges are back in 2 seconds.").
 ### Portals for the wrap
 
 Built in part 5 of round six B (PR #202):
-- Going off an edge while wrapping opens a pair of portals, one on each side, drawn as in the game Portal (the owner,
-  9 November 2026, #592: a blue and orange scheme tells a player at once what they are): the entry a glowing blue half
-  oval that swirls in, the exit a glowing orange one that spills out, each with a thin gold trim for the golden
-  mushroom. Their shape, a half oval on the edge, keeps them apart from the jump's sky blue and the flash's ember. The
-  frame is gilded while you wrap.
+- Going off an edge while wrapping opens a pair of portals, one on each side, drawn to look like the game Portal's own
+  (the owner, 9 November 2026, #592: a blue and orange scheme tells a player at once what they are; and 10 November
+  2026: "I want them looking like Portal's portals"): the entry blue, the exit orange, each an upright oval about two
+  cells long along the edge and one deep, standing over the edge so most of it shows on the board; a bright, thick ring
+  of its colour whose rim flickers, ragged and alive; inside, a darker field of the same colour with a faint swirl,
+  turning in at the entry and spilling out at the exit; a soft glow around it; and a thin gold trim just outside the
+  ring for the golden mushroom. With reduced motion the rim and the swirl stand still. The oval and its bright rim keep
+  them apart from the jump's sky blue and the flash's ember. The frame is gilded while you wrap. Drawing only.
 - Others may follow you through while your body passes and for a while after (`PORTAL_MS`, 2 s). Coming out
   onto your body is a crash.
 - *Open long enough to matter:* the time a portal stays open after your tail is lengthened, step by step, until
