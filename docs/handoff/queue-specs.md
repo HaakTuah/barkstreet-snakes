@@ -7,8 +7,8 @@ and a pointer here; this text is its spec, as the entry's own words were. When a
 
 ### The shared core (the owner, 5 November 2026; first among the side lanes, before the rule-file audit)
 
-The rules common to every project move to one public repository, `HaakTuah/agent-rules` (the name the design session
-proposed), and each project carries an exact copy of it under `core/`, pinned to one of its commits, generated and never
+The rules common to every project move to one public repository, `HaakTuah/agent-core` (renamed from `agent-rules`),
+and each project carries an exact copy of it under `core/`, pinned to one of its commits, generated and never
 edited by hand, as Amarna Letters treats its copy of its design document. It comes in two layers (archive, 9 November 2026): a safety floor every
 project takes whole and can never edit or leave out, and practice modules each project picks in a small manifest of its
 own; this game takes them all. What moves: the security baseline, the four
@@ -29,7 +29,7 @@ it went (the core, one game, or dropped with its reason), and a fresh reviewer g
 core finds nothing lost. The design session then checks the result against both games before any game takes a copy; (3)
 each project, in a PR of its own, adds the copy, cuts its rule files to what is its own, and adds a check on every PR
 that the copy matches the core at its pin (a workflow, so the owner's yes in that PR); (4) from then on a core change
-reaches a project only through a sync PR in it, reviewed as any other. Steps 1 and 2 are done, and step 3 is next: it takes `HaakTuah/agent-rules` at its newest `main`, from the
+reaches a project only through a sync PR in it, reviewed as any other. Steps 1 and 2 are done, and step 3 is next: it takes `HaakTuah/agent-core` at its newest `main`, from the
 core's `reports/2026-11-10-step-3-now.md` first, which lists this game's step 3 in order (dropping `develop` just before
 it, in a PR of its own) and holds where the older reports it names disagree. Its workflows need the owner's yes in its
 PR. No session writes to more than one repository:
