@@ -24,3 +24,20 @@ How they are kept, and where each item lives: `archive/instructions.md`.
      where its run needs it:
 
      > Yes, expertly.
+
+128. **10 November 2026** (the core). A game's orchestrator started a builder on Opus without passing an effort, as no
+     rule named one, and the builder ran at extra effort, the app's default for a new Opus session; asked, the
+     orchestrator said its session tool takes an effort and that a session does not inherit its own. Told that so
+     item 99's premise no longer holds, and that the audit's reading of medium effort for Sonnet lanes was never
+     measured:
+
+     > Why shouldn't sonnet run on high, expert?
+
+     To the design session's answer (no strong reason: Sonnet is the cheap model, a review round costs more than the
+     extra thinking, and one effort for every session is simpler; high for every session the orchestrator starts, Opus
+     and Sonnet alike, and for the orchestrator, never above high without his word):
+
+     > Agreed. However escalation still allows for extra, expert?
+
+     Told yes: the escalation step keeps extra effort where the stuck builder already runs at high, as Claude's table
+     sets it.
