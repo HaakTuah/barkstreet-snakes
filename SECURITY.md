@@ -14,8 +14,8 @@ floor's numbers, what only this game has and what the floor leaves to it; who mi
      names it;
    - **the checks on the work:** the copies check (`core/scripts/copies.mjs` with `tools/copies.json` and
      `tools/copies-baseline.json`), the pointer and reading-size checks (`tools/pointers-test.js`,
-     `tools/sizes-test.js`, `tools/sizes.json` and `tools/rule-files.js`), the licence check's config
-     (`tools/licence-check.json`) and the calibration log (`docs/calibration.md`).
+     `tools/sizes-test.js`, `tools/sizes.json` and `tools/rule-files.js`), and the licence check's config
+     (`tools/licence-check.json`).
 5. **Untrusted input, and its checks:**
    - **Online peers** (PeerJS, `net.js` and `online.js`): anyone with a room code. Their checks: each
      message's pinned shape (`tools/online-test.js`, `tools/protocol-shapes.json`); names through the one cleaner

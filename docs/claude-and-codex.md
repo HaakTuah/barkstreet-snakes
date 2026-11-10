@@ -1,7 +1,7 @@
 # Claude and Codex: what goes to whom
 
-This game's own table of what goes to whom, and its trial, for the orchestrator once Codex can build; Codex's status,
-the hand-over and the rest: `core/modules/codex-building.md`. A draft PR labelled `codex` is a claimed lane like any
+This game's own table of what goes to whom, and its trial, for the orchestrator once Codex can build; Codex's status:
+`core/modules/roles.md`. A draft PR labelled `codex` is a claimed lane like any
 other.
 
 | Claude decides and builds | Codex builds |
