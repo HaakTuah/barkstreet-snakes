@@ -39,33 +39,33 @@ function portalSwirl({ cx, cy, ix, iy }, fade, now, out) {
   ctx.save();
   ctx.translate(cx, cy);
   ctx.rotate(turn);
-  ctx.beginPath(); // (the thin gold trim, just outside the ring)
-  ctx.ellipse(0, 0, along + 2.5, deep + 2.5, 0, 0, Math.PI);
-  ctx.lineWidth = 1.2;
-  ctx.strokeStyle = '#f5c542';
-  ctx.globalAlpha = fade;
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.ellipse(0, 0, along, deep, 0, 0, Math.PI);
-  ctx.closePath();
+  const oval = new Path2D();
+  oval.ellipse(0, 0, along, deep, 0, 0, Math.PI);
+  oval.closePath();
   const haze = ctx.createRadialGradient(0, 0, 0, 0, 0, along);
   haze.addColorStop(0, out ? light : heart); // (the entry's heart dark, drawing in; the exit's bright, spilling out)
   haze.addColorStop(0.7, out ? ring : heart);
   haze.addColorStop(1, ring);
   ctx.globalAlpha = 0.85 * fade;
   ctx.fillStyle = haze;
-  ctx.fill();
+  ctx.fill(oval);
   ctx.strokeStyle = ring; // (the glow: a wide faint stroke under the ring, as the canvas has no blur)
   ctx.lineWidth = 10;
   ctx.globalAlpha = 0.3 * fade;
-  ctx.stroke();
+  ctx.stroke(oval);
   ctx.globalAlpha = fade;
-  ctx.lineWidth = 4;
+  ctx.beginPath(); // (the thin gold trim, just outside the ring, over the glow)
+  ctx.ellipse(0, 0, along + 2.5, deep + 2.5, 0, 0, Math.PI);
+  ctx.lineWidth = 1.2;
+  ctx.strokeStyle = '#f5c542';
   ctx.stroke();
+  ctx.strokeStyle = ring;
+  ctx.lineWidth = 4;
+  ctx.stroke(oval);
   ctx.lineWidth = 1.5;
   ctx.strokeStyle = light;
-  ctx.stroke();
-  ctx.clip();
+  ctx.stroke(oval);
+  ctx.clip(oval);
   const t = reduced ? 0.3 : (now / 1000) % 1;
   ctx.lineWidth = 2;
   for (let k = 0; k < 3; k++) {
