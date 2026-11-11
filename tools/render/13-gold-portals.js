@@ -1,4 +1,4 @@
-// Round six B, part 5: a body through a gold portal. Anyone may follow a
+// Round six B, part 5: a body through a portal. Anyone may follow a
 // snake the edges wrap for through one, so a follower's body runs off one
 // edge and on at the other as a wrapping snake's does: drawn on each side,
 // never as a band across the log; and one about to go through is drawn
@@ -20,7 +20,7 @@ const follow = (body, alpha) => ev(`(() => {
 })()`);
 const orange = ([r, g, b]) => r > 170 && g > 90 && b < 110; // (Gobbler's colour, not the bark)
 const through = await follow([[1, 11], [0, 11], [23, 11], [22, 11], [21, 11], [20, 11]], 0.5);
-check(!through.row.some(orange), 'a follower’s body through a gold portal is drawn on each side, never across the log between', JSON.stringify(through.row));
+check(!through.row.some(orange), 'a follower’s body through a portal is drawn on each side, never across the log between', JSON.stringify(through.row));
 const into = await follow([[23, 11], [22, 11], [21, 11], [20, 11]], 0.9);
 check(into.guess.x === 0 && into.guess.y === 11 && into.guess.moves === 1, '...and one about to go through is drawn going on into it, out at the exit', JSON.stringify(into.guess));
 // A flash asked for at the edge, through an open portal: drawn going on through it, the way the game takes it.

@@ -63,7 +63,7 @@
 //   holes.js      its aim and patch on the board, and the holes and pits it leaves
 //   watch.js      the spot it watches in act 1, a pale pool on the log
 //   cut.js        the outline it's cutting (a nick on each cell to go), and its fight's ring
-//   portals.js    the gold portals a wrapping snake opens going off an edge
+//   portals.js    the portals a wrapping snake opens going off an edge
 //   blasts.js     a snake going out with a pop: the starburst, its ring and pieces
 //   edges.js      the wrap seam round the board and a dash's speed-line streaks
 //   world.js      the frame, the round's events and moments, and the API

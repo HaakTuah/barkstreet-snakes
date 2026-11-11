@@ -13,8 +13,8 @@ hops islands"), and their text as it was in `docs/archive/design-powers.md`.
 "Taking a landing", and its text as it was, with what it measured, in `docs/archive/design-powers.md`.
 
 **A snake across a pit is a bridge**, **Bumps in the air**, **The plain flash cuts** (with **The neck cut**),
-**The edge is a shelter, measured**, **The golden flash cuts deeper**, **Dropping your tail**, **Gold portals
-for the wrap**, **Dropped charges** and **Mushrooms come back up** (with **The spit flies along the line**): their rules are in
+**The edge is a shelter, measured**, **The golden flash cuts deeper**, **Dropping your tail**, **Portals for
+the wrap**, **Dropped charges** and **Mushrooms come back up** (with **The spit flies along the line**): their rules are in
 `40-powers-and-moves.md` under those names, and their text as it was in `docs/archive/design-powers.md`.
 
 **Mason builds double walls**: its rule is in `39-the-rivals.md` under that name, and its text as it was in

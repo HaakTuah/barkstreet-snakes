@@ -8,14 +8,14 @@ floor's numbers, what only this game has and what the floor leaves to it; who mi
 
 3. **The protected files:** the trusted builder is Claude's builder sessions (`core/modules/roles.md`). The files:
    - **what runs by itself or with credentials:** `.github/`, `.claude/`, `scripts/cloud-setup.sh`, and
-     `docs/developing.md` (the pushes of PR pictures);
-   - **the rule files:** `AGENTS.md`, `CLAUDE.md`, `core-manifest.md`, `docs/claude-and-codex.md`,
+     `docs/pr-pictures.md` (the pushes of PR pictures);
+   - **the rule files:** `AGENTS.md`, `CLAUDE.md`, `core-manifest.md`,
      `docs/review-guidelines.md`, `docs/threat-model.md` and this file; with the copy of the core, `core/`, as the floor
      names it;
    - **the checks on the work:** the copies check (`core/scripts/copies.mjs` with `tools/copies.json` and
      `tools/copies-baseline.json`), the pointer and reading-size checks (`tools/pointers-test.js`,
-     `tools/sizes-test.js`, `tools/sizes.json` and `tools/rule-files.js`), the licence check's config
-     (`tools/licence-check.json`) and the calibration log (`docs/calibration.md`).
+     `tools/sizes-test.js`, `tools/sizes.json` and `tools/rule-files.js`), and the licence check's config
+     (`tools/licence-check.json`).
 5. **Untrusted input, and its checks:**
    - **Online peers** (PeerJS, `net.js` and `online.js`): anyone with a room code. Their checks: each
      message's pinned shape (`tools/online-test.js`, `tools/protocol-shapes.json`); names through the one cleaner
@@ -38,8 +38,6 @@ floor's numbers, what only this game has and what the floor leaves to it; who mi
    - **The service worker** (`sw.js`): caches only this site's own files, never another origin's responses.
    - **Storage keys** (`snake-*`, `barkbite-muted`, `barkbite-music`) and `net.js`'s `PREFIX` are never renamed
      (players' records and online play depend on them), and hold no secret.
-9. **What reaches past the lower stakes** here also includes code run in a player's browser from input that is not the
-   player's own (a peer's message, a shared record).
 10. **What ships** is the files the live site serves; its notices file is
     [`THIRD-PARTY-NOTICES.txt`](THIRD-PARTY-NOTICES.txt). The audit of every licence, with which list each is held to,
     is `tools/licences.json`.

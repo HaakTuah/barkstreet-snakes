@@ -11,6 +11,7 @@ window.SnakeVersion = {
   build: 'dev',
   news: [
     { on: '2026-11-11', line: 'A meal keeps you 12 s, to the very end.' },
+    { on: '2026-11-10', line: 'Portals glow blue and orange, as in Portal.' },
     { on: '2026-11-09', line: 'The woodpecker cuts the log away. Get off it!' },
     { on: '2026-11-08', line: 'The woodpecker comes in acts. Mind its gaze.' },
     { on: '2026-11-08', line: 'Rounds now come lean, normal or plentiful.' },

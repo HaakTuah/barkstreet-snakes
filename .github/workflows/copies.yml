@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   copies:
-    uses: HaakTuah/agent-core/.github/workflows/copies.yml@2d13e39d7d6062a5524852a9b2107e86b33c5353
+    uses: HaakTuah/agent-core/.github/workflows/copies.yml@81039140a22761cb7d37c87e2e8cac8e1bfadcad
     with:
       config: tools/copies.json
 
@@ -26,7 +26,7 @@ jobs:
           persist-credentials: false # nothing after the checkout needs the token
       - uses: actions/setup-node@v7 # (it loads the core's script by require, which needs Node 22.12 or later)
         with:
-          node-version: 26
+          node-version-file: core/.node-version # the core's one exact Node ("Node" in core/modules/updates.md)
       - name: The base branch's latest commit, for its marks (not the whole history)
         if: github.event_name == 'pull_request'
         env:

@@ -27,8 +27,7 @@ The other modules are read when a task needs them, each saying when, among them 
 | --- | --- |
 | What is done and the queue, in order | `docs/PROGRESS.md` |
 | Security: what this game adds to the floor; who might attack it | `SECURITY.md`, `docs/threat-model.md` |
-| What goes to Claude and what to Codex, once Codex builds | `docs/claude-and-codex.md` |
-| Running and checking it: every tool, PR pictures, its updates; each file and where each folder lists its parts ("How it's put together") | `docs/developing.md` |
+| Running and checking it: every tool, its updates; each file and where each folder lists its parts ("How it's put together") | `docs/developing.md`; PR pictures: `docs/pr-pictures.md` |
 | The design, one file per topic | `docs/design/` (index: `DESIGN.md` at the root) |
 | Materials the queue points to, with the specs word for word of the entries that name one (`queue-specs.md`) | `docs/handoff/` |
 | Study and measuring tools from earlier rounds (censuses, audits, PR pictures) | `tools/dev/` (done ones: `docs/archive/`) |
@@ -39,16 +38,16 @@ The other modules are read when a task needs them, each saying when, among them 
 1. Take the main lane's next entry, as "State" in `docs/PROGRESS.md` names it. Its entry there, the section of
    `docs/handoff/queue-specs.md` it names where it names one, and the design sections it names are the spec.
 2. Read only those sections: `grep -rn "## Section" docs/design` finds a section that code or the queue names.
-3. What is read again before the PR (`core/modules/work-flow.md`, point 1): the task's entry in `docs/PROGRESS.md` and
-   its `question` issues; a large change goes in as its own entry right after the task.
+3. What is read again before the PR (`core/modules/work-flow.md`, point 1): the task's entry in `docs/PROGRESS.md`; a
+   large change goes in as its own entry right after the task.
 
 ## How to work, here
 
-- **A design call** goes into its topic file in `docs/design/`.
+- **A design call** goes into its topic file in `docs/design/`; a new topic gets its own file and a line in `DESIGN.md`.
 - **Every file is also a script tag and an `sw.js` entry,** one more cost of a file.
 - **The smallest setup** here is a scripted board with only the snakes and food it needs, for a few ticks. Full rounds
-  only in the simulation's fingerprint and `--check` and the online round trip; long measurements (`tools/abtest.js`,
-  censuses) in `scripts/sim.sh`.
+  only in the simulation's fingerprint and `--check` and the online round trip; long measurements
+  (`tools/abtest.js`; censuses through `scripts/sim.sh`) only by hand.
 - **An AI entry waits for the last AI change to merge,** so each head-to-head compares against a settled AI.
 - **The news line:** a PR that makes a change a player would notice puts its line of what is new at the top of
   `version.js`'s news, since every merge goes live.
@@ -71,15 +70,16 @@ This game's own, beside the core's (`core/modules/game-design.md`, whose section
   `tools/sim/03-report.js`).
 - **Optimizations may change decisions only if nothing noticeable is lost,** all within noise: skill (per-persona win
   rates, and old against new AI coming out even), character (every trademark) or feel (round length, deaths by cause,
-  starving and crashes survived). Visuals too: a look-alike is fine if nobody would see a difference. The rest go
-  through `tools/abtest.js` on fresh seeds.
-- **Conditional goods:** the mushrooms are the example (archive, 31 October 2026).
+  starving and crashes survived). Visuals too: a look-alike is fine if nobody would see a difference. Measure skill,
+  character and feel with `tools/abtest.js` on fresh seeds (`--metrics … trademarks`).
+- **Conditional goods** ("No solutions, only trade-offs"): checked by simulation; the mushrooms are the example
+  (archive, 31 October 2026).
 - **Never create a repository named `snake-game`:** old links redirect from it.
 
 ## Commands
 
 ```bash
-scripts/cloud-setup.sh                 # cloud machines: Node 26, the tools' packages and Chromium, if missing (it runs by itself when a cloud session starts)
+scripts/cloud-setup.sh                 # cloud machines: CI's Node, the tools' packages and Chromium, if missing (it runs by itself when a cloud session starts)
 scripts/test.sh                        # the types (tsc) and every suite, quiet; or name some: scripts/test.sh rules render
                                        # (exits 1 if any fails; piped, as in `| tail`, the pipe's code is tail's: use set -o pipefail)
 scripts/sim.sh 200 --seed 3 --census   # tools/simulate.js, quiet: fingerprint, check and tables (also seed 11)

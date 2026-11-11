@@ -105,5 +105,5 @@ would fill with the host's rivals.
 - **The carve** is offered on your death's card or the round's, once a round ("Small mercies at the keys" in
   `42-controls.md`), when the round is in the Hall of Fame's top three, or is a new best in its top 10 ("Hall of Fame
   #2. Carve your name:"), or is a new best at the top of your own list ("Top of your own list."). Named already, the
-  card says "Hall of Fame #4, as Perry." instead. Carving puts the name on this round's row and on all your unnamed
+  card says "Hall of Fame #4, as Mossy." instead. Carving puts the name on this round's row and on all your unnamed
   ones.

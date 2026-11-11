@@ -11,7 +11,7 @@ power food" in "Food on the log"); the woodpecker's holes
 (`39-the-rivals.md`, "Rivals use their powers, when it pays" and "Every rival has a power style"; "Balance targets" there); what each move measured, with the numbers chosen
 (round six B's "chosen numbers" in `docs/archive/design-powers.md`); the keys, swipes, taps and the mouse (`42-controls.md`); teaching
 (`30-teaching-by-showing.md`); Capricious, Copycat and Wildcard (`35-capricious-copycat-and-wildcard.md`); sound in
-general (`21-sound.md`); one stamina for both plain powers, to build (`37-one-stamina.md`); and crashes, head-ons,
+general (`21-sound.md`); one stamina for both plain powers, built (`37-one-stamina.md`); and crashes, head-ons,
 fire on snakes and your own beads squashed (`41-crashes.md`).
 
 ### The words
@@ -322,16 +322,17 @@ ends (`WRAP_WARN_MS`), you're warned ("The edges are back in 2 seconds.").
 - *The rivals:* while the edges wrap for one, its look-ahead wraps too, and every rival allows for a rival that can come
   in over the edge.
 
-### Gold portals for the wrap
+### Portals for the wrap
 
 Built in part 5 of round six B (PR #202):
-- Going off an edge while wrapping opens a pair of gold portals, one on each side, trimmed in your colour. The entry
-  swirls in and the exit spills out. The frame is gilded while you wrap. Gold, not blue and orange: on this board sky
-  blue means jump and ember means flash.
-  *To come* (the owner, 9 November 2026, #592: "A blue and orange color scheme for the portals immediately communicates
-  to a player what it is, and gives them a chuckle."): the entry blue and the exit orange, glowing ovals as in the game
-  Portal, with a thin gold trim for the golden mushroom; their shape keeps them apart from the jump's sky blue and the
-  flash's ember. The polish lane's next find in `docs/PROGRESS.md`.
+- Going off an edge while wrapping opens a pair of portals, one on each side, drawn to look like the game Portal's own
+  (the owner, 9 November 2026, #592: a blue and orange scheme tells a player at once what they are; and 10 November
+  2026: "I want them looking like Portal's portals"): the entry blue, the exit orange, each an upright oval about two
+  cells long along the edge and one deep, standing over the edge so most of it shows on the board; a bright, thick ring
+  of its colour whose rim flickers, ragged and alive; inside, a darker field of the same colour with a faint swirl,
+  turning in at the entry and spilling out at the exit; a soft glow around it; and a thin gold trim just outside the
+  ring for the golden mushroom. With reduced motion the rim and the swirl stand still. The oval and its bright rim keep
+  them apart from the jump's sky blue and the flash's ember. The frame is gilded while you wrap. Drawing only.
 - Others may follow you through while your body passes and for a while after (`PORTAL_MS`, 2 s). Coming out
   onto your body is a crash.
 - *Open long enough to matter:* the time a portal stays open after your tail is lengthened, step by step, until
@@ -439,7 +440,7 @@ at the start, before anyone moves (the ones already in the air first, then any s
 that moves onto it where it hangs between ticks is hit too, as if it had flown into it. So a head two out is hit at
 once, four out the tick after, and a target has the second of the dotted line, and the flight, to step out of the line;
 a body between the spitter and it is a shield. Over the edge it flies on only where the edges wrapped for the spitter as
-it left; a gold portal is a way through for snakes, not for what they spit. The spitter's own head goes over it in the
+it left; a portal is a way through for snakes, not for what they spit. The spitter's own head goes over it in the
 air, as over its own lying wet.
 - **To come** (the owner, 9 November 2026, #583: "Should be improved, but I want it to mainly be something you shoot in
   front of people, which they can avoid. So it is skill based, not just something that you have no control to avoid."):

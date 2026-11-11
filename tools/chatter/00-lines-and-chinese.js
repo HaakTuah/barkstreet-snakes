@@ -107,7 +107,7 @@ for (const k of ['zoom', 'ready', 'resting', 'stash']) ok(VOICES.star[k]?.length
 for (const k of ['wildcard', 'mason']) ok(VOICES[k].showoff?.length, `${k} answers Star's showing off`);
 // No formula: too many lines of one voice may not share one shape, so a filled-in template
 // ("Sunshine! I love sunshine! Today.", "Rain! I love rain! For now.", …) can't creep back (the
-// slop audit, docs/PROGRESS.md). A line's shapes: its opening two words with its last mark, and,
+// slop bar, docs/slop-bar.md). A line's shapes: its opening two words with its last mark, and,
 // with more than one sentence, its marks in order with the second sentence's opening two words.
 // Mason's "Et tu, …?" is the owner's gag, kept word for word, so its shape may repeat.
 const SHAPE_MAX = 4, SHAPE_KEPT = { mason: ['open:et tu|?'] };
