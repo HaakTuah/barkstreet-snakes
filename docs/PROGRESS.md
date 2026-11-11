@@ -65,6 +65,11 @@ the owner's notes of 2 November and the portals blue and orange, among them).
   Step 3 is done (#636, #637).
 - **The browser suites' one ending** (#526): `tools/render-test.js` and `tools/input-test.js` end with `report.end(b)`
   like the others.
+- **The README as a front page** (an outside review of the repositories, 11 November 2026: about 6,400 words, rules
+  that read like a legal code, one paragraph of over 3,000 characters): the README keeps what the game is, how to
+  start and the controls, in a few hundred words, and points to the game itself, whose lesson and Field guide teach
+  each rule ("where rules are taught"); whatever moves goes to the design topic it belongs to, nothing a player needs
+  is lost, and the copies check proves nothing is said twice.
 - **Waiting for a gap, a split by meaning:** `render/world.js` (40 KB), the file-by-file review's last part, in a PR
   of its own when no open lane touches it, proven by fingerprints and suites.
 
