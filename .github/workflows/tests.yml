@@ -1,13 +1,13 @@
-# The game's own checks, on every push and pull request: the rules, online play and the types of its messages, the
-# rivals' chatter, the records and the service worker in Node, the same seeded rounds with and without thinking ahead,
-# and in headless Chrome (the runner has it) the page's shared scope, its content security policy, the renderer's and
-# controls' promises, the page on phones, tablets and desktops, and the owner's playtest. The jobs run side by side.
-# Each runs only where a change can affect it ("The smallest setup that tests the rule" in core/modules/how-to-work.md):
-# nothing for notes alone (docs/, tools/dev/, .claude/, any .md), the Node checks and the headless four for any change
-# to the game or its tools, and the page on every screen and the playtest for a change to what the page shows
-# (index.html, style/, fonts/, render/, game/, chatter/, audio/, online.js, net.js, records.js, lineup.js,
-# scores-screen.js, sw.js, the layout and playtest tests and their parts, the parts' loader, the browser driver or this
-# file). "browser", which main requires, gathers the browser jobs' results.
+# The game's own checks, on every pull request and every push to main: the rules, online play and the types of its
+# messages, the rivals' chatter, the records and the service worker in Node, the same seeded rounds with and without
+# thinking ahead, and in headless Chrome (the runner has it) the page's shared scope, its content security policy, the
+# renderer's and controls' promises, the page on phones, tablets and desktops, and the owner's playtest. The jobs run
+# side by side. Each runs only where a change can affect it ("The smallest setup that tests the rule" in
+# core/modules/how-to-work.md): nothing for notes alone (docs/, tools/dev/, .claude/, any .md), the Node checks and the
+# headless four for any change to the game or its tools, and the page on every screen and the playtest for a change to
+# what the page shows (index.html, style/, fonts/, render/, game/, chatter/, audio/, online.js, net.js, records.js,
+# lineup.js, scores-screen.js, sw.js, the layout and playtest tests and their parts, the parts' loader, the browser
+# driver or this file). "browser", which main requires, gathers the browser jobs' results.
 name: tests
 
 on:

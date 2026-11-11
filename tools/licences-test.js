@@ -12,14 +12,11 @@ const ok = require('./ok.js');
 const root = path.join(__dirname, '..');
 const tracked = execFileSync('git', ['ls-files', '-z'], { cwd: root, encoding: 'utf8' }).split('\0').filter(Boolean);
 
-// A fresh copy of the repository's files, changed by `change(dir)`, and whether the check passes on it (the copy is a git
-// repository of its own, since the core's scan reads what git tracks).
+// A fresh copy of the repository's files, changed by `change(dir)`, and whether the check passes on it.
 function gate(change) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'licences-'));
   for (const f of tracked) { fs.mkdirSync(path.join(dir, path.dirname(f)), { recursive: true }); fs.copyFileSync(path.join(root, f), path.join(dir, f)); }
   change(dir);
-  execFileSync('git', ['init', '-q'], { cwd: dir });
-  execFileSync('git', ['add', '-A'], { cwd: dir });
   const run = spawnSync(process.execPath, [path.join(dir, 'tools/licences.js')], { encoding: 'utf8' });
   fs.rmSync(dir, { recursive: true, force: true });
   return { passes: run.status === 0, out: run.stdout + run.stderr };
