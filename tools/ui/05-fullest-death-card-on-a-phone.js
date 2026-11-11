@@ -63,10 +63,10 @@ for (const [w, h, want, round] of [[390, 844, 'badge+carve+link', 'carve+link'],
   }
   if (h === 460) {
     await tap(await at('#name-input'));
-    await b.send('Input.insertText', { text: 'Perry' });
+    await b.send('Input.insertText', { text: 'Mossy' });
     await key('Enter');
     f = await ev(fitNow);
-    check(f.rank === 'Carved: Perry.' && !f.field && f.shown === 'carve+link' && f.over <= 0, `phone ${w}x${h}: once your name's carved, the field goes and the Field guide's link is back, and it still fits`, JSON.stringify(f));
+    check(f.rank === 'Carved: Mossy.' && !f.field && f.shown === 'carve+link' && f.over <= 0, `phone ${w}x${h}: once your name's carved, the field goes and the Field guide's link is back, and it still fits`, JSON.stringify(f));
     await key('Escape'); // (keep watching)
     await wait(`!cardUp()`);
     await ev(`pilot.on = false; 1`);
@@ -74,7 +74,7 @@ for (const [w, h, want, round] of [[390, 844, 'badge+carve+link', 'carve+link'],
     await ev(`you().eaten = 40; 1`);
     await die();
     f = await ev(fitNow);
-    check(/^Hall of Fame #\d+, as Perry\.$/.test(f.rank) && !f.field && f.shown === 'carve+link' && f.over <= 0, `phone ${w}x${h}: the next good round, with a name already carved, the link is there from the start`, JSON.stringify(f));
+    check(/^Hall of Fame #\d+, as Mossy\.$/.test(f.rank) && !f.field && f.shown === 'carve+link' && f.over <= 0, `phone ${w}x${h}: the next good round, with a name already carved, the link is there from the start`, JSON.stringify(f));
   }
   if (round) {
     await key('Escape'); // (keep watching)

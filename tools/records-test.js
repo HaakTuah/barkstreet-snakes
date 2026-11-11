@@ -92,13 +92,13 @@ E.recordPlayer({ place: 2, eaten: 9, survived: 30000 });
 E.recordPlayer({ place: 3, eaten: 5, survived: 20000 });
 E.importShared(A.shareable('Ada'), '#4ade80');
 const latest = E.recordPlayer({ place: 1, won: true, eaten: 14, survived: 50000 });
-E.rename(latest, 'Perry');
-ok(E.scores().filter(e => !e.friend).every(e => e.name === 'Perry'), 'carving a name renames your unnamed rounds');
+E.rename(latest, 'Mossy');
+ok(E.scores().filter(e => !e.friend).every(e => e.name === 'Mossy'), 'carving a name renames your unnamed rounds');
 ok(E.scores().filter(e => e.friend).every(e => e.name === 'Ada'), "...and nobody else's");
 E.recordPlayer({ place: 4, eaten: 1, survived: 9000 });
 const again = E.recordPlayer({ place: 2, eaten: 8, survived: 40000 });
 E.rename(again, 'P');
-ok(E.scores().filter(e => !e.friend && e.name === 'Perry').length === 4, '...and a later carve leaves named rounds as they were');
+ok(E.scores().filter(e => !e.friend && e.name === 'Mossy').length === 4, '...and a later carve leaves named rounds as they were');
 
 // What got you, in the same words on the bar and as your nemesis; the woodpecker has its own.
 const F = player();
@@ -129,9 +129,9 @@ ok(find(page, 'records-note').length === 1 && text(find(page, 'empty')[0]).start
 G.recordPlayer({ place: 2, eaten: 7, survived: 50000, killer: 'Sniper' });
 G.recordPlayer({ place: 1, won: true, eaten: 12, survived: 90000 });
 G.setBest(12);
-G.rename(G.scores()[0].id, 'Perry');
+G.rename(G.scores()[0].id, 'Mossy');
 ok(G.stats().played === 2 && G.scores().length === 2 && G.getBest() === 12, '...but the rounds played still count until the tab closes');
-ok(G.getName() === 'Perry' && G.scores().every(e => e.name === 'Perry'), '...and so does the name you carved');
+ok(G.getName() === 'Mossy' && G.scores().every(e => e.name === 'Mossy'), '...and so does the name you carved');
 page = document.createElement('div');
 G.renderScores(page, null, 'all', '#4ade80');
 ok(text(find(page, 'records-note')[0]) === 'This browser isn’t keeping records, so these last until you close the tab.' && find(page, 'scores-table').length === 1, 'the Hall of Fame shows them, and says why they won’t last');
