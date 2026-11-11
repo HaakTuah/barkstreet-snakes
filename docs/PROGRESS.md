@@ -70,6 +70,12 @@ the owner's notes of 2 November and the portals blue and orange, among them).
   start and the controls, in a few hundred words, and points to the game itself, whose lesson and Field guide teach
   each rule ("where rules are taught"); whatever moves goes to the design topic it belongs to, nothing a player needs
   is lost, and the copies check proves nothing is said twice.
+- **A check for code nothing uses** (the owner, 11 November 2026: "Should we have a rule about removing unused code,
+  expert?", then "Yes, expertly to all, expert!"): "Keep it lean" forbids leftovers, but no check holds it, and what
+  died earlier is nobody's task. A small script beside `scripts/codemap.sh` lists every top-level function, constant and
+  file that nothing else names, counting script tags, `sw.js` entries and names looked up as strings as uses. One
+  clean-up PR removes each find, or lists it with its reason where it is reached indirectly; then the script joins
+  `scripts/test.sh`, so a leftover fails. No new package; fingerprints and suites prove play unchanged. A routine lane.
 - **Waiting for a gap, a split by meaning:** `render/world.js` (40 KB), the file-by-file review's last part, in a PR
   of its own when no open lane touches it, proven by fingerprints and suites.
 
