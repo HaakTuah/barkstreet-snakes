@@ -17,18 +17,18 @@ claimed by a draft PR.
 
 ## For the owner
 
-Readings taken are in each PR, for the owner to read when he likes; nothing waits for him but what floor rules 3 and
-14 name. Issues hold [ideas](https://github.com/HaakTuah/barkstreet-snakes/issues?q=is%3Aopen+label%3Aenhancement)
-(`enhancement`) and [bugs](https://github.com/HaakTuah/barkstreet-snakes/issues?q=is%3Aopen+label%3Abug) (`bug`), by
-`core/modules/inbox.md`. Answered rows from before 2 November 2026: `docs/archive/progress-done/owner-answered.md`,
-"For the owner, answered".
+Open [ideas](https://github.com/HaakTuah/barkstreet-snakes/issues?q=is%3Aopen+label%3Aenhancement) (`enhancement`) and
+[bugs](https://github.com/HaakTuah/barkstreet-snakes/issues?q=is%3Aopen+label%3Abug) (`bug`), by
+`core/modules/inbox.md`. Answered rows from before 2 November 2026: `docs/archive/progress-done/owner-answered.md`, "For
+the owner, answered".
 
 ## The polish lane
 
-A side lane of small refinements, beside the AI and engine lane and never ahead of it (the owner, 31 October 2026: "Should
-we add a polish point to each that it can spend the last credits on also?" and, to the design session's shape of it,
-"Yes, and make things as refined as possible!"). Taken when the main lane's current entry is merged or parked, and on
-the second account until its usage is spent; on the main account the brake closes it first (from about 85%).
+A side lane of small refinements, beside the AI and engine lane and never ahead of it (the owner, 31 October 2026:
+"Should we add a polish point to each that it can spend the last credits on also?" and, to the design session's shape of
+it, "Yes, and make things as refined as possible!"). Taken when the main lane's current entry is merged or parked, and
+on the second account until its usage is spent; on the main account the usage brake (`core/modules/claude.md`) closes it
+first.
 - **First: the slop audit** (the owner, 2 November 2026: "Are these 2 games ai sloppy?", then "Yes, please,
   expertly!"): its bar and method are in `docs/slop-bar.md`; the lines it has fixed so far, in
   `docs/archive/progress-done/polish-lane.md`, "The slop audit, done so far". *Left:* the guide's Burrows, Jump, Cuts
@@ -58,6 +58,15 @@ the owner's notes of 2 November and the portals blue and orange, among them).
 
 *Done in the lane:* each line is in `docs/archive/workshop-lane-done.md`.
 
+- **The core's game rules this game does not meet yet** (the design session, 11 November 2026; the core's
+  `reports/2026-11-10-step-3-now.md`, "What each game does not yet do"): (1) whether one `tools/abtest.js` run plays all
+  three groups of "Using a feature must pay" (where it fits, always, never), and its threshold for "by more than chance"
+  listed as a first guess; (2) a check that nothing in `aiView()` says which snake is a person and that no rival's
+  timing gives one away ("The computer players never know who is a person"); (3) whatever the game shows from the past
+  showing its age ("No rule untaught"); (4) online rounds replaying from the log of every input ("Same seed, same
+  game"). What changes the AI, the engine's rules or the online messages goes to the main lane as an entry of its own.
+  The updating rule needs nothing: `docs/design/36-updating.md` takes a new version between rounds, as the core's
+  "Players always play the newest version" now says.
 - **The file-by-file review** (the owner, 2 November 2026; part 1, the docs every session reads, done in PR #334;
   part 2, `docs/design/`, PR #335; part 3, the code, PR #337): its spec is in
   `docs/handoff/queue-specs.md` under the same title.

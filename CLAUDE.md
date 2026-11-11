@@ -5,5 +5,3 @@ its models, effort, helpers and usage.
 
 @AGENTS.md
 @core/modules/claude.md
-
-Fable's work by name here: the writing pass (entry 9 in `docs/PROGRESS.md`).
