@@ -43,7 +43,8 @@ The REST calls from a cloud session: `core/modules/github-calls.md`. Updates, De
   browser install (named by the entry's files), a file carrying someone's licence notice, a font, image, sound or data
   file. Beside it, `node tools/licences.js` checks what only this game has: every address the game loads is an audited
   entry's, each Google Fonts family a font of its own, and `sw.js` keeps the notices. `tools/licences-test.js` stages
-  each form of those that must fail; the core's tests cover the rest. `scripts/test.sh licences` runs both. Something new goes into the audit with its licence, checked from its own published licence file.
+  each form of those that must fail; the core's tests cover the rest. `scripts/test.sh licences` runs both. Something
+  new goes into the audit with its licence, checked from its own published licence file.
 
 ## Run locally
 

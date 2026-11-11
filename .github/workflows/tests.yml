@@ -6,8 +6,8 @@
 # core/modules/how-to-work.md): nothing for notes alone (docs/, tools/dev/, .claude/, any .md), the Node checks and the
 # headless four for any change to the game or its tools, and the page on every screen and the playtest for a change to
 # what the page shows (index.html, style/, fonts/, render/, game/, chatter/, audio/, online.js, net.js, records.js,
-# lineup.js, scores-screen.js, sw.js, the layout and playtest tests and their parts, the parts' loader, the browser
-# driver or this file). "browser", which main requires, gathers the browser jobs' results.
+# lineup.js, scores-screen.js, sw.js, update.js, version.js, the layout and playtest tests and their parts, the parts'
+# loader, the browser driver or this file). "browser", which main requires, gathers the browser jobs' results.
 name: tests
 
 on:
@@ -43,7 +43,7 @@ jobs:
           files=$(git diff --name-only "$BASE" HEAD)
           echo "$files"
           code=$(echo "$files" | grep -v -E '^(docs/|tools/dev/|\.claude/)|\.md$' | grep -c . || true)
-          page=$(echo "$files" | grep -E '^(index\.html|style/|fonts/|render/|game/|chatter/|audio/|online\.js|net\.js|records\.js|lineup\.js|scores-screen\.js|sw\.js|tools/layout-test\.js|tools/layout/|tools/ui-test\.js|tools/ui/|tools/parts\.js|tools/browser\.js|\.github/workflows/tests\.yml)' | grep -c . || true)
+          page=$(echo "$files" | grep -E '^(index\.html|style/|fonts/|render/|game/|chatter/|audio/|online\.js|net\.js|records\.js|lineup\.js|scores-screen\.js|sw\.js|update\.js|version\.js|tools/layout-test\.js|tools/layout/|tools/ui-test\.js|tools/ui/|tools/parts\.js|tools/browser\.js|\.github/workflows/tests\.yml)' | grep -c . || true)
           echo "code=$([ "$code" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
           echo "page=$([ "$page" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
