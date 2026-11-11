@@ -364,7 +364,7 @@ The package to build in PR A wave 2:
 - **Context:** a newcomer wouldn't know the WASD convention. Arrow keys ALREADY steer ("Arrows or WASD steer" on the start card and hints). Make it obvious.
   - **PR A:** clearer arrow-first wording; mouse buttons as an option for one player (left click = jump, right click = flash, no context menu over the board).
   - **PR C:** onboarding shows a small picture of the keys on the start card (arrows, Space, Shift) instead of text.
-- **PR D (after C, continuous): local two-player on one keyboard,** plus a key-settings screen to rebind keys (layouts differ: Mac has no right Ctrl, Nordic punctuation moves).
+- **PR D (after C, continuous): local two-player on one keyboard,** plus a key-settings screen to rebind keys (layouts differ: Mac has no right Ctrl, non-US layouts move punctuation).
   - Reuses the online multi-human seat machinery: names, colours, name arrows; two AI rivals fill the rest.
   - Default keys:
     - **Player 1 (left):** WASD, Q jump, E flash.

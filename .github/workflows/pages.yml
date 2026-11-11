@@ -54,14 +54,15 @@ jobs:
           stamp() { [ ! -f "$1/version.js" ] || sed -i "s/build: 'dev'/build: '$2'/" "$1/version.js"; }
           for attempt in 1 2 3 4 5; do
             cd "$GITHUB_WORKSPACE"
-            git fetch -q origin main
-            main=$(git rev-parse FETCH_HEAD)
             site=$(mktemp -d)
             if git fetch -q origin gh-pages; then
               git worktree add -q "$site" FETCH_HEAD
             else
               git worktree add -q --detach "$site" && (cd "$site" && git checkout -q --orphan gh-pages && git rm -rqf .)
             fi
+            # (main fetched after gh-pages: main only moves forward, so the root never goes back to an older main)
+            git fetch -q origin main
+            main=$(git rev-parse FETCH_HEAD)
             cd "$site"
             # Main at the root, exactly as main has it (everything but the previews is replaced), on every run, so
             # whichever run comes last brings main's latest.
@@ -83,10 +84,11 @@ jobs:
             touch .nojekyll # (served as is: no Jekyll build)
             git add -A
             if git diff --cached --quiet; then echo "nothing changed"; exit 0; fi
-            if [ -z "$PR" ]; then msg="main ${src:0:7}"; elif [ "$GONE" = true ]; then msg="pr-$PR: taken down"; else msg="pr-$PR: ${src:0:7}"; fi
+            if [ -z "$PR" ]; then msg="main ${main:0:7}"; elif [ "$GONE" = true ]; then msg="pr-$PR: taken down"; else msg="pr-$PR: ${src:0:7}"; fi
             git commit -q -m "$msg"
             if git push -q origin HEAD:refs/heads/gh-pages; then exit 0; fi
-            echo "gh-pages moved during the publish; trying again ($attempt)" >&2
+            [ "$attempt" -lt 5 ] || break
+            echo "push refused (another run may have moved gh-pages); trying again ($attempt)" >&2
             sleep $((attempt * 3))
           done
           echo "could not publish to gh-pages" >&2
