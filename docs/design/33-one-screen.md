@@ -160,7 +160,7 @@ board is a size container), whichever way the phone is held:
   board with the longest reason a round gives ("You crashed head-on into Capricious, the same length: both out · 4th
   place · score 128"): up to 403 px the death's quip waits while the carve is offered, up to 340 the badge gives way to
   the carve (a Galaxy Fold's cover screen, 336 px), and up to 300 the card's links wait while you carve. A note stands
-  in for the badge and the carve up to 455 px. Once your name's in ("Carved: Perry.", or "Hall of Fame #4, as Perry." if
+  in for the badge and the carve up to 455 px. Once your name's in ("Carved: Mossy.", or "Hall of Fame #4, as Mossy." if
   you had one) the field goes, the row is one line and the link is back. The rename that a field would offer there is
   the one thing given up, on the smallest boards only.
 - **The round's card when your death ends it** (it has the carve, the badge and the link then) says a little more
