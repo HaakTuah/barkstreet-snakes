@@ -194,3 +194,27 @@ How they are kept, and where each item lives: `archive/instructions.md`.
 
      > Code's should probably note where it has made an assumption, like it does now with questions, so we can check it
      > afterwards.
+
+145. **31 October 2026** (Amarna Letters, its archive item 73, for both games, in the design chat, 11:31 to 11:39 UTC),
+     behind the polish lane, which each game then wrote for itself and which moved here on 11 November 2026, when the
+     audit he asked for ("Is everything perfect now, expert? Be thorough!") found the two copies drifting apart, and
+     the last lines both games still shared (what it looks for, and when it runs) the same day. On a second account he
+     had freed for the week:
+
+     > They can spend 100% on this account i have used it for what I need.
+
+     Then:
+
+     > Should we add a polish point to each that it can spend the last credits on also?
+
+     And, to the design session's shape of the polish lane:
+
+     > Yes, and make things as refined as possible!
+
+146. **11 November 2026** (both games, in the design chat, 16:41 UTC), after the final audit's report, behind
+     the usage brake's removal from the core and both games (floor rule 16 among it, his yes as he asked), and the
+     return of "other providers first", which core archive 76 gave and the cut-down of 10 November had dropped:
+
+     > Well, that took you a couple of hours. Just remove all reference to usage caps, you and the orchestrators all mess
+     > it up, and can't track it in the cloud regardless. Just keep the rules about spending other providers first e.g.
+     > codex. Does that sound sensible to you, expert?

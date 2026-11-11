@@ -53,22 +53,21 @@ The other modules are read when a task needs them, each saying when, among them 
 
 ## Rules that stand
 
-This game's own, beside the core's (`core/modules/game-design.md`, whose sections the quoted names are). The owner's words behind them are in
-`docs/archive/instructions.md`.
+This game's own, beside the core's (`core/modules/game-design.md`, whose sections the quoted names are). The owner's
+words behind them are in `docs/archive/instructions.md`.
 
-- **A person's input before it lands** is never in `aiView()`.
-- **No ability only people use,** here: the rivals see each move used against them, and rules tests prove both through
-  the same engine calls. **No refuges** (the core's "No solutions, only trade-offs"), here: a move takes timing and
-  skill.
+- **A person's input before it lands** is never in `aiView()` ("The computer players never cheat").
+- **No ability only people use** ("No feature only people use"), here: the rivals see each move used against them,
+  and rules tests prove both through the same engine calls. **No refuges** ("No solutions, only trade-offs"), here: a
+  move takes timing and skill.
 - **Human reactions:** the limit the rivals play within ("Strong computer players") is human reaction speed; they get
   better by planning ahead (archive, 11 and 14 October 2026).
 - **Each rival's style** ("Strong computer players") is its trademark, checked by `--signatures` (`TRADEMARKS` in
   `tools/sim/03-report.js`).
-- **Optimizations** (the core's "Same seed, same game"): here, skill is the per-persona win rates and old against new
-  AI coming out even, character every trademark, and feel the round length, deaths by cause and starving and crashes
-  survived; measured with `tools/abtest.js` on fresh seeds (`--metrics … trademarks`).
-- **Conditional goods** ("No solutions, only trade-offs"): checked by simulation; the mushrooms are the example
-  (archive, 31 October 2026).
+- **Optimizations** ("Same seed, same game"): here, skill is the per-persona win rates and old against new AI coming out
+  even, character every trademark, and feel the round length, deaths by cause and starving and crashes survived;
+  measured with `tools/abtest.js` on fresh seeds (`--metrics … trademarks`).
+- **Conditional goods** ("No solutions, only trade-offs"): the mushrooms are the example (archive, 31 October 2026).
 - **Never create a repository named `snake-game`:** old links redirect from it.
 
 ## Commands

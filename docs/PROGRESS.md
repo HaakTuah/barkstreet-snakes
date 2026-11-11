@@ -17,38 +17,27 @@ claimed by a draft PR.
 
 ## For the owner
 
-Readings taken are in each PR, for the owner to read when he likes; nothing waits for him but what floor rules 3 and
-14 name. Issues hold [ideas](https://github.com/HaakTuah/barkstreet-snakes/issues?q=is%3Aopen+label%3Aenhancement)
-(`enhancement`) and [bugs](https://github.com/HaakTuah/barkstreet-snakes/issues?q=is%3Aopen+label%3Abug) (`bug`), by
-`core/modules/inbox.md`. Answered rows from before 2 November 2026: `docs/archive/progress-done/owner-answered.md`,
-"For the owner, answered".
+Open [ideas](https://github.com/HaakTuah/barkstreet-snakes/issues?q=is%3Aopen+label%3Aenhancement) (`enhancement`) and
+[bugs](https://github.com/HaakTuah/barkstreet-snakes/issues?q=is%3Aopen+label%3Abug) (`bug`), by
+`core/modules/inbox.md`. Answered rows from before 2 November 2026: `docs/archive/progress-done/owner-answered.md`, "For
+the owner, answered".
 
 ## The polish lane
 
-A side lane of small refinements, beside the AI and engine lane and never ahead of it (the owner, 31 October 2026: "Should
-we add a polish point to each that it can spend the last credits on also?" and, to the design session's shape of it,
-"Yes, and make things as refined as possible!"). Taken when the main lane's current entry is merged or parked, and on
-the second account until its usage is spent; on the main account the brake closes it first (from about 85%).
+The game's polish lane (`core/modules/work-flow.md`, point 4; the owner, 31 October 2026).
 - **First: the slop audit** (the owner, 2 November 2026: "Are these 2 games ai sloppy?", then "Yes, please,
   expertly!"): its bar and method are in `docs/slop-bar.md`; the lines it has fixed so far, in
   `docs/archive/progress-done/polish-lane.md`, "The slop audit, done so far". *Left:* the guide's Burrows, Jump, Cuts
   and Golden beetle rows, and one name for each thing (hole, pit or gap; jump, hop or leap; the rings). Wildcard's and
   Mason's protected lines stay as they are; the Chinese is rewritten with each changed line.
-- **What belongs:** whatever makes the game feel finished without changing how it plays: things drawn wrong, out of
-  place, overlapping, flickering or cut off; the same thing drawn, named or worded differently in two places (a
-  rival's colours, a move's name in the lesson and the Field guide); layout at 390 px and desktop, phone held upright and
-  sideways, reduced motion, tap targets and contrast; typos and wording in banners, chatter, the Field guide and
-  menus; errors or warnings in the console; sound levels that jar; slow frames that can be made smooth.
-- **What does not:** anything that changes a rule, a number, a rival's play or the online messages; those go to their
-  entries.
-- **How:** look for them by playing the live build, on a phone-sized screen and on desktop, through every screen, a
-  lesson, an online lobby, and whole rounds watched at top speed; each find is its own small PR (about half an hour),
-  with a before-and-after picture on `pr-media`, the suites green and the simulation's fingerprints unchanged (seeds 3
-  and 11), so nothing that changes play slips in; merged once reviewed, one line per fix under this lane. A fix not finished when usage ends is left as the brake says
-  (`core/modules/claude.md`), its find noted for the next session.
+- **What belongs, here:** the same thing drawn, named or worded differently in two places (a rival's colours, a move's
+  name in the lesson and the Field guide); the phone held upright and sideways; the wording of banners, chatter, the
+  Field guide and menus; sound levels that jar. Never the online messages: they go to their entries.
+- **How, here:** a lesson and an online lobby among the screens; the picture on `pr-media`, and play proven unchanged by
+  the suites and the simulation's fingerprints (seeds 3 and 11); one line per fix under this lane.
 
 *Next find:* first the portals drawn to look like Portal's own (the owner, 10 November 2026; how, in design 40,
-"Portals for the wrap"), with before-and-after pictures on a phone and on desktop. Then the code comments in `engine/`, `ai/`, `online.js`, `tuning.js` and the simulation tools that still say "gold portals", renamed to "portals" once #615 (open on those files) has merged; then look for more by playing, as "How" says.
+"Portals for the wrap"). Then the code comments in `engine/`, `ai/`, `online.js`, `tuning.js` and the simulation tools that still say "gold portals", renamed to "portals" once #615 (open on those files) has merged; then look for more by playing, as "How" says.
 
 *Done in the lane:* each fix's line is in `docs/archive/progress-done/polish-lane.md`, "The polish lane, done" (the README for
 players, any key wakes, the woodpecker bigger on a phone, the flash become the dash, the room card and Join on a phone,
@@ -58,6 +47,15 @@ the owner's notes of 2 November and the portals blue and orange, among them).
 
 *Done in the lane:* each line is in `docs/archive/workshop-lane-done.md`.
 
+- **The core's game rules this game does not meet yet** (the design session, 11 November 2026; the core's
+  `reports/2026-11-10-step-3-now.md`, "What each game does not yet do"): (1) whether one `tools/abtest.js` run plays all
+  three groups of "Using a feature must pay" (where it fits, always, never), and its threshold for "by more than chance"
+  listed as a first guess; (2) a check that nothing in `aiView()` says which snake is a person and that no rival's
+  timing gives one away ("The computer players never know who is a person"); (3) whatever the game shows from the past
+  showing its age ("No rule untaught"); (4) online rounds replaying from the log of every input ("Same seed, same
+  game"). What changes the AI, the engine's rules or the online messages goes to the main lane as an entry of its own.
+  The updating rule needs nothing: `docs/design/36-updating.md` takes a new version between rounds, as the core's
+  "Players always play the newest version" now says.
 - **The file-by-file review** (the owner, 2 November 2026; part 1, the docs every session reads, done in PR #334;
   part 2, `docs/design/`, PR #335; part 3, the code, PR #337): its spec is in
   `docs/handoff/queue-specs.md` under the same title.
