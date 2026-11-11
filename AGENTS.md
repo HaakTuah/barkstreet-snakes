@@ -48,7 +48,6 @@ The other modules are read when a task needs them, each saying when, among them 
 - **The smallest setup** here is a scripted board with only the snakes and food it needs, for a few ticks. Full rounds
   only in the simulation's fingerprint and `--check` and the online round trip; long measurements
   (`tools/abtest.js`; censuses through `scripts/sim.sh`) only by hand.
-- **An AI entry waits for the last AI change to merge,** so each head-to-head compares against a settled AI.
 - **The news line:** a PR that makes a change a player would notice puts its line of what is new at the top of
   `version.js`'s news, since every merge goes live.
 
@@ -59,19 +58,15 @@ This game's own, beside the core's (`core/modules/game-design.md`, whose section
 
 - **A person's input before it lands** is never in `aiView()`.
 - **No ability only people use,** here: the rivals see each move used against them, and rules tests prove both through
-  the same engine calls. **No refuges:** a move must take timing and skill and never make anyone safe; measure whether
-  its users outlive everyone, and tighten or drop it.
+  the same engine calls. **No refuges** (the core's "No solutions, only trade-offs"), here: a move takes timing and
+  skill.
 - **Human reactions:** the limit the rivals play within ("Strong computer players") is human reaction speed; they get
   better by planning ahead (archive, 11 and 14 October 2026).
-- **Every new move, measured** ("Using a feature must pay"): a move too rare to move whole rounds is judged per use,
-  each use forked and played on with and without it; and a move is measured against rivals who play its counter (a
-  dodge is worth only what the threat it dodges is worth).
 - **Each rival's style** ("Strong computer players") is its trademark, checked by `--signatures` (`TRADEMARKS` in
   `tools/sim/03-report.js`).
-- **Optimizations may change decisions only if nothing noticeable is lost,** all within noise: skill (per-persona win
-  rates, and old against new AI coming out even), character (every trademark) or feel (round length, deaths by cause,
-  starving and crashes survived). Visuals too: a look-alike is fine if nobody would see a difference. Measure skill,
-  character and feel with `tools/abtest.js` on fresh seeds (`--metrics … trademarks`).
+- **Optimizations** (the core's "Same seed, same game"): here, skill is the per-persona win rates and old against new
+  AI coming out even, character every trademark, and feel the round length, deaths by cause and starving and crashes
+  survived; measured with `tools/abtest.js` on fresh seeds (`--metrics … trademarks`).
 - **Conditional goods** ("No solutions, only trade-offs"): checked by simulation; the mushrooms are the example
   (archive, 31 October 2026).
 - **Never create a repository named `snake-game`:** old links redirect from it.
