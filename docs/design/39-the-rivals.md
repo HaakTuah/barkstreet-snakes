@@ -147,6 +147,10 @@ room a snake needs to turn in.
   hunger would take it below the length worth keeping, not to its first shrink: the shrinks above it cost nothing it
   would keep, so a long rival lets hunger trim it, as one that never ate would, and eats as it nears that length, as
   one would not (entry 6, part 3: read from the meal clock alone, the weighing ate almost as rivals that always eat).
+  Head to head it beats rivals that never eat, who starve, but only comes out even with rivals that always eat: in the
+  frenzy a cut takes about 30 segments, more than meals give, and a cut tail feeds the cutter, so which meals a rival
+  takes hardly moves its length; fewer self-bites and more starving after a cut cancel, and rounds end in crashes (the
+  rework: #655, a rule that makes length cost room).
 - **The tail drop planned ahead:** a drop needs the flash rested, a body one thick and a free cell beyond, and a boxed
   snake rarely has all three. So in the endgame a rival weighs dropping its tail as soon as the search sees it boxed in
   (every crawl ends in less room than it needs, or only through a gap a rival could shut), not only once every crawl

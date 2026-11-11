@@ -1,7 +1,8 @@
 # Agent Core
 
 The rules shared by the owner's agent-built projects, written once so a change is made once and every project takes it
-alike (core archive 68). The owner's words behind each rule: `archive/instructions.md`.
+alike (core archive 68). The owner's words behind each rule: `archive/instructions.md`. A project of another owner takes
+the core the same way, its *owner's account* filled in, and in its copy "the owner" is its own (core archive 148).
 
 ## Two layers
 
@@ -43,7 +44,10 @@ alike (core archive 68). The owner's words behind each rule: `archive/instructio
    `delete-merged-branches.yml` and, if it has versions Dependabot cannot see, `versions.yml` keep their triggers and
    call the core's of the same name (`uses: HaakTuah/agent-core/.github/workflows/<name>.yml@<full commit SHA>`). Only a
    sync PR moves those pins, and only when the called workflow changed; `core.yml` fails a call pinned where it differs
-   from the core's pin. Its `.github/dependabot.yml` ignores `HaakTuah/agent-core*`.
+   from the core's pin. Its `.github/dependabot.yml` ignores `HaakTuah/agent-core*`. A game served by GitHub Pages
+   publishes main with `site-publish.sh root`, and its pull requests' previews through a `preview.yml` of its own, on
+   `workflow_run` of its build, that calls the core's (the build uploads the artifact `preview`: `pr-number`, and the
+   site in `site/`).
 6. **What only it has** stays in its own rule files: what it is, its commands, its queue, its own rules, with pointers
    into `core/`.
 
@@ -54,6 +58,7 @@ and each manifest says what fills it. A task is a project's unit of work; the ma
 
 | Slot | What the project fills in |
 | --- | --- |
+| *owner's account* | the owner's GitHub login, in backticks (`core.yml` fails a manifest without it): his word (floor rule 4) and his inbox (`modules/inbox.md`) |
 | *progress file* | the file that holds the queue and what is done |
 | *report* | where a task's report, with its "Readings taken", goes |
 | *settling references* | what open points are settled against, with the owner's past words |

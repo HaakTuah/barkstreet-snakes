@@ -4,7 +4,7 @@ The newest version, by itself between rounds (entry 2v, 30 October 2026). The ow
 game. [...] Like why would I not want the latest version?"
 
 - **How a page knows.** `version.js` names its build: `'dev'` in the repository, stamped with the commit by
-  `.github/workflows/pages.yml` as it publishes main's copy and each preview's. `update.js` asks for `version.js`
+  `.github/workflows/pages.yml` as it builds main's copy and each preview's. `update.js` asks for `version.js`
   afresh (no cache) when the page is shown again after being hidden and every 30 minutes; a different build means a
   newer version is out. A fresh load is already the newest (`sw.js` asks the network first).
 - **When it goes in.** Only on the start card or the round-over card, alone: not during a round, a nap or a

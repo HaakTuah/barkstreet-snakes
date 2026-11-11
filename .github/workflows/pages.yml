@@ -1,11 +1,9 @@
-# The site on GitHub Pages, served from the gh-pages branch: main at its root,
-# exactly as main has it, and every open pull request playable beside it at
-# pr-<number>/ (https://haaktuah.github.io/barkstreet-snakes/pr-<number>/).
-# A push to main brings the root up to date (the previews stay); a pull
-# request's push brings its preview up to date and puts the link in it; a
-# closed one has its preview taken down. Pages must serve the gh-pages branch
-# (Settings, Pages, "Deploy from a branch": gh-pages, / (root)). The first run
-# of any of these makes the branch if it isn't there yet.
+# The site on GitHub Pages, served from the gh-pages branch: main at its root, exactly as main has it, and every open
+# pull request playable beside it at pr-<number>/ (https://haaktuah.github.io/barkstreet-snakes/pr-<number>/). Pages
+# must serve the gh-pages branch (Settings, Pages, "Deploy from a branch": gh-pages, / (root)).
+# This workflow only builds, with a read-only token: a push to main publishes the root (the previews stay) with the
+# core's site-publish.sh; a pull request's run uploads its preview, which "preview" (preview.yml), always main's own
+# copy, puts at pr-<number>/ through the core's preview workflow, and takes down when the PR closes.
 # sw.js keeps main's offline copy and each preview's apart.
 name: pages
 
@@ -17,93 +15,80 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 # One queue for main and one for each pull request, so no pull request's run waits behind, or is dropped for, another's
 # (GitHub keeps only the newest waiting run in a queue); a newer push to the same pull request replaces the older run.
-# A run that finds gh-pages moved under it by another queue's does its publish again from the new tip.
 concurrency:
   group: gh-pages-${{ github.event.pull_request.number || 'main' }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  publish:
-    # (a fork's pull request gets a read-only token: no preview for it)
+  build:
+    # (a fork's pull request gets no preview)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    env:
-      PR: ${{ github.event.pull_request.number }}
-      GONE: ${{ github.event_name == 'pull_request' && github.event.action == 'closed' }}
-      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v7
+        if: github.event.action != 'closed'
         with:
-          fetch-depth: 0
-          # (a pull request's own head, not the merge GitHub makes of it; closed, main)
-          ref: ${{ github.event_name != 'pull_request' && github.sha || github.event.action == 'closed' && 'main' || github.event.pull_request.head.sha }}
+          persist-credentials: false # nothing after the checkout needs the token
+          # (a pull request's own head, not the merge GitHub makes of it)
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
 
-      - name: Update gh-pages
+      - name: The site
+        if: github.event.action != 'closed'
+        env:
+          PR: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          src=$(git rev-parse HEAD)
-          # (each copy's version.js names its commit, so an open page can tell a newer one is out: see update.js)
-          stamp() { [ ! -f "$1/version.js" ] || sed -i "s/build: 'dev'/build: '$2'/" "$1/version.js"; }
-          for attempt in 1 2 3 4 5; do
-            cd "$GITHUB_WORKSPACE"
-            site=$(mktemp -d)
-            if git fetch -q origin gh-pages; then
-              git worktree add -q "$site" FETCH_HEAD
-            else
-              git worktree add -q --detach "$site" && (cd "$site" && git checkout -q --orphan gh-pages && git rm -rqf .)
-            fi
-            # (main fetched after gh-pages: main only moves forward, so the root never goes back to an older main)
-            git fetch -q origin main
-            main=$(git rev-parse FETCH_HEAD)
-            cd "$site"
-            # Main at the root, exactly as main has it (everything but the previews is replaced), on every run, so
-            # whichever run comes last brings main's latest.
-            find . -mindepth 1 -maxdepth 1 ! -name .git ! -name 'pr-[0-9]*' -exec rm -rf {} +
-            git -C "$GITHUB_WORKSPACE" archive "$main" | tar -x
-            stamp . "${main:0:7}"
-            # (and for the same reason, any closed pull request's preview still up goes)
-            open=" $(gh api "repos/$GITHUB_REPOSITORY/pulls?state=open&per_page=100" --paginate --jq '.[].number' | tr '\n' ' ') "
-            for d in pr-[0-9]*; do [ -d "$d" ] && [[ "$open" != *" ${d#pr-} "* ]] && rm -rf "$d"; done
+          mkdir site
+          if [ -n "$PR" ]; then
             # A preview: the game's own files, without the core, the tools and the notes.
-            if [ -n "$PR" ]; then
-              rm -rf "pr-$PR"
-              if [ "$GONE" != true ]; then
-                mkdir "pr-$PR"
-                git -C "$GITHUB_WORKSPACE" archive "$src" | tar -x -C "pr-$PR" --exclude=core --exclude=tools --exclude=docs --exclude=scripts --exclude=.claude --exclude=.github --exclude='*.md'
-                stamp "pr-$PR" "${src:0:7}"
-              fi
-            fi
-            touch .nojekyll # (served as is: no Jekyll build)
-            git add -A
-            if git diff --cached --quiet; then echo "nothing changed"; exit 0; fi
-            if [ -z "$PR" ]; then msg="main ${main:0:7}"; elif [ "$GONE" = true ]; then msg="pr-$PR: taken down"; else msg="pr-$PR: ${src:0:7}"; fi
-            git commit -q -m "$msg"
-            if git push -q origin HEAD:refs/heads/gh-pages; then exit 0; fi
-            [ "$attempt" -lt 5 ] || break
-            echo "push refused (another run may have moved gh-pages); trying again ($attempt)" >&2
-            sleep $((attempt * 3))
-          done
-          echo "could not publish to gh-pages" >&2
-          exit 1
+            git archive HEAD | tar -x -C site --exclude=core --exclude=tools --exclude=docs --exclude=scripts --exclude=.claude --exclude=.github --exclude='*.md'
+          else
+            git archive HEAD | tar -x -C site # main at the root, exactly as main has it
+          fi
+          # (each copy's version.js names its commit, so an open page can tell a newer one is out: see update.js)
+          [ ! -f site/version.js ] || sed -i "s/build: 'dev'/build: '$(git rev-parse --short=7 HEAD)'/" site/version.js
 
-      - name: Link the preview in the pull request
-        if: github.event_name == 'pull_request' && github.event.action != 'closed'
-        run: |
-          set -euo pipefail
-          owner=${GITHUB_REPOSITORY%%/*}
-          url="https://${owner,,}.github.io/${GITHUB_REPOSITORY#*/}/pr-$PR/"
-          body="<!-- pages-preview -->
-          **Play this pull request:** $url
-          (its latest push, ${{ github.event.pull_request.head.sha }}; Pages takes a minute or two to update)"
-          ids=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --paginate --jq '.[] | select(.body | startswith("<!-- pages-preview -->")) | .id')
-          id=${ids%%$'\n'*}
-          if [ -n "$id" ]; then gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -f body="$body" >/dev/null
-          else gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" -f body="$body" >/dev/null; fi
+      # What the publisher reads: the PR's number (checked against the PR itself before use) and, unless it closed,
+      # its site.
+      - name: Hand the preview to the publisher
+        if: github.event_name == 'pull_request'
+        env:
+          PR: ${{ github.event.pull_request.number }}
+        run: mkdir -p preview && echo "$PR" > preview/pr-number && { [ ! -d site ] || mv site preview/site; }
+
+      - uses: actions/upload-artifact@v7
+        if: github.event_name == 'pull_request'
+        with:
+          name: preview
+          path: preview
+          include-hidden-files: true
+          retention-days: 3
+
+      - uses: actions/upload-artifact@v7
+        if: github.event_name != 'pull_request'
+        with:
+          name: site
+          path: site
+          include-hidden-files: true
+          retention-days: 3
+
+  publish:
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: site
+          path: site
+      - name: Publish to the root of gh-pages
+        run: core/scripts/site-publish.sh root site

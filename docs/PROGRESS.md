@@ -8,11 +8,13 @@ to his words in the archive.
 
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
-**The main lane is 6** (round six C: the woodpecker in three acts; parts 1 to 3 done, 3+ next), the first open entry
-that waits on nothing (3c waits on 3b's Wildcard part, 3d on 3c, and 4 on 5). Item 5's part 7 (one pricing model, built
-afresh) is next, now that 6's part 3 (PR #615) is in, as the queue's order says; 2y++'s last step waits on part 7. The
-entries before these are done (`docs/archive/progress-done/queue-done.md`). The polish lane and the workshop lane run
-beside it, each claimed by a draft PR.
+**The main lane is 6** (round six C: the woodpecker in three acts; parts 1 and 2 done, part 3's clock in with its
+weighing open, 3+ next), the first open entry that waits on nothing (3c waits on 3b's Wildcard part, 3d on 3c, and 4 on
+5). Item 5's part 7 (one pricing model, built afresh) is next, now that 6's part 3 (PR #615) is in, as the queue's order
+says; 2y++'s last step waits on part 7. The entries before these are done
+(`docs/archive/progress-done/queue-done.md`). The polish lane and the workshop lane run beside it, each claimed by a
+draft PR, and so does 2z. **A bug first:** the ui suite's death card check that fails now and then in CI (#673) gets a
+lane of its own now, a tests lane on Sonnet.
 
 ## For the owner
 
@@ -63,12 +65,37 @@ the owner's notes of 2 November and the portals blue and orange, among them).
   Step 3 is done (#636, #637).
 - **The browser suites' one ending** (#526): `tools/render-test.js` and `tools/input-test.js` end with `report.end(b)`
   like the others.
+- **The README as a front page** (an outside review of the repositories, 11 November 2026: about 6,400 words, rules
+  that read like a legal code, one paragraph of over 3,000 characters): the README keeps what the game is, how to
+  start and the controls, in a few hundred words, and points to the game itself, whose lesson and Field guide teach
+  each rule ("where rules are taught"); whatever moves goes to the design topic it belongs to, nothing a player needs
+  is lost, and the copies check proves nothing is said twice.
 - **Waiting for a gap, a split by meaning:** `render/world.js` (40 KB), the file-by-file review's last part, in a PR
   of its own when no open lane touches it, proven by fingerprints and suites.
 
 ## The queue, in order
 
 **Done:** every finished entry, 1 to 2w, with its PR, is in `docs/archive/progress-done/queue-done.md`, "The queue, done".
+
+### 2z. Online play that hangs on no single free service (the owner, 11 November 2026, on the design session's list of what would break: "fix all of it, expertly!"; a side lane now)
+
+Friends find each other only through PeerJS's free public broker, and connect only where Google's free STUN servers
+find a route (design 22, "Connecting"): if the broker goes down or turns us away, nobody can start or join a game, and
+friends behind strict networks (some mobile carriers, offices) cannot connect at all. Make online play survive both, at
+no cost and with no server of our own:
+1. **A second way to find each other,** independent of PeerJS's broker and tried when it cannot be reached, the room
+   code and link unchanged for players: free public relays any browser reaches over WebSocket (such as Nostr relays or
+   a public MQTT broker, as the MIT-licensed Trystero does), several at once so that no one of them is needed, loaded
+   only when Play with friends opens and pinned like PeerJS.
+2. **A relay for strict networks** (TURN), free and with nothing secret in the page; if none fits, the PR says so and
+   the marked spot in `net.js` stays, for the owner to decide on a paid one.
+3. **A plain answer when it fails:** the lobby says which part failed (finding each other, or the route) instead of
+   waiting.
+
+Each new host is one exact line in the content security policy and in `SECURITY.md`; licences by floor rule 10; the
+online round trip passes through each way in; no message changes (`tools/protocol-shapes.json` unchanged). It touches
+`net.js` and the lobby, not the online messages, so it runs beside the main lane, on Opus (online sync is the *hard
+work*).
 
 ### 2y++. The golden flight, followed up (the owner, 2 November 2026; #399 and #401; side lanes now, the last step after part 7)
 
@@ -130,11 +157,13 @@ three acts" (its draft: `docs/handoff/woodpecker-acts-draft.md`). In six playabl
 1. **Done** (PR #605): the three acts (calm, the watcher and its gaze, the first pecks, the frenzy), `?acts=`; Sovereign's
    time at home asked in #607.
 2. **Done** (PR #610): it cuts shapes along an outline, down to a floor, then fights.
-3. **Done** (PR #615): hunger a conditional good to the end, by one hunger clock for the whole round (#616; design 04;
-   the follow-up idea #655). 3+. Islands that stay (#611; design 38, "The log stays one piece"). 4. The food A/B
+3. **The clock done** (PR #615): hunger a factor to the end, by one hunger clock for the whole round (#616; design 04).
+   **Open:** the rivals' weighing of a meal beats never eating but comes out only even with always eating, since in the
+   frenzy cuts take more length than meals give (design 39, "Hunger read against that length"); the rework, a rule that
+   makes length cost room, is the idea #655, built once the owner queues it. 3+. Islands that stay (#611; design 38, "The log stays one piece"). 4. The food A/B
    (`?food=fall`), chips and a bounce if the knock stays (the old study patches, `tools/dev/r6-study-tools/patch-flex*.js`,
    rebuilt for it). 5. Skeletons and trademark memorials. 6. 2h's numbers measured again, among them the endgame's
-   meals: part 3's weighing beat never eating but only came out even with always eating (#655).
+   meals.
 
 ### 7. Then: local multiplayer (PR D)
 

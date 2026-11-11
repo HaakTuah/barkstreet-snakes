@@ -1,6 +1,6 @@
 # Core manifest
 
-Core: HaakTuah/agent-core at 6f9cbebf5d0228f16b930c7f5f932c4a7c693694, copied whole under core/ (never edited here).
+Core: HaakTuah/agent-core at cc101a39f233afcb0c2da75b138cab57861814cd, copied whole under core/ (never edited here).
 Paths: in the core's files, one into floor/, modules/, scripts/, setup/, archive/ or reports/ is under core/; any other is ours.
 Floor: whole. Modules: all.
 
@@ -10,6 +10,7 @@ Floor: whole. Modules: all.
 ## Slots
 | Slot | Here |
 | --- | --- |
+| *owner's account* | `HaakTuah` |
 | *progress file* | `docs/PROGRESS.md` |
 | *report* | the PR's description |
 | *settling references* | "Rules that stand" in `AGENTS.md`, or the design section |
