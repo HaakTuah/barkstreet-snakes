@@ -16,9 +16,9 @@ updates:
       actions:
         patterns: ["*"]
         update-types: ["minor", "patch"] # a new major is its own PR (core/modules/updates.md)
-  # The tools' packages (tools/package.json: TypeScript, Playwright; the game ships none). Each update is audited in
-  # tools/licences.json in the same PR, or the licence gate fails it. What Dependabot cannot see (PeerJS, Node's exact
-  # version) is in tools/versions.json, checked monthly by the core's versions check (.github/workflows/versions.yml).
+  # The tools' packages (tools/package.json: TypeScript, Playwright; the game ships none). The licence check reads each
+  # update's licence from the lock, with what it pulls in. What Dependabot cannot see (PeerJS) is in tools/versions.json,
+  # checked monthly by the core's versions check (.github/workflows/versions.yml); Node is the core's one pin.
   - package-ecosystem: "npm"
     directory: "/tools"
     schedule:

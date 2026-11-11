@@ -1,6 +1,6 @@
 # The licence check (floor rule 10, and SECURITY.md, rule 10), on every pull request, Dependabot's included: the core's,
-# with this game's config (tools/licence-check.json), and this game's own scan that nothing it uses is left out of its
-# audit (tools/licences.js, which runs the core's check too) with that scan's test. Read-only, and no secrets.
+# with this game's config (tools/licence-check.json), and this game's own part (tools/licences.js: what the game loads,
+# its fonts, the notices kept offline) with its test. Read-only, and no secrets.
 name: licences
 
 on:
@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   licences:
-    uses: HaakTuah/agent-core/.github/workflows/licences.yml@81039140a22761cb7d37c87e2e8cac8e1bfadcad
+    uses: HaakTuah/agent-core/.github/workflows/licences.yml@cf447366a16cbf1d8268e89e429a7816611d007f
     with:
       config: tools/licence-check.json
 
@@ -25,7 +25,7 @@ jobs:
       - uses: actions/setup-node@v7 # (it loads the core's script by require, which needs Node 22.12 or later)
         with:
           node-version-file: core/.node-version # the core's one exact Node ("Node" in core/modules/updates.md)
-      - name: Everything used is audited
+      - name: Every address the game loads, and each font, audited
         run: node tools/licences.js
-      - name: The scan fails on every form of something unaudited (invented names)
+      - name: It fails on every form of one left out (invented names)
         run: node tools/licences-test.js

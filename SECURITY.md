@@ -12,7 +12,9 @@ floor's numbers, what only this game has and what the floor leaves to it; who mi
    - **the rule files:** besides those the floor names, `docs/review-guidelines.md`, `docs/slop-bar.md` and
      `docs/threat-model.md`;
    - **the checks on the work:** the configs of the core's copies, reading-size and licence checks
-     (`tools/copies.json`, `tools/copies-baseline.json`, `tools/sizes.json` and `tools/licence-check.json`).
+     (`tools/copies.json`, `tools/copies-baseline.json`, `tools/sizes.json` and `tools/licence-check.json`), the licence
+     audit (`tools/licences.json`), this game's own part of the licence check and its test (`tools/licences.js`,
+     `tools/licences-test.js`), and `tools/.npmrc`, which keeps install scripts off.
 5. **Untrusted input, and its checks:**
    - **Online peers** (PeerJS, `net.js` and `online.js`): anyone with a room code. Their checks: each
      message's pinned shape (`tools/online-test.js`, `tools/protocol-shapes.json`); names through the one cleaner
@@ -36,10 +38,11 @@ floor's numbers, what only this game has and what the floor leaves to it; who mi
    - **Storage keys** (`snake-*`, `barkbite-muted`, `barkbite-music`) and `net.js`'s `PREFIX` are never renamed
      (players' records and online play depend on them), and hold no secret.
 10. **What ships** is the files the live site serves; its notices file is
-    [`THIRD-PARTY-NOTICES.txt`](THIRD-PARTY-NOTICES.txt). The audit of every licence, with which list each is held to,
-    is `tools/licences.json`.
-17. **Dependabot's package files:** `tools/package.json` and `tools/package-lock.json` (and, for a version PR,
-    `tools/licences.json`, their audit).
+    [`THIRD-PARTY-NOTICES.txt`](THIRD-PARTY-NOTICES.txt), which the licence check holds every shipped entry's name in.
+    The audit of every licence, with which list each is held to, is `tools/licences.json`.
+15. **No install scripts:** `ignore-scripts` in `tools/.npmrc`, for every install of the tools' packages.
+17. **Dependabot's package files:** `tools/package.json` and `tools/package-lock.json`, whose every package the
+    licence check reads from the lock at each version.
 
 ## Reporting a weakness
 

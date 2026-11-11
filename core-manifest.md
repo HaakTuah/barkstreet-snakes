@@ -1,6 +1,6 @@
 # Core manifest
 
-Core: HaakTuah/agent-core at 34a532112299810aecb0e2c9da710be1a9eab44a, copied whole under core/ (never edited here).
+Core: HaakTuah/agent-core at cf447366a16cbf1d8268e89e429a7816611d007f, copied whole under core/ (never edited here).
 Paths: in the core's files, one into floor/, modules/, scripts/, setup/, archive/ or reports/ is under core/; any other is ours.
 Floor: whole. Modules: all.
 
@@ -16,6 +16,7 @@ Floor: whole. Modules: all.
 | *settling references* | "Rules that stand" in `AGENTS.md`, or the design section |
 | *descriptions* | the topic file in `docs/design/` and, for what a player sees, the README, the lesson, the Field guide row and the hints on screen |
 | *copies check* | `core/scripts/copies.mjs` with `tools/copies.json` |
+| *size marks* | `tools/sizes.json` |
 | *large file* | a large game file (`render/world.js`, about 40 KB): `scripts/codemap.sh <file>` or grep |
 | *one at a time* | AI and engine-rules changes, and changes to the online messages |
 | *design-checked PRs* | engine-rules and AI entries (new moves and rules, the rivals' play) |
