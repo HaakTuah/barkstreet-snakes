@@ -1,6 +1,6 @@
-# The monthly version check (the owner, 2 November 2026), the core's: what Dependabot cannot see (tools/versions.json:
-# PeerJS) is compared with the npm registry's newest stable release old enough to take, and each one behind gets an
-# enhancement issue for the owner, unless one is already open. Scheduled runs use main's copy of these files.
+# The monthly version check, the core's: what Dependabot cannot see (tools/versions.json) is compared with the npm
+# registry's newest stable release old enough to take, and each one behind gets an enhancement issue for the owner,
+# unless one is already open. Scheduled runs use main's copy of these files.
 name: versions
 
 on:

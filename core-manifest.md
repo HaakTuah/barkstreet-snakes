@@ -6,7 +6,6 @@ Floor: whole. Modules: all.
 
 ## Names
 - A task: an entry in the queue.
-- The main lane: the main lane.
 
 ## Slots
 | Slot | Here |

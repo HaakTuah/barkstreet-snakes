@@ -20,10 +20,12 @@ permissions:
   contents: write
   pull-requests: write
 
-# (one at a time: each run commits to gh-pages on top of the last)
+# One queue for main and one for each pull request, so no pull request's run waits behind, or is dropped for, another's
+# (GitHub keeps only the newest waiting run in a queue); a newer push to the same pull request replaces the older run.
+# A run that finds gh-pages moved under it by another queue's does its publish again from the new tip.
 concurrency:
-  group: gh-pages
-  cancel-in-progress: false
+  group: gh-pages-${{ github.event.pull_request.number || 'main' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   publish:
@@ -46,42 +48,51 @@ jobs:
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
-          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           src=$(git rev-parse HEAD)
-          site=$(mktemp -d)
-          if git fetch -q origin gh-pages; then
-            git worktree add -q "$site" FETCH_HEAD
-          else
-            git worktree add -q --detach "$site" && (cd "$site" && git checkout -q --orphan gh-pages && git rm -rqf .)
-          fi
-          cd "$site"
-          # Main at the root, exactly as main has it (everything but the previews is
-          # replaced), on every run: GitHub drops a run still waiting its turn when a
-          # newer one comes, so whichever runs brings main's latest.
-          find . -mindepth 1 -maxdepth 1 ! -name .git ! -name 'pr-[0-9]*' -exec rm -rf {} +
-          git -C "$GITHUB_WORKSPACE" fetch -q origin main
-          git -C "$GITHUB_WORKSPACE" archive FETCH_HEAD | tar -x
           # (each copy's version.js names its commit, so an open page can tell a newer one is out: see update.js)
           stamp() { [ ! -f "$1/version.js" ] || sed -i "s/build: 'dev'/build: '$2'/" "$1/version.js"; }
-          stamp . "$(git -C "$GITHUB_WORKSPACE" rev-parse --short=7 FETCH_HEAD)"
-          # (and for the same reason, any closed pull request's preview still up goes)
-          open=" $(gh api "repos/$GITHUB_REPOSITORY/pulls?state=open&per_page=100" --paginate --jq '.[].number' | tr '\n' ' ') "
-          for d in pr-[0-9]*; do [ -d "$d" ] && [[ "$open" != *" ${d#pr-} "* ]] && rm -rf "$d"; done
-          # A preview: the game's own files, without the core, the tools and the notes.
-          if [ -n "$PR" ]; then
-            rm -rf "pr-$PR"
-            if [ "$GONE" != true ]; then
-              mkdir "pr-$PR"
-              git -C "$GITHUB_WORKSPACE" archive "$src" | tar -x -C "pr-$PR" --exclude=core --exclude=tools --exclude=docs --exclude=scripts --exclude=.claude --exclude=.github --exclude='*.md'
-              stamp "pr-$PR" "${src:0:7}"
+          for attempt in 1 2 3 4 5; do
+            cd "$GITHUB_WORKSPACE"
+            site=$(mktemp -d)
+            if git fetch -q origin gh-pages; then
+              git worktree add -q "$site" FETCH_HEAD
+            else
+              git worktree add -q --detach "$site" && (cd "$site" && git checkout -q --orphan gh-pages && git rm -rqf .)
             fi
-          fi
-          touch .nojekyll # (served as is: no Jekyll build)
-          git add -A
-          if git diff --cached --quiet; then echo "nothing changed"; exit 0; fi
-          if [ -z "$PR" ]; then msg="main ${src:0:7}"; elif [ "$GONE" = true ]; then msg="pr-$PR: taken down"; else msg="pr-$PR: ${src:0:7}"; fi
-          git commit -q -m "$msg"
-          git push -q origin HEAD:refs/heads/gh-pages
+            # (main fetched after gh-pages: main only moves forward, so the root never goes back to an older main)
+            git fetch -q origin main
+            main=$(git rev-parse FETCH_HEAD)
+            cd "$site"
+            # Main at the root, exactly as main has it (everything but the previews is replaced), on every run, so
+            # whichever run comes last brings main's latest.
+            find . -mindepth 1 -maxdepth 1 ! -name .git ! -name 'pr-[0-9]*' -exec rm -rf {} +
+            git -C "$GITHUB_WORKSPACE" archive "$main" | tar -x
+            stamp . "${main:0:7}"
+            # (and for the same reason, any closed pull request's preview still up goes)
+            open=" $(gh api "repos/$GITHUB_REPOSITORY/pulls?state=open&per_page=100" --paginate --jq '.[].number' | tr '\n' ' ') "
+            for d in pr-[0-9]*; do [ -d "$d" ] && [[ "$open" != *" ${d#pr-} "* ]] && rm -rf "$d"; done
+            # A preview: the game's own files, without the core, the tools and the notes.
+            if [ -n "$PR" ]; then
+              rm -rf "pr-$PR"
+              if [ "$GONE" != true ]; then
+                mkdir "pr-$PR"
+                git -C "$GITHUB_WORKSPACE" archive "$src" | tar -x -C "pr-$PR" --exclude=core --exclude=tools --exclude=docs --exclude=scripts --exclude=.claude --exclude=.github --exclude='*.md'
+                stamp "pr-$PR" "${src:0:7}"
+              fi
+            fi
+            touch .nojekyll # (served as is: no Jekyll build)
+            git add -A
+            if git diff --cached --quiet; then echo "nothing changed"; exit 0; fi
+            if [ -z "$PR" ]; then msg="main ${main:0:7}"; elif [ "$GONE" = true ]; then msg="pr-$PR: taken down"; else msg="pr-$PR: ${src:0:7}"; fi
+            git commit -q -m "$msg"
+            if git push -q origin HEAD:refs/heads/gh-pages; then exit 0; fi
+            [ "$attempt" -lt 5 ] || break
+            echo "push refused (another run may have moved gh-pages); trying again ($attempt)" >&2
+            sleep $((attempt * 3))
+          done
+          echo "could not publish to gh-pages" >&2
+          exit 1
 
       - name: Link the preview in the pull request
         if: github.event_name == 'pull_request' && github.event.action != 'closed'
