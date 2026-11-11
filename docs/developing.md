@@ -35,13 +35,10 @@ The REST calls from a cloud session: `core/modules/github-calls.md`. Updates, De
   package's licence from the lock at every version. The game itself ships no dependencies.
 - **Node:** the core's one exact pin, `core/.node-version`, which CI and the cloud setup read ("Node" in
   `core/modules/updates.md`); here a move also keeps the fingerprints.
-- **The licence check** (`.github/workflows/licences.yml`) runs the core's (`core/scripts/licences.mjs`, with
-  `tools/licence-check.json`), which holds every package of the tools' lock to its list, each shipped entry's name in
-  `THIRD-PARTY-NOTICES.txt`, and, by its scan (`core/scripts/licence-scan.mjs`), everything else the game and its tools
-  use to the audit, `tools/licences.json`: an action (but the owner's own), a package fetched with npx or npm (written
-  `name@exact.version`, at the version its entry audits, so an update is audited again), a fetcher such as Playwright's
-  browser install (named by the entry's files), a file carrying someone's licence notice, a font, image, sound or data
-  file. Beside it, `node tools/licences.js` checks what only this game has: every address the game loads is an audited
+- **The licence check** (`.github/workflows/licences.yml`) runs the core's, `core/scripts/licences.mjs` with
+  `tools/licence-check.json`, against the audit, `tools/licences.json`, and the notices, `THIRD-PARTY-NOTICES.txt`; what
+  it and its scan hold is in the headers of `core/scripts/licences.mjs` and `core/scripts/licence-scan.mjs`. Beside it,
+  `node tools/licences.js` checks what only this game has: every address the game loads is an audited
   entry's, each Google Fonts family a font of its own, and `sw.js` keeps the notices. `tools/licences-test.js` stages
   each form of those that must fail; the core's tests cover the rest. `scripts/test.sh licences` runs both. Something
   new goes into the audit with its licence, checked from its own published licence file.

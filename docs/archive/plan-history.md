@@ -178,7 +178,7 @@ The package to build in PR A wave 2:
 
 - **Phones** (feature/phones at 99b971f after the first fix round: boards 346->382 upright and 268->310 on its side; layout-test with 558 checks). The recheck found a new HIGH: at in-between heights upright, the bird sits over the edge column. Round 2 (eee32e7) fixed it: a 580-size sweep found 0 px over cells, the bird at least 24 px, layout-test at 629 checks. Round 3 is running (wf_4c3b22a1-8cf) for four lows: the board shrinks mid-round when the score reaches 3 digits at in-between heights; 568x320 slices the chatter; the help hides at 321-340 tall; the DESIGN list. Then the PR to main, with pictures from .git/[…]-tools/phones/build/after.
 - **PR #30 OPEN (2026-10-19): the snake S** (feature/snake-s: e34f0db plus 8902976, the copy and palette fixes from the verify), to main; pictures on pr-media f6fdcd9.
-- **2026-10-19: the weekly usage limit stopped four runs mid-way** (resets 6am Oslo). They were resumed from their journals:
+- **2026-10-19: the weekly usage limit stopped four runs mid-way**. They were resumed from their journals:
   - the S verify (wf_d331af06-bf8; build e34f0db on branch s-snake: the inked honey snake, judges 3-0);
   - phones fix and recheck (wf_9c1b5ce6-b7c; build 8e0f720 on feature/phones);
   - the playtest (wf_5f45a451-801; nap and guide diagnoses cached);
@@ -364,7 +364,7 @@ The package to build in PR A wave 2:
 - **Context:** a newcomer wouldn't know the WASD convention. Arrow keys ALREADY steer ("Arrows or WASD steer" on the start card and hints). Make it obvious.
   - **PR A:** clearer arrow-first wording; mouse buttons as an option for one player (left click = jump, right click = flash, no context menu over the board).
   - **PR C:** onboarding shows a small picture of the keys on the start card (arrows, Space, Shift) instead of text.
-- **PR D (after C, continuous): local two-player on one keyboard,** plus a key-settings screen to rebind keys (layouts differ: Mac has no right Ctrl, Norwegian punctuation moves).
+- **PR D (after C, continuous): local two-player on one keyboard,** plus a key-settings screen to rebind keys (layouts differ: Mac has no right Ctrl, Nordic punctuation moves).
   - Reuses the online multi-human seat machinery: names, colours, name arrows; two AI rivals fill the rest.
   - Default keys:
     - **Player 1 (left):** WASD, Q jump, E flash.
