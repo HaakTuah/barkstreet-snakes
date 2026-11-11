@@ -8,12 +8,11 @@ to his words in the archive.
 
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
-**The main lane is 6** (round six C: the woodpecker in three acts; parts 1 and 2 done, part 3 next, PR #615), the first
-open entry that waits on nothing (3c waits on 3b's Wildcard part, 3d on 3c, and 4 on 5). Item 5's part 7 (one pricing
-model, built afresh) is next once 6's part 3 (PR #615) merges, as the queue's order says; 2y++'s last step waits on part
-7. The entries before
-these are done (`docs/archive/progress-done/queue-done.md`). The polish lane and the workshop lane run beside it, each
-claimed by a draft PR.
+**The main lane is 6** (round six C: the woodpecker in three acts; parts 1 to 3 done, 3+ next), the first open entry
+that waits on nothing (3c waits on 3b's Wildcard part, 3d on 3c, and 4 on 5). Item 5's part 7 (one pricing model, built
+afresh) is next, now that 6's part 3 (PR #615) is in, as the queue's order says; 2y++'s last step waits on part 7. The
+entries before these are done (`docs/archive/progress-done/queue-done.md`). The polish lane and the workshop lane run
+beside it, each claimed by a draft PR.
 
 ## For the owner
 
@@ -131,10 +130,10 @@ three acts" (its draft: `docs/handoff/woodpecker-acts-draft.md`). In six playabl
 1. **Done** (PR #605): the three acts (calm, the watcher and its gaze, the first pecks, the frenzy), `?acts=`; Sovereign's
    time at home asked in #607.
 2. **Done** (PR #610): it cuts shapes along an outline, down to a floor, then fights.
-3. Hunger a conditional good to the end, by one hunger clock for the whole round (#616; design 04). 3+. Islands
-   that stay (#611; design 38, "The log stays one piece"). 4. The food A/B (`?food=fall`),
-   chips and a bounce if the knock stays (the old study patches, `tools/dev/r6-study-tools/patch-flex*.js`, rebuilt for
-   it). 5. Skeletons and trademark memorials. 6. 2h's numbers measured again.
+3. **Done** (PR #615): hunger a conditional good to the end, by one hunger clock for the whole round (#616; design 04;
+   the follow-up idea #655). 3+. Islands that stay (#611; design 38, "The log stays one piece"). 4. The food A/B
+   (`?food=fall`), chips and a bounce if the knock stays (the old study patches, `tools/dev/r6-study-tools/patch-flex*.js`,
+   rebuilt for it). 5. Skeletons and trademark memorials. 6. 2h's numbers measured again.
 
 ### 7. Then: local multiplayer (PR D)
 
