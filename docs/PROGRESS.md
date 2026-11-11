@@ -133,7 +133,8 @@ three acts" (its draft: `docs/handoff/woodpecker-acts-draft.md`). In six playabl
 3. **Done** (PR #615): hunger a conditional good to the end, by one hunger clock for the whole round (#616; design 04;
    the follow-up idea #655). 3+. Islands that stay (#611; design 38, "The log stays one piece"). 4. The food A/B
    (`?food=fall`), chips and a bounce if the knock stays (the old study patches, `tools/dev/r6-study-tools/patch-flex*.js`,
-   rebuilt for it). 5. Skeletons and trademark memorials. 6. 2h's numbers measured again.
+   rebuilt for it). 5. Skeletons and trademark memorials. 6. 2h's numbers measured again, among them the endgame's
+   meals: part 3's weighing beat never eating but only came out even with always eating (#655).
 
 ### 7. Then: local multiplayer (PR D)
 

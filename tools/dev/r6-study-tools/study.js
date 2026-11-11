@@ -203,7 +203,7 @@ function play({ from, to, seed, ahead, root }) {
       if (ahead) for (const s of g.snakes) { if (!s.alive) continue; if (!E.canThinkAhead(g, s)) break; E.thinkAhead(g, s); }
       const alive0 = g.snakes.filter(s => s.alive);
       for (const m of marks) if (R.aliveAt[m] == null && g.time >= m) { R.aliveAt[m] = alive0.length; R.lenAt[m] = alive0.map(s => s.body.length); }
-      const phase = sdAt != null ? 'sd' : g.time < T.HUNGER_MID_FROM_MS ? 'open' : 'mid';
+      const phase = sdAt != null ? 'sd' : g.time < 45000 ? 'open' : 'mid'; // (45 s: where the mid-round meal clock began, until one clock ran all round: #616)
       const dt = E.tickMs(g);
       const wk = sdAt != null ? 'sd' : g.weather.kind;
       const W = (R.weather[wk] ||= { snakeMs: 0, meals: 0, deaths: 0, crashes: 0, flashes: 0, jumps: 0, golden: 0, alight: 0 });

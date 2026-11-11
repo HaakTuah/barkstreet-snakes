@@ -128,8 +128,8 @@ Past a length of its own (`hungryBelow`), a fed rival wants food only `fedFactor
 (sudden death, its third act: `view.act` 3) nothing new grows but the last apples, so the "fed" state switches off for everyone (and all
 round in a lean food season; a plentiful one starts the weighing below before the woodpecker: "Food seasons" in
 `04-food-and-the-world.md`). Hunger trumps
-it too: with under 10 s before it starts starving (`AI_HUNGRY_MS`; in the endgame, before it would starve below the
-length worth keeping, below), any rival goes looking for food, harder the closer it gets. Ghost, which stays small on purpose, keeps small but not starvation-small: before the woodpecker food counts
+it too: with under 10 s before it starts starving (`AI_HUNGRY_MS`; in the endgame, before hunger would take it below
+the length worth keeping, below), any rival goes looking for food, harder the closer it gets. Ghost, which stays small on purpose, keeps small but not starvation-small: before the woodpecker food counts
 in full for it under 18 cells (`hungryBelow` 18, `fedFactor` 0.4), and in the endgame it keeps the least (below), and hungry it keeps its distance from heads less (none, desperate), so its
 distance doesn't cost it the meals it needs.
 
