@@ -17,6 +17,7 @@ else echo "NOT INSTALLED: Node (no core/scripts/node.sh on refs/remotes/origin/m
 lock="$here/tools/package-lock.json"
 if [ ! -f "$lock" ]; then echo "NOT INSTALLED: the tools' packages (no tools/package-lock.json in $here)"
 elif cmp -s "$lock" "$here/tools/node_modules/.installed-lock"; then echo "tools: present"
+# (--ignore-scripts said here too, since this script runs main's copy and tools/.npmrc is the branch's: SECURITY.md, rule 15)
 elif npm ci --prefix "$here/tools" --ignore-scripts --no-audit --no-fund >/tmp/tools-install.log 2>&1 \
   && cp "$lock" "$here/tools/node_modules/.installed-lock"; then echo "tools: installed"
 else echo "NOT INSTALLED: the tools' packages (see /tmp/tools-install.log); the types suite will install them if it can"; fi
