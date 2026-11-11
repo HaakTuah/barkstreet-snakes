@@ -13,9 +13,10 @@
     { "name": "Chromium", "kind": "tool", "version": "Playwright's, or the runner's Chrome", "licence": "BSD-3-Clause", "files": ["scripts/cloud-setup.sh"], "used": "the browser suites, headless: the runner's Chrome in CI; on a cloud machine without one, Playwright's, which scripts/cloud-setup.sh installs" },
     { "name": "Node.js", "kind": "tool", "version": "26", "licence": "MIT", "used": "every suite and tool: the core's exact pin, core/.node-version, which CI reads and core/scripts/node.sh fetches for the cloud as node-linux-<arch>" },
     { "name": "npm", "kind": "tool", "version": "bundled with Node", "licence": "Artistic-2.0", "used": "npm ci installs tools/package.json's packages" },
-    { "name": "GitHub CLI", "kind": "tool", "version": "the runner's", "licence": "MIT", "used": "gh in pages.yml: the open pull requests, and each preview's comment" },
 
-    { "name": "actions/checkout", "kind": "action", "licence": "MIT", "used": "every workflow" },
-    { "name": "actions/setup-node", "kind": "action", "licence": "MIT", "used": "tests.yml and licences.yml" }
+    { "name": "actions/checkout", "kind": "action", "licence": "MIT", "used": "pages.yml, tests.yml and licences.yml" },
+    { "name": "actions/download-artifact", "kind": "action", "licence": "MIT", "used": "pages.yml: main's built site, for its publish" },
+    { "name": "actions/setup-node", "kind": "action", "licence": "MIT", "used": "tests.yml and licences.yml" },
+    { "name": "actions/upload-artifact", "kind": "action", "licence": "MIT", "used": "pages.yml: the built site, and a pull request's preview for the core's preview workflow" }
   ]
 }

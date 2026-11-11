@@ -2,10 +2,11 @@
 // so a new version is never hidden behind an old one, and the cache only
 // when the network's gone. Same-origin GETs only (online play goes its own
 // way).
-// A pull request's preview (pr-<n>/ beside main on Pages: see
-// .github/workflows/pages.yml) has a service worker of its own, scoped to its
-// folder, with a cache of its own: main's never answers for a preview, nor a
-// preview's for main, and each drops only its own old caches.
+// A pull request's preview (pr-<n>/ beside main on Pages: built by
+// .github/workflows/pages.yml, published by preview.yml) has a service worker
+// of its own, scoped to its folder, with a cache of its own: main's never
+// answers for a preview, nor a preview's for main, and each drops only its own
+// old caches.
 const SCOPE = new URL(self.registration.scope).pathname; // (its folder: /barkstreet-snakes/ for main, /barkstreet-snakes/pr-<n>/ for a preview)
 const PREVIEW = (SCOPE.match(/\/pr-(\d+)\/$/) || [])[1];
 const CACHE = (PREVIEW ? `barkstreet-snakes-pr${PREVIEW}-` : 'barkstreet-snakes-') + '5'; // (a new number drops the old cache on activate; only the game's own: every project site of the account shares this origin)
