@@ -1,5 +1,5 @@
 {
-  "about": "What Dependabot cannot see (.github/dependabot.yml covers the actions and tools/package.json; Node's pin is the core's, core/.node-version): each version is read from its file by its pattern, never written here, and tools/versions.js compares it with the npm registry's newest stable release old enough to take ('days': a week, two for a script players' browsers load; 'sameMajor': only within the major version the project chose). .github/workflows/versions.yml runs it monthly and opens an enhancement issue for each one behind.",
+  "about": "What Dependabot cannot see (.github/dependabot.yml covers the actions and tools/package.json; Node's pin is the core's, core/.node-version): each version is read from its file by its pattern, never written here, and the core's core/scripts/versions.mjs compares it with the npm registry's newest stable release old enough to take ('days': a week, two for a script players' browsers load; 'sameMajor': only within the major version the project chose). .github/workflows/versions.yml runs it monthly, by the core's versions workflow, and opens an enhancement issue for each one behind; scripts/test.sh's versions suite checks on every PR that each pattern still finds exactly one version.",
   "entries": [
     {
       "name": "peerjs",

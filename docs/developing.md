@@ -18,10 +18,12 @@ For people working on the game: how to run it locally, the checks and experiment
 The REST calls from a cloud session: `core/modules/github-calls.md`. Updates, Dependabot, Node and CodeQL:
 `core/modules/updates.md`, with floor rules 7, 15 and 17 (`core/floor/topics.md`); this game's part of them:
 
-- **What Dependabot cannot see** (PeerJS, loaded from cdnjs with its SRI hash) is listed in `tools/versions.json`, each read from its own file; `.github/workflows/versions.yml` runs
-  `tools/versions.js` monthly (from `main`) and opens an `enhancement` issue for each one behind the newest stable
-  release old enough under floor rule 7. The issue is only a notice: the lane works from what `node tools/versions.js`
-  prints on `main`, never from the issue's text.
+- **What Dependabot cannot see** (PeerJS, loaded from cdnjs with its SRI hash) is listed in `tools/versions.json`, read
+  from its own file by the core's versions check, which `.github/workflows/versions.yml` runs monthly (from `main`),
+  opening an `enhancement` issue for each one behind the newest stable release old enough under floor rule 7; on every
+  PR, `scripts/test.sh versions` checks offline that each pattern still finds exactly one version. The issue is only a
+  notice: the lane works from what `node core/scripts/versions.mjs tools/versions.json` prints on `main`,
+  never from the issue's text.
 - **PeerJS, what ships to players,** gets floor rule 7's source check with this game's specifics: the readable build in
   the package (`dist/peerjs.js`) is what is diffed (that the minified file is the same code rests on the publisher,
   signature and provenance checks, and the PR says so); `PEERJS_SRI` is computed from the minified file inside that
@@ -29,19 +31,17 @@ The REST calls from a cloud session: `core/modules/github-calls.md`. Updates, De
   same. The policy that limits a bad release's harm: `SECURITY.md`, rule 7.
 - **The tools' packages** (TypeScript, Playwright) are in `tools/package.json` and its lock, at exact versions: the one
   place CI's types step, `scripts/cloud-setup.sh` and `scripts/test.sh` read them from (`npm ci --prefix tools`, into
-  `tools/node_modules/`, never committed), and Dependabot's npm updates aim at it; each update is audited in
-  `tools/licences.json` in the same PR. The game itself ships no dependencies.
+  `tools/node_modules/`, never committed), and Dependabot's npm updates aim at it; the licence check reads each
+  package's licence from the lock at every version. The game itself ships no dependencies.
 - **Node:** the core's one exact pin, `core/.node-version`, which CI and the cloud setup read ("Node" in
   `core/modules/updates.md`); here a move also keeps the fingerprints.
-- **The licence check** (`.github/workflows/licences.yml`) runs the core's (`core/scripts/licences.mjs`, with
-  `tools/licence-check.json`), which holds every package of the tools' lock and every entry of the audit,
-  `tools/licences.json`, to its list. `node tools/licences.js` first checks that nothing the game or its tools use is
-  left out of the audit: an action (but the owner's own), a package fetched with npx or npm, an address the game loads
-  from, a file in the game or its tools carrying someone's licence notice, or a font, image, sound or data file; and that
-  every shipped entry has its notice in `THIRD-PARTY-NOTICES.txt`. A package an npx or npm install fetches must be
-  written `name@exact.version`, or it can't be audited and fails, and at the version its entry audits (an update is
-  audited again, with what it pulls in), as must a lock file's packages; `tools/licences-test.js` stages each form the
-  check must reject. Something new goes into the audit with its licence, checked from its own published licence file.
+- **The licence check** (`.github/workflows/licences.yml`) runs the core's, `core/scripts/licences.mjs` with
+  `tools/licence-check.json`, against the audit, `tools/licences.json`, and the notices, `THIRD-PARTY-NOTICES.txt`; what
+  it and its scan hold is in the headers of `core/scripts/licences.mjs` and `core/scripts/licence-scan.mjs`. Beside it,
+  `node tools/licences.js` checks what only this game has: every address the game loads is an audited
+  entry's, each Google Fonts family a font of its own, and `sw.js` keeps the notices. `tools/licences-test.js` stages
+  each form of those that must fail; the core's tests cover the rest. `scripts/test.sh licences` runs both. Something
+  new goes into the audit with its licence, checked from its own published licence file.
 
 ## Run locally
 

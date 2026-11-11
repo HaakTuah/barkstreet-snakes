@@ -1,7 +1,8 @@
-#!/usr/bin/env node
-// The pointer check ("One fact, one place" in core/modules/how-to-work.md): every pointer in the rule files (SECURITY.md, rule 3) to a
-// file, a section or a numbered point must lead to one that exists, or it fails, saying which. A pointer is read from
-// the forms below; a form it cannot read is listed, never guessed. Node's own modules only.
+// The pointer check ("One fact, one place" in modules/how-to-work.md), for every project that takes the core: every
+// pointer in the project's rule files (rule-files.mjs, beside this file) to a file, a section or a numbered point must
+// lead to one that exists, or it fails, saying which. A pointer is read from the forms below; a form it cannot read is
+// listed, never guessed. Node's own modules only. It checks the project it lies in (core/scripts/ there), whatever the
+// directory it is started from; the copies workflow (.github/workflows/copies.yml) runs it on every PR.
 //
 //   `path`                     a tracked file or folder (a bare name, such as `net.js`, if exactly one file has it)
 //   [text](path)               a tracked file or folder, relative to the file it is in (a web address is not checked)
@@ -10,15 +11,22 @@
 //   "Section", point 6         a numbered point in that section (point 6 of "Section" too)
 //   ("Section"), point 6       with no file: the file the pointer is in; a lone point: its own section's list
 // A run of these joined only by a comma, "and", "in", "of" or an opening bracket is one pointer: one file, its sections
-// and its points. The check is run by .github/workflows/copies.yml, its pointers job.
+// and its points.
 //
-//   node tools/pointers-test.js
-const fs = require('fs');
-const { posix } = require('path');
-process.chdir(require('path').join(__dirname, '..'));
-const { git, ruleFiles } = require('./rule-files.js');
-const RULES = ruleFiles();
+//   node core/scripts/pointers.mjs
+import { execFileSync } from "node:child_process";
+import fs from "node:fs";
+import { posix } from "node:path";
+import { fileURLToPath } from "node:url";
+import { ruleFiles } from "./rule-files.mjs";
+
+const git = args => execFileSync("git", args, { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
+process.chdir(fileURLToPath(new URL(".", import.meta.url)));
+process.chdir(git(["rev-parse", "--show-toplevel"]).trim());
 const tracked = git(['ls-files', '-z']).split('\0').filter(Boolean);
+const RULES = ruleFiles();
+for (const rf of RULES.filter(f => !tracked.includes(f))) { console.error(`FAIL: the rule file ${rf} is no tracked file`); process.exitCode = 1; }
+if (process.exitCode) process.exit(1);
 const files = new Set(tracked), dirs = new Set(tracked.flatMap(f => f.split('/').slice(0, -1).map((_, i, p) => p.slice(0, i + 1).join('/') + '/')));
 const plain = s => s.toLowerCase().replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/\s+/g, ' ').trim();
 
@@ -50,7 +58,8 @@ function atoms(text) {
   for (const m of text.matchAll(re)) {
     const at = { start: m.index, end: m.index + m[0].length };
     if (m[1] !== undefined) {
-      if (!/^[\w.@-]*[\w-]\/|^[\w./-]+\.(md|js|json|sh|css|html|yml|txt)$|\/$/.test(m[1]) || /[<>*]/.test(m[1])) continue;
+      // a package's name, such as `@types/node`, is no path
+      if (!/^[\w.@-]*[\w-]\/|^[\w./-]+\.(md|js|json|sh|css|html|yml|txt)$|\/$/.test(m[1]) || /[<>*]/.test(m[1]) || m[1].startsWith('@')) continue;
       out.push({ ...at, file: m[1] });
     } else if (m[2] || m[3]) out.push({ ...at, title: plain(m[2] || m[3]) });
     else {

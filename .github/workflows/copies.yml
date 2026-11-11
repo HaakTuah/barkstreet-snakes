@@ -1,6 +1,6 @@
-# The copies check (one fact, one place: the core's modules/how-to-work.md), the core's with this game's config
-# (tools/copies.json), and this game's pointer and reading-size checks, on every pull request and push to main, docs-only
-# changes included, since the rule files are what they guard most. Read-only.
+# The copies, pointer and reading-size checks (one fact, one place; read little: the core's modules/how-to-work.md),
+# the core's, with this game's config (tools/copies.json) and marks (tools/sizes.json), on every pull request and push
+# to main, docs-only changes included, since the rule files are what they guard most. Read-only.
 name: copies
 
 on:
@@ -13,26 +13,7 @@ permissions:
 
 jobs:
   copies:
-    uses: HaakTuah/agent-core/.github/workflows/copies.yml@81039140a22761cb7d37c87e2e8cac8e1bfadcad
+    uses: HaakTuah/agent-core/.github/workflows/copies.yml@d33bc087090ff6ff0b635321d26f6e6fd361a813
     with:
       config: tools/copies.json
-
-  pointers:
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false # nothing after the checkout needs the token
-      - uses: actions/setup-node@v7 # (it loads the core's script by require, which needs Node 22.12 or later)
-        with:
-          node-version-file: core/.node-version # the core's one exact Node ("Node" in core/modules/updates.md)
-      - name: The base branch's latest commit, for its marks (not the whole history)
-        if: github.event_name == 'pull_request'
-        env:
-          BASE: ${{ github.base_ref }}
-        run: git fetch --no-tags --depth=1 origin "+refs/heads/$BASE:refs/remotes/origin/$BASE"
-      - name: Every pointer resolves; the files read at the start keep to their marks
-        env:
-          SIZES_BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || '' }}
-        run: node tools/pointers-test.js && node tools/sizes-test.js
+      sizes: tools/sizes.json

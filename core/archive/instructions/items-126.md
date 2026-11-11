@@ -162,3 +162,35 @@ How they are kept, and where each item lives: `archive/instructions.md`.
 
      > But it already does a security review when the change was made in the agent-core repo? We are not cyberdyne
      > systems…
+
+141. **11 November 2026** (the core; first in both games, 2 November 2026). On the audit of what players read: "Not 1
+     to 10 review here?" To each kind of text scored 1 to 10, only a 10 passing, his read of the lines before and after
+     the final word: "Yes, expertly!" Told that both games had written that bar for themselves, and asked for his yes to
+     move it into the core's review guidelines, which change only on his word:
+
+     > yes to the text bar
+
+142. **11 November 2026** (the core): "Why dont my stand-in answer on ideas? is there more it could do, expert?" Told
+     that it answers open points in work he has chosen, while nothing is built from an idea until he moves it into
+     the progress file, and offered its verdicts on ideas, its sureness and a check of what players see: "And I like
+     the idea of my stand-in, doing more. Is there even more it could do, expert?" Then, on giving them in its answers
+     rather than in calls of their own: "Can't it do it, when it is already answering any questions? Then it has to
+     read my previous takes regardless? Seems more efficient?" To doing so, with one weekly sweep for the ideas no
+     answer touches:
+
+     > Yes to everything, expertly!
+
+143. **11 November 2026** (the core): "Are you duplicating rules that should be in agent-core, expert?" Told which
+     rules the games repeat from the core, and which rules one game wrote that hold for every game or project (an
+     optimization changes nothing a player would notice; a feature too rare to change whole games judged per use and
+     against its counter; no refuges; a long task may end its session at a passed gate):
+
+     > Yes, do all of it, expertly!
+
+144. **28 October 2026** (Amarna Letters, in the design chat, 07:33), the words behind a reading listed with what it
+     rests on, which that game's design document had written as part of its "Reason from the pillars"; moved here when
+     he asked on 11 November 2026, of the core and both games, "Is everything perfectly cohesive, shared, no
+     duplication, and perfect now, expert? Be thorough in your checks!":
+
+     > Code's should probably note where it has made an assumption, like it does now with questions, so we can check it
+     > afterwards.

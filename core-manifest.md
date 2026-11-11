@@ -1,12 +1,11 @@
 # Core manifest
 
-Core: HaakTuah/agent-core at 81039140a22761cb7d37c87e2e8cac8e1bfadcad, copied whole under core/ (never edited here).
+Core: HaakTuah/agent-core at 1fa542b7578b35acd01078a83620728524bcd77e, copied whole under core/ (never edited here).
 Paths: in the core's files, one into floor/, modules/, scripts/, setup/, archive/ or reports/ is under core/; any other is ours.
 Floor: whole. Modules: all.
 
 ## Names
 - A task: an entry in the queue.
-- The main lane: the main lane.
 
 ## Slots
 | Slot | Here |
@@ -16,6 +15,7 @@ Floor: whole. Modules: all.
 | *settling references* | "Rules that stand" in `AGENTS.md`, or the design section |
 | *descriptions* | the topic file in `docs/design/` and, for what a player sees, the README, the lesson, the Field guide row and the hints on screen |
 | *copies check* | `core/scripts/copies.mjs` with `tools/copies.json` |
+| *size marks* | `tools/sizes.json` |
 | *large file* | a large game file (`render/world.js`, about 40 KB): `scripts/codemap.sh <file>` or grep |
 | *one at a time* | AI and engine-rules changes, and changes to the online messages |
 | *design-checked PRs* | engine-rules and AI entries (new moves and rules, the rivals' play) |
