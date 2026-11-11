@@ -13,7 +13,7 @@ Entry 6 (round six C; the owner, 19 October 2026: the round had "just 2 stages. 
 sudden elimination"). Each act starts at a time drawn in its window after the one before (`ACT_WATCH_MS`,
 `ACT_PECKS_MS`, `ACT_FRENZY_MS` in `tuning.js`; `game.acts`, drawn by the host), so a round is never quite predictable;
 `E.actOf` gives the act. A playtest pins them in the address: `?acts=70,140,200` (seconds, three rising times).
-- **0. Calm,** from the start: food, weather, beetles, the meal clock from 0:45.
+- **0. Calm,** from the start: food, weather, beetles.
 - **1. The watcher** (50–75 s in; the owner's starting point, 60–90 s, then 50–80 s and 50–80 s, made rounds of
   246 s at the median, against the draft's 3 to 3.5 minutes): it lands outside the board and scouts it. No pecks. It watches a spot on the log
   (`w.gaze`, anywhere that isn't a hole), then moves to a new vantage 2 to 4 times (`WATCH_LOOKS`), its last look

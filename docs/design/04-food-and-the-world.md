@@ -24,8 +24,9 @@ was tried and measured, is in `docs/archive/design-food.md`).
   beetles").
 - **A meal keeps you 12 s** (`HUNGER_MS`), one clock for the whole round (the owner, 9 November 2026, #616), so a
   meal is a trade-off to the end (entry 6, part 3): late in the round it buys life but costs room in a shrinking log.
-  Its length is set by the endgame test: rivals that always eat and rivals that never eat in the woodpecker's frenzy
-  both do worse than ones that weigh each meal ("The endgame: a meal is worth the life it buys" in `39-the-rivals.md`).
+  Its length is set by the endgame test, rivals that always eat and rivals that never eat in the woodpecker's frenzy
+  against ones that weigh each meal ("The endgame: a meal is worth the life it buys" in `39-the-rivals.md`): at 12 s
+  never eating does clearly worse, and always eating only a little, too little to decide (#655 would widen it).
   Each snake keeps how long its last meal keeps it (`mealMs`, carried online), and its tag's bar is measured against
   that, so it's full after any meal. Under `HUNGER_WARN_MS` (6 s) left, the tag shows it's starving: the bar in Berry,
   a ring pulsing round the tag, and "starving" for a screen reader.
