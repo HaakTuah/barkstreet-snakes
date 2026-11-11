@@ -24,28 +24,22 @@ the owner, answered".
 
 ## The polish lane
 
-A side lane of small refinements, beside the AI and engine lane and never ahead of it (the owner, 31 October 2026:
-"Should we add a polish point to each that it can spend the last credits on also?" and, to the design session's shape of
-it, "Yes, and make things as refined as possible!"). Taken when the main lane's current entry is merged or parked, and
-on the second account until its usage is spent; on the main account the usage brake (`core/modules/claude.md`) closes it
-first.
+The game's polish lane (`core/modules/work-flow.md`, point 4; the owner, 31 October 2026), taken when the main lane's
+current entry is merged or parked, and on the second account until its usage is spent; on the main account the usage
+brake (`core/modules/claude.md`) closes it first.
 - **First: the slop audit** (the owner, 2 November 2026: "Are these 2 games ai sloppy?", then "Yes, please,
   expertly!"): its bar and method are in `docs/slop-bar.md`; the lines it has fixed so far, in
   `docs/archive/progress-done/polish-lane.md`, "The slop audit, done so far". *Left:* the guide's Burrows, Jump, Cuts
   and Golden beetle rows, and one name for each thing (hole, pit or gap; jump, hop or leap; the rings). Wildcard's and
   Mason's protected lines stay as they are; the Chinese is rewritten with each changed line.
-- **What belongs:** whatever makes the game feel finished without changing how it plays: things drawn wrong, out of
-  place, overlapping, flickering or cut off; the same thing drawn, named or worded differently in two places (a
-  rival's colours, a move's name in the lesson and the Field guide); layout at 390 px and desktop, phone held upright and
-  sideways, reduced motion, tap targets and contrast; typos and wording in banners, chatter, the Field guide and
-  menus; errors or warnings in the console; sound levels that jar; slow frames that can be made smooth.
-- **What does not:** anything that changes a rule, a number, a rival's play or the online messages; those go to their
-  entries.
-- **How:** look for them by playing the live build, on a phone-sized screen and on desktop, through every screen, a
-  lesson, an online lobby, and whole rounds watched at top speed; each find is its own small PR (about half an hour),
-  with a before-and-after picture on `pr-media`, the suites green and the simulation's fingerprints unchanged (seeds 3
-  and 11), so nothing that changes play slips in; merged once reviewed, one line per fix under this lane. A fix not finished when usage ends is left as the brake says
-  (`core/modules/claude.md`), its find noted for the next session.
+- **What belongs, here:** things drawn wrong, out of place, overlapping, flickering or cut off; the same thing drawn,
+  named or worded differently in two places (a rival's colours, a move's name in the lesson and the Field guide); layout
+  at 390 px and desktop, phone held upright and sideways, reduced motion, tap targets and contrast; typos and wording in
+  banners, chatter, the Field guide and menus; errors or warnings in the console; sound levels that jar; slow frames
+  that can be made smooth. Never a rule, a number, a rival's play or the online messages: those go to their entries.
+- **How, here:** through every screen, a lesson, an online lobby, and whole rounds watched at top speed; the picture on
+  `pr-media`, and play proven unchanged by the suites and the simulation's fingerprints (seeds 3 and 11); one line per
+  fix under this lane.
 
 *Next find:* first the portals drawn to look like Portal's own (the owner, 10 November 2026; how, in design 40,
 "Portals for the wrap"), with before-and-after pictures on a phone and on desktop. Then the code comments in `engine/`, `ai/`, `online.js`, `tuning.js` and the simulation tools that still say "gold portals", renamed to "portals" once #615 (open on those files) has merged; then look for more by playing, as "How" says.
