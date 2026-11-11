@@ -1,7 +1,7 @@
 // The version this page is, and what is new in it. build is stamped with the
-// commit by .github/workflows/pages.yml as it publishes the site (main's and
-// each preview's); anywhere else it stays 'dev', and nothing updates. update.js
-// asks for this file afresh to learn whether a newer version is out.
+// commit by .github/workflows/pages.yml as it builds the site (main's and each
+// preview's); anywhere else it stays 'dev', and nothing updates. update.js asks
+// for this file afresh to learn whether a newer version is out.
 // news: one line per change a player would notice, newest first, written by
 // the PR that makes it, since every merge goes live (50 characters at most:
 // with "New: " in front it takes the start card's intro line for a few rounds
