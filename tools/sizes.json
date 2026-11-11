@@ -14,5 +14,8 @@
   },
   "total": 50851,
   "split": 51200,
+  "skip": [
+    "docs/archive/"
+  ],
   "past": {}
 }

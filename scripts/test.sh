@@ -19,8 +19,13 @@ for s in "${suites[@]}"; do
     pids=(); for j in 1 2 3 4 5; do LAYOUT_JOB=$j node tools/layout-test.js >"$dir/layout-$j.log" 2>&1 & pids+=($!); done
     rc=0; for p in "${pids[@]}"; do wait "$p" || rc=1; done
     for j in 1 2 3 4 5; do echo "== job $j"; cat "$dir/layout-$j.log"; done >"$log"
-  elif [ "$s" = copies ]; then # (the core's copies check with this game's config, then the pointer and reading-size checks)
-    { node core/scripts/copies.mjs tools/copies.json && node tools/pointers-test.js && node tools/sizes-test.js; } >"$log" 2>&1; rc=$?
+  elif [ "$s" = copies ]; then # (the core's copies, pointer and reading-size checks, with this game's config and marks)
+    { node core/scripts/copies.mjs tools/copies.json && node core/scripts/pointers.mjs && node core/scripts/reading-size.mjs tools/sizes.json; } >"$log" 2>&1; rc=$?
+  elif [ "$s" = versions ]; then # (offline: each entry of tools/versions.json finds exactly one version in its file, by the core's own reading)
+    node --input-type=module -e 'import fs from "node:fs"; import { current } from "./core/scripts/versions.mjs";
+      const found = current(JSON.parse(fs.readFileSync("tools/versions.json", "utf8")).entries, ".");
+      if (!found.length) throw new Error("tools/versions.json lists no versions");
+      for (const e of found) console.log(`ok   ${e.name} ${e.version} in ${e.file}`);' >"$log" 2>&1; rc=$?
   else node "tools/$s-test.js" >"$log" 2>&1; rc=$?; fi
   t=$(( $(date +%s) - start ))
   if [ $rc -eq 0 ]; then echo "PASS $s (${t}s)"; else

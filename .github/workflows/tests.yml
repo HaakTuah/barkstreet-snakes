@@ -79,8 +79,8 @@ jobs:
         run: node tools/records-test.js
       - name: Service worker
         run: node tools/sw-test.js
-      - name: The versions Dependabot cannot see
-        run: node tools/versions-test.js
+      - name: The versions Dependabot cannot see, each found once
+        run: scripts/test.sh versions
       # Four of seed 3's rounds, each played on its own seed (round r of a run
       # with --seed S is round 0 of one with --seed S + 7919 r): 29, 37 and
       # 38, and 47. Between them they cross every kind of event the engine
