@@ -49,9 +49,11 @@ function readAppetite() {
   // and on past it while I starve; in the endgame, before hunger takes me
   // below my length worth keeping: the shrinks above it cost nothing I'd
   // keep, so I let hunger trim me, as a fed snake that never ate would, and
-  // eat as I near it, as one would not: entry 6, part 3)
-  const spare = endgame ? Math.max(0, myLen - keepLen) * TUNE.STARVE_EVERY_MS : 0;
-  const ramp = me.hungerLeft == null ? 0 : Math.max(0, (TUNE.AI_HUNGRY_MS - me.hungerLeft - spare) / TUNE.AI_HUNGRY_MS);
+  // eat as I near it, as one would not: entry 6, part 3; once I starve, from
+  // my next shrink, since my length already counts the ones behind me, as
+  // the engine's own countdown does)
+  const left = endgame && myLen > keepLen ? Math.max(me.hungerLeft, me.starveIn) + (myLen - keepLen) * TUNE.STARVE_EVERY_MS : me.hungerLeft;
+  const ramp = me.hungerLeft == null ? 0 : Math.max(0, (TUNE.AI_HUNGRY_MS - left) / TUNE.AI_HUNGRY_MS);
   hunger = Math.min(1, ramp);
   fed = !hunger && !endgame && !scarce && myLen >= (w.hungryBelow ?? Infinity);
   foodW0 = fed ? w.food * w.fedFactor : Math.max(w.food, 8 * hunger) * (1 + 2 * hunger);

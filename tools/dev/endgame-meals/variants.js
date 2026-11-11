@@ -22,7 +22,7 @@ if (!dir || !['always', 'never'].includes(which) || !fs.existsSync(file)) {
 }
 const EDITS = {
   always: [
-    ['const spare = endgame ?', 'const spare = false ?'],
+    ['const left = endgame && myLen > keepLen ?', 'const left = false ?'],
     ['growShare = myLen < keepLen ? 1 :', 'growShare = endgame || myLen < keepLen ? 1 :'],
     ['ateAt > -HOLE && len >= keepLen ?', 'ateAt > -HOLE && !endgame && len >= keepLen ?'],
   ],
