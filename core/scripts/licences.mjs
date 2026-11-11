@@ -15,17 +15,18 @@
 // "lockfiles", the npm lockfiles whose every package is checked; "ships", the package.json files (each beside one of
 // those lockfiles) whose runtime dependencies, and those of the workspaces it declares, ship ([] if no package ships);
 // "data" and "fonts", the packages checked by hand to be data or assets, or fonts; "audit", the project's audit of what
-// no lockfile holds, a JSON file whose "entries" each have a "name", a "licence", "ships": true if it ships, and "kind":
-// "data", "asset" or "font" where that widens its list ("github-service" with LicenseRef-GitHub-Terms: one of GitHub's
-// own services, GITHUB_SERVICES below, which never ships; "own" with LicenseRef-Owner: the owner's own work, all rights
-// reserved, as floor rule 10 ends), and "notice", its notice; "notices", the third-party notices file that ships, where
-// the project keeps one (every entry that ships, but the owner's own, is named in it; without one, each such entry has
-// its "notice", for the notices the project builds, as floor rule 10 asks); "ignoreScriptsIn", the .npmrc files that must keep packages' own install scripts off
-// (floor rule 15); and "scan", which folders reach users, for the scan that nothing used is left out of the audit
-// (licence-scan.mjs, beside this file, which says what it finds). Every .npmrc in the project may hold only settings
-// that leave where npm fetches from alone, since a data or font package is known by its registry address.
+// no lockfile holds, a JSON file whose "entries" each have a "name", a "licence", "ships": true if it ships, and
+// "kind": "data", "asset" or "font" where that widens its list ("github-service" with LicenseRef-GitHub-Terms: one of
+// GitHub's own services, GITHUB_SERVICES below, which never ships; "own" with LicenseRef-Owner: the owner's own work,
+// all rights reserved, as floor rule 10 ends), and "notice", its notice; "notices", the third-party notices file that
+// ships, where the project keeps one (every entry that ships, but the owner's own, is named in it; without one, each
+// such entry has its "notice", for the notices the project builds, as floor rule 10 asks); "ignoreScriptsIn", the
+// .npmrc files that must keep packages' own install scripts off (floor rule 15); and "scan", which folders reach users,
+// for the scan that nothing used is left out of the audit (licence-scan.mjs, beside this file, which says what it
+// finds). Every .npmrc in the project may hold only settings that leave where npm fetches from alone, since a data or
+// font package is known by its registry address.
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, posix } from "node:path";
 import { fileURLToPath } from "node:url";
 import { scan } from "./licence-scan.mjs";
@@ -295,7 +296,10 @@ export function check(config, root) {
   if (config.audit) {
     entries = JSON.parse(readFileSync(join(root, config.audit), "utf8")).entries;
     if (!Array.isArray(entries)) throw new Error(`${config.audit} has no "entries" list`);
-    const notices = config.notices === undefined ? undefined : readFileSync(join(root, config.notices), "utf8");
+    // (the notices file the config names; null when it names none there, which fails once, not for every entry)
+    const noticesFile = config.notices === undefined ? undefined : join(root, config.notices);
+    const notices = noticesFile === undefined ? undefined : existsSync(noticesFile) && statSync(noticesFile).isFile() ? readFileSync(noticesFile, "utf8") : null;
+    if (notices === null) failures.push(`the config's "notices", ${config.notices}, names no file`);
     for (const e of entries) {
       if (!e || typeof e.name !== "string" || !e.name || typeof e.licence !== "string" || !e.licence) { failures.push(`${config.audit}: an entry without a name or licence: ${JSON.stringify(e)}`); continue; }
       // (a "ships" or "kind" of the wrong shape would check less without a word)
@@ -306,7 +310,7 @@ export function check(config, root) {
         continue;
       }
       if (!licenceOk(e.licence, allowedFor(e.name, e.ships === true, e.kind ?? null))) failures.push(`${config.audit}: ${e.name}: ${e.licence} is not on the list for ${e.ships === true ? "what ships" : "tools that only run"}`);
-      if (e.ships === true && !(notices === undefined ? typeof e.notice === "string" && e.notice.trim() : notices.includes(e.name))) {
+      if (e.ships === true && notices !== null && !(notices === undefined ? typeof e.notice === "string" && e.notice.trim() : notices.includes(e.name))) {
         failures.push(`${config.audit}: ${e.name}: it ships, so its notice ships too (floor rule 10): ${notices === undefined ? 'its "notice", for the notices the project builds' : `its name in ${config.notices}`}`);
       }
     }

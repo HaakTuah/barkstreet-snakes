@@ -37,8 +37,8 @@ alike (core archive 68). The owner's words behind each rule: `archive/instructio
 5. **The shared scripts and workflows,** run from its `core/` copy: `work-saved.sh` as its work-saved hook,
    `statusline.sh` as its status line (read by `usage.sh`), `copies.mjs` and `licences.mjs` as its copies and licence
    checks with configs of its own (the *copies check*; the licence check's with its audit of what no lockfile holds,
-   each entry that ships with its notice, which `licence-scan.mjs` holds whole: every action, fetched package, asset and
-   copied-in code it uses), and with the copies check `pointers.mjs` and `reading-size.mjs`, the pointer check and the
+   which `licence-scan.mjs` holds whole, every action, fetched package, asset and copied-in code it uses, and each entry
+   that ships with its notice), and with the copies check `pointers.mjs` and `reading-size.mjs`, the pointer check and the
    reading-size check, the second with marks of its own (the *size marks*). Its own `core.yml`, `personal-terms.yml`,
    `copies.yml`, `licences.yml`, `codeql.yml`, `delete-merged-branches.yml` and, if it has versions Dependabot cannot
    see, `versions.yml` keep their triggers and call the core's of the same name (`uses:
