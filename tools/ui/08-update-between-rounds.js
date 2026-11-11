@@ -58,7 +58,9 @@ await ev(`document.getElementById('start').click(); 1`);
 const hosted = await reloaded(from);
 const after = await P();
 const opening = await ev(`document.getElementById('lobby-status').textContent`);
-check(hosted && after.state === 'lobby' && after.title === 'Play with friends' && opening !== '', 'Host a game with a newer version out: into it first, and the room opens there', `reloaded ${hosted}, ${after.state}: ${after.title}; “${opening}”`);
+// Opening, or already open where the network reaches the PeerJS server in time (as in CI).
+const opens = (after.title === 'Play with friends' && opening !== '') || /^Room [A-Z0-9]+$/.test(after.title);
+check(hosted && after.state === 'lobby' && opens, 'Host a game with a newer version out: into it first, and the room opens there', `reloaded ${hosted}, ${after.state}: ${after.title}; “${opening}”`);
 await ev(`backToStart(); 1`);
 
 // A friend joining with a newer version out: into it first, and joins straight (the room's code kept).
