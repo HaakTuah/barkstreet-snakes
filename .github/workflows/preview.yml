@@ -1,0 +1,17 @@
+# The pull-request previews: once pages.yml has built a pull request's preview, the core's preview workflow
+# ("How a project takes the core" in core/README.md, point 5) puts it at pr-<number>/ on gh-pages, keeps one comment on
+# the PR linking it, and takes it down when the PR closes. workflow_run always runs main's own copy of this file.
+name: preview
+
+on:
+  workflow_run:
+    workflows: [pages]
+    types: [completed]
+
+jobs:
+  preview:
+    permissions:
+      contents: write
+      actions: read
+      pull-requests: write
+    uses: HaakTuah/agent-core/.github/workflows/preview.yml@776095282462b1c466648c60d6d2a510e071d00e
