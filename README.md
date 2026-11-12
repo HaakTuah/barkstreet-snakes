@@ -8,7 +8,7 @@ A snake game on a fallen, mossy log in the woods: you against three AI rivals, d
 
 Steer your snake round the log, eat to grow and stay out of everything else. A crash costs you some tail, not the round, so you can take a few knocks; hunger, weather, fire and a woodpecker that cuts the log away squeeze the board as the round goes on. The last snake alive wins. Jump and dash are your two powers, and they share one stamina ring round your head.
 
-You don't need to read the rules first: the game teaches each one when it first matters, and the **Field guide** (G, or the open-book button) shows every food, power and danger with its picture. **Watch rivals** on the start screen lets you see a round between four AI snakes, and you can pick which rivals you face. Your best rounds and stats stay in your browser, in the Hall of Fame (H).
+You don't need to read the rules first: the game teaches each one when it first matters, and the **Field guide** (G, or the open-book button) shows every food, power and danger with its picture. **Watch rivals** on the start screen lets you see a round between four AI snakes, and you can pick which rivals you face (tap a seat on the start card). Your best rounds and stats stay in your browser, in the Hall of Fame (H).
 
 ## Controls
 
