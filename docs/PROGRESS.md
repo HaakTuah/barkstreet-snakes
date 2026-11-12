@@ -49,8 +49,9 @@ the owner's notes of 2 November, the portals blue and orange and the woodpecker'
   not yet do" in `reports/2026-11-10-step-3-now.md` of the core's own repository, which no copy holds): (1) whether one
   `tools/abtest.js` run plays all three groups of "Using a feature must pay" (where it fits, always, never), and its
   threshold for "by more than chance" listed as a first guess; (2) a check that nothing in `aiView()` says which snake
-  is a person and that no rival's timing gives one away ("The computer players never know who is a person"); (3)
-  whatever the game shows from the past showing its age ("No rule untaught"); (4) online rounds replaying from the log
+  is a person and that no rival's timing gives one away ("The computer players never know who is a person") (done: PR
+  #728, `tools/rules/31-never-know-a-person.js`; it found a dropped tail's colour in the food a rival is shown, taken
+  out); (3) whatever the game shows from the past showing its age ("No rule untaught"); (4) online rounds replaying from the log
   of every input ("Same seed, same game"). What changes the AI, the engine's rules or the online messages goes to the
   main lane as an entry of its own. The updating rule needs nothing: `docs/design/36-updating.md` takes a new version
   between rounds, as the core's "Players always play the newest version" now says.
