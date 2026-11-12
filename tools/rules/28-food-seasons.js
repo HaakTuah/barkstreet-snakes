@@ -47,6 +47,12 @@
     lasts('lean', 60000) === T.HUNGER_MS * T.SEASONS.lean.meal && lasts('normal', 60000) === T.HUNGER_MS && lasts('plentiful', 60000) === T.HUNGER_MS
     && lasts('lean', 5000) === T.HUNGER_MS * T.SEASONS.lean.meal, [lasts('lean', 60000), lasts('normal', 60000), lasts('lean', 5000)].join());
 }
+{ // ...but a meal never leaves a snake less time than it had: a lean apple in the first seconds keeps the start's longer clock.
+  const g = board([[line(5, 5, 4), 'right']], { season: 'lean', time: 100, food: [[6, 5]] });
+  const before = g.snakes[0].nextStarve;
+  E.step(g);
+  check('an early lean meal never brings starving forward', g.snakes[0].eaten === 1 && g.snakes[0].nextStarve >= before, [before, g.snakes[0].nextStarve].join());
+}
 
 // The rivals play the season. A long snake, an apple three cells to its side (below), nobody near.
 const seasonTakes = (season, key, len, others = [aiRival(1, [[22, 2], [22, 3], [22, 4]], 'down')]) => {

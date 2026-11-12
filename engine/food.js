@@ -169,7 +169,9 @@ function consume(game, s, f, x, y) {
     s.cheek = { power, spitAt: game.tick + T.CHEEK_TICKS, left: f.expires != null ? Math.max(0, f.expires - game.tick) : T.MUSHROOM_TICKS };
   } else {
     const growth = f.kind === 'golden' ? T.GOLDEN_GROWTH : f.kind === 'beetle' ? T.BEETLE_GROWTH : f.cooked ? T.COOKED_GROWTH : 1;
-    const lasts = mealLasts(game); // (mealMs: what a full bar means)
+    // (A meal never leaves it less time than it had: a lean meal in the first seconds, under the 12 s every snake
+    // starts with, keeps the longer; mealMs, what a full bar means, is then that long.)
+    const lasts = Math.max(mealLasts(game), hungerLeft(game, s));
     s.lastAte = game.time - (T.HUNGER_MS - lasts);
     s.nextStarve = game.time + lasts;
     s.mealMs = lasts;
