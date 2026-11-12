@@ -51,15 +51,16 @@ const washed = await ev(`(() => {
   const plan = g.woodpecker.plan; delete g.woodpecker.plan;
   show(g); drawN(12);
   const inside = () => lum(pixels(19, 1, 4, 4)), base = inside(); // (a few cells' mean, so the streaks' own lines are averaged in)
+  const darkest = () => { const d = pixels(19, 1, 4, 4).data, v = []; for (let i = 0; i < d.length; i += 4) v.push(0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]); v.sort((a, b) => a - b); return v.slice(0, v.length >> 2).reduce((a, b) => a + b, 0) / (v.length >> 2); }; // (the darkest quarter: the streaks' pale lines lift the cut-loose mean)
   g.woodpecker.plan = plan; drawN(12);
-  const wash = inside(); drawN(7, 0.5, 71); const washLater = inside();
-  Object.assign(g.woodpecker, { target: cut.slice(), fall: piece.slice(), strikeAt: g.tick + 4 }); // (the last peck aimed, well on: nothing left to nick)
-  drawN(12); const loose = inside(); drawN(7, 0.5, 71); const looseLater = inside();
+  const wash = inside(), washDark = darkest(); drawN(7, 0.5, 71); const washLater = inside();
+  Object.assign(g.woodpecker, { target: cut.slice(), fall: piece.slice(), strikeAt: g.tick + 1 }); // (the last peck aimed, nearly at the strike: nothing left to nick)
+  drawN(12); const loose = inside(), looseDark = darkest(); drawN(7, 0.5, 71); const looseLater = inside();
   g.woodpecker.fall = []; g.woodpecker.target = []; plan.cut = [];
   drawN(12); const none = inside();
-  return { base, wash, washLater, loose, looseLater, none };
+  return { base, wash, washLater, washDark, loose, looseLater, looseDark, none };
 })()`);
-check(washed.wash < washed.base - 2 && washed.wash > washed.loose + 3, 'an outline\'s piece is washed lightly while nicks are left, lighter than the cut-loose shading', JSON.stringify(washed));
+check(washed.wash < washed.base - 2 && washed.washDark > washed.looseDark + 5, 'an outline\'s piece is washed lightly while nicks are left, lighter than the cut-loose shading', JSON.stringify(washed));
 check(washed.wash === washed.washLater, '...with no sliding streaks, the wash steady frame to frame', JSON.stringify(washed));
 check(Math.abs(washed.none - washed.base) < 2, '...and no wash on a piece whose cut has no nicks left and is not aimed', JSON.stringify(washed));
 

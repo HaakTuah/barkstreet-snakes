@@ -10,7 +10,7 @@
 window.SnakeVersion = {
   build: 'dev',
   news: [
-    { on: '2026-11-12', line: 'The woodpecker’s piece is shaded before it falls.' },
+    { on: '2026-11-12', line: 'The woodpecker’s piece is shaded as it’s cut.' },
     { on: '2026-11-12', line: 'Hunger bites 12 s after every meal, all round.' },
     { on: '2026-11-12', line: 'Joining friends now works even if PeerJS is down.' },
     { on: '2026-11-12', line: 'Portals are now swirling ovals, as in Portal.' },
