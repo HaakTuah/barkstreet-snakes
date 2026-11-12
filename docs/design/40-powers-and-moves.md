@@ -30,7 +30,8 @@ into it.
 - **Flash:** E, either Shift, a right-click on the board or a fresh press of the steering key (arrow or WASD) the way
   you're already going, or on a phone a swipe that way. Golden flashes go first.
 - **Pressed together,** the jump goes first if it can (something right in front to hop, somewhere to land), because no
-  flash gets past that; the flash goes once you're down. A flash pressed in the air goes once you're down too.
+  flash gets past that; the flash goes once you're down. A flash pressed in the air goes once you're down too, if a flash's worth is still left: from a full bar the two
+  together take more than the bar, so the flash fizzles and you press it again when the ring shows a flash's worth.
 - **The key ahead flashes, behind touch's guard** (the owner, 4 November 2026; it was dropped once because held keys
   fired it by accident: `docs/archive/design-powers.md`). Only a fresh keydown counts, never a held key's auto-repeat;
   and `POWER_AFTER_TURN_MS` (300): a fresh press the way the last press turned you, within 300 ms of it (for a swipe,
@@ -306,7 +307,7 @@ rest alone.
 A flash can cut your own body, by the same rules: the plain one through one thick, the golden one through two. The part
 behind the cut becomes beads, which others can eat and you squash. A cut of your own never puts you out. It's how a long
 snake gets out of a pocket too small for it, at the price of the length.
-- *The lessons:* the first time you're in a pocket smaller than you, your flash ready and your own body one thick in
+- *The lessons:* the first time you're really in a pocket smaller than you (not coiled with room to crawl out after your tail), your flash ready and your own body one thick in
   front, "Dash through your own tail to drop it."; your first own cut, "Tail dropped: lighter, and out of the pocket."
 - *The rivals* drop their own tail when trapped, and in the endgame plan it once they see themselves boxed in, each in
   its style ("The endgame: a meal is worth the life it buys" in `39-the-rivals.md`).
@@ -411,7 +412,7 @@ A mushroom is a weapon you aim:
   loop.) *The cue:* it lies wet, a green slick under it and a glint on its cap, drying as the moves run out. The rivals
   know it as you do (`ai/food.js`: their own fresh spit can't be eaten till then).
 - **Stronger each time.** A mushroom takes `SHRINK` (3) segments the first time, and one more each time it comes back
-  up, to `SHRINK_MAX` (5); it darkens a shade each time. It never kills by itself: it shrinks you no further than
+  up, to `SHRINK_MAX` (5); it darkens a shade each time. A mushroom withers after `MUSHROOM_TICKS` (180, about 20 s) and regrows elsewhere. It never kills by itself: it shrinks you no further than
   `MIN_LENGTH`. A spat mushroom wilts in half the time it had left, but lies at least `SPIT_WILT_MIN` (20) ticks.
   Golden mushrooms are a power, eaten as before. A mushroom in a cheek still counts toward the board's mushrooms, so the
   log holds no more poison than before.
