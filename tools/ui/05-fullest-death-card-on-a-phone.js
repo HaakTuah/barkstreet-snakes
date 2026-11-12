@@ -41,24 +41,25 @@ for (const [w, h, want, round] of [[390, 844, 'badge+carve+link', 'carve+link'],
   p = await P();
   check(start <= 0 && startNote <= 0 && p.note.startsWith('Joker'), `phone ${w}x${h}: the start card fits, and with a rival's note on it`, `${start} / ${startNote} px over`);
   await tap(await at('#note-close'));
-  // (your death's card, not the round's end that can follow it: the rivals go on behind it)
-  const yourCard = `SnakeDebug.state() !== 'over' && document.getElementById('how').textContent.startsWith('Field guide:')`;
-  for (let tries = 0; tries < 3; tries++) {
-    await fresh(['joker', 'capricious', 'vulture']);
-    await ev(`you().eaten = 30; 1`);
-    await die();
-    if (await ev(yourCard)) break;
+  // (your death's card, not the round's end that can follow it: the rivals go on behind it; every read is made on the card itself)
+  const card = await onYourDeathCard(['joker', 'capricious', 'vulture'], `you().eaten = 30; 1`, async () => {
+    await ev(words(LONG, QUIP));
+    const full = await ev(fitNow);
+    await tap(await tagAt('Joker'));
+    const noted = { f: await ev(fitNow), p: await P() };
+    await tap(await at('#note-close'));
+    return { full, noted, closed: await ev(fitNow) };
+  });
+  if (!card) {
+    check(false, `phone ${w}x${h}: the round ended behind your own death's card in all 3 rounds, so the fullest card was not checked`, `now ${(await P()).state}: ${(await P()).title}`);
+    continue;
   }
-  await ev(words(LONG, QUIP));
-  let f = await ev(fitNow);
+  let f = card.full;
   check(f.over <= 0 && f.under === 0 && f.shown === want, `phone ${w}x${h}: the fullest death card, the longest reason and quip, fits its ${f.board} px board (${want})`, JSON.stringify(f));
   { // (a rival's note, on every screen)
-    await tap(await tagAt('Joker'));
-    f = await ev(fitNow);
-    p = await P();
-    check(p.note.startsWith('Joker') && f.over <= 0 && !/badge|carve/.test(f.shown), `phone ${w}x${h}: with a note on it, the badge and the carve wait, and it still fits`, JSON.stringify(f));
-    await tap(await at('#note-close'));
-    f = await ev(fitNow);
+    f = card.noted.f;
+    check(card.noted.p.note.startsWith('Joker') && f.over <= 0 && !/badge|carve/.test(f.shown), `phone ${w}x${h}: with a note on it, the badge and the carve wait, and it still fits`, JSON.stringify(f));
+    f = card.closed;
     check(f.shown === want && f.over <= 0, `phone ${w}x${h}: closing the note brings them back`, JSON.stringify(f));
   }
   if (h === 460) {
@@ -70,11 +71,8 @@ for (const [w, h, want, round] of [[390, 844, 'badge+carve+link', 'carve+link'],
     await key('Escape'); // (keep watching)
     await wait(`!cardUp()`);
     await ev(`pilot.on = false; 1`);
-    await fresh(['joker', 'capricious', 'vulture']);
-    await ev(`you().eaten = 40; 1`);
-    await die();
-    f = await ev(fitNow);
-    check(/^Hall of Fame #\d+, as Mossy\.$/.test(f.rank) && !f.field && f.shown === 'carve+link' && f.over <= 0, `phone ${w}x${h}: the next good round, with a name already carved, the link is there from the start`, JSON.stringify(f));
+    f = await onYourDeathCard(['joker', 'capricious', 'vulture'], `you().eaten = 40; 1`, () => ev(fitNow));
+    check(f !== null && /^Hall of Fame #\d+, as Mossy\.$/.test(f.rank) && !f.field && f.shown === 'carve+link' && f.over <= 0, `phone ${w}x${h}: the next good round, with a name already carved, the link is there from the start`, f ? JSON.stringify(f) : 'the round ended behind your own death\'s card in all 3 rounds');
   }
   if (round) {
     await key('Escape'); // (keep watching)
