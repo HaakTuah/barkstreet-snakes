@@ -22,7 +22,7 @@ online round trip passes through each way in; no message changes (`tools/protoco
 `net.js` and the lobby, not the online messages, so it runs beside the main lane, on Opus (online sync is the *hard
 work*).
 
-*Done* (PRs #710 and this one, #PR2): (1) a room is on PeerJS's broker and five public Nostr relays at once; a friend
+*Done* (PRs #710 and #712): (1) a room is on PeerJS's broker and five public Nostr relays at once; a friend
 tries the broker first and the relays when it can't find the room or after 4 s, the code and link unchanged.
 `net-relays.js` signs and seals its own notes on the browser's crypto, so nothing new is loaded and no licence is
 added; each relay is one exact host in the content security policy and in `SECURITY.md`. (2) No free TURN relay asks
