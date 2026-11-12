@@ -349,10 +349,24 @@ async function inChrome() {
       for (let i = 1; i < 20; i++) { await shake(i); await sleep(60); } // (one at a time, each after the last was worked)
       await sleep(500);
       const boxes = new Set(parse().filter(n => n.k === 'offer' && n.from === hi2.from).map(n => n.box));
+      // Rooms that never answer, dropped and replaced: the friend agrees eight keys in all (MAX_AGREED), then no more.
+      const before3 = new Set(posted.keys()), joining3 = friendWin.SnakeRelays.connect('barkbite-flood', [], 20000).catch(e => e.type);
+      let hi3 = null;
+      for (let i = 0; i < 100 && !hi3; i++) { await sleep(50); hi3 = [...posted].filter(([id]) => !before3.has(id)).map(([, c]) => JSON.parse(c)).find(n => n.k === 'hi'); }
+      const room3 = async (id, n) => ws.send(JSON.stringify(['EVENT', { id: id + n, kind: 26517, tags: [['x', topic]], content: JSON.stringify({ k: 'hey', from: id, to: hi3.from, Y: (await R.half(w, 'N')).X, at: Date.now() }), pubkey: '00', sig: '00', created_at: 0 }]));
+      const keysTo = () => new Set(parse().filter(n => n.k === 'offer' && n.from === hi3.from).map(n => n.box)).size;
+      for (let r = 0; r < 4; r++) await room3('e'.repeat(15) + r, 'a');
+      for (let i = 0; i < 100 && keysTo() < 4; i++) await sleep(50);
+      for (let r = 0; r < 4; r++) { await room3('e'.repeat(15) + r, 'b'); await sleep(60); } // (each room once anew: eight keys)
+      await sleep(11000); // (the friend gives up on rooms that never answer after four more tries of 2 s)
+      for (let r = 4; r < 8; r++) { await room3('e'.repeat(15) + r, 'a'); await sleep(60); }
+      await sleep(500);
+      const allKeys = keysTo();
       ws.close();
-      return { rooms: offeredTo.size, ended: await joining, oneRoomKeys: boxes.size, ended2: await joining2 };
+      return { rooms: offeredTo.size, ended: await joining, oneRoomKeys: boxes.size, ended2: await joining2, allKeys, ended3: await joining3 };
     })()`);
     ok(flood.rooms >= 1 && flood.rooms <= 4, 'a friend flooded with handshakes from twenty rooms shakes hands with four at most', JSON.stringify(flood));
+    ok(flood.allKeys === 8, 'rooms that never answer, dropped and replaced: the friend agrees eight keys in all, then no more', JSON.stringify(flood));
     ok(flood.oneRoomKeys >= 1 && flood.oneRoomKeys <= 2, 'a room shaking hands anew twenty times gets two keys at most from the friend (each a guess for a room that isn’t one)', JSON.stringify(flood));
     ok(/^barkbite-[0-9a-f]{1,3}$/.test(keys.topic), 'a room’s topic is one of 4,096, so what a relay sees says little of the code', keys.topic);
     await b.ev(`friendWin.close(); 'ok'`);

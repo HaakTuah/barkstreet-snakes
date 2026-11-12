@@ -373,13 +373,14 @@ window.SnakeRelays = (() => {
           const known = hosts.get(note.from);
           // (a slot is taken before any work, so a flood of handshakes gets MAX_HOSTS at most, each one at a time)
           // (and keys agreed are few: each is one guess for a room that isn't one, against our offer)
-          if (busy.has(note.from) || agreed >= MAX_AGREED || (known ? known.Y === note.Y || known.again : hosts.size + busy.size >= MAX_HOSTS)) return;
+          if (busy.has(note.from) || agreed + busy.size >= MAX_AGREED || (known ? known.Y === note.Y || known.again : hosts.size + busy.size >= MAX_HOSTS)) return;
           busy.add(note.from);
-          agreed++;
           try {
             const key = await agree(w, x, 'N', note.Y, [myId, note.from, X, note.Y]);
+            if (!key) return; // (a point off the curve: no key, nothing spent)
+            agreed++;
             const sdp = await offered;
-            if (!key || answered) return;
+            if (answered) return;
             const box = await seal(key, 'offer', sdp);
             hosts.set(note.from, { key, box, Y: note.Y, tries: 0, again: !!known });
             room?.post({ k: 'offer', from: myId, to: note.from, box, at: Date.now() });

@@ -25,7 +25,7 @@ a room on a newer version in `36-updating.md` ("Online"); the shared Hall of Fam
     that proves both sides know the code without showing it, then the browsers' WebRTC offer and answer, sealed
     (AES-GCM) with the key it agreed. Someone watching the relays learns nothing of a room's code; one who tries
     codes gets one guess a try, on the room itself, which takes one new handshake a second and leaves the relays after
-    50 failed guesses (friends already in stay). The curve, the signing Nostr asks for (BIP-340) and the handshake are the file's own code on the
+    50 failed guesses (friends already in stay); one posing as rooms gets eight guesses from a joining friend at most. The curve, the signing Nostr asks for (BIP-340) and the handshake are the file's own code on the
     browser's crypto, nothing loaded.
     The room code and link are the same either way. A code the broker says is taken is replaced on both ways, so
     the relays, if they open the room first, wait up to those 4 s for the broker's word before the code is shown.
