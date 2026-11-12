@@ -53,15 +53,18 @@ window.SnakeNet = (() => {
     }));
   }
 
-  // Why a connection failed, in words for the card.
+  // Why a connection failed, in words for the card: which part failed, finding each other (the
+  // broker, or no room behind the code) or the route between the two browsers (the room answered,
+  // but no network path let the connection through: STUN found none, and there's no relay).
   /** @param {any} err */
   function explain(err) {
     const type = err?.type || err?.message;
     if (type === 'library') return 'Online play didn’t load. Are you connected?';
     if (type === 'peer-unavailable') return 'There’s no room with that code. Check it, or ask for a fresh link.';
+    if (type === 'unanswered') return 'Couldn’t find each other: the room didn’t answer. Ask the host whether it’s still open, then try again.';
+    if (type === 'route') return 'Found the room, but couldn’t connect to it: a network on the way blocks direct connections, as some offices, schools and mobile carriers do. Try another network, such as mobile data instead of Wi-Fi.';
     if (type === 'browser-incompatible') return 'This browser can’t play with friends. Try a recent Chrome, Firefox or Safari.';
-    if (type === 'timeout') return 'Couldn’t reach the room. Try another network, such as mobile data instead of Wi-Fi.';
-    return 'Couldn’t reach the rooms just now. Check your connection and try again.';
+    return 'Couldn’t find each other: the service that introduces players didn’t answer. Check your connection, or try again in a minute.';
   }
 
   const peerOptions = () => ({ config: { iceServers: ICE_SERVERS }, debug: 0 });
@@ -170,12 +173,17 @@ window.SnakeNet = (() => {
     /** @type {PeerJS.Peer} */
     let peer;
     try { peer = await openPeer(Peer); } catch (err) { throw new Error(explain(err)); }
+    // The room answered once ICE starts checking routes (the host's answer and candidates came
+    // through the broker); a failure after that is the route's, before it the room's.
     const conn = await new Promise(/** @param {(c: PeerJS.DataConnection) => void} resolve */ (resolve, reject) => { // (it has its own time limit)
       const c = peer.connect(PREFIX + code.toLowerCase(), { serialization: 'json', reliable: true });
-      const timer = setTimeout(() => fail({ type: 'timeout' }), CONNECT_MS);
+      let answered = false;
+      const failed = () => fail({ type: answered ? 'route' : 'unanswered' });
+      const timer = setTimeout(failed, CONNECT_MS);
       /** @param {PeerJS.Err} err */
       function fail(err) { clearTimeout(timer); peer.destroy(); reject(new Error(explain(err))); }
       peer.once('error', fail);
+      c.on('iceStateChanged', state => { if (state !== 'new') answered = true; if (state === 'failed') failed(); });
       c.once('open', () => { clearTimeout(timer); peer.off('error', fail); resolve(c); });
     });
 
