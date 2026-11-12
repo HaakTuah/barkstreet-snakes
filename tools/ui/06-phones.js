@@ -66,15 +66,18 @@ for (const [w, h] of [[390, 844], [320, 640]]) {
   await tap(await at('#start'));
   p = await P();
   check(!p.note && p.state !== 'paused', `phone ${w}: Wake up wakes, and the note goes with the card`, p.state);
-  await wait(`SnakeDebug.state() === 'running' && !cardUp()`);
-  await die();
-  await tap(await tagAt('Gobbler'));
-  p = await P();
-  check(p.note.startsWith('Gobbler'), `phone ${w}: your death’s card takes a note`, p.note.slice(0, 30));
-  await tap(await at('#watch'));
-  await tap(await tagAt('Metagamer'));
-  p = await P();
-  check(p.kind === 'note' && p.toast.startsWith('Metagamer'), `phone ${w}: watching, a tap on a tag is a banner`, p.toast);
+  // (a round that ends behind your death's card shows the round's end instead, with no Watch button and no banner: the try is made again)
+  const dead = await onYourDeathCard(['ouroboros', 'metagamer', 'gobbler'], '', async () => {
+    await tap(await tagAt('Gobbler'));
+    const noted = await P();
+    await tap(await at('#watch'));
+    await tap(await tagAt('Metagamer'));
+    return { noted, banner: await P() };
+  });
+  if (dead) {
+    check(dead.noted.note.startsWith('Gobbler'), `phone ${w}: your death’s card takes a note`, dead.noted.note.slice(0, 30));
+    check(dead.banner.kind === 'note' && dead.banner.toast.startsWith('Metagamer'), `phone ${w}: watching, a tap on a tag is a banner`, dead.banner.toast);
+  } else check(false, `phone ${w}: the round ended behind your death’s card in all 3 rounds, so its note and the banner were not checked`, `now ${(await P()).state}: ${(await P()).title}`);
   await fresh(['ouroboros', 'metagamer', 'gobbler']);
   await ev(fire);
   await wait(`cardUp() && !you().alive`);
