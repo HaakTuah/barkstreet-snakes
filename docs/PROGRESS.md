@@ -66,11 +66,6 @@ the owner's notes of 2 November and the portals blue and orange, among them).
   Step 3 is done (#636, #637).
 - **The browser suites' one ending** (#526): `tools/render-test.js` and `tools/input-test.js` end with `report.end(b)`
   like the others.
-- **The README as a front page** (an outside review of the repositories, 11 November 2026: about 6,400 words, rules
-  that read like a legal code, one paragraph of over 3,000 characters): the README keeps what the game is, how to
-  start and the controls, in a few hundred words, and points to the game itself, whose lesson and Field guide teach
-  each rule ("where rules are taught"); whatever moves goes to the design topic it belongs to, nothing a player needs
-  is lost, and the copies check proves nothing is said twice.
 - **A check for code nothing uses** (the owner, 11 November 2026: "Should we have a rule about removing unused code,
   expert?", then "Yes, expertly to all, expert!"): "Keep it lean" forbids leftovers, but no check holds it, and what
   died earlier is nobody's task. A small script beside `scripts/codemap.sh` lists every top-level function, constant and

@@ -39,3 +39,7 @@ the workshop check's 20 KB. New ones are added here.
   `header.css` and `access.css`, linked in the same order (the workshop/split-screens PR).
 - *Done:* the old copy in `tools/copies-baseline.json` removed (the shared header probe, PR #522); the workshop check's
   point (2) condensed again, `AGENTS.md` from 23.6 to 19.8 KB (PR #360).
+- *Done:* the README as a front page (an outside review, 11 November 2026: about 6,400 words): what the game is, how it
+  plays, the controls, friends and the licences in about 560 words; the rules were already in `docs/design/`, and the
+  dozen the topics lacked (the board's size, golden apple and beetle timings, the stamina's refill, the full-bar fizzle
+  and others) were moved to their topics, the lesson and the Field guide teaching each in the game (the workshop/readme-front-page PR).
