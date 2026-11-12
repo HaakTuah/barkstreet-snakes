@@ -34,12 +34,14 @@ The REST calls from a cloud session: `core/modules/github-calls.md`. Updates, De
 - **The signature check** (`.github/workflows/signatures.yml`) runs the core's on a pull request that changes the
   tools' package list, their lock file or their `.npmrc`: an install from the registry alone with no install script
   run, then `npm audit signatures`, npm's own check of the registry's signature on each installed package (floor rule
-  7). It cannot run in a cloud session, which cannot reach Sigstore; the pull request's own run is the check.
+  7). It cannot run in a cloud session, which cannot reach Sigstore; the pull request's own run is the check. It is
+  never a required check, since it reports only on the pull requests it runs on: there, merge only once it is green,
+  and not by auto-merge alone.
 - **Node:** the core's one exact pin, `core/.node-version`, which CI and the cloud setup read ("Node" in
   `core/modules/updates.md`); here a move also keeps the fingerprints.
 - **The description check** (`.github/workflows/pr-description.yml`) runs the core's on every pull request that is no
-  draft: it fails one whose description lacks the heading "What the owner can try" or "Readings taken" (with "None"
-  under it where there is nothing), and passes by itself once the description is put right.
+  draft: it fails one whose description lacks the heading "What the owner can try" or "Readings taken", and passes by
+  itself once the description is put right. Where there is nothing to say, the heading stands with "None" under it.
 - **The licence check** (`.github/workflows/licences.yml`) runs the core's, `core/scripts/licences.mjs` with
   `tools/licence-check.json`, against the audit, `tools/licences.json`, and the notices, `THIRD-PARTY-NOTICES.txt`; what
   it and its scan hold is in the headers of `core/scripts/licences.mjs` and `core/scripts/licence-scan.mjs`. Beside it,
