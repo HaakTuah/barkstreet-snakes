@@ -1,5 +1,5 @@
 // Types for the online messages, checked only (tsc --noEmit -p jsconfig.json; see
-// .github/workflows/tests.yml): net.js and online.js, and what they see of the rest of
+// .github/workflows/tests.yml): net.js, net-relays.js and online.js, and what they see of the rest of
 // the page in types/globals.d.ts. Nothing is built or shipped from this.
 {
   "compilerOptions": {
@@ -11,5 +11,5 @@
     "lib": ["es2022", "dom"],
     "types": []
   },
-  "files": ["types/globals.d.ts", "net.js", "online.js"]
+  "files": ["types/globals.d.ts", "net-relays.js", "net.js", "online.js"]
 }
