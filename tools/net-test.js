@@ -158,6 +158,12 @@ async function inNode() {
   await new Promise(r => later(r, 2000));
   ok(h.said === 'hosted' && h.room.code === 'K7QXM' && calls.listen.join() === 'barkbite-mossy,barkbite-k7qxm' && calls.listenClosed === 1, 'a code the broker says is taken: a new one, on both ways', `${h.said} ${h.room?.code} ${calls.listen}`);
   h.room.close();
+  h = await host({ open: peer => later(() => peer.id === 'barkbite-mossy' ? fails(peer, 'unavailable-id') : peer.emit('open'), 2500), listen: 'ok' }, ['MOSSY', 'K7QXM']);
+  ok(h.said === 'hosted' && h.room.code === 'K7QXM', 'a code the broker says is taken after the relays opened it: still replaced, never shown', `${h.said} ${h.room?.code}`);
+  h.room.close();
+  h = await host({ open: () => {}, listen: 'ok' });
+  ok(h.said === 'hosted' && h.room.code === 'MOSSY', 'the broker hanging: the room opens on the relays once the broker has had its time');
+  h.room.close();
   h = await host({});
   ok(h.said === 'hosted', 'the relays out of reach: the room opens on the broker');
   h.room.close();

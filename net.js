@@ -165,8 +165,8 @@ window.SnakeNet = (() => {
   }
 
   // The room under one code on every way at once; resolves as soon as one way has it, the other
-  // carrying on. A code the broker says is taken before then is replaced on both. Rejects if
-  // neither way can be reached.
+  // carrying on. A code the broker says is taken is replaced on both. Rejects if neither way can
+  // be reached.
   /**
    * @param {() => string} newCode @param {(conn: PeerJS.DataConnection) => void} accept
    * @param {((err: PeerJS.Err) => void) | undefined} onLost @returns {Promise<{ code: string, close(): void }>}
@@ -194,11 +194,22 @@ window.SnakeNet = (() => {
       });
       /** @type {any[]} */
       const errors = [];
+      // (the relays opening first wait up to HEAD_START_MS for the broker's word, so a code it says
+      // is taken is never shown; a broker slower than that is taken to be out of reach)
       const outcome = await new Promise(resolve => {
+        let heard = false, relayOpen = false;
         /** @param {any} err */
-        const no = err => { errors.push(err); if (err?.type === 'unavailable-id') resolve('taken'); else if (errors.length === 2) resolve('none'); };
-        broker.then(() => resolve('open'), no);
-        relay.then(() => resolve('open'), no);
+        const no = err => {
+          errors.push(err);
+          if (err?.type === 'unavailable-id') resolve('taken');
+          else if (errors.length === 2) resolve('none');
+          else if (relayOpen) resolve('open');
+        };
+        broker.then(() => resolve('open'), no).finally(() => { heard = true; });
+        relay.then(() => {
+          relayOpen = true;
+          if (heard) resolve('open'); else setTimeout(() => resolve('open'), HEAD_START_MS);
+        }, no);
       });
       if (outcome === 'open') return { code, close };
       close();

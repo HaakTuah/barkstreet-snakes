@@ -24,7 +24,8 @@ a room on a newer version in `36-updating.md` ("Online"); the shared Hall of Fam
     They pass on only two sealed notes per friend, the browsers' WebRTC offer and answer, under a topic and with a key
     both made slowly (PBKDF2) from the room's name, so only those with the code can read or write them; the signing
     Nostr asks for (BIP-340) and the sealing (AES-GCM) are the file's own code on the browser's crypto, nothing loaded.
-    The room code and link are the same either way.
+    The room code and link are the same either way. A code the broker says is taken is replaced on both ways, so
+    the relays, if they open the room first, wait up to those 4 s for the broker's word before the code is shown.
   - **The route:** STUN finds one for most networks; either way, the game then goes straight between the browsers.
     Strict networks need a relay (TURN). No free one asks for nothing: each needs an account, and its key or password
     would sit in the page (November 2026: Metered's Open Relay, ExpressTURN and Cloudflare's all need a signup), so
