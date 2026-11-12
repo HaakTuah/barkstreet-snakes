@@ -24,7 +24,7 @@ Floor: whole. Modules: all.
 | *planning design* | the rivals' planning |
 | *hard work* | the AI's planning, the engine's rules and online sync (not a big-file split: its fingerprints and suites check it) |
 | *major version checks* | the full suites, and played through for what ships |
-| *Codex's checks* | `scripts/test.sh`, and `scripts/sim.sh` with the fingerprint for a change that should keep behaviour |
+| *other builders' checks* | `scripts/test.sh`, and `scripts/sim.sh` with the fingerprint for a change that should keep behaviour |
 | *computer players* | the rivals |
 | *measured players* | the rivals, each by name |
 | *what they are shown* | `aiView()` |
