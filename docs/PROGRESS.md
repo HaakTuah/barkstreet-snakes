@@ -35,15 +35,11 @@ The game's polish lane (`core/modules/work-flow.md`, point 4; the owner, 31 Octo
 - **How, here:** a lesson and an online lobby among the screens; the picture on `pr-media`, and play proven unchanged by
   the suites and the simulation's fingerprints (seeds 3 and 11); one line per fix under this lane.
 
-*Next find:* the woodpecker's piece shaded faintly while the nicks close round it (#612, "Woodpecker: shade the piece
-it's cutting out before its last peck, so a person can see what the rivals see"), deepening to today's cut-loose
-shading at the last peck: `render/cut.js`, design 38's cue lines, the Field guide row and lesson, the wash differing
-from the cut-loose piece by more than colour, and the stand-in's notes on the pictures; then look for more by playing,
-as "How" says.
+*Next find:* none queued: look for more by playing, as "How" says.
 
 *Done in the lane:* each fix's line is in `docs/archive/progress-done/polish-lane.md`, "The polish lane, done" (the README for
 players, any key wakes, the woodpecker bigger on a phone, the flash become the dash, the room card and Join on a phone,
-the owner's notes of 2 November and the portals blue and orange, among them).
+the owner's notes of 2 November, the portals blue and orange and the woodpecker's piece washed, among them).
 
 ## The workshop lane (splits by meaning, leftovers, the file-by-file review)
 
