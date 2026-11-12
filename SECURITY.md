@@ -15,10 +15,12 @@ floor's numbers, what only this game has and what the floor leaves to it; who mi
      audit (`tools/licences.json`), this game's own part of the licence check and its test (`tools/licences.js`,
      `tools/licences-test.js`), and `tools/.npmrc`, which keeps install scripts off.
 5. **Untrusted input, and its checks:**
-   - **Notes on the public relays** (`net-relays.js`): anyone can post under a room's topic. Only a note sealed with
-     the room's key (AES-GCM, from the code) is opened, and kept only in its exact shape (an offer or an answer, ids of
-     our own alphabet and length, a session description of bounded length) and fresh; a room answers at most eight
-     friends at once. A relay's own message is read only as Nostr's `EVENT` for our subscription, its size capped.
+   - **Notes on the public relays** (`net-relays.js`): anyone can post under a room's topic (one in 4,096 codes share
+     it). A note is kept only in its exact shape (a handshake's point on the curve, ids of our own alphabet and length,
+     a sealed box) and fresh; a session description only if it opens with the key the handshake (SPAKE2) agreed, and
+     is of bounded length. A room takes one new handshake a second, eight at once, and leaves the relays after 50
+     offers that don't open (codes guessed). A relay's own message is read only as Nostr's `EVENT` for our
+     subscription, its size capped.
    - **Online peers** (PeerJS, `net.js`, `net-relays.js` and `online.js`): anyone with a room code. Their checks: each
      message's pinned shape (`tools/online-test.js`, `tools/protocol-shapes.json`); names through the one cleaner
      (`SnakeRecords.cleanName`); a colour, kind or id one of the game's own values; caps on counts and lengths, so
@@ -40,8 +42,8 @@ floor's numbers, what only this game has and what the floor leaves to it; who mi
      - `wss://relay.nsec.app`
      - `wss://nostr.mom`
 
-     The relays carry only sealed notes, and nothing they send runs: the signing and sealing are `net-relays.js`'s own
-     code, on the browser's own crypto, with no script from them or anyone else. What a policy cannot govern stays
+     The relays carry only handshakes and sealed notes, and nothing they send runs: the curve, the signing and the
+     handshake are `net-relays.js`'s own code, on the browser's own crypto, with no script from them or anyone else. What a policy cannot govern stays
      with the reviews (`core/floor/security.md`, rule 8): WebRTC (the STUN servers `net.js` names, and any server a
      script could name for a connection of its own) and leaving the page (a link or `window.open`). A new version of
      PeerJS changes its address there too; anything new the page must load or reach goes into the policy by name, never

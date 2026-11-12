@@ -8,7 +8,8 @@
 // Then net-relays.js runs for real in headless Chrome (tools/browser.js): its signing against BIP-340's own test
 // vectors, and the online round trip through the relays, a host and a friend in two windows of the game
 // (?way=relays) with a stand-in for the relays between them: the friend joins by the code, the round starts, the
-// friend's board follows the host's ticks and the host times the friend's pongs, and the friend leaves.
+// friend's board follows the host's ticks and the host times the friend's pongs, a code sharing the room's topic
+// can't get in, and the friend leaves; and the handshake's keys (the same code agrees, another doesn't).
 // That the real relays, PeerJS's file and its broker work is shown on the PR's preview (?way=relays and ?way=broker),
 // not here: no suite reaches the network.
 //
@@ -60,8 +61,9 @@ function Peer(id) {
   return peer;
 }
 const Relays = {
-  connect(name) {
+  connect(name, _ice, _ms, stop) {
     calls.relays = [...(calls.relays || []), name];
+    stop?.addEventListener('abort', () => { calls.relaysStopped = true; });
     return new Promise((resolve, reject) => later(() => {
       const r = plan.relays || 'unreachable';
       if (typeof r === 'string') return reject({ type: r });
@@ -80,7 +82,7 @@ const Relays = {
 };
 const window = { Peer, SnakeRelays: Relays };
 vm.runInNewContext(code, {
-  window, console, performance,
+  window, console, performance, AbortController,
   setTimeout: later, clearTimeout, setInterval: (f, ms) => setInterval(f, ms / FAST), clearInterval,
 });
 const Net = window.SnakeNet;
@@ -135,6 +137,8 @@ async function inNode() {
   ok(r.said === 'joined' && r.id.startsWith('relay-'), 'the broker out of reach: joined through the relays', r.said);
   r = await join({ open: () => {}, relays: channel('host') });
   ok(r.said === 'joined' && r.id.startsWith('relay-') && r.took >= 4000 && r.took < 8000, 'the broker hanging: joined through the relays after the broker’s head start', `${r.said} (${Math.round(r.took)} ms)`);
+  r = await join({ open: peer => later(() => peer.emit('open'), 4500), connect: opens, relays: channel('host'), relaysMs: 3000 });
+  ok(r.said === 'joined' && !r.id.startsWith('relay-') && calls.relaysStopped, 'the broker connecting after its head start: joined through it, the relays’ try stopped', `${r.said} ${r.id}`);
   const late = channel('host');
   r = await join({ connect: (_, c) => later(() => c.opens(), 6000), relays: late, relaysMs: 200 });
   ok(r.said === 'joined' && r.id.startsWith('relay-'), 'both ways under way: the first open wins', r.said);
@@ -179,7 +183,8 @@ const HUB = `(() => {
         const m = JSON.parse(text);
         if (m[0] === 'REQ') subs.push({ ws, sub: m[1], f: m[2] });
         if (m[0] !== 'EVENT') return;
-        window.relayed = (window.relayed || 0) + 1;
+        (window.relayed ||= new Set()).add(m[1].id); // (each note once, however many relays it went to)
+        (window.posted ||= new Map()).set(m[1].id, m[1].content);
         for (const s of subs) if (s.ws.readyState === 1 && s.f.kinds.includes(m[1].kind) && m[1].tags.some(t => t[0] === 'x' && s.f['#x'].includes(t[1])))
           setTimeout(() => s.ws.onmessage?.({ data: JSON.stringify(['EVENT', s.sub, m[1]]) }), 5);
       },
@@ -227,10 +232,59 @@ async function inChrome() {
     await b.ev(`document.getElementById('start').click(); 'ok'`);
     const ticks = await until(`friendWin.SnakeDebug.state() === 'running' && friendWin.SnakeDebug.game().tick >= 30 && SnakeDebug.online().rtt > 0 && [friendWin.SnakeDebug.game().tick, SnakeDebug.game().tick, SnakeDebug.online().rtt]`, 60000);
     ok(ticks[0] <= ticks[1], 'the round runs on the friend’s screen from the host’s ticks, and the host times the friend’s pongs', `friend at tick ${ticks[0]}, host at ${ticks[1]}, round trip ${Math.round(ticks[2])} ms`);
-    const relayed = await b.ev(`window.relayed`);
+    const relayed = await b.ev(`window.relayed.size`);
+    // A code in the same bucket as the room's (so its handshake reaches the room) but not the room's own: the room
+    // shakes hands, but the friend's offer can't be opened, and the room never answers it.
+    const wrong = await b.ev(`(async () => {
+      const name = 'barkbite-' + SnakeDebug.online().code.toLowerCase(), { topic } = await SnakeRelays.roomOf(name);
+      const C = 'abcdefghjkmnpqrstuvwxyz23456789';
+      for (let i = 0; i < 200000; i++) {
+        let code = ''; for (let n = i, k = 0; k < 5; k++, n = Math.floor(n / C.length)) code += C[n % C.length];
+        if ('barkbite-' + code !== name && (await SnakeRelays.roomOf('barkbite-' + code)).topic === topic) return 'barkbite-' + code;
+      }
+    })()`);
+    const refused = await b.ev(`friendWin.SnakeRelays.connect(${JSON.stringify(wrong)}, [], 8000).then(r => (r.conn.close(), 'joined'), e => e.type)`);
+    ok(refused === 'unanswered', 'a code that shares the room’s topic but isn’t its code can’t join: its offer is never answered', `${wrong}: ${refused}`);
+    // Notes the room must drop, sent under its own topic: none gets a handshake back; a fresh, well-made one does.
+    const dropped = await b.ev(`(async () => {
+      const name = 'barkbite-' + SnakeDebug.online().code.toLowerCase(), R = SnakeRelays, { w, topic } = await R.roomOf(name);
+      const ws = hub(); await new Promise(r => setTimeout(r, 30));
+      const say = (content, t = topic, kind = 26517) => ws.send(JSON.stringify(['EVENT', { id: Math.random().toString(36), kind, tags: [['x', t]], content, pubkey: '00', sig: '00', created_at: 0 }]));
+      const heys = to => [...posted.values()].filter(c => c.includes('"hey"') && c.includes(to)).length;
+      const { X } = await R.half(w, 'M'), off = '02' + 'f'.repeat(64);
+      const cases = {
+        'not JSON': ['{nope', 'aaaaaaaaaaaaaaa1'], 'stale': [JSON.stringify({ k: 'hi', from: 'aaaaaaaaaaaaaaa2', X, at: Date.now() - 120000 }), 'aaaaaaaaaaaaaaa2'],
+        'a bad id': [JSON.stringify({ k: 'hi', from: 'AAAA', X, at: Date.now() }), 'AAAA'], 'a point off the curve': [JSON.stringify({ k: 'hi', from: 'aaaaaaaaaaaaaaa3', X: off, at: Date.now() }), 'aaaaaaaaaaaaaaa3'],
+        'too long': [JSON.stringify({ k: 'hi', from: 'aaaaaaaaaaaaaaa4', X, at: Date.now(), pad: 'x'.repeat(20000) }), 'aaaaaaaaaaaaaaa4'],
+        'another topic': [JSON.stringify({ k: 'hi', from: 'aaaaaaaaaaaaaaa5', X, at: Date.now() }), 'aaaaaaaaaaaaaaa5', 'barkbite-zzz'],
+        'another kind': [JSON.stringify({ k: 'hi', from: 'aaaaaaaaaaaaaaa6', X, at: Date.now() }), 'aaaaaaaaaaaaaaa6', topic, 1],
+      };
+      const out = {};
+      for (const [what, [content, from, t, kind]] of Object.entries(cases)) { say(content, t, kind); await new Promise(r => setTimeout(r, 1200)); out[what] = heys(from); }
+      say(JSON.stringify({ k: 'hi', from: 'aaaaaaaaaaaaaaa7', X, at: Date.now() })); await new Promise(r => setTimeout(r, 1200));
+      out.fresh = heys('aaaaaaaaaaaaaaa7');
+      ws.close();
+      return out;
+    })()`);
+    const { fresh, ...junk } = dropped;
+    ok(fresh >= 1 && Object.values(junk).every(n => n === 0), 'the room drops notes that aren’t JSON, stale, badly made, a point off the curve, too long, or of another topic or kind, and answers a well-made one', JSON.stringify(dropped));
+    const keys = await b.ev(`(async () => {
+      const R = SnakeRelays, a = await R.roomOf('barkbite-mossy'), b = await R.roomOf('barkbite-k7qxm');
+      const guest = await R.half(a.w, 'M'), room = await R.half(a.w, 'N'), stranger = await R.half(b.w, 'M');
+      const t = ['g', 'h', guest.X, room.X], u = ['g', 'h', stranger.X, room.X];
+      const kGuest = await R.agree(a.w, guest.x, 'N', room.X, t), kRoom = await R.agree(a.w, room.x, 'M', guest.X, t);
+      const kStranger = await R.agree(b.w, stranger.x, 'N', room.X, u), kRoom2 = await R.agree(a.w, room.x, 'M', stranger.X, u);
+      const iv = new Uint8Array(12), box = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, kGuest, new Uint8Array([1, 2, 3]));
+      const opens = async (k, bx) => crypto.subtle.decrypt({ name: 'AES-GCM', iv }, k, bx).then(() => true, () => false);
+      const sbox = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, kStranger, new Uint8Array([1, 2, 3]));
+      const { M, N } = await R.spake();
+      return { same: await opens(kRoom, box), stranger: await opens(kRoom2, sbox), junk: await R.agree(a.w, room.x, 'M', '02' + 'f'.repeat(64), t), blinds: M[0] !== N[0], topic: a.topic };
+    })()`);
+    ok(keys.same && !keys.stranger && keys.junk === null && keys.blinds, 'the handshake: the same code reaches the same key, another code doesn’t, and a point off the curve is refused', JSON.stringify(keys));
+    ok(/^barkbite-[0-9a-f]{1,3}$/.test(keys.topic), 'a room’s topic is one of 4,096, so what a relay sees says little of the code', keys.topic);
     await b.ev(`friendWin.close(); 'ok'`);
     await until(`SnakeDebug.online().players.length === 1`);
-    ok(relayed >= 2 && relayed < 20, 'the friend leaving frees their seat; the relays carried only the offer and answer, the game went straight between the windows', `${relayed} notes relayed`);
+    ok(relayed >= 4 && relayed < 20, 'the friend leaving frees their seat; the relays carried only the handshake, the offer and the answer (and their repeats), the game went straight between the windows', `${relayed} notes relayed`);
     ok(!b.errors.length, 'no errors in the page', b.errors.join('; '));
   } finally { await b.close(); site.close(); }
 }

@@ -177,7 +177,7 @@ declare namespace PeerJS {
 // net-relays.js, as net.js calls it: its channels behave as PeerJS's DataConnection.
 interface Relays {
   listen(name: string, iceServers: RTCIceServer[], onConnection: (conn: PeerJS.DataConnection) => void): Promise<{ close(): void }>;
-  connect(name: string, iceServers: RTCIceServer[], ms: number): Promise<{ id: string; conn: PeerJS.DataConnection }>;
+  connect(name: string, iceServers: RTCIceServer[], ms: number, stop?: AbortSignal): Promise<{ id: string; conn: PeerJS.DataConnection }>;
 }
 
 interface Window {

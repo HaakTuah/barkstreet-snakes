@@ -261,10 +261,11 @@ window.SnakeNet = (() => {
       /** @type {any[]} */
       const fails = [];
       let trying = 0, relaysTried = WAY === 'broker', done = false;
+      const stop = new AbortController(); // (the relays' try, ended once another way wins)
       /** @param {any} err */
       const end = err => { done = true; clearTimeout(head); reject(new Error(explain(err))); };
       /** @param {Way} way */
-      const won = way => { if (done) { way.end(); return; } done = true; clearTimeout(head); resolve(way); };
+      const won = way => { if (done) { way.end(); return; } done = true; clearTimeout(head); stop.abort(); resolve(way); };
       /** @param {any} err */
       const lost = err => {
         fails.push(err);
@@ -278,7 +279,7 @@ window.SnakeNet = (() => {
         if (relaysTried || done) return;
         relaysTried = true;
         trying++;
-        Relays.connect(name, ICE_SERVERS, CONNECT_MS).then(({ id, conn }) => won({ id, conn, end: () => conn.close() }), lost);
+        Relays.connect(name, ICE_SERVERS, CONNECT_MS, stop.signal).then(({ id, conn }) => won({ id, conn, end: () => conn.close() }), lost);
       };
       if (WAY !== 'relays') { trying++; viaBroker(name).then(won, lost); }
       const head = setTimeout(relays, WAY === 'relays' ? 0 : HEAD_START_MS);

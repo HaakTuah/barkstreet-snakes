@@ -21,9 +21,12 @@ a room on a newer version in `36-updating.md` ("Online"); the shared Hall of Fam
     public broker, tried first.
   - **Several public Nostr relays** at once (`net-relays.js`; five, of different operators, any one of which is
     enough), tried when the broker can't find the room or hasn't connected a friend within 4 s (`HEAD_START_MS`).
-    They pass on only two sealed notes per friend, the browsers' WebRTC offer and answer, under a topic and with a key
-    both made slowly (PBKDF2) from the room's name, so only those with the code can read or write them; the signing
-    Nostr asks for (BIP-340) and the sealing (AES-GCM) are the file's own code on the browser's crypto, nothing loaded.
+    They pass on four notes per friend under a topic shared by one in 4,096 codes: a handshake (SPAKE2, RFC 9382)
+    that proves both sides know the code without showing it, then the browsers' WebRTC offer and answer, sealed
+    (AES-GCM) with the key it agreed. Someone watching the relays learns nothing of a room's code; one who tries
+    codes gets one guess a try, on the room itself, which takes one new handshake a second and leaves the relays after
+    50 wrong offers. The curve, the signing Nostr asks for (BIP-340) and the handshake are the file's own code on the
+    browser's crypto, nothing loaded.
     The room code and link are the same either way. A code the broker says is taken is replaced on both ways, so
     the relays, if they open the room first, wait up to those 4 s for the broker's word before the code is shown.
   - **The route:** STUN finds one for most networks; either way, the game then goes straight between the browsers.
