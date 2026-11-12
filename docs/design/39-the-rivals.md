@@ -341,7 +341,7 @@ measured"). The latest rates by persona are in "Win rates by personality" there.
 The measure for the moves and the power styles, as round six B set it (simulation, paired seeds): powers on clearly beat
 powers off in the seat-split A/B; every persona in the band (above); rounds about 160–180 s; starving at most 15%
 of deaths (8% until entry 6, part 3 made a meal a trade-off in the frenzy, where a long rival now lets itself shrink:
-12.5% on seed 107, 4.6% before, the time spent starving before the frenzy 2.9% against 2.2%);
+13.7% on seeds 107 and 109, 4.4% before, the time spent starving before the frenzy 2.9% against 2.2%);
 failed flashes rare enough to be a risk you take on purpose. The numbers chosen against it are in each move's section
 of `40-powers-and-moves.md`; the text as it was, with the A/B as it stood then, is in
 `docs/archive/design-arc-and-history.md`.
