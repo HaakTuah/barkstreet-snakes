@@ -63,6 +63,9 @@ owner's three notes of 2 November merged as PRs #322 (the remains), #320 (the fl
   straight there; at 4× overlaps fell from 202 to 20 in two minutes on a phone (longest 0.53 s to 0.13 s), 98 to 6 on desktop.
 - The portals blue and orange, as in the game Portal (#592, PR #619): the entry a glowing blue half oval, the exit an
   orange one, each with a thin gold trim; design 40's section is "Portals for the wrap", and the README and Field guide say so.
+- The portals drawn as Portal's own (the owner, 10 November 2026, PR #708): each end a full upright oval two cells long
+  and one deep, a thick flickering rim, a deeper shade of its colour inside with a swirl turning in at the entry and
+  out at the exit, a glow and the thin gold trim; fingerprints on seeds 3 and 11 unchanged.
 
 ## The slop audit, done so far
 
