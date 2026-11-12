@@ -47,7 +47,7 @@ function drawCut(alpha) {
 function washPiece(piece) {
   const cells = new Set(piece.filter(k => !game.holes.has(k)));
   if (!cells.size) return;
-  ctx.fillStyle = 'rgba(20, 8, 2, 0.1)';
+  ctx.fillStyle = 'rgba(20, 8, 2, 0.15)';
   ctx.beginPath();
   for (const k of cells) ctx.rect((k % GRID) * CELL, Math.floor(k / GRID) * CELL, CELL, CELL);
   ctx.fill();
