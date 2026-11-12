@@ -62,7 +62,7 @@ Golden ones go before the plain ones and leave your stamina alone. Anyone holdin
 
 Press **Play with friends** on the start screen, then **Host a game** and send the link (or the five-letter code) to up to three friends. When they're in, press **Start**. Empty seats go to rivals, and you can play round after round in the same room.
 
-- One browser hosts: it runs the game, and friends' browsers connect straight to it (peer to peer). There's no game server and nothing to sign up for. A free public service, PeerJS, only introduces the browsers to each other.
+- One browser hosts: it runs the game, and friends' browsers connect straight to it (peer to peer). There's no game server and nothing to sign up for. Free public services only introduce the browsers to each other: PeerJS, or, if it can't, several Nostr relays at once.
 - It's fair: the rivals treat everyone alike, and the host's own turns are held back by the friends' lag, so the host gets no head start.
 - **Shared Hall of Fame:** when you connect, your best rounds and your friends' are copied into each other's Hall of Fame (marked "friend"), and every round you play together is recorded for everyone. Your stats and **Only you** stay yours.
 - If a friend's connection goes quiet, an AI steers their snake until they're back; if they leave, it finishes the round for them.
