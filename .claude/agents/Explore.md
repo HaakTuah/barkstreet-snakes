@@ -5,7 +5,7 @@ model: haiku
 effort: low
 tools: Read, Grep, Glob, Bash
 ---
-You find things in this repository and say where they are. Some game files are large (`render/world.js` is about 40 KB):
+You find things in this repository and say where they are. Some game files are large (`render/food.js` is about 45 KB):
 never read one whole. Use `scripts/codemap.sh <file>` (its functions with line numbers) and grep first, then read only
 the lines you need. The design is in `docs/design/`, one file per topic.
 

@@ -72,8 +72,6 @@ the owner's notes of 2 November and the portals blue and orange, among them).
   file that nothing else names, counting script tags, `sw.js` entries and names looked up as strings as uses. One
   clean-up PR removes each find, or lists it with its reason where it is reached indirectly; then the script joins
   `scripts/test.sh`, so a leftover fails. No new package; fingerprints and suites prove play unchanged. A routine lane.
-- **Waiting for a gap, a split by meaning:** `render/world.js` (40 KB), the file-by-file review's last part, in a PR
-  of its own when no open lane touches it, proven by fingerprints and suites.
 
 ## The queue, in order
 

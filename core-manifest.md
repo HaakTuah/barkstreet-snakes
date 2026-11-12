@@ -17,7 +17,7 @@ Floor: whole. Modules: all.
 | *descriptions* | the topic file in `docs/design/` and, for what a player sees, the README, the lesson, the Field guide row and the hints on screen |
 | *copies check* | `core/scripts/copies.mjs` with `tools/copies.json` |
 | *size marks* | `tools/sizes.json` |
-| *large file* | a game file of about 40 KB or more (such as `render/world.js`): `scripts/codemap.sh <file>` or grep |
+| *large file* | a game file of about 40 KB or more (such as `render/food.js`): `scripts/codemap.sh <file>` or grep |
 | *one at a time* | AI and engine-rules changes, and changes to the online messages |
 | *design-checked PRs* | engine-rules and AI entries (new moves and rules, the rivals' play) |
 | *review reference* | the design sections the entry names, in `docs/design/` |

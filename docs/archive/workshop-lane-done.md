@@ -23,7 +23,10 @@ the workshop check's 20 KB. New ones are added here.
 - *Done:* every version where Dependabot sees it: the tools' packages in `tools/package.json` (Playwright 1.49.1 to
   1.64.1), Dependabot's npm updates, and a monthly check of the rest, PeerJS and Node (`tools/versions.json`; PR #385).
 - **The file-by-file review's moves:** done, a folder a PR (#341, #342, #343, #344, #345):
-  `docs/archive/progress-done/split-lane.md`, "The split lane, done". Left: `render/world.js`'s part, which waits with it below.
+  `docs/archive/progress-done/split-lane.md`, "The split lane, done". `render/world.js` (40 KB)
+  split by meaning: the player's marker and refused ×, the dead, the tick's events and the canvas's setup to
+  `render/you.js`, `corpses.js`, `events.js` and `setup.js`, leaving the frame and the API (40.7 to 8.8, 5.8, 19.5, 2.7 and
+  4.6 KB; the last part; the workshop/split-world PR).
   `render/food.js` split by meaning: its burrows and the beetle's bore to `render/burrows.js` (66 to 43.5 and 22.6 KB;
   PR #421).
 - **The design by topic, not by round** (#336): *Done:* the round files are pointers and records; topics made or widened:
