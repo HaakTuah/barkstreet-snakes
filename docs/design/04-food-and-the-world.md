@@ -22,14 +22,15 @@ was tried and measured, is in `docs/archive/design-food.md`).
 - **Two apples all round** (`APPLES`; one in winter, `SNOW_APPLES`: see "Weather"; a food season adds or takes one:
   see "Food seasons"): eaten or rotted, another drops somewhere. Beetles carry more of the food (see "Less fruit, more
   beetles").
-- **A meal keeps you 20 s** (`HUNGER_MS`) in the opening and once the woodpecker has come, and **12 s mid-round**
-  (`HUNGER_MID_MS`, from 0:45, `HUNGER_MID_FROM_MS`), so hunger matters in the middle of the round too. Each snake keeps
-  how long its last meal keeps it (`mealMs`, carried online), and its tag's bar is measured against that, so it's full
-  after any meal. Under `HUNGER_WARN_MS` (6 s) left, the tag shows it's starving: the bar in Berry, a ring pulsing round
-  the tag, and "starving" for a screen reader.
-  *To come* (the owner, 9 November 2026, #616: "Is it not good to have a bit of consistency throughout, expert?", then
-  "Yes to all, expertly!"): one hunger clock for the whole round, no longer back to 20 s once the woodpecker comes,
-  its length tuned so that in the endgame neither always nor never eating wins; entry 6, part 3.
+- **A meal keeps you 12 s** (`HUNGER_MS`), one clock for the whole round (the owner, 9 November 2026, #616), so a
+  meal is a trade-off to the end (entry 6, part 3): late in the round it buys life but costs room in a shrinking log.
+  Its length is set by the endgame test, rivals that always eat and rivals that never eat in the woodpecker's frenzy
+  against ones that weigh each meal ("The endgame: a meal is worth the life it buys" in `39-the-rivals.md`): at 12 s
+  never eating does clearly worse, and always eating comes out even (why: "Hunger read against that length" there;
+  #655 would make length cost room).
+  Each snake keeps how long its last meal keeps it (`mealMs`, carried online), and its tag's bar is measured against
+  that, so it's full after any meal. Under `HUNGER_WARN_MS` (6 s) left, the tag shows it's starving: the bar in Berry,
+  a ring pulsing round the tag, and "starving" for a screen reader.
 - **Starving is decided after eating:** a snake whose head reaches food on the tick it would starve eats instead
   (`ateTick`, in `engine/food.js` and `engine/step.js`). A mushroom doesn't save it, nor does its own bead, which it
   squashes.
@@ -62,8 +63,10 @@ was tried and measured, is in `docs/archive/design-food.md`).
 Each round draws its food season, as it draws its weather, so rounds don't feel alike (the owner, 29 October 2026, in
 `docs/handoff/queue-specs.md`, "2i"): lean one round in four, normal one in two, plentiful one in four (`SEASON_ODDS`;
 what each changes: `SEASONS` in `tuning.js`).
-- **Lean:** one apple fewer (never none: in winter it stays one), beetles half as often, and a meal keeps you 70% as
-  long (12 s mid-round becomes 8.4).
+- **Lean:** one apple fewer from the first beetles (`BEETLE_FIRST_MS`, 15 s; in the opening, while everyone is at its
+  smallest, the log keeps both: #616), never none (in winter it stays one), beetles half as often, and a meal keeps you 70% as
+  long (12 s becomes 8.4; a meal never leaves you less time than you had, so one in the first seconds keeps the
+  start's 12 s).
 - **Plentiful:** one apple more and beetles half again as often (winter keeps two). Snakes grow long, and the log crowds.
 - **Seen and taught:** a lean or plentiful round says so in a banner after Go ("A lean season…", "A season of
   plenty!"), its colour dry bark or fresh leaves, and the first time each comes in a visit a lesson follows with its

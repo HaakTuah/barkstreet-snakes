@@ -8,13 +8,11 @@ to his words in the archive.
 
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
-**The main lane is 6** (round six C: the woodpecker in three acts; parts 1 and 2 done, part 3 next, PR #615), the first
-open entry that waits on nothing (3c waits on 3b's Wildcard part, 3d on 3c, and 4 on 5). Item 5's part 7 (one pricing
-model, built afresh) is next once 6's part 3 (PR #615) merges, as the queue's order says; 2y++'s last step waits on part
-7. The entries before
-these are done (`docs/archive/progress-done/queue-done.md`). The polish lane and the workshop lane run beside it, each
-claimed by a draft PR. **A bug first:** the ui suite's death card check that fails now and then in CI
-(#673) gets a lane of its own now, a tests lane on Sonnet.
+**The main lane is 6** (round six C: the woodpecker in three acts; parts 1, 2 and 3 done, 3+ next), the first open entry
+that waits on nothing (3c waits on 3b's Wildcard part, 3d on 3c, and 4 on 5). Item 5's part 7 (one pricing model, built
+afresh) is next, now that 6's part 3 (PR #615) is in, as the queue's order says; 2y++'s last step waits on part 7. The
+entries before these are done (`docs/archive/progress-done/queue-done.md`). The polish lane and the workshop lane run
+beside it, each claimed by a draft PR.
 
 ## For the owner
 
@@ -146,8 +144,10 @@ three acts" (its draft: `docs/handoff/woodpecker-acts-draft.md`). In six playabl
 1. **Done** (PR #605): the three acts (calm, the watcher and its gaze, the first pecks, the frenzy), `?acts=`; Sovereign's
    time at home asked in #607.
 2. **Done** (PR #610): it cuts shapes along an outline, down to a floor, then fights.
-3. Hunger a conditional good to the end, by one hunger clock for the whole round (#616; design 04); its weighing is
-   finished by 3++. 3+. Islands
+3. **Done** (PR #615): hunger a conditional good to the end, by one hunger clock for the whole round (#616; design 04),
+   and the opening it made too hungry eased: a lean round keeps both apples until the first beetles, and the rivals turn
+   desperate with 6 s of life left, not 11 (#673; design 04 and 39). Its weighing beats never eating but only ties
+   always eating, and is finished by 3++. 3+. Islands
    that stay (#611; design 38, "The log stays one piece"). 3++. Length costs room in the frenzy (#655, "Make length
    cost more in the endgame, so always eating there loses clearly"): under today's rules no meal weighing beats always
    eating, so a long snake must pay in room for the weighing to win. An engine-rules entry, run one at a time, with the

@@ -44,12 +44,13 @@ function weather(game) {
     strike(game);
   }
   // Winter: hunger runs faster (the clock to everyone's next meal runs
-  // down quicker), and apples rot twice as fast.
-  if (now.kind === 'snow') {
-    const extra = tickLength(game) * (T.SNOW_HUNGER - 1);
+  // down quicker: hungerRate), and apples rot twice as fast.
+  const rate = hungerRate(game);
+  if (rate !== 1) {
+    const extra = tickLength(game) * (rate - 1);
     for (const s of game.snakes) if (s.alive) { s.lastAte -= extra; s.nextStarve -= extra; }
-    for (const f of game.food) if (f.kind === 'food' && f.expires != null && !f.cooked) f.expires--;
   }
+  if (now.kind === 'snow') for (const f of game.food) if (f.kind === 'food' && f.expires != null && !f.cooked) f.expires--;
   burn(game);
 }
 // The next spell, drawn from a shuffled bag (WEATHER_ODDS of each kind), so

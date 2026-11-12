@@ -152,7 +152,7 @@ function updateHud(force = false) {
     const leading = s === lead;
     const len = s.alive ? String(s.body.length) : 'out';
     const left = s.alive ? Engine.hungerLeft(theGame, s) : 0;
-    const full = s.alive ? Math.max(0, Math.min(1, left / (s.mealMs || TUNE.HUNGER_MS))) : 0; // (against the last meal: full after any, though one mid-round lasts less)
+    const full = s.alive ? Math.max(0, Math.min(1, left / (s.mealMs || TUNE.HUNGER_MS))) : 0; // (against the last meal: full after any, though one in a lean season lasts less)
     const bar = Math.round(full * 100);
     const starving = s.alive && Engine.hungerWarning(theGame, s) < 1; // (in the warning, as the toast and the growl have it)
     if (force || last.dot !== dot) { t.dot.style.background = dot; last.dot = dot; }

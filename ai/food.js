@@ -13,7 +13,7 @@ let myLen, winter, lifeMs, lifeTicks, desperate;
 function readDesperation() {
   myLen = me.body.length + me.grow;
   winter = view.weather === 'snow';
-  lifeMs = me.starveIn == null ? Infinity : (me.starveIn + (myLen - TUNE.MIN_LENGTH) * TUNE.STARVE_EVERY_MS) / (winter ? TUNE.SNOW_HUNGER : 1);
+  lifeMs = me.starveIn == null ? Infinity : (me.starveIn + (myLen - TUNE.MIN_LENGTH) * TUNE.STARVE_EVERY_MS) / (view.hungerRate || 1);
   lifeTicks = lifeMs / Math.max(TUNE.MIN_TICK, TUNE.START_TICK - (TUNE.START_TICK - TUNE.MIN_TICK) * view.timeMs / TUNE.RAMP_MS);
   desperate = lifeMs < TUNE.AI_DESPERATE_MS;
   memory.desperate = desperate;
@@ -37,9 +37,6 @@ function readDesperation() {
 // (readAppetite() sets these for each decision:)
 let hunger, endgame, fed, foodW0, eatW0, foodW, eatW, contested, starved, saves, nerveKeep, keepLen, roomy, growShare;
 function readAppetite() {
-  // (the hunger clock, from 0 AI_HUNGRY_MS before my first shrink, 1 at it, and on past it while I starve)
-  const ramp = me.hungerLeft == null ? 0 : Math.max(0, (TUNE.AI_HUNGRY_MS - me.hungerLeft) / TUNE.AI_HUNGRY_MS);
-  hunger = Math.min(1, ramp);
   // (Once the woodpecker's here nothing new grows: nobody can afford to be picky.)
   endgame = view.act === 3;
   // (2i: in a lean season, no one is ever fed enough to pass food up; in a
@@ -47,6 +44,17 @@ function readAppetite() {
   // costs before the woodpecker too, as in the endgame below, past
   // AI_CROWD_KEEP times the length worth keeping there)
   const scarce = view.season === 'lean', crowded = !endgame && view.season === 'plentiful';
+  keepLen = endgame ? TUNE.MIN_LENGTH + (w.keep ?? KEEP) : crowded ? TUNE.MIN_LENGTH + TUNE.AI_CROWD_KEEP * (w.keep ?? KEEP) : Infinity;
+  // (the hunger clock, from 0 AI_HUNGRY_MS before my first shrink, 1 at it,
+  // and on past it while I starve; in the endgame, before hunger takes me
+  // below my length worth keeping: the shrinks above it cost nothing I'd
+  // keep, so I let hunger trim me, as a fed snake that never ate would, and
+  // eat as I near it, as one would not: entry 6, part 3; once I starve, from
+  // my next shrink, since my length already counts the ones behind me, as
+  // the engine's own countdown does)
+  const left = endgame && myLen > keepLen ? Math.max(me.hungerLeft, me.starveIn) + (myLen - keepLen) * TUNE.STARVE_EVERY_MS : me.hungerLeft;
+  const ramp = me.hungerLeft == null ? 0 : Math.max(0, (TUNE.AI_HUNGRY_MS - left) / TUNE.AI_HUNGRY_MS);
+  hunger = Math.min(1, ramp);
   fed = !hunger && !endgame && !scarce && myLen >= (w.hungryBelow ?? Infinity);
   foodW0 = fed ? w.food * w.fedFactor : Math.max(w.food, 8 * hunger) * (1 + 2 * hunger);
   eatW0 = fed ? w.eat * w.fedFactor : Math.max(w.eat, 150 * hunger) * (1 + 2 * hunger);
@@ -73,7 +81,6 @@ function readAppetite() {
   // snake: then as before). growShare: the share of a meal's growth that
   // counts, at my length now; along a line, a meal after one is worth only
   // roomy past keepLen (see move).
-  keepLen = endgame ? TUNE.MIN_LENGTH + (w.keep ?? KEEP) : crowded ? TUNE.MIN_LENGTH + TUNE.AI_CROWD_KEEP * (w.keep ?? KEEP) : Infinity;
   if (endgame || crowded) {
     let free = N * N - holes.size - myLen;
     for (const o of others) free -= o.body.length;
