@@ -189,16 +189,16 @@ async function inChrome() {
     await b.go(site.url + 'index.html?debug&way=relays', { settle: 0 });
     await b.ev(`new Promise(r => { const t = setInterval(() => { if (window.SnakeDebug && window.SnakeRelays) { clearInterval(t); r(); } }, 20); })`);
     // BIP-340's test vectors 0 to 3: secret key, public key's x, aux, message, signature.
-    const vectors = [
-      ['0000000000000000000000000000000000000000000000000000000000000003', 'F9308A019258C31049344F85F89D5229B531C845836F99B08601F113BCE036F9', '0000000000000000000000000000000000000000000000000000000000000000', '0000000000000000000000000000000000000000000000000000000000000000', 'E907831F80848D1069A5371B402410364BDF1C5F8307B0084C55F1CE2DCA821525F66A4A85EA8B71E482A74F382D2CE5EBEEE8FDB2172F477DF4900D310536C0'],
-      ['B7E151628AED2A6ABF7158809CF4F3C762E7160F38B4DA56A784D9045190CFEF', 'DFF1D77F2A671C5F36183726DB2341BE58FEAE1DA2DECED843240F7B502BA659', '0000000000000000000000000000000000000000000000000000000000000001', '243F6A8885A308D313198A2E03707344A4093822299F31D0082EFA98EC4E6C89', '6896BD60EEAE296DB48A229FF71DFE071BDE413E6D43F917DC8DCF8C78DE33418906D11AC976ABCCB20B091292BFF4EA897EFCB639EA871CFA95F6DE339E4B0A'],
-      ['C90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B14E5C9', 'DD308AFEC5777E13121FA72B9CC1B7CC0139715309B086C960E18FD969774EB8', 'C87AA53824B4D7AE2EB035A2B5BBBCCC080E76CDC6D1692C4B0B62D798E6D906', '7E2D58D8B3BCDF1ABADEC7829054F90DDA9805AAB56C77333024B9D0A508B75C', '5831AAEED7B44BB74E5EAB94BA9D4294C49BCF2A60728D8B4C200F50DD313C1BAB745879A5AD954A72C45A91C3A51D3C7ADEA98D82F8481E0E1E03674A6F3FB7'],
-      ['0B432B2677937381AEF05BB02A66ECD012773062CF3FA2549E44F58ED2401710', '25D1DFF95105F5253C4022F628A996AD3A0D95FBF21D468A1B33F8C160D8F517', 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF', 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF', '7EB0509757E246F19449885651611CB965ECC1A187DD51B64FDA1EDC9637D5EC97582B9CB13DB3933705B32BA982AF5AF25FD78881EBB32771FC5922EFC66EA3'],
-    ];
+    const vectors = `[
+      ["0000000000000000000000000000000000000000000000000000000000000003", "F9308A019258C31049344F85F89D5229B531C845836F99B08601F113BCE036F9", "0000000000000000000000000000000000000000000000000000000000000000", "0000000000000000000000000000000000000000000000000000000000000000", "E907831F80848D1069A5371B402410364BDF1C5F8307B0084C55F1CE2DCA821525F66A4A85EA8B71E482A74F382D2CE5EBEEE8FDB2172F477DF4900D310536C0"],
+      ["B7E151628AED2A6ABF7158809CF4F3C762E7160F38B4DA56A784D9045190CFEF", "DFF1D77F2A671C5F36183726DB2341BE58FEAE1DA2DECED843240F7B502BA659", "0000000000000000000000000000000000000000000000000000000000000001", "243F6A8885A308D313198A2E03707344A4093822299F31D0082EFA98EC4E6C89", "6896BD60EEAE296DB48A229FF71DFE071BDE413E6D43F917DC8DCF8C78DE33418906D11AC976ABCCB20B091292BFF4EA897EFCB639EA871CFA95F6DE339E4B0A"],
+      ["C90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B14E5C9", "DD308AFEC5777E13121FA72B9CC1B7CC0139715309B086C960E18FD969774EB8", "C87AA53824B4D7AE2EB035A2B5BBBCCC080E76CDC6D1692C4B0B62D798E6D906", "7E2D58D8B3BCDF1ABADEC7829054F90DDA9805AAB56C77333024B9D0A508B75C", "5831AAEED7B44BB74E5EAB94BA9D4294C49BCF2A60728D8B4C200F50DD313C1BAB745879A5AD954A72C45A91C3A51D3C7ADEA98D82F8481E0E1E03674A6F3FB7"],
+      ["0B432B2677937381AEF05BB02A66ECD012773062CF3FA2549E44F58ED2401710", "25D1DFF95105F5253C4022F628A996AD3A0D95FBF21D468A1B33F8C160D8F517", "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", "7EB0509757E246F19449885651611CB965ECC1A187DD51B64FDA1EDC9637D5EC97582B9CB13DB3933705B32BA982AF5AF25FD78881EBB32771FC5922EFC66EA3"]
+    ]`; // (written into the page's code as it stands: this file's own text)
     const signed = await b.ev(`(async () => {
       const bytes = h => Uint8Array.from(h.match(/../g), x => parseInt(x, 16));
       const out = [];
-      for (const [sk, pk, aux, msg, sig] of ${JSON.stringify(vectors)}) {
+      for (const [sk, pk, aux, msg, sig] of ${vectors}) {
         const s = await SnakeRelays.sign(bytes(msg), BigInt('0x' + sk), bytes(aux));
         out.push(s.toUpperCase() === sig && SnakeRelays.times(BigInt('0x' + sk))[0].toString(16).padStart(64, '0').toUpperCase() === pk);
       }
@@ -207,13 +207,15 @@ async function inChrome() {
     ok(signed.length === 4 && signed.every(Boolean), 'the relays’ signatures match BIP-340’s own test vectors', JSON.stringify(signed));
 
     // The round trip: the host here, the friend in a window of its own, both on the stand-in.
-    const until = (cond, ms = 30000) => b.ev(`new Promise((res, rej) => { const t0 = performance.now(); (function check() { let v; try { v = ${cond}; } catch {} if (v) return res(v); if (performance.now() - t0 > ${ms}) return rej(new Error('timeout: ' + ${JSON.stringify(cond)})); setTimeout(check, 50); })(); })`);
+    // (cond: this file's own code, waited for in the page; nothing from the page is ever built into code here)
+    const until = (cond, ms = 30000) => b.ev(`new Promise((res, rej) => { const t0 = performance.now(); (function check() { let v; try { v = ${cond}; } catch {} if (v) return res(v); if (performance.now() - t0 > ${ms}) return rej(new Error('timed out')); setTimeout(check, 50); })(); })`)
+      .catch(err => { throw new Error(`${err.message}, waiting for ${cond}`); });
     await b.ev(`window.hub = ${HUB}; SnakeRelays.useSockets(hub); window.friendWin = window.open('index.html?debug&way=relays'); 'ok'`);
     await until(`friendWin.SnakeDebug && friendWin.SnakeRelays && friendWin.document.readyState === 'complete'`);
     await b.ev(`friendWin.SnakeRelays.useSockets(hub); document.getElementById('friends').click(); document.getElementById('start').click(); 'ok'`);
     const roomCode = await until(`SnakeDebug.online()?.code`);
     ok(/^[A-Z0-9]{5}$/.test(roomCode), 'a room opens on the relays alone (?way=relays), with a code', roomCode);
-    await b.ev(`friendWin.document.getElementById('friends').click(); friendWin.document.getElementById('lobby-code').value = ${JSON.stringify(roomCode)}; friendWin.document.getElementById('lobby-join').requestSubmit(); 'ok'`);
+    await b.ev(`friendWin.document.getElementById('friends').click(); friendWin.document.getElementById('lobby-code').value = SnakeDebug.online().code; friendWin.document.getElementById('lobby-join').requestSubmit(); 'ok'`);
     const joined = await until(`friendWin.SnakeDebug.online()?.role === 'guest' && SnakeDebug.online().players.length === 2 && SnakeDebug.online()`);
     ok(joined.players.length === 2, 'the friend joins by the code, through the relays, and the host’s lobby shows them', JSON.stringify(joined.players.map(p => p.name)));
     await b.ev(`document.getElementById('start').click(); 'ok'`);
