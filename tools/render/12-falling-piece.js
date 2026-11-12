@@ -50,10 +50,10 @@ const washed = await ev(`(() => {
   R.setReducedMotion(false);
   const plan = g.woodpecker.plan; delete g.woodpecker.plan;
   show(g); drawN(12);
-  const inside = () => lum(pixels(21, 2, 1, 1)), base = inside();
+  const inside = () => lum(pixels(19, 1, 4, 4)), base = inside(); // (a few cells' mean, so the streaks' own lines are averaged in)
   g.woodpecker.plan = plan; drawN(12);
   const wash = inside(); drawN(7, 0.5, 71); const washLater = inside();
-  Object.assign(g.woodpecker, { target: cut.slice(), fall: piece.slice(), strikeAt: g.tick + 8 }); // (the last peck aimed, half way: nothing left to nick)
+  Object.assign(g.woodpecker, { target: cut.slice(), fall: piece.slice(), strikeAt: g.tick + 4 }); // (the last peck aimed, well on: nothing left to nick)
   drawN(12); const loose = inside(); drawN(7, 0.5, 71); const looseLater = inside();
   g.woodpecker.fall = []; g.woodpecker.target = []; plan.cut = [];
   drawN(12); const none = inside();
