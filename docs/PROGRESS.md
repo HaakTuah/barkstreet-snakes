@@ -13,8 +13,7 @@ weighing open, 3+ next), the first open entry that waits on nothing (3c waits on
 5). Item 5's part 7 (one pricing model, built afresh) is next, now that 6's part 3 (PR #615) is in, as the queue's order
 says; 2y++'s last step waits on part 7. The entries before these are done
 (`docs/archive/progress-done/queue-done.md`). The polish lane and the workshop lane run beside it, each claimed by a
-draft PR, and so does 2z. **A bug first:** the ui suite's death card check that fails now and then in CI (#673) gets a
-lane of its own now, a tests lane on Sonnet.
+draft PR, and so does 2z.
 
 ## For the owner
 
@@ -163,8 +162,9 @@ three acts" (its draft: `docs/handoff/woodpecker-acts-draft.md`). In six playabl
 1. **Done** (PR #605): the three acts (calm, the watcher and its gaze, the first pecks, the frenzy), `?acts=`; Sovereign's
    time at home asked in #607.
 2. **Done** (PR #610): it cuts shapes along an outline, down to a floor, then fights.
-3. **The clock done** (PR #615): hunger a factor to the end, by one hunger clock for the whole round (#616; design 04).
-   **Open:** the rivals' weighing of a meal beats never eating but comes out only even with always eating, since in the
+3. **The clock done** (PR #615): hunger a factor to the end, by one hunger clock for the whole round (#616; design 04),
+   and the opening it made too hungry eased: a lean round keeps both apples until the first beetles, and the rivals turn
+   desperate with 6 s of life left, not 11 (#673; design 04 and 39). **Open:** the rivals' weighing of a meal beats never eating but comes out only even with always eating, since in the
    frenzy cuts take more length than meals give (design 39, "Hunger read against that length"); the rework, a rule that
    makes length cost room, is the idea #655, built once the owner queues it. 3+. Islands that stay (#611; design 38, "The log stays one piece"). 4. The food A/B
    (`?food=fall`), chips and a bounce if the knock stays (the old study patches, `tools/dev/r6-study-tools/patch-flex*.js`,
