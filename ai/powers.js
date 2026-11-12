@@ -71,7 +71,7 @@ function powerPick(crawlIn, crawlDirIn) {
   pecks = view.pecks; // (the woodpecker's mark, if I'm shown it apart from the holes)
   cellAt = (x, y) => {
     if (me.wrap > 0) { x = (x + N) % N; y = (y + N) % N; } // (the edges wrap for me)
-    return inGrid(x, y) ? y * N + x : seenPortals.length ? portalCell(x, y) : -1; // (or through a gold portal open there)
+    return inGrid(x, y) ? y * N + x : seenPortals.length ? portalCell(x, y) : -1; // (or through a portal open there)
   };
   freeSoon = i => i >= 0 && myCells[i] !== stampM && mineFree[i] <= 1; // (free by next tick)
   // Leap now (pressed twice, over open ground) is weighed only out of a

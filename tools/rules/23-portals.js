@@ -25,7 +25,7 @@ const portalRun = (gap, ticks = 40, stun = 0) => {
 
 { // Going off an edge while wrapping opens a portal there, the way it went, and its exit where it came in.
   const { opened } = portalRun(3, 3);
-  check('a snake the edges wrap for opens a gold portal going off one: entry, the way through, exit', opened && opened.p.x === N21 - 1 && opened.p.y === 10 && opened.p.dx === 1 && opened.p.dy === 0 && opened.p.tx === 0 && opened.p.ty === 10 && opened.p.owner === 0, JSON.stringify(opened));
+  check('a snake the edges wrap for opens a portal going off one: entry, the way through, exit', opened && opened.p.x === N21 - 1 && opened.p.y === 10 && opened.p.dx === 1 && opened.p.dy === 0 && opened.p.tx === 0 && opened.p.ty === 10 && opened.p.owner === 0, JSON.stringify(opened));
 }
 
 { // A dash across the edge while wrapping opens one too (its head lands past the crossing, a cell or two in).
@@ -34,7 +34,7 @@ const portalRun = (gap, ticks = 40, stun = 0) => {
   a.wrapUntil = g.time + 60000; a.dashes = 1;
   E.flash(g, a); feed(g); quiet(g);
   const p = g.portals[0];
-  check('a dash across the edge while wrapping opens a gold portal where it crossed', g.events.some(e => e.type === 'portal') && p && p.x === N21 - 1 && p.dx === 1 && p.tx === 0 && a.body[0].x > 0, JSON.stringify({ head: a.body[0], portals: g.portals }));
+  check('a dash across the edge while wrapping opens a portal where it crossed', g.events.some(e => e.type === 'portal') && p && p.x === N21 - 1 && p.dx === 1 && p.tx === 0 && a.body[0].x > 0, JSON.stringify({ head: a.body[0], portals: g.portals }));
 }
 
 { // A wrap that runs out on the very tick a snake goes off the edge still opens the portal it crossed by.
@@ -86,14 +86,14 @@ const portalRun = (gap, ticks = 40, stun = 0) => {
   check('...but a flight over its exit, not through it, doesn\'t keep it open', me.alive && me.flight && g.portals.length === 0, JSON.stringify({ head: me.body[0], flight: me.flight && { over: me.flight.over, land: me.flight.land }, portals: g.portals }));
 }
 
-{ // A gold portal is a way through for snakes, not for what they spit: a mushroom spat at an open one goes off the
+{ // A portal is a way through for snakes, not for what they spit: a mushroom spat at an open one goes off the
   // board, as its dotted line shows (none, there), and doesn't land on the far side.
   const g = board([[line(N21 - 2, 10, 4), 'right'], [line(10, 20, 4), 'right']], { time: 30000 });
   g.snakes[0].cheek = { power: T.SHRINK, spitAt: g.tick, left: 120 };
   g.portals.push({ x: N21 - 1, y: 10, dx: 1, dy: 0, tx: 0, ty: 10, owner: 1, shutAt: g.time + 1500, followed: [], wrappers: [] });
   feed(g); quiet(g);
   const e = g.events.find(e => e.type === 'spat');
-  check('a mushroom spat at an open gold portal goes off the board, not through it', e && e.x >= N21 && e.lx === null && !g.spits.length && !g.food.some(f => f.kind === 'mushroom' && f.y === 10 && f.x < 3), JSON.stringify({ spat: e && [e.x, e.y], food: g.food.filter(f => f.kind === 'mushroom') }));
+  check('a mushroom spat at an open portal goes off the board, not through it', e && e.x >= N21 && e.lx === null && !g.spits.length && !g.food.some(f => f.kind === 'mushroom' && f.y === 10 && f.x < 3), JSON.stringify({ spat: e && [e.x, e.y], food: g.food.filter(f => f.kind === 'mushroom') }));
 }
 
 { // Following close behind (the body passing, then a moment after): through, out at the exit, nothing crashed.
@@ -126,7 +126,7 @@ const portalRun = (gap, ticks = 40, stun = 0) => {
     food: [{ x: 1, y: 10, kind: 'golden', expires: 999 }, { x: 12, y: 3, kind: 'food', expires: 999 }],
     portals: shutAt === null ? [] : [{ x: N21 - 1, y: 10, dx: 1, dy: 0, tx: 0, ty: 10, owner: 1, shutAt }] });
   const open = picks(view(30000 + 800), 'drab', 20), none = picks(view(null), 'drab', 20);
-  check('an AI goes through an open gold portal when it pays (food just beyond its exit)', open.right === 20, JSON.stringify(open));
+  check('an AI goes through an open portal when it pays (food just beyond its exit)', open.right === 20, JSON.stringify(open));
   check('...and never into the edge where there\'s none', !none.right, JSON.stringify(none));
 }
 
@@ -165,6 +165,6 @@ const portalRun = (gap, ticks = 40, stun = 0) => {
     food: [{ x: 1, y: 10, kind: 'food', expires: 999 }, { x: N21 - 4, y: 1, kind: 'food', expires: 999 }],
     portals: shutAt === null ? [] : [{ x: N21 - 1, y: 10, dx: 1, dy: 0, tx: 0, ty: 10, owner: 1, shutAt }] });
   const open = picks(view(30000 + 800), 'drab', 20), none = picks(view(null), 'drab', 20);
-  check('an AI a few moves off an open gold portal heads for it when food past its exit is nearer that way', open.right === 20, JSON.stringify(open));
+  check('an AI a few moves off an open portal heads for it when food past its exit is nearer that way', open.right === 20, JSON.stringify(open));
   check('...and not toward the edge when it is shut', !none.right, JSON.stringify(none));
 }

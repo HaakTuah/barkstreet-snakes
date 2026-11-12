@@ -35,7 +35,7 @@ The game's polish lane (`core/modules/work-flow.md`, point 4; the owner, 31 Octo
 - **How, here:** a lesson and an online lobby among the screens; the picture on `pr-media`, and play proven unchanged by
   the suites and the simulation's fingerprints (seeds 3 and 11); one line per fix under this lane.
 
-*Next find:* the code comments in `engine/`, `ai/`, `online.js`, `tuning.js` and the simulation tools that still say "gold portals", renamed to "portals" once #615 (open on those files) has merged; then the woodpecker's piece shaded faintly while the
+*Next find:* the woodpecker's piece shaded faintly while the
 nicks close round it (#612, "Woodpecker: shade the piece it's cutting out before its last peck, so a person can see what
 the rivals see"), deepening to today's cut-loose shading at the last peck: `render/cut.js`, design 38's cue lines, the
 Field guide row and lesson, the wash differing from the cut-loose piece by more than colour, and the stand-in's notes on

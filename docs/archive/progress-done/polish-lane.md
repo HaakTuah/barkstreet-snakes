@@ -80,3 +80,4 @@ owner's three notes of 2 November merged as PRs #322 (the remains), #320 (the fl
 - The menus: the start card's trailer-shaped intro, the nap card's cliché, the repeated friends joke and errors that didn't say what went wrong (PR #558).
 - The news lines: the repeated "no longer", semicolon lists, "islands" and a stray "Leap now!" gone, the top line left to the milestone (PR #561).
 - The README's player text: run-ons with piled brackets, "So …" summaries and one phrase four times, facts unchanged (PR #562).
+- The portals: the code comments, test names and census lines that still said "gold portals" say "portals", as the game draws and names them; `tools/rules/23-gold-portals.js` is now `23-portals.js` (this PR).

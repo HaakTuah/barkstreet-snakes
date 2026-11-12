@@ -129,7 +129,7 @@ function aiView(game, snake) {
     landings: game.woodpecker?.landings || null,
     fall: game.woodpecker?.fall || null, // (2s: the pieces its mark cuts loose, shaded for everyone: they fall at the strike, food and all)
     burrows: game.burrows, // (as they are: a person sees every burrow on the board, [{ x, y, at }])
-    portals: game.portals, // (round six B, part 5: the gold portals, as anyone sees them open and shutting)
+    portals: game.portals, // (round six B, part 5: the portals, as anyone sees them open and shutting)
     tickMs: tickLength(game),
     age: game.history.length - 1 - idx,
     tick: game.tick,

@@ -65,7 +65,7 @@ declare namespace Engine {
   /** A beetle underground. */
   interface Under { until: number; expires: number; from: number; gold: boolean }
   interface Burrow { x: number; y: number; at: number; used?: number; dug?: number | boolean; shutFrom?: number; shutAt?: number }
-  /** A gold portal (round six B, part 5): the entry, the way through it, the exit, whose, and when it shuts (0: its owner's body is still through it). */
+  /** A portal (round six B, part 5): the entry, the way through it, the exit, whose, and when it shuts (0: its owner's body is still through it). */
   interface Portal { x: number; y: number; dx: number; dy: number; tx: number; ty: number; owner: number; shutAt: number; followed?: number[] }
   /** A mushroom in the air (3b+): where it is, which way it flies, the cells it has left, its strength, the ticks it'll lie, whose, over the edge or not. */
   interface Spit { x: number; y: number; fx?: number; fy?: number; dir: Dir; left: number; power: number; wilt: number; by: number; wrap: boolean }
