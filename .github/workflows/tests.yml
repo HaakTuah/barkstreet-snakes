@@ -50,7 +50,8 @@ jobs:
           if [ -z "$BASE" ] || [ "$BASE" = 0000000000000000000000000000000000000000 ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
             { echo "code=true"; echo "copy=false"; echo "page=true"; } >> "$GITHUB_OUTPUT"; exit 0
           fi
-          files=$(git diff --name-only "$BASE" HEAD)
+          # (--no-renames: a file moved shows as one deleted and one added, so the place it left still counts)
+          files=$(git diff --no-renames --name-only "$BASE" HEAD)
           echo "$files"
           norm='s#(haaktuah/agent-core/\.github/workflows/[a-z0-9._-]+\.ya?ml@)[0-9a-f]{40}#\1<pin>#Ig'
           own=$(echo "$files" | while IFS= read -r f; do
@@ -58,8 +59,9 @@ jobs:
               core/.node-version|core/scripts/*) ;;
               core/*) continue ;;
               .github/workflows/*)
-                if old=$(git show "$BASE:$f" 2>/dev/null) && new=$(git show "HEAD:$f" 2>/dev/null) \
-                  && [ "$(printf '%s' "$old" | sed -E "$norm")" = "$(printf '%s' "$new" | sed -E "$norm")" ]; then continue; fi ;;
+                # (a file missing on either side, or sed failing, leaves it counted)
+                if old=$(git show "$BASE:$f" 2>/dev/null | sed -E "$norm") && new=$(git show "HEAD:$f" 2>/dev/null | sed -E "$norm") \
+                  && [ -n "$old" ] && [ "$old" = "$new" ]; then continue; fi ;;
             esac
             printf '%s\n' "$f"
           done)
