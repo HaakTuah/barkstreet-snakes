@@ -65,7 +65,8 @@ Each round draws its food season, as it draws its weather, so rounds don't feel 
 what each changes: `SEASONS` in `tuning.js`).
 - **Lean:** one apple fewer from the first beetles (`BEETLE_FIRST_MS`, 15 s; in the opening, while everyone is at its
   smallest, the log keeps both: #616), never none (in winter it stays one), beetles half as often, and a meal keeps you 70% as
-  long (12 s becomes 8.4).
+  long (12 s becomes 8.4; a meal never leaves you less time than you had, so one in the first seconds keeps the
+  start's 12 s).
 - **Plentiful:** one apple more and beetles half again as often (winter keeps two). Snakes grow long, and the log crowds.
 - **Seen and taught:** a lean or plentiful round says so in a banner after Go ("A lean season…", "A season of
   plenty!"), its colour dry bark or fresh leaves, and the first time each comes in a visit a lesson follows with its
