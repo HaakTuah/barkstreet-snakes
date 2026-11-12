@@ -153,6 +153,7 @@ declare namespace PeerJS {
     on(event: 'data', fn: (data: any) => void): void; // (whatever the other browser sent)
     on(event: 'error', fn: (err: Err) => void): void;
     on(event: 'iceStateChanged', fn: (state: RTCIceConnectionState) => void): void;
+    off(event: 'iceStateChanged', fn: (state: RTCIceConnectionState) => void): void;
     once(event: 'open', fn: () => void): void;
   }
   interface Peer {

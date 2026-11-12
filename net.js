@@ -42,6 +42,7 @@ window.SnakeNet = (() => {
   /** @returns {Promise<PeerJS.PeerClass>} */
   function load() {
     if (window.Peer) return Promise.resolve(window.Peer);
+    // (a file that never comes is the library's failure, not the broker's)
     return inTime(loading ||= new Promise((resolve, reject) => {
       const s = document.createElement('script');
       s.src = PEERJS;
@@ -50,7 +51,7 @@ window.SnakeNet = (() => {
       s.onload = () => { if (window.Peer) resolve(window.Peer); else { loading = null; reject(new Error('library')); } };
       s.onerror = () => { loading = null; s.remove(); reject(new Error('library')); };
       document.head.append(s);
-    }));
+    })).catch(err => { throw err?.type === 'timeout' ? new Error('library') : err; });
   }
 
   // Why a connection failed, in words for the card: which part failed, finding each other (the
@@ -61,8 +62,8 @@ window.SnakeNet = (() => {
     const type = err?.type || err?.message;
     if (type === 'library') return 'Online play didn’t load. Are you connected?';
     if (type === 'peer-unavailable') return 'There’s no room with that code. Check it, or ask for a fresh link.';
-    if (type === 'unanswered') return 'Couldn’t find each other: the room didn’t answer. Ask the host whether it’s still open, then try again.';
-    if (type === 'route') return 'Found the room, but couldn’t connect to it: a network on the way blocks direct connections, as some offices, schools and mobile carriers do. Try another network, such as mobile data instead of Wi-Fi.';
+    if (type === 'unanswered') return 'Couldn’t find each other: the room didn’t answer. Ask the host to check the game is still open, then try again.';
+    if (type === 'route') return 'Found the room, but couldn’t connect: one of your networks blocks direct connections, as some offices, schools and mobile carriers do. One of you could try another network, such as mobile data.';
     if (type === 'browser-incompatible') return 'This browser can’t play with friends. Try a recent Chrome, Firefox or Safari.';
     return 'Couldn’t find each other: the service that introduces players didn’t answer. Check your connection, or try again in a minute.';
   }
@@ -183,8 +184,10 @@ window.SnakeNet = (() => {
       /** @param {PeerJS.Err} err */
       function fail(err) { clearTimeout(timer); peer.destroy(); reject(new Error(explain(err))); }
       peer.once('error', fail);
-      c.on('iceStateChanged', state => { if (state !== 'new') answered = true; if (state === 'failed') failed(); });
-      c.once('open', () => { clearTimeout(timer); peer.off('error', fail); resolve(c); });
+      /** @param {RTCIceConnectionState} state */
+      const onIce = state => { if (state !== 'new') answered = true; if (state === 'failed') failed(); };
+      c.on('iceStateChanged', onIce);
+      c.once('open', () => { clearTimeout(timer); peer.off('error', fail); c.off('iceStateChanged', onIce); resolve(c); });
     });
 
     let heard = performance.now(), closed = false;

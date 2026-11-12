@@ -65,8 +65,10 @@ const finding = /^Couldn’t find each other|^There’s no room/, route = /^Foun
   const silent = await join({ connect: () => {} });
   ok(finding.test(silent) && /room didn’t answer/.test(silent), 'a room that never answers: finding each other failed', silent);
 
+  const t0 = performance.now();
   const failed = await join({ connect: (_, c) => { c.emit('iceStateChanged', 'checking'); later(() => c.emit('iceStateChanged', 'failed'), 100); } });
-  ok(route.test(failed), 'a room that answered, but no route through: the route failed', failed);
+  const took = (performance.now() - t0) * FAST;
+  ok(route.test(failed) && took < 5000, 'a room that answered, but no route through: the route failed, said at once rather than at the time limit', `${failed} (after ${Math.round(took)} ms of game time)`);
   const stuck = await join({ connect: (_, c) => c.emit('iceStateChanged', 'checking') });
   ok(route.test(stuck), 'a room that answered, with routes tried till time ran out: the route failed', stuck);
 
