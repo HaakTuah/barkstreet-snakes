@@ -11,7 +11,9 @@ window.SnakeVersion = {
   build: 'dev',
   news: [
     { on: '2026-11-12', line: 'Lean rounds keep both apples for the first 15 s.' },
-    { on: '2026-11-11', line: 'Hunger now bites after 12 seconds, all round.' },
+    { on: '2026-11-12', line: 'Hunger now bites after 12 seconds, all round.' },
+    { on: '2026-11-12', line: 'Portals are now swirling ovals, as in Portal.' },
+    { on: '2026-11-12', line: 'Failed joins now say what went wrong.' },
     { on: '2026-11-10', line: 'Portals glow blue and orange, as in Portal.' },
     { on: '2026-11-09', line: 'The woodpecker cuts the log away. Get off it!' },
     { on: '2026-11-08', line: 'The woodpecker comes in acts. Mind its gaze.' },

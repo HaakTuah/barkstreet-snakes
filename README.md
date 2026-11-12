@@ -67,7 +67,7 @@ Press **Play with friends** on the start screen, then **Host a game** and send t
 - **Shared Hall of Fame:** when you connect, your best rounds and your friends' are copied into each other's Hall of Fame (marked "friend"), and every round you play together is recorded for everyone. Your stats and **Only you** stay yours.
 - If a friend's connection goes quiet, an AI steers their snake until they're back; if they leave, it finishes the round for them.
 - There's no napping online, and the host's tab should stay open (it keeps the round going even in the background).
-- On some strict networks (certain mobile carriers and offices) browsers can't connect directly. If a friend can't get in, try another network; for good, a relay (TURN server) can be added in `net.js`.
+- On some strict networks (certain mobile carriers and offices) browsers can't connect directly. If a friend can't get in, the lobby says which part failed: finding each other, or the route. For the route, try another network; for good, a relay (TURN server) can be added in `net.js`.
 
 ## Controls
 
