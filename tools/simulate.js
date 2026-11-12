@@ -25,9 +25,7 @@
 //   --census  also print what a round holds: golden things, weather and
 //             lightning, the woodpecker (and any aim it had to make near a
 //             head), the powers used, how sudden death goes, and how hungry
-//             snakes are before the woodpecker comes and after (and how
-//             often a snake eats mid-round, from HUNGER_MID_FROM_MS to the
-//             woodpecker: meals a snake-minute), and the
+//             snakes are before the woodpecker comes and after, and the
 //             beads: how many were eaten (and how many by the snake they
 //             broke off), how often a snake choked on its own, and what it
 //             nudged aside coughing; the beetles: how each time one is above

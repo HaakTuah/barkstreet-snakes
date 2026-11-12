@@ -2,15 +2,17 @@
 // (The queue's entry: "if food levels varied more, that would change things up.") Each round draws lean, normal or
 // plentiful; everyone sees it.
 
-{ // A season's apples: one fewer when lean, one more in plenty; in winter too, never none.
-  const count = (season, snow) => {
+{ // A season's apples: one fewer when lean (from the first beetles: #616), one more in plenty; in winter too, never none.
+  const count = (season, snow, at = T.BEETLE_FIRST_MS) => {
     const g = board([[line(5, 5, 3), 'right'], [[[5, 15], [4, 15], [3, 15]], 'right']], { season });
+    g.time = at;
     if (snow) g.weather = { kind: 'snow', since: 0, until: 1e9, nextGust: 0, nextStrike: 0 };
     g.food = [];
     E.step(g);
     return g.food.filter(f => f.kind === 'food').length;
   };
   check('a lean season keeps one apple fewer, a plentiful one one more', count('lean') === T.APPLES - 1 && count('normal') === T.APPLES && count('plentiful') === T.APPLES + 1, [count('lean'), count('normal'), count('plentiful')].join());
+  check('...but in the opening, a lean one keeps them all', count('lean', false, 0) === T.APPLES && count('plentiful', false, 0) === T.APPLES + 1);
   check('...and in winter, never none', count('lean', true) === 1 && count('plentiful', true) === T.SNOW_APPLES + 1);
 }
 
@@ -37,13 +39,19 @@
 { // A lean season's meal keeps a snake SEASONS.lean.meal as long, mid-round and before.
   const lasts = (season, time) => {
     const g = board([[line(5, 5, 4), 'right']], { season, time, food: [[6, 5]] });
-    Object.assign(g.snakes[0], { lastAte: time - T.HUNGER_MS + 1000, nextStarve: time + 1000 }); // (hungry: a meal never leaves it less time than it had)
+    Object.assign(g.snakes[0], { lastAte: time - T.HUNGER_MS + 1000, nextStarve: time + 1000 }); // (hungry)
     E.step(g);
     return g.snakes[0].mealMs;
   };
   check('a lean meal keeps a snake less long (mid-round and in the opening), a plentiful one as a normal one',
-    lasts('lean', 60000) === T.HUNGER_MID_MS * T.SEASONS.lean.meal && lasts('normal', 60000) === T.HUNGER_MID_MS && lasts('plentiful', 60000) === T.HUNGER_MID_MS
+    lasts('lean', 60000) === T.HUNGER_MS * T.SEASONS.lean.meal && lasts('normal', 60000) === T.HUNGER_MS && lasts('plentiful', 60000) === T.HUNGER_MS
     && lasts('lean', 5000) === T.HUNGER_MS * T.SEASONS.lean.meal, [lasts('lean', 60000), lasts('normal', 60000), lasts('lean', 5000)].join());
+}
+{ // ...but a meal never leaves a snake less time than it had: a lean apple in the first seconds keeps the start's longer clock.
+  const g = board([[line(5, 5, 4), 'right']], { season: 'lean', time: 100, food: [[6, 5]] });
+  const before = g.snakes[0].nextStarve;
+  E.step(g);
+  check('an early lean meal never brings starving forward', g.snakes[0].eaten === 1 && g.snakes[0].nextStarve >= before, [before, g.snakes[0].nextStarve].join());
 }
 
 // The rivals play the season. A long snake, an apple three cells to its side (below), nobody near.

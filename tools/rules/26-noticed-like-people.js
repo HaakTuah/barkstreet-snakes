@@ -41,6 +41,7 @@
 }
 { // ...nor when the rival's own head jumps across the board (over a wrapped edge): the snake beside it is now far off.
   const g = board([[line(3, 3, 4), 'right'], [line(3, 4, 4), 'right']], { time: 150000 }); // (the fastest ticks: the most ticks between near and far)
+  for (const s of g.snakes) { s.lastAte = g.time; s.nextStarve = g.time + T.HUNGER_MS; } // (fed: nobody starves in these ticks)
   for (let t = 0; t < 8; t++) E.step(g);
   const me = g.snakes[0], o = g.snakes[1], body = q => JSON.stringify(q.body);
   const lateOf = v => [...g.history].reverse().findIndex(h => body(h.snakes.find(s => s.id === o.id)) === body(v.others[0]));

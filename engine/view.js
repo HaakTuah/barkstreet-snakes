@@ -135,6 +135,7 @@ function aiView(game, snake) {
     tick: game.tick,
     timeMs: game.time,
     weather: game.weather.kind, // (everyone sees the weather: in winter, apples rot twice as fast)
+    hungerRate: hungerRate(game), // (and how fast hunger runs: faster in snow, as everyone's bar shows)
     season: game.season, // (2i: and the round's food season, named in its start banner)
     act: actOf(game), // (entry 6: the woodpecker's act, as anyone sees it: it comes, it pecks, it rages)
     gaze: game.woodpecker && actOf(game) === 1 ? game.woodpecker.gaze : -1, // (act 1: the spot it watches, as anyone sees its eye on it)

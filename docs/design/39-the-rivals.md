@@ -128,8 +128,8 @@ Past a length of its own (`hungryBelow`), a fed rival wants food only `fedFactor
 (sudden death, its third act: `view.act` 3) nothing new grows but the last apples, so the "fed" state switches off for everyone (and all
 round in a lean food season; a plentiful one starts the weighing below before the woodpecker: "Food seasons" in
 `04-food-and-the-world.md`). Hunger trumps
-it too: with under 10 s before it starts starving (`AI_HUNGRY_MS`), any rival goes looking for food, harder the closer
-it gets. Ghost, which stays small on purpose, keeps small but not starvation-small: before the woodpecker food counts
+it too: with under 10 s before it starts starving (`AI_HUNGRY_MS`; in the endgame, before hunger would take it below
+the length worth keeping, below), any rival goes looking for food, harder the closer it gets. Ghost, which stays small on purpose, keeps small but not starvation-small: before the woodpecker food counts
 in full for it under 18 cells (`hungryBelow` 18, `fedFactor` 0.4), and in the endgame it keeps the least (below), and hungry it keeps its distance from heads less (none, desperate), so its
 distance doesn't cost it the meals it needs.
 
@@ -143,6 +143,14 @@ room a snake needs to turn in.
   log a snake, and more) food counts as before. Gobbler stays the greediest (`keep` 24: its food share is its
   trademark), Mason keeps 16 (its walls, two thick, need the length), and Ghost, which keeps small on purpose, is the
   most sparing (7); the default is already sparing for the rest.
+- **Hunger read against that length:** in the endgame a rival's hunger ramp (`AI_HUNGRY_MS`) counts down to when
+  hunger would take it below the length worth keeping, not to its first shrink: the shrinks above it cost nothing it
+  would keep, so a long rival lets hunger trim it, as one that never ate would, and eats as it nears that length, as
+  one would not (entry 6, part 3: read from the meal clock alone, the weighing ate almost as rivals that always eat).
+  Head to head it beats rivals that never eat, who starve, but only comes out even with rivals that always eat: in the
+  frenzy a cut takes about 30 segments, more than meals give, and a cut tail feeds the cutter, so which meals a rival
+  takes hardly moves its length; fewer self-bites and more starving after a cut cancel, and rounds end in crashes (the
+  rework: #655, a rule that makes length cost room).
 - **The tail drop planned ahead:** a drop needs the flash rested, a body one thick and a free cell beyond, and a boxed
   snake rarely has all three. So in the endgame a rival weighs dropping its tail as soon as the search sees it boxed in
   (every crawl ends in less room than it needs, or only through a gap a rival could shut), not only once every crawl
@@ -163,8 +171,9 @@ room a snake needs to turn in.
 
 ### A starving rival takes its chances
 
-When the hunger it can see (its own clock, as a person sees their bar) leaves it less than about 11 s of life
-(`AI_DESPERATE_MS`), a rival:
+When the hunger it can see (its own clock, as a person sees their bar) leaves it less than about 6 s of life
+(`AI_DESPERATE_MS`; at 11 s, under one 12 s clock, a rival four long was desperate 2.5 s after every meal, and the
+opening's rivals chased the same apples and crashed: #616), a rival:
 - drops its personality's errands (home, mimicry, coiling, lures);
 - goes for any food, even food a rival might reach first (never its own beads, which aren't a meal);
 - takes more risk near heads;
@@ -330,7 +339,9 @@ measured"). The latest rates by persona are in "Win rates by personality" there.
 ### Balance targets
 
 The measure for the moves and the power styles, as round six B set it (simulation, paired seeds): powers on clearly beat
-powers off in the seat-split A/B; every persona in the band (above); rounds about 160–180 s; starving at most 8%;
+powers off in the seat-split A/B; every persona in the band (above); rounds about 160–180 s; starving at most 15%
+of deaths (8% until entry 6, part 3 made a meal a trade-off in the frenzy, where a long rival now lets itself shrink:
+13.7% on seeds 107 and 109, 4.4% before, the time spent starving before the frenzy 2.9% against 2.2%);
 failed flashes rare enough to be a risk you take on purpose. The numbers chosen against it are in each move's section
 of `40-powers-and-moves.md`; the text as it was, with the A/B as it stood then, is in
 `docs/archive/design-arc-and-history.md`.

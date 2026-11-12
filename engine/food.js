@@ -1,9 +1,10 @@
 // An apple: it rots away after a while (and another drops somewhere else).
 const apple = game => ({ kind: 'food', expires: game.tick + Math.round(T.APPLE_TICKS * between(0.75, 1.25)) });
 // How many apples the board keeps: two; in winter, one; one fewer in a lean
-// season and one more in a plentiful one (2i), never none.
-const seasonApples = (season, snow = false) => Math.max(1, (snow ? T.SNOW_APPLES : T.APPLES) + T.SEASONS[season].apples); // (the Field guide and the lesson count them here too)
-const applesWanted = game => seasonApples(game.season, game.weather.kind === 'snow');
+// season (from the first beetles: in the opening everyone is at its
+// smallest, #616) and one more in a plentiful one (2i), never none.
+const seasonApples = (season, snow = false, opening = false) => Math.max(1, (snow ? T.SNOW_APPLES : T.APPLES) + (opening ? Math.max(0, T.SEASONS[season].apples) : T.SEASONS[season].apples)); // (the Field guide and the lesson count them here too)
+const applesWanted = game => seasonApples(game.season, game.weather.kind === 'snow', game.time < T.BEETLE_FIRST_MS);
 function fillFood(game) {
   // Apples, golden apples and beads rot, mushrooms wither, and beetles nobody caught fly off.
   if (game.food.some(f => f.expires != null && f.expires <= game.tick)) {
@@ -168,7 +169,8 @@ function consume(game, s, f, x, y) {
     s.cheek = { power, spitAt: game.tick + T.CHEEK_TICKS, left: f.expires != null ? Math.max(0, f.expires - game.tick) : T.MUSHROOM_TICKS };
   } else {
     const growth = f.kind === 'golden' ? T.GOLDEN_GROWTH : f.kind === 'beetle' ? T.BEETLE_GROWTH : f.cooked ? T.COOKED_GROWTH : 1;
-    // (A meal never leaves it less time than it had: one just after HUNGER_MID_FROM_MS on top of one just before keeps the longer; mealMs, what a full bar means, is then that long.)
+    // (A meal never leaves it less time than it had: a lean meal in the first seconds, under the 12 s every snake
+    // starts with, keeps the longer; mealMs, what a full bar means, is then that long.)
     const lasts = Math.max(mealLasts(game), hungerLeft(game, s));
     s.lastAte = game.time - (T.HUNGER_MS - lasts);
     s.nextStarve = game.time + lasts;

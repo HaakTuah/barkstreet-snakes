@@ -109,7 +109,7 @@ const FLAVOR = {
     plentiful: ['A season of plenty!', 'Plenty on the log this round.'],
   },
   seasonRule: k => k === 'lean' // (one idea, 60 characters at most, as every lesson)
-    ? `Lean: ${inWords(Engine.seasonApples(k))} apple, fewer beetles, short meals. Some starve.`
+    ? `Lean: ${inWords(Engine.seasonApples(k))} apple from 0:${Math.round(TUNE.BEETLE_FIRST_MS / 1000)}, fewer beetles, short meals.`
     : `Plenty: ${inWords(Engine.seasonApples(k))} apples, more beetles. Mind the crowd.`,
   strike: ['Lightning! The bark’s on fire.', 'Crack! Fire on the bark.'],
   rainbow: ['A rainbow! And at its foot, something golden.', 'After the rain, a rainbow. Follow it to the gold.'],

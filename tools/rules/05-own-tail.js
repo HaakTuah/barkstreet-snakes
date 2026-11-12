@@ -110,7 +110,7 @@ const freeHere = g => (x, y) => passHere(g)(x, y) && !g.food.some(f => f.x === x
   check('an AI sees the food as it is, not as it was', E.aiView(g, b).food === g.food && E.aiView(g, a).food === g.food);
 }
 
-{ // A meal keeps you HUNGER_MS in the opening and once the woodpecker's here, but only HUNGER_MID_MS in between, when food is everywhere.
+{ // A meal keeps you HUNGER_MS, one clock for the whole round (#616): in the opening, mid-round and once the woodpecker's here.
   const meal = time => {
     const g = board([[line(5, 10, 5), 'right'], [line(5, 20, 3), 'right']], { food: [[6, 10]], time });
     g.weather.until = 1e12; // (clear: no winter)
@@ -119,19 +119,8 @@ const freeHere = g => (x, y) => passHere(g)(x, y) && !g.food.some(f => f.x === x
     const s = g.snakes[0];
     return [Math.round(E.hungerLeft(g, s) + g.time - t0), Math.round(s.nextStarve - t0)]; // (as it ate: the time left, and when it starts shrinking)
   };
-  const opening = meal(T.HUNGER_MID_FROM_MS - 5000), mid = meal(T.HUNGER_MID_FROM_MS + 5000), late = meal(FRENZY + 1000);
-  check('a meal lasts HUNGER_MS in the opening, HUNGER_MID_MS mid-round, HUNGER_MS once the woodpecker\'s here', [opening, mid, late].map(String).join(' ') === [[T.HUNGER_MS, T.HUNGER_MS], [T.HUNGER_MID_MS, T.HUNGER_MID_MS], [T.HUNGER_MS, T.HUNGER_MS]].map(String).join(' '), JSON.stringify([opening, mid, late]));
-  // A meal just before HUNGER_MID_FROM_MS, then one just after: the second never takes time away (nor does the bar fill for less than is left).
-  const g = board([[line(5, 10, 5), 'right'], [line(5, 20, 3), 'right']], { food: [[6, 10]], time: T.HUNGER_MID_FROM_MS - 100 });
-  g.weather.until = 1e12;
-  const s = g.snakes[0];
-  feed(g); quiet(g);
-  const first = s.nextStarve;
-  while (g.time < T.HUNGER_MID_FROM_MS + 1000) quiet(g);
-  g.food = [{ x: s.body[0].x + 1, y: s.body[0].y, kind: 'food' }]; g.given = new Set([g.food[0].y * T.GRID + g.food[0].x]);
-  const before = E.hungerLeft(g, s);
-  quiet(g);
-  check('...and a meal just after HUNGER_MID_FROM_MS never shortens what an earlier one left', s.ateTick === g.tick - 1 && before > T.HUNGER_MID_MS && Math.abs(s.nextStarve - first) < 1e-6 && Math.abs(s.mealMs - before) < 1e-6, JSON.stringify({ first, now: s.nextStarve, before, mealMs: s.mealMs }));
+  const times = [5000, 60000, FRENZY + 1000].map(meal);
+  check('a meal lasts HUNGER_MS all round: in the opening, mid-round, once the woodpecker\'s here', times.every(([left, at]) => left === T.HUNGER_MS && at === T.HUNGER_MS), JSON.stringify(times));
 }
 
 { // Sudden death: the last apples fall one at a time, each wait longer than the last; the first is announced; nothing else grows (beetles still come out).

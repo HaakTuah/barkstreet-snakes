@@ -109,9 +109,7 @@ window.TUNING = Object.freeze({
   COOKED_GROWTH: 2,         // baked food is worth this much
 
   // ---------------------------------------------------------------- hunger
-  HUNGER_MS: 20000,         // this long without food (mushrooms don't count) and you start shrinking, in the opening and once the woodpecker's here...
-  HUNGER_MID_MS: 12000,     // ...but a meal between HUNGER_MID_FROM_MS and then keeps you only this long (with 20 s, a snake was hungry 3% of the time before 2:00; with 13, 9%; once the rivals hunted well, 8% with 13 and about 10% with 12)
-  HUNGER_MID_FROM_MS: 45000,
+  HUNGER_MS: 12000,         // this long without food (mushrooms don't count) and you start shrinking: one clock for the whole round, tuned so a meal is a trade-off to the end (entry 6, part 3; #616)...
   STARVE_EVERY_MS: 1500,    // ...one segment this often, starving at MIN_LENGTH
   HUNGER_WARN_MS: 6000,     // warn you when this much time is left (half again as early at your smallest)
   BANNER_BASE_MS: 1000,     // a banner is held for its reading time, read in glances while you steer: this...
@@ -230,7 +228,7 @@ window.TUNING = Object.freeze({
   REACTION_DRIFT_TICKS: 8,  // ...drawn afresh this often and blended between, so it drifts rather than flickers
   HISTORY: 8,               // board snapshots kept for those delays
   AI_HUNGRY_MS: 10000,      // with this long left before starving, an AI starts looking for food, harder as it gets closer
-  AI_DESPERATE_MS: 11000,   // with less than this much life left by hunger (its own clock, shrinking included), an AI drops its errands and takes its chances for food
+  AI_DESPERATE_MS: 6000,    // with less than this much life left by hunger (its own clock, shrinking included), an AI drops its errands and takes its chances for food (11 s, with one 12 s clock, had a rival four long desperate 2.5 s after every meal, and crashing: #616)
   AI_CROWD_KEEP: 3,         // in a plentiful season (2i), an AI weighs growth past MIN_LENGTH + this many times its endgame keep against the room it costs, as it does from the woodpecker on
   LAND_REACH: 0.5,          // a cell is Sovereign's or a colony's land when its centre is within the field's radius plus this of the field's centre (one rule: AI, chatter, HUD, borders)
 
