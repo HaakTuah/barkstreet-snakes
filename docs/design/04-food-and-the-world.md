@@ -63,7 +63,8 @@ was tried and measured, is in `docs/archive/design-food.md`).
 Each round draws its food season, as it draws its weather, so rounds don't feel alike (the owner, 29 October 2026, in
 `docs/handoff/queue-specs.md`, "2i"): lean one round in four, normal one in two, plentiful one in four (`SEASON_ODDS`;
 what each changes: `SEASONS` in `tuning.js`).
-- **Lean:** one apple fewer (never none: in winter it stays one), beetles half as often, and a meal keeps you 70% as
+- **Lean:** one apple fewer from the first beetles (`BEETLE_FIRST_MS`, 15 s; in the opening, while everyone is at its
+  smallest, the log keeps both: #616), never none (in winter it stays one), beetles half as often, and a meal keeps you 70% as
   long (12 s becomes 8.4).
 - **Plentiful:** one apple more and beetles half again as often (winter keeps two). Snakes grow long, and the log crowds.
 - **Seen and taught:** a lean or plentiful round says so in a banner after Go ("A lean season…", "A season of

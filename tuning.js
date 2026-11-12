@@ -228,7 +228,7 @@ window.TUNING = Object.freeze({
   REACTION_DRIFT_TICKS: 8,  // ...drawn afresh this often and blended between, so it drifts rather than flickers
   HISTORY: 8,               // board snapshots kept for those delays
   AI_HUNGRY_MS: 10000,      // with this long left before starving, an AI starts looking for food, harder as it gets closer
-  AI_DESPERATE_MS: 11000,   // with less than this much life left by hunger (its own clock, shrinking included), an AI drops its errands and takes its chances for food
+  AI_DESPERATE_MS: 6000,    // with less than this much life left by hunger (its own clock, shrinking included), an AI drops its errands and takes its chances for food (11 s, with one 12 s clock, had a rival four long desperate 2.5 s after every meal, and crashing: #616)
   AI_CROWD_KEEP: 3,         // in a plentiful season (2i), an AI weighs growth past MIN_LENGTH + this many times its endgame keep against the room it costs, as it does from the woodpecker on
   LAND_REACH: 0.5,          // a cell is Sovereign's or a colony's land when its centre is within the field's radius plus this of the field's centre (one rule: AI, chatter, HUD, borders)
 

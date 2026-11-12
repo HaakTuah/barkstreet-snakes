@@ -171,8 +171,9 @@ room a snake needs to turn in.
 
 ### A starving rival takes its chances
 
-When the hunger it can see (its own clock, as a person sees their bar) leaves it less than about 11 s of life
-(`AI_DESPERATE_MS`), a rival:
+When the hunger it can see (its own clock, as a person sees their bar) leaves it less than about 6 s of life
+(`AI_DESPERATE_MS`; at 11 s, under one 12 s clock, a rival four long was desperate 2.5 s after every meal, and the
+opening's rivals chased the same apples and crashed: #616), a rival:
 - drops its personality's errands (home, mimicry, coiling, lures);
 - goes for any food, even food a rival might reach first (never its own beads, which aren't a meal);
 - takes more risk near heads;
