@@ -32,9 +32,9 @@ The REST calls from a cloud session: `core/modules/github-calls.md`. Updates, De
   `tools/node_modules/`, never committed), and Dependabot's npm updates aim at it; the licence check reads each
   package's licence from the lock at every version. The game itself ships no dependencies.
 - **The signature check** (`.github/workflows/signatures.yml`) runs the core's on every pull request. Where one
-  changes the tools' package list, their lock file, an `.npmrc` or the Node version, it installs from the registry
-  alone with no install script run, then runs `npm audit signatures`, npm's own check of the registry's signature on
-  each installed package (floor rule 7); where it changes none, it passes at once. It cannot run in a cloud session,
+  changes a package list or a lock file anywhere in the repository, an `.npmrc` or the Node version, it installs the
+  tools' packages from the registry alone with no install script run, then runs `npm audit signatures`, npm's own
+  check of the registry's signature on each installed package (floor rule 7); where it changes none, it passes at once. It cannot run in a cloud session,
   which cannot reach Sigstore; the pull request's own run is the check. It reports on every pull request, so a ruleset
   can require it; until one does, merge only once it is green, and not by auto-merge alone.
 - **Node:** the core's one exact pin, `core/.node-version`, which CI and the cloud setup read ("Node" in
