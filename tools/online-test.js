@@ -195,7 +195,7 @@ const EVENTS = (s, o, h, k) => {
     knock: [{ kind: 'food', ...at, tx: Math.min(E.GRID - 1, h.x + 2), ty: h.y }, { kind: 'beetle', ...at, tx: h.x, ty: Math.max(0, h.y - 2), gold: 1 }, { kind: 'pellet', ...at, tx: null, ty: null, color: o.color }], // (knocked aside, a golden beetle scurrying, and a bead in its colour with nowhere to go)
     burrow: [{ ...at }, { ...at, dug: 1 }], shut: [{ ...at, at: 9000 + k }], heal: [{ ...at }], // (one cracked open, or left by a dig; one starting to grow shut; one closing over)
     spill: [{ snake: s, ...at, leaps: 2, dashes: 1 }, { snake: s, ...at, leaps: 0, dashes: 3 }], // (round six B, part 6: dropped charges)
-    portal: [{ snake: s, x: E.GRID - 1, y: h.y, tx: 0, ty: h.y }], through: [{ snake: s, x: 0, y: h.y, tx: E.GRID - 1, ty: h.y, owner: o.id }], portalShut: [{ x: h.x, y: 0, tx: h.x, ty: E.GRID - 1 }], // (round six B, part 5: gold portals)
+    portal: [{ snake: s, x: E.GRID - 1, y: h.y, tx: 0, ty: h.y }], through: [{ snake: s, x: 0, y: h.y, tx: E.GRID - 1, ty: h.y, owner: o.id }], portalShut: [{ x: h.x, y: 0, tx: h.x, ty: E.GRID - 1 }], // (round six B, part 5: portals)
   };
 };
 const WEATHER = ['clear', 'sun', 'wind', 'rain', 'storm', 'snow'], FIRES = ['burning', 'struck', 'ember']; // (online.js's orders)
@@ -237,7 +237,7 @@ function stage(game) {
   if (bug && short('food beetle 9')) { bug.scared = true; return; } // (a scared one)
   const digger = game.food.find(f => f.kind === 'beetle' && f.digUntil == null);
   if (digger && short('food beetle 11')) { digger.digUntil = k + 8; return; } // (one digging in, cornered)
-  if (!game.portals.length && short('portals')) { game.portals.push({ x: E.GRID - 1, y: h.y, dx: 1, dy: 0, tx: 0, ty: h.y, owner: s.id, shutAt: game.time + T.PORTAL_MS }); return; } // (a gold portal, shutting; the engine shuts it in its time)
+  if (!game.portals.length && short('portals')) { game.portals.push({ x: E.GRID - 1, y: h.y, dx: 1, dy: 0, tx: 0, ty: h.y, owner: s.id, shutAt: game.time + T.PORTAL_MS }); return; } // (a portal, shutting; the engine shuts it in its time)
   if (game.burrows.length && short('burrows dug')) { game.burrows[0].dug = 1; return; } // (one a dig left)
   if (game.burrows.length && !game.burrows[0].shutAt && short('burrows shut')) { game.burrows[0].shutFrom = game.time; game.burrows[0].shutAt = game.time + 9000; return; } // (one growing shut)
   const hatch = game.burrows[0] || free(game);
@@ -287,7 +287,7 @@ for (let r = 0; r < rounds; r++) {
       presses++;
     }
     const dyingHost = E.step(host);
-    if (r >= rounds - 2) stage(host); // (in the last two rounds: the ones before have had their go; one was too few once the gold portals came)
+    if (r >= rounds - 2) stage(host); // (in the last two rounds: the ones before have had their go; one was too few once the portals came)
     const msg = wire(O.tick(host, { holesFrom: holesSent, tickLen: E.tickMs(host) }));
     holesSent = host.holes.size;
     const dyingGuest = O.apply(guest, msg, E.DIRS);

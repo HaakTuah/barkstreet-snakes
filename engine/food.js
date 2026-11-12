@@ -195,7 +195,7 @@ function shrink(s, n) {
 // (3b+). A mushroom in a cheek, its time up, leaves the head the way the
 // snake faces, a segment stronger (to SHRINK_MAX), and flies straight on,
 // SPIT_SPEED cells a tick, up to SPIT_REACH (over the edge only where the
-// edges wrapped for the spitter as it left; a gold portal is a way through
+// edges wrapped for the spitter as it left; a portal is a way through
 // for snakes, not for what they spit). It stops at the first thing in its
 // way (see spitHits): a head swallows it (shrinking, and spitting it on in
 // its turn), unless its own mouth is full: then it bounces off, as off a

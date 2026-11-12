@@ -1,4 +1,4 @@
-// The gold portals (round six B, part 5), as anyone sees them: a snake the
+// The portals (round six B, part 5), as anyone sees them: a snake the
 // edges wrap for opens a pair going off an edge, and anyone may follow it
 // through while its body passes and PORTAL_MS after (engine/portals.js).
 
@@ -32,7 +32,7 @@ function portalOut(x, y, d, step) {
   return false;
 }
 
-// Off the grid at (x, y), a step from inside it: through a gold portal
+// Off the grid at (x, y), a step from inside it: through a portal
 // open there that way now, to its exit (for a power's path, as the
 // engine's ahead() takes it); -1 if none.
 function portalCell(x, y) {
