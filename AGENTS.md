@@ -3,7 +3,8 @@
 A snake game on a mossy log: you against three AI rivals drawn from a cast of eighteen, in the browser on desktop and
 phone, with online play through PeerJS. Plain HTML, CSS and JavaScript: no build step and no dependencies, which is one
 of its features. The owner plays it, gives feedback and decides; builders like you build it. Live at
-https://haaktuah.github.io/barkstreet-snakes/. Codex: read `core/modules/codex.md` at the start of every task.
+https://haaktuah.github.io/barkstreet-snakes/. A builder of another provider (Codex): read
+`core/modules/other-builders.md` at the start of every task.
 
 ## The core
 
