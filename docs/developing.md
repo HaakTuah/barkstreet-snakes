@@ -1,6 +1,6 @@
 # Developing Barkstreet Snakes
 
-For people working on the game: how to run it locally, the checks and experiments, and how it is put together. The game itself is described for players in the [README](../README.md).
+For people working on the game: how to run it locally, the checks and experiments, and how it is put together. The game is taught to players in the game itself (its lessons and Field guide); the [README](../README.md) is its front page.
 
 ## Switches for the checks
 

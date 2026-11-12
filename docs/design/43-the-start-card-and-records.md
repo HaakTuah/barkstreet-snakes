@@ -22,7 +22,8 @@ the keys" in `42-controls.md`).
   how).
 - **The death card and the round's card** (your death's, and the round's end): their layout in "The cards, by the
   board" in `33-one-screen.md`, their words in `09-voice-and-copy.md` (Death titles, Round over, New best), and why a
-  crash was the end in `41-crashes.md`. The carve and the new best's badge are on them (below).
+  crash was the end in `41-crashes.md`. The carve and the new best's badge are on them (below). **Watch again** on the
+  round's card keeps you watching; Enter or R start a round you play.
 
 ### A rival's note
 

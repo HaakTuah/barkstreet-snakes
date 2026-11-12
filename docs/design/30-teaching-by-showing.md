@@ -31,7 +31,7 @@ Every banner goes through one queue (`toast()` in `game/toasts.js`; what a round
 - **While a card is up,** only what changes the round gets through.
 
 Lessons are one idea and 60 characters or fewer, with the keys and on touch (input-test checks every one). The fine
-print lives in the README and the Field guide, or comes when it happens (*Snip!*).
+print lives in the Field guide, or comes when it happens (*Snip!*).
 
 ### Lessons
 
