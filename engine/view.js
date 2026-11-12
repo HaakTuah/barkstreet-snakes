@@ -34,6 +34,10 @@ function blockedSeen(game, snap) {
   return snap.blocked.set;
 }
 const NO_CELLS = new Set();
+// The food as an AI sees it: as it is, but for a dropped tail's colour, the colour of whoever dropped it (a person
+// chooses theirs): a pellet is known by its owner, a snake's id, as for every snake ("The computer players never
+// know who is a person"). Nothing in the AI reads it; the renderer does.
+const foodSeen = game => game.food.some(f => f.color) ? game.food.map(({ color, ...f }) => f) : game.food;
 const fireCellsSeen = snap => snap.fires.length ? (snap.fireSet ||= new Set(snap.fires)) : NO_CELLS;
 // The holes as they were in a snapshot (the first `n` pecked; a Set keeps
 // insertion order). Shared by every AI deciding on the same tick.
@@ -115,7 +119,7 @@ function aiView(game, snake) {
       spitIn: snake.cheek ? Math.max(0, snake.cheek.spitAt - game.tick) : 0, spitPower: snake.cheek ? Math.min(T.SHRINK_MAX, snake.cheek.power + 1) : 0,
     },
     others, // (each as of when I'd notice it: `age` ticks ago near my head, a little more across the board)
-    food: game.food, // (as it is: it only changes on a tick, so thinking ahead sees what the tick would)
+    food: foodSeen(game), // (as it is: it only changes on a tick, so thinking ahead sees what the tick would)
     holes: blockedSeen(game, snap),
     fire: fireCellsSeen(snap), // (among the holes: the cells that are only fire, which it can go through, at a price)
     spits: snap.spits, // (3b+: mushrooms in the air, as of `age` ago, as a person would see them fly: [{ x, y, dir, left, by, wrap }])
