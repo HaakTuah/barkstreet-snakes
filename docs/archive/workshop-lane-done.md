@@ -42,4 +42,5 @@ the workshop check's 20 KB. New ones are added here.
 - *Done:* the README as a front page (an outside review, 11 November 2026: about 6,400 words): what the game is, how it
   plays, the controls, friends and the licences in about 560 words; the rules were already in `docs/design/`, and the
   dozen the topics lacked (the board's size, golden apple and beetle timings, the stamina's refill, the full-bar fizzle
-  and others) were moved to their topics, the lesson and the Field guide teaching each in the game (the workshop/readme-front-page PR).
+  and others) were moved to their topics, the lesson and the Field guide teaching each in the game (the
+  workshop/readme-front-page PR).

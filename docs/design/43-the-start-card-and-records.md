@@ -22,7 +22,8 @@ the keys" in `42-controls.md`).
   how).
 - **The death card and the round's card** (your death's, and the round's end): their layout in "The cards, by the
   board" in `33-one-screen.md`, their words in `09-voice-and-copy.md` (Death titles, Round over, New best), and why a
-  crash was the end in `41-crashes.md`. The carve and the new best's badge are on them (below).
+  crash was the end in `41-crashes.md`. The carve and the new best's badge are on them (below). **Watch again** on the
+  round's card keeps you watching; Enter or R start a round you play.
 
 ### A rival's note
 
@@ -37,7 +38,6 @@ the keys" in `42-controls.md`).
 - Its tag wears a cream ring while its note is up, its name tells a screen reader so (`aria-expanded`), and the note is
   read out as it opens. Esc or its × give focus back to the name, where Enter opens it again rather than asking to
   start over.
-- **Watch again** on the round-over card keeps you watching; Enter or R start a round you play.
 - Watching with no card up (after you're out, or Watch AIs): a banner edged in the rival's colour, up as long as it
   takes to find and read: 1 s and 55 ms a character (about 200 words a minute), 3.5 to 9 s. Its level, `asked`, comes
   up at once (you asked for it): every other banner waits its turn behind it, and the one it interrupted goes back to

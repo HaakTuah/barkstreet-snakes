@@ -30,8 +30,9 @@ into it.
 - **Flash:** E, either Shift, a right-click on the board or a fresh press of the steering key (arrow or WASD) the way
   you're already going, or on a phone a swipe that way. Golden flashes go first.
 - **Pressed together,** the jump goes first if it can (something right in front to hop, somewhere to land), because no
-  flash gets past that; the flash goes once you're down. A flash pressed in the air goes once you're down too, if a flash's worth is still left: from a full bar the two
-  together take more than the bar, so the flash fizzles and you press it again when the ring shows a flash's worth.
+  flash gets past that; the flash goes once you're down, if a flash's worth is still left (from a full bar the two
+  together take more than the bar, so the flash fizzles and you press it again when the ring shows a flash's worth). A flash pressed
+  in the air goes once you're down too.
 - **The key ahead flashes, behind touch's guard** (the owner, 4 November 2026; it was dropped once because held keys
   fired it by accident: `docs/archive/design-powers.md`). Only a fresh keydown counts, never a held key's auto-repeat;
   and `POWER_AFTER_TURN_MS` (300): a fresh press the way the last press turned you, within 300 ms of it (for a swipe,
@@ -412,7 +413,7 @@ A mushroom is a weapon you aim:
   loop.) *The cue:* it lies wet, a green slick under it and a glint on its cap, drying as the moves run out. The rivals
   know it as you do (`ai/food.js`: their own fresh spit can't be eaten till then).
 - **Stronger each time.** A mushroom takes `SHRINK` (3) segments the first time, and one more each time it comes back
-  up, to `SHRINK_MAX` (5); it darkens a shade each time. A mushroom withers after `MUSHROOM_TICKS` (180, about 20 s) and regrows elsewhere. It never kills by itself: it shrinks you no further than
+  up, to `SHRINK_MAX` (5); it darkens a shade each time. It never kills by itself: it shrinks you no further than
   `MIN_LENGTH`. A spat mushroom wilts in half the time it had left, but lies at least `SPIT_WILT_MIN` (20) ticks.
   Golden mushrooms are a power, eaten as before. A mushroom in a cheek still counts toward the board's mushrooms, so the
   log holds no more poison than before.

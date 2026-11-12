@@ -16,8 +16,8 @@ You don't need to read the rules first: the game teaches each one when it first 
 |--------|----------|-------|
 | Steer | Arrow keys or WASD | Swipe (anywhere on the screen during a round) |
 | Jump | Space, or click the board | Tap |
-| Dash | E or Shift, the key you're going, or right-click the board | Swipe the way you're already going |
-| Nap (pause) | P or Esc | ⏸ button |
+| Dash | E or Shift, the steering key you're already going, or right-click the board | Swipe the way you're already going |
+| Nap (pause) | P or Esc, and it naps by itself when you switch tabs | ⏸ button |
 | Wake up | Any key that plays | Tap the board or the card |
 | Start / start over | Enter or R (mid-round it asks first) | Play button |
 | Field guide | G | The open-book button, or **How to play** on the start screen |
@@ -26,11 +26,9 @@ You don't need to read the rules first: the game teaches each one when it first 
 | Sound / music | M / N | 🔈 / ♪ buttons |
 | Watching speed | 1, 2, 4 | 1× 2× 4× buttons |
 
-The game naps by itself when you switch tabs or windows, so you never come back to a dead snake.
-
 ## Play with friends
 
-Press **Play with friends**, then **Host a game**, and send the link (or the five-letter code) to up to three friends. Empty seats go to rivals. One browser hosts and the others connect straight to it, peer to peer, through PeerJS: there is no game server and nothing to sign up for.
+Press **Play with friends**, then **Host a game**, and send the link (or the five-character code) to up to three friends. Empty seats go to rivals. One browser hosts and the others connect straight to it, peer to peer, through PeerJS: there is no game server and nothing to sign up for.
 
 ## No build step, no dependencies
 

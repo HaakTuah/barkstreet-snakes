@@ -73,7 +73,7 @@ choice: a crash stops you dead and stuns you; fire lets you keep going.
 
 ### Choking on your own tail
 
-Your own beads (the tail a crash knocks off, or a cut takes) aren't a meal (a squashed one is a little splat on the bark): your head squashes any bead of your own it
+Your own beads (the tail a crash knocks off, or a cut takes) aren't a meal: your head squashes any bead of your own it
 passes over, at once and for nothing, so it's no meal for you and denied to everyone else. A crash costs its length for
 good, and chasing your own beads to deny them is a choice that costs time and position. Beads carry their owner, so it's
 the same rule for everyone. (A starving snake that squashes a bead on the tick it runs out isn't saved: it ate nothing.)
