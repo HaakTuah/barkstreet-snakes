@@ -32,7 +32,7 @@ board draws less, for good (nothing raises it again until the page loads afresh)
   strikes running lower the quality one level (`Render.setQuality`), and the count starts again.
 - **Only a round's own frames count:** a running round past its first 1.5 s, the tab visible. Benchmarks pin the
   quality, and the governor stays out (`pinQuality`).
-- **The levels** (`quality` in `render/world.js`): 2 draws everything; 1 drops the canopy shadows and the second sheet
+- **The levels** (`quality` in `render/setup.js`): 2 draws everything; 1 drops the canopy shadows and the second sheet
   of rain and layer of snow, and draws at most 1.5 device pixels per CSS pixel (the woodpecker's layer too, which
   is at most 2 at level 2); 0 also drops the falling leaves, at 1 device pixel per CSS pixel.
 

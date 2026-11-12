@@ -12,7 +12,7 @@ a room on a newer version in `36-updating.md` ("Online"); the shared Hall of Fam
 
 ### Hosting and joining
 
-- **A room** holds up to four people (`MAX_PEOPLE`): the host and three friends; empty seats go to rivals. Its code is
+- **A room** holds up to four people (`MAX_PEOPLE`): the host and three friends; empty seats go to rivals, and the same room plays round after round. Its code is
   five characters with no look-alikes (no 0/O, 1/I/L: `CODE_CHARS` in `online.js`), sent as a link (`?join=`) or, from
   `file://`, as the code alone. A room is full at four, and a friend on another protocol version is turned away
   (`{t:'reject', why}`: `'full'` or `'version'`).

@@ -56,7 +56,7 @@ const focusedLater = await ev(`document.activeElement?.id === 'name-input'`);
 check(carveTaps > 0 && !focusedMash && carveState === 'running' && focusedLater,
   'mashing jump over a card offering the carve never focuses the name field; a tap once it’s settled does', `${carveTaps} taps on the field or its words, ${focusedMash ? 'focused' : 'not focused'}; then ${focusedLater ? 'focused' : 'not focused'}`);
 
-// The testers' own way to choose the rivals (README): SnakeDebug.setup
+// The testers' own way to choose the rivals (docs/developing.md, `?debug`): SnakeDebug.setup
 // with three, then Watch AIs, watches those three and one more at random
 // (an AI-only round has four); Play plays them; a page's own start card,
 // nobody chosen, gives Watch AIs a random four.

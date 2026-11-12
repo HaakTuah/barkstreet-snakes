@@ -131,7 +131,7 @@ const FLAVOR = {
   youAlight: ['On fire: 3 bites of tail, and at\u00a03 it ends you. Rain helps.', 'Burning, and losing bits of you. At\u00a03 it ends you.'],
   youPeckedUnder: 'Pecking under you! Only your head can fall in.', // (a body over a fresh hole bridges it)
   cutLoose: 'The shaded piece is cut loose and will fall. Get off it!', // (2s: the first mark that cuts a piece loose, or its strike)
-  outline: 'It’s cutting a piece out: get off before it falls!', // (part 2: its first peck along an outline, the nicks showing the rest)
+  outline: 'It’s cutting out the shaded piece: get off before it falls!', // (part 2: its first peck along an outline, the nicks showing the rest, the piece under a faint wash)
   fight: 'Little log left: now it pecks at snakes. Dodge!', // (part 2: its first fight, at the floor: a head in the ring at the strike crashes)
   youSquash: 'Your own beads feed nobody.', // (round six B: your first own bead squashed)
   youWatched: 'The woodpecker’s watching… Mind where it looks.', // (entry 6: as it comes, its gaze a tell: its first cut starts where it looked last)

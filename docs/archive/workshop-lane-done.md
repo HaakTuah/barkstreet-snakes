@@ -23,7 +23,10 @@ the workshop check's 20 KB. New ones are added here.
 - *Done:* every version where Dependabot sees it: the tools' packages in `tools/package.json` (Playwright 1.49.1 to
   1.64.1), Dependabot's npm updates, and a monthly check of the rest, PeerJS and Node (`tools/versions.json`; PR #385).
 - **The file-by-file review's moves:** done, a folder a PR (#341, #342, #343, #344, #345):
-  `docs/archive/progress-done/split-lane.md`, "The split lane, done". Left: `render/world.js`'s part, which waits with it below.
+  `docs/archive/progress-done/split-lane.md`, "The split lane, done". `render/world.js` (40 KB)
+  split by meaning: the player's marker and refused ×, the dead, the tick's events and the canvas's setup to
+  `render/you.js`, `corpses.js`, `events.js` and `setup.js`, leaving the frame and the API (40.7 to 8.8, 5.8, 19.5, 2.7 and
+  4.6 KB; the last part; the workshop/split-world PR).
   `render/food.js` split by meaning: its burrows and the beetle's bore to `render/burrows.js` (66 to 43.5 and 22.6 KB;
   PR #421).
 - **The design by topic, not by round** (#336): *Done:* the round files are pointers and records; topics made or widened:
@@ -39,3 +42,8 @@ the workshop check's 20 KB. New ones are added here.
   `header.css` and `access.css`, linked in the same order (the workshop/split-screens PR).
 - *Done:* the old copy in `tools/copies-baseline.json` removed (the shared header probe, PR #522); the workshop check's
   point (2) condensed again, `AGENTS.md` from 23.6 to 19.8 KB (PR #360).
+- *Done:* the README as a front page (an outside review, 11 November 2026: about 6,400 words): what the game is, how it
+  plays, the controls, friends and the licences in about 560 words; the rules were already in `docs/design/`, and the
+  dozen the topics lacked (the board's size, golden apple and beetle timings, the stamina's refill, the full-bar fizzle
+  and others) were moved to their topics, the lesson and the Field guide teaching each in the game (the
+  workshop/readme-front-page PR).

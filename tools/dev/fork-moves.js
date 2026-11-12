@@ -12,7 +12,7 @@
 // it (the rival still holds it and uses it later), the rest of the round whether having it helps.
 //   node tools/dev/fork-moves.js <root> --move fly|now|dash|portal|spit|power|golden|grab|charges [--rounds 40] [--seed 1] [--per-round 4] [--forced] [--rest] [--json]
 //     fly: a golden flight held past the plain hop (always GOLD_FLY cells); now: a plain leap now; dash: a golden flash;
-//     portal: following someone through a gold portal (no --forced)
+//     portal: following someone through a portal (no --forced)
 //     grab (part 6): at each spill of dropped charges, the rival whose head is nearest it, played on as it went and
 //       ignoring spills for the rest of the round (chosen before either play, so neither is picked for its luck). No --forced or --rest.
 //     charges (part 6): golden charges a rival eats, from a spill or a golden leaf, played on as it went and with the
@@ -41,7 +41,7 @@ function patchAI(text) {
   swap('  let turn = null;\n  if (golden) {', '  let turn = null;\n  if (golden && !globalThis.__forbid.fly.has(me.id)) {');
   swap('if (!golden && !trapped && !ringCover.length) return null;', 'if (!golden && (globalThis.__forbid.now.has(me.id) || (!trapped && !ringCover.length && !globalThis.__force.now.has(me.id)))) return null;');
   swap('if (span < 1 || (!golden && !trapped && !coverAt(path[span], span + 1))) return null;', 'if (span < 1 || (!golden && !trapped && !globalThis.__force.now.has(me.id) && !coverAt(path[span], span + 1))) return null;');
-  swap('(seenPortals.length && !inGrid(nx, ny) && portalOut(body[0].x', '(seenPortals.length && !inGrid(nx, ny) && !globalThis.__forbid.portal.has(me.id) && portalOut(body[0].x'); // (portal: my own steps through a gold portal, searched or powered)
+  swap('(seenPortals.length && !inGrid(nx, ny) && portalOut(body[0].x', '(seenPortals.length && !inGrid(nx, ny) && !globalThis.__forbid.portal.has(me.id) && portalOut(body[0].x'); // (portal: my own steps through a portal, searched or powered)
   swap('    for (let n = 0; n < portalIn.length; n++) {\n      const e = portalIn[n], q = portalEx[n];', '    for (let n = 0; n < (globalThis.__forbid.portal.has(me.id) ? 0 : portalIn.length); n++) {\n      const e = portalIn[n], q = portalEx[n];'); // (nor plans room through one: the A/B's B side)
   swap('if (se < CLAIMED || !tag || portalLeft', 'if (se < CLAIMED || (globalThis.__forbid.portal.has(me.id) ? tag <= 1 : !tag) || portalLeft');
   swap('!portalOut(sx, sy, d, 1)) return -1;', '!portalOut(sx, sy, d, 1) || globalThis.__forbid.portal.has(me.id)) return -1;');
@@ -77,7 +77,7 @@ function used(g, s) {
     if (MOVE === 'fly' && e.type === 'leap' && e.gold && s.flight?.held) return true; // (held: the full flight, 2y)
     if (MOVE === 'now' && e.type === 'leap' && e.now && !e.gold) return true;
     if (MOVE === 'dash' && e.type === 'dash' && !e.plain) return true;
-    if (MOVE === 'portal' && e.type === 'through') return true; // (following someone through a gold portal)
+    if (MOVE === 'portal' && e.type === 'through') return true; // (following someone through a portal)
     if (MOVE === 'spit' && e.type === 'spit') return true; // (3b+: a mushroom spat)
     if (MOVE === 'golden' && e.type === 'eat' && e.kind === 'golden') return true;
     if (MOVE === 'power' && plainPower(e)) return true;

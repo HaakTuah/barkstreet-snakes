@@ -66,6 +66,9 @@ owner's three notes of 2 November merged as PRs #322 (the remains), #320 (the fl
 - The portals drawn as Portal's own (the owner, 10 November 2026, PR #708): each end a full upright oval two cells long
   and one deep, a thick flickering rim, a deeper shade of its colour inside with a swirl turning in at the entry and
   out at the exit, a glow and the thin gold trim; fingerprints on seeds 3 and 11 unchanged.
+- The portals worded as the game names them (PR #724): the code comments, check names and census lines that still
+  said "gold portals" say "portals"; `tools/rules/23-gold-portals.js` is now `23-portals.js`; fingerprints on seeds 3
+  and 11 unchanged.
 
 ## The slop audit, done so far
 
@@ -80,3 +83,4 @@ owner's three notes of 2 November merged as PRs #322 (the remains), #320 (the fl
 - The menus: the start card's trailer-shaped intro, the nap card's cliché, the repeated friends joke and errors that didn't say what went wrong (PR #558).
 - The news lines: the repeated "no longer", semicolon lists, "islands" and a stray "Leap now!" gone, the top line left to the milestone (PR #561).
 - The README's player text: run-ons with piled brackets, "So …" summaries and one phrase four times, facts unchanged (PR #562).
+- **Done: the woodpecker's piece washed while its nicks close** (PR #725, issue #612; the stand-in's verdict: yes, sure it is wanted): the piece its outline cuts round, exactly `aiView`'s `piece`, lies under a faint dark wash with a dashed pale edge until the last peck is aimed, then the cut-loose shading with its sliding streaks takes over (`render/cut.js`, design 38 "It cuts a shape"); the lesson, the Field guide row and the news line say it; looks only, the fingerprints unchanged (seeds 3 and 11).

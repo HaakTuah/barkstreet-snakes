@@ -35,15 +35,11 @@ The game's polish lane (`core/modules/work-flow.md`, point 4; the owner, 31 Octo
 - **How, here:** a lesson and an online lobby among the screens; the picture on `pr-media`, and play proven unchanged by
   the suites and the simulation's fingerprints (seeds 3 and 11); one line per fix under this lane.
 
-*Next find:* the code comments in `engine/`, `ai/`, `online.js`, `tuning.js` and the simulation tools that still say "gold portals", renamed to "portals" once #615 (open on those files) has merged; then the woodpecker's piece shaded faintly while the
-nicks close round it (#612, "Woodpecker: shade the piece it's cutting out before its last peck, so a person can see what
-the rivals see"), deepening to today's cut-loose shading at the last peck: `render/cut.js`, design 38's cue lines, the
-Field guide row and lesson, the wash differing from the cut-loose piece by more than colour, and the stand-in's notes on
-the pictures; then look for more by playing, as "How" says.
+*Next find:* none queued: look for more by playing, as "How" says.
 
 *Done in the lane:* each fix's line is in `docs/archive/progress-done/polish-lane.md`, "The polish lane, done" (the README for
 players, any key wakes, the woodpecker bigger on a phone, the flash become the dash, the room card and Join on a phone,
-the owner's notes of 2 November and the portals blue and orange, among them).
+the owner's notes of 2 November, the portals blue and orange and the woodpecker's piece washed, among them).
 
 ## The workshop lane (splits by meaning, leftovers, the file-by-file review)
 
@@ -66,19 +62,12 @@ the owner's notes of 2 November and the portals blue and orange, among them).
   Step 3 is done (#636, #637).
 - **The browser suites' one ending** (#526): `tools/render-test.js` and `tools/input-test.js` end with `report.end(b)`
   like the others.
-- **The README as a front page** (an outside review of the repositories, 11 November 2026: about 6,400 words, rules
-  that read like a legal code, one paragraph of over 3,000 characters): the README keeps what the game is, how to
-  start and the controls, in a few hundred words, and points to the game itself, whose lesson and Field guide teach
-  each rule ("where rules are taught"); whatever moves goes to the design topic it belongs to, nothing a player needs
-  is lost, and the copies check proves nothing is said twice.
 - **A check for code nothing uses** (the owner, 11 November 2026: "Should we have a rule about removing unused code,
   expert?", then "Yes, expertly to all, expert!"): "Keep it lean" forbids leftovers, but no check holds it, and what
   died earlier is nobody's task. A small script beside `scripts/codemap.sh` lists every top-level function, constant and
   file that nothing else names, counting script tags, `sw.js` entries and names looked up as strings as uses. One
   clean-up PR removes each find, or lists it with its reason where it is reached indirectly; then the script joins
   `scripts/test.sh`, so a leftover fails. No new package; fingerprints and suites prove play unchanged. A routine lane.
-- **Waiting for a gap, a split by meaning:** `render/world.js` (40 KB), the file-by-file review's last part, in a PR
-  of its own when no open lane touches it, proven by fingerprints and suites.
 
 ## The queue, in order
 

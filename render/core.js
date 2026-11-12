@@ -66,7 +66,11 @@
 //   portals.js    the portals a wrapping snake opens going off an edge
 //   blasts.js     a snake going out with a pop: the starburst, its ring and pieces
 //   edges.js      the wrap seam round the board and a dash's speed-line streaks
-//   world.js      the frame, the round's events and moments, and the API
+//   you.js        your snake's marker at a round's start, and a refused press's ×
+//   corpses.js    the dead: bursting into meat, fading, or held for a moment
+//   events.js     the round's events and moments: what each tick's events set off, and confetti
+//   setup.js      the canvas's size and quality, the first setup, and a new round's reset
+//   world.js      the frame, and the API
 
 const CELL = 32;
 const SIZE = GRID * CELL;

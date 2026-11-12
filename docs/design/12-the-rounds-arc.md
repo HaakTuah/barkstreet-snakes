@@ -52,7 +52,8 @@ was in `docs/archive/design-food.md`.
 ### The end
 
 The round is over when one snake is left, the winner, or none. Snakes out on the same tick share their place, ahead of
-those out before them; if nobody is left, the last share first place, a draw (`afterTick` in `game/core.js`).
+those out before them; if nobody is left, the last share first place, a draw (`afterTick` in `game/core.js`). Out
+first, you can watch the rest of the round or start over.
 
 **The Hall of Fame ranks by place, then time alive, then food**: its rule is in `43-the-start-card-and-records.md`
 under that name, and its text as it was in `docs/archive/design-online.md`.

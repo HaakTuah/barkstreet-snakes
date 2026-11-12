@@ -73,6 +73,11 @@ it never takes out half the trunk."). It never melts the log: it plans a piece a
 - **It may cover food:** food in the mark is knocked aside at the strike (see "It knocks food aside").
 - **The cue:** each cell its cut has still to go is nicked on the bark, a short dark slit with a pale rim
   (`render/cut.js`), so you can watch the line close round the piece; the pecked ones are pits.
+- **The wash** (#612: a person sees the piece the rivals are handed, `aiView`'s `piece`, not only the nicks): while any
+  nick is left, the piece lies under a faint dark wash with a dashed pale edge, exactly `piece`'s cells (crumbs
+  that go with it included) and no more. It has none of the cut-loose
+  shading's sliding streaks, so the two differ by more than darkness, and it stays still with reduced motion. The last
+  peck aimed, no nick is left and "The log stays one piece" takes over, the shading deeper (below).
 
 ### The floor
 

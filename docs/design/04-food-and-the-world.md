@@ -1,5 +1,7 @@
 ## Food and the world
 
+Four snakes share a 24×24 log (`GRID`): you and three others (rivals, or friends online), or four rivals when you watch.
+
 - **Everything moves smoothly.** Food used to snap to whole pixels, so its small bob moved in visible steps; now it's drawn at its true position. Each piece has its own shadow on the bark, apart from the sprite, so it lifts off it. **New food pops in** with a little overshoot, and at the start of a round the board's food pops in one piece after another. A mushroom that withers or a golden apple that rots goes with a small poof.
 - **Apples** bob up off their shadows, squash a touch as they come down, sway their leaf, and now and then a glint winks on them.
 - **The golden apple** bobs too, in a glow that breathes, with a small rotating sparkle star (a non-hue cue) and glints twinkling round it. Instead of blinking before it rots, it dims calmly.
@@ -22,7 +24,8 @@ was tried and measured, is in `docs/archive/design-food.md`).
 - **Two apples all round** (`APPLES`; one in winter, `SNOW_APPLES`: see "Weather"; a food season adds or takes one:
   see "Food seasons"): eaten or rotted, another drops somewhere. Beetles carry more of the food (see "Less fruit, more
   beetles").
-- **A meal keeps you 12 s** (`HUNGER_MS`), one clock for the whole round (the owner, 9 November 2026, #616), so a
+- **A meal keeps you 12 s** (`HUNGER_MS`; a mushroom isn't a meal for it, only food that grows you resets the clock),
+  one clock for the whole round (the owner, 9 November 2026, #616), so a
   meal is a trade-off to the end (entry 6, part 3): late in the round it buys life but costs room in a shrinking log.
   Its length is set by the endgame test, rivals that always eat and rivals that never eat in the woodpecker's frenzy
   against ones that weigh each meal ("The endgame: a meal is worth the life it buys" in `39-the-rivals.md`): at 12 s
@@ -48,7 +51,11 @@ was tried and measured, is in `docs/archive/design-food.md`).
   `30-teaching-by-showing.md`.)
 - **More golden power food,** since golden powers stack and the rivals use them: a gust of wind may blow in a golden
   leaf (`LEAF_CHANCE`, 0.25 a gust, one at a time), a rain spell may bring up a golden mushroom (`GOLDCAP_CHANCE`, 0.55,
-  one a spell at most), and one beetle in six is golden (`GOLD_BEETLE_CHANCE`; see "Less fruit, more beetles").
+  one a spell at most), and one beetle in six is golden (`GOLD_BEETLE_CHANCE`; see "Less fruit, more beetles"). A
+  leaf and a golden mushroom are each +1 length, and each comes in about 6 rounds in 10
+  (measured in round four: `docs/archive/design-powers.md`).
+- **A golden apple rots after `GOLDEN_TICKS`** (120, about 12 s) and comes about five a round (`GOLDEN_CHANCE`, a tick's
+  chance while none is out).
 - **No winter before 45 s** (`SNOW_FROM_MS`): snow in the first half-minute starved short snakes.
 - **Mushrooms never sprout within 2 cells of a head:** nobody could see one appear in front of them in time.
 - **Golden apples, leaves and mushrooms land somewhere quiet** (the farthest of 8 tries from every head), so each is a
@@ -125,7 +132,8 @@ text is in `docs/archive/design-food.md`):
 
 ### Mushrooms look poisonous
 
-A mushroom shrinks whoever eats it, so it looks it, as the first seconds settled it (its text is in
+A mushroom withers after `MUSHROOM_TICKS` (180, about 20 s) and regrows elsewhere. It shrinks whoever eats it, so it
+looks it, as the first seconds settled it (its text is in
 `docs/archive/design-looks.md`, under "Looks"):
 - a violet haze round it that breathes, two wavy violet stink lines rising, and violet spores drifting off it
   (`render/food.js`);
@@ -156,7 +164,8 @@ beetles well, beetles carry more of the food (this section also holds what "Fewe
 
 - **Up to two beetles at once**, above ground or under (`BEETLE_MAX`), coming out at 0.008 a tick (`BEETLE_CHANCE`)
   while fewer are out, from 15 s (`BEETLE_FIRST_MS`) and in sudden death too; one in six is golden
-  (`GOLD_BEETLE_CHANCE`), about two a round.
+  (`GOLD_BEETLE_CHANCE`), about two a round. One nobody catches flies off after `BEETLE_TICKS` (260, about 30 s); it
+  crawls a cell every `BEETLE_EVERY` (3) ticks, faster when scared.
 - **A beetle scurries from a head within 6** (`BEETLE_FEAR`) at half a snake's speed, running for a burrow nearer than 7
   (`BEETLE_HOME_REACH`), and dives in.
 - **The escape band: at least a third** (the owner, 31 October 2026: "Yeah, I feel it should be at least a third of the

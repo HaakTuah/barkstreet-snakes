@@ -32,6 +32,38 @@ check(fallen.shade < fallen.pecked - 5, '2s: the piece a mark cuts loose is shad
 check(fallen.mid > fallen.after + 2, '...and at the strike it tips away into the pit, gone within a second', JSON.stringify(fallen));
 check(fallen.onSlab === 2, '...its apple and its beetle going down with it', JSON.stringify(fallen));
 
+// Part 2's outline, before its last peck: the piece it cuts round lies under a
+// faint wash while any nick is left (what the rivals are handed as aiView's
+// piece), with none of the cut-loose shading's sliding streaks, and the cut-loose
+// shading, once the last peck is aimed, is the darker of the two.
+const washed = await ev(`(() => {
+  seeds(225);
+  SnakeDebug.pinQuality(0);
+  const g = stage(['gobbler', 'mason', 'ghost']), N = TUNING.GRID, K = (x, y) => y * N + x;
+  g.time = g.acts.frenzy + 5000; g.tick = 2000;
+  g.snakes.forEach((s, i) => setBody(s, [[3 + 4 * i, 20], [2 + 4 * i, 20], [1 + 4 * i, 20]], 'right'));
+  const piece = [], cut = [];
+  for (let y = 0; y <= 5; y++) for (let x = 18; x < N; x++) piece.push(K(x, y));
+  for (let x = 17; x < N; x++) cut.push(K(x, 6));
+  for (let y = 0; y <= 5; y++) cut.push(K(17, y));
+  g.woodpecker = { x: 17, y: 7, at: g.time - 9000, target: [], strikeAt: -1, last: [], struckAt: g.tick - 60, restUntil: g.tick + 1e6, pecks: 2, plan: { cut: cut.slice(), piece, waitFrom: -1 } };
+  R.setReducedMotion(false);
+  const plan = g.woodpecker.plan; delete g.woodpecker.plan;
+  show(g); drawN(12);
+  const inside = () => lum(pixels(19, 1, 4, 4)), base = inside(); // (a few cells' mean, so the streaks' own lines are averaged in)
+  const darkest = () => { const d = pixels(19, 1, 4, 4).data, v = []; for (let i = 0; i < d.length; i += 4) v.push(0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]); v.sort((a, b) => a - b); return v.slice(0, v.length >> 2).reduce((a, b) => a + b, 0) / (v.length >> 2); }; // (the darkest quarter: the streaks' pale lines lift the cut-loose mean)
+  g.woodpecker.plan = plan; drawN(12);
+  const wash = inside(), washDark = darkest(); drawN(7, 0.5, 71); const washLater = inside();
+  Object.assign(g.woodpecker, { target: cut.slice(), fall: piece.slice(), strikeAt: g.tick + 1 }); // (the last peck aimed, nearly at the strike: nothing left to nick)
+  drawN(12); const loose = inside(), looseDark = darkest(); drawN(7, 0.5, 71); const looseLater = inside();
+  g.woodpecker.fall = []; g.woodpecker.target = []; plan.cut = [];
+  drawN(12); const none = inside();
+  return { base, wash, washLater, washDark, loose, looseLater, looseDark, none };
+})()`);
+check(washed.wash < washed.base - 2 && washed.washDark > washed.looseDark + 5, 'an outline\'s piece is washed lightly while nicks are left, lighter than the cut-loose shading', JSON.stringify(washed));
+check(washed.wash === washed.washLater, '...with no sliding streaks, the wash steady frame to frame', JSON.stringify(washed));
+check(Math.abs(washed.none - washed.base) < 2, '...and no wash on a piece whose cut has no nicks left and is not aimed', JSON.stringify(washed));
+
 // A flag on a piece cut loose falls with it (the owner, 2 November 2026: flags
 // fall with the log, not jump): upright on its slab, shrinking with it
 // toward the piece's middle, gone with it within a second; never tipping
