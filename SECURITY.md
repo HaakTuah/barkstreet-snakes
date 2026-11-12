@@ -15,7 +15,11 @@ floor's numbers, what only this game has and what the floor leaves to it; who mi
      audit (`tools/licences.json`), this game's own part of the licence check and its test (`tools/licences.js`,
      `tools/licences-test.js`), and `tools/.npmrc`, which keeps install scripts off.
 5. **Untrusted input, and its checks:**
-   - **Online peers** (PeerJS, `net.js` and `online.js`): anyone with a room code. Their checks: each
+   - **Notes on the public relays** (`net-relays.js`): anyone can post under a room's topic. Only a note sealed with
+     the room's key (AES-GCM, from the code) is opened, and kept only in its exact shape (an offer or an answer, ids of
+     our own alphabet and length, a session description of bounded length) and fresh; a room answers at most eight
+     friends at once. A relay's own message is read only as Nostr's `EVENT` for our subscription, its size capped.
+   - **Online peers** (PeerJS, `net.js`, `net-relays.js` and `online.js`): anyone with a room code. Their checks: each
      message's pinned shape (`tools/online-test.js`, `tools/protocol-shapes.json`); names through the one cleaner
      (`SnakeRecords.cleanName`); a colour, kind or id one of the game's own values; caps on counts and lengths, so
      nothing a peer sends stalls the host's tick.
@@ -28,11 +32,20 @@ floor's numbers, what only this game has and what the floor leaves to it; who mi
      script needs the same, or it does not go in.
    - **The content security policy** (the meta at the top of `index.html`; GitHub Pages sends no headers): the page runs
      code only from this site, its own inline scripts by their hashes and PeerJS's pinned file, and loads from or
-     connects over the web only to this site and PeerJS's broker. What a policy cannot govern stays with the reviews
-     (`core/floor/security.md`, rule 8): WebRTC (the STUN servers `net.js` names, and any server a script could name for
-     a connection of its own) and leaving the page (a link or `window.open`). A new version of PeerJS changes its
-     address there too; anything new the page must load or reach goes into the policy by name, never by a wildcard, and
-     into `tools/csp-test.js`, which pins the policy whole.
+     connects over the web only to this site, PeerJS's broker and the Nostr relays `net-relays.js` names, each one
+     exact host on a line of its own:
+     - `wss://relay.damus.io`
+     - `wss://nos.lol`
+     - `wss://relay.primal.net`
+     - `wss://relay.nsec.app`
+     - `wss://nostr.mom`
+
+     The relays carry only sealed notes, and nothing they send runs: the signing and sealing are `net-relays.js`'s own
+     code, on the browser's own crypto, with no script from them or anyone else. What a policy cannot govern stays
+     with the reviews (`core/floor/security.md`, rule 8): WebRTC (the STUN servers `net.js` names, and any server a
+     script could name for a connection of its own) and leaving the page (a link or `window.open`). A new version of
+     PeerJS changes its address there too; anything new the page must load or reach goes into the policy by name, never
+     by a wildcard, and into `tools/csp-test.js`, which pins the policy whole.
    - **The service worker** (`sw.js`): caches only this site's own files, never another origin's responses.
    - **Storage keys** (`snake-*`, `barkbite-muted`, `barkbite-music`) and `net.js`'s `PREFIX` are never renamed
      (players' records and online play depend on them), and hold no secret.

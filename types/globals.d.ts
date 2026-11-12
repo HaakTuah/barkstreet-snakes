@@ -174,6 +174,12 @@ declare namespace PeerJS {
   type PeerClass = { new (options: Options): Peer; new (id: string, options: Options): Peer };
 }
 
+// net-relays.js, as net.js calls it: its channels behave as PeerJS's DataConnection.
+interface Relays {
+  listen(name: string, iceServers: RTCIceServer[], onConnection: (conn: PeerJS.DataConnection) => void): Promise<{ close(): void }>;
+  connect(name: string, iceServers: RTCIceServer[], ms: number): Promise<{ id: string; conn: PeerJS.DataConnection }>;
+}
+
 interface Window {
   Peer?: PeerJS.PeerClass;
   SnakeAI: { PERSONAS: Record<string, unknown> };
@@ -181,5 +187,6 @@ interface Window {
   TUNING: { GRID: number; SHRINK_MAX: number; SPIT_REACH: number; LEAP_MAX: number; DASH_MAX: number; SEASONS: Record<string, unknown> };
   // Made by these two files (their shapes are the files themselves).
   SnakeNet: unknown;
+  SnakeRelays: unknown;
   SnakeOnline: unknown;
 }

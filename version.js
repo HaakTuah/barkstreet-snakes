@@ -10,6 +10,7 @@
 window.SnakeVersion = {
   build: 'dev',
   news: [
+    { on: '2026-11-12', line: 'Online play finds friends even if PeerJS is down.' },
     { on: '2026-11-12', line: 'Failed joins now say what went wrong.' },
     { on: '2026-11-10', line: 'Portals glow blue and orange, as in Portal.' },
     { on: '2026-11-09', line: 'The woodpecker cuts the log away. Get off it!' },

@@ -16,15 +16,26 @@ a room on a newer version in `36-updating.md` ("Online"); the shared Hall of Fam
   five characters with no look-alikes (no 0/O, 1/I/L: `CODE_CHARS` in `online.js`), sent as a link (`?join=`) or, from
   `file://`, as the code alone. A room is full at four, and a friend on another protocol version is turned away
   (`{t:'reject', why}`: `'full'` or `'version'`).
-- **Connecting:** PeerJS (from cdnjs with an integrity hash, loaded only when someone opens Play with friends) and its
-  free public broker introduce the browsers; STUN finds a route for most networks. Strict ones need a relay (TURN).
-  No free one asks for nothing: each needs an account, and its key or password would sit in the page (November 2026:
-  Metered's Open Relay, ExpressTURN and Cloudflare's all need a signup), so it's left as a marked spot in `net.js`, for
-  the owner to decide on.
-- **When it fails, the lobby says which part:** *finding each other* (the broker didn't answer, there's no room behind
-  the code, or the room didn't answer) or *the route* (the room answered, but no network path let the browsers
-  connect: try another network). A room counts as answered once the browsers start trying routes (`net.js`'s
-  `explain`).
+- **Connecting, on no single free service:** two ways introduce the browsers, and a room is on both at once.
+  - **PeerJS** (from cdnjs with an integrity hash, loaded only when someone opens Play with friends) and its free
+    public broker, tried first.
+  - **Several public Nostr relays** at once (`net-relays.js`; five, of different operators, any one of which is
+    enough), tried when the broker can't find the room or hasn't connected a friend within 4 s (`HEAD_START_MS`).
+    They pass on only two sealed notes per friend, the browsers' WebRTC offer and answer, under a topic and with a key
+    both made slowly (PBKDF2) from the room's name, so only those with the code can read or write them; the signing
+    Nostr asks for (BIP-340) and the sealing (AES-GCM) are the file's own code on the browser's crypto, nothing loaded.
+    The room code and link are the same either way.
+  - **The route:** STUN finds one for most networks; either way, the game then goes straight between the browsers.
+    Strict networks need a relay (TURN). No free one asks for nothing: each needs an account, and its key or password
+    would sit in the page (November 2026: Metered's Open Relay, ExpressTURN and Cloudflare's all need a signup), so
+    it's left as a marked spot in `net.js`, for the owner to decide on (#709).
+  - **Trying one way alone:** `?way=broker` or `?way=relays` in the page's address uses only that way, for checking
+    each on a preview.
+- **When it fails, the lobby says which part:** *finding each other* (neither the broker nor the relays answered,
+  there's no room behind the code, or the room didn't answer) or *the route* (the room answered, but no network path
+  let the browsers connect: try another network). A room counts as answered once the browsers start trying routes;
+  a route that fails through the broker isn't tried again through the relays, whose route is the same. Of several
+  failures, the lobby names the one that says most (`net.js`'s `explain` and `worst`).
 - **The lobby** shows who's in, in their seat colours, and the rivals who'll take the empty seats (the line-up, its
   picker and the deck online: "The rival line-up" in `39-the-rivals.md`). Names are made unique (a friend called
   "Sniper" becomes "Sniper 2" in a round with the rival; two friends of one name, the second gets a 2). A friend who

@@ -6,7 +6,12 @@
        checks it, and prints the hashes to put here when an inline script changes. -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'none';
     script-src 'self' https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/peerjs.min.js 'sha256-buXsW4VMfK3WKn9z+WYIkVWK2rmsSo5pOt10flk588w=' 'sha256-OYMWjdUzf1KiFWCCOhnuHftAECCRR1ABYpfeVRwDKlQ=' 'sha256-EpAbkYMYKrYDLpYrX2qCCCDv6psUccVN5tphgy8ac6E=';
-    connect-src 'self' https://0.peerjs.com wss://0.peerjs.com;
+    connect-src 'self' https://0.peerjs.com wss://0.peerjs.com
+      wss://relay.damus.io
+      wss://nos.lol
+      wss://relay.primal.net
+      wss://relay.nsec.app
+      wss://nostr.mom;
     style-src 'self' 'unsafe-inline';
     font-src 'self';
     img-src 'self' data:;
@@ -354,6 +359,7 @@
   <script src="render/edges.js"></script>
   <script src="render/world.js"></script>
   <script src="online.js"></script>
+  <script src="net-relays.js"></script>
   <script src="net.js"></script>
   <script src="version.js"></script>
   <script src="update.js"></script>
