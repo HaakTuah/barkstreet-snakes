@@ -30,12 +30,13 @@ back. A page's content security policy is never weakened. The project names what
 
 **9. Security alerts and reported weaknesses.** The Security tab's alerts are seen only by the owner; no agent gets a
 token to read them; he passes on what needs fixing (core archive 35).
-- **In a PR's own change:** a P0 or P1 blocks the merge until fixed; a lower one is fixed in the PR, or filed and fixed
-  next if it lies outside the change. A CodeQL false alarm, explained in the PR and confirmed by its security reviewer,
-  may merge, with no suppression comment; where the ruleset blocks on it, the owner dismisses it (core archive 130).
-- **In merged code, if it reaches what the threat model protects:** reported privately (an agent: only in its session's
-  last message to the owner, never in a file, PR, issue or comment) and fixed first, in a PR that says what it hardens,
-  never how to attack it.
+- **In a PR's own change:** a blocking finding holds the merge until fixed; any other is fixed in the PR, or filed and
+  fixed next if it lies outside the change. A CodeQL false alarm, explained in the PR and confirmed by its security
+  reviewer, may merge, with no suppression comment; where the ruleset blocks on it, the owner dismisses it (core archive
+  130).
+- **In merged code, if it reaches what the threat model protects:** reported privately (an agent: as "Reporting a
+  weakness" says, never in a file, PR, issue or comment) and fixed first, in a PR that says what it hardens, never how
+  to attack it.
 - **Any other weakness in merged code:** a `bug` issue, fixed with priority.
 
 **10. Licences: free to use, kept that way** (core archive 41). What ships, or is built into it: every package, the ones
@@ -46,8 +47,8 @@ in a third-party notices file that ships. Tools that only run, nothing of which 
 Source Initiative approves; a tool's code never moves into what ships without passing the first list. Never, in either:
 non-commercial or no-derivatives terms, source-available terms (BSL, SSPL, Elastic, Commons Clause), or no licence. A
 check on every PR fails one that adds or updates a package to a licence off its list; one the owner wants anyway waits
-for his yes. CodeQL is free only while a repository is public. The owner's own work carries no licence file, all rights
-reserved: never add one.
+for his yes. The owner's own work carries no licence but the terms he gives it, all rights reserved: never add or change
+them unasked.
 
 **15. Dependencies** (core archive 76): installed from the lock file (`npm ci` or its like), except where a PR adds or
 updates a package; never running a package's install scripts; pinned as rule 7 says; a new one only with a reason, from
@@ -62,3 +63,7 @@ fails a condition is closed with the reason, and the update made in a PR of the 
 
 Use GitHub's private vulnerability reporting: the repository's Security tab, "Report a vulnerability", which only the
 owner sees. If you cannot, open an issue saying only that a weakness exists and which part it touches, with no details.
+An agent files by that reporting's own call alone (`POST repos/<owner>/<repo>/security-advisories/reports`), only to its
+project's own repository or the core's, whichever the weakness is in, with no secret or personal detail and, to the
+core, nothing of its project; where the call fails it tells its own owner in its session's last message, never an issue
+(core archive 164).

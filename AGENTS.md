@@ -3,12 +3,13 @@
 A snake game on a mossy log: you against three AI rivals drawn from a cast of eighteen, in the browser on desktop and
 phone, with online play through PeerJS. Plain HTML, CSS and JavaScript: no build step and no dependencies, which is one
 of its features. The owner plays it, gives feedback and decides; builders like you build it. Live at
-https://haaktuah.github.io/barkstreet-snakes/. Codex: read `core/modules/codex.md` at the start of every task.
+https://haaktuah.github.io/barkstreet-snakes/. A builder of another provider: read
+`core/modules/other-builders.md` at the start of every task.
 
 ## The core
 
 This game takes the shared rules in `core/` by `core-manifest.md`, whose slots and names fill the core's words. Read
-these whole at the start of every task (Claude Code imports them; Codex: read each file named):
+these whole at the start of every task (Claude Code imports them; any other builder: read each file named):
 
 @core-manifest.md
 @core/floor/security.md
@@ -35,11 +36,13 @@ The other modules are read when a task needs them, each saying when, among them 
 
 ## Starting a task
 
+A builder of another provider starts from its brief instead (`core/modules/other-builders.md`).
+
 1. Take the main lane's next entry, as "State" in `docs/PROGRESS.md` names it. Its entry there, the section of
    `docs/handoff/queue-specs.md` it names where it names one, and the design sections it names are the spec.
 2. Read only those sections: `grep -rn "## Section" docs/design` finds a section that code or the queue names.
-3. What is read again before the PR (`core/modules/work-flow.md`, point 1): the task's entry in `docs/PROGRESS.md`; a
-   large change goes in as its own entry right after the task.
+3. What is read again before the PR (`core/modules/work-flow.md`, point 1): the task's spec, as point 1 here gives it;
+   a large change goes in as its own entry right after the task.
 
 ## How to work, here
 
@@ -66,7 +69,8 @@ words behind them are in `docs/archive/instructions.md`.
   `tools/sim/03-report.js`).
 - **Optimizations** ("Same seed, same game"): here, skill is the per-persona win rates and old against new AI coming out
   even, character every trademark, and feel the round length, deaths by cause and starving and crashes survived;
-  measured with `tools/abtest.js` on fresh seeds (`--metrics … trademarks`).
+  measured with `tools/abtest.js` on fresh seeds (`--metrics … trademarks`); and look, by before-and-after pictures
+  (`docs/pr-pictures.md`).
 - **Conditional goods** ("No solutions, only trade-offs"): the mushrooms are the example (archive, 31 October 2026).
 - **Never create a repository named `snake-game`:** old links redirect from it.
 
@@ -85,5 +89,5 @@ fingerprints are this game's proof under "Same seed, same game" (`core/modules/g
 
 ## Review guidelines
 
-Every reviewer, Codex's code review included, reads `core/modules/review-guidelines.md` and this game's
+Every reviewer, the code reviewers and the security reviewer included, reads `core/modules/review-guidelines.md` and this game's
 `docs/review-guidelines.md` whole and judges the change by them, with `SECURITY.md` and the floor.

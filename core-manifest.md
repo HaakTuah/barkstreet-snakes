@@ -1,7 +1,7 @@
 # Core manifest
 
-Core: HaakTuah/agent-core at df4771279d46d2912e7fbde62ed9d0e4240bfdd6, copied whole under core/ (never edited here).
-Paths: in the core's files, one into floor/, modules/, scripts/, setup/, archive/ or reports/ is under core/; any other is ours.
+Core: HaakTuah/agent-core at c0dfe3ae2262e008e776ad6c8459770986b03f64, copied whole under core/ (never edited here).
+Paths: in the core's files, one into floor/, modules/, scripts/, setup/ or archive/ is under core/; any other is ours.
 Floor: whole. Modules: all.
 
 ## Names
@@ -17,14 +17,14 @@ Floor: whole. Modules: all.
 | *descriptions* | the topic file in `docs/design/` and, for what a player sees, the README, the lesson, the Field guide row and the hints on screen |
 | *copies check* | `core/scripts/copies.mjs` with `tools/copies.json` |
 | *size marks* | `tools/sizes.json` |
-| *large file* | a large game file (`render/world.js`, about 40 KB): `scripts/codemap.sh <file>` or grep |
+| *large file* | a game file of about 40 KB or more (such as `render/world.js`): `scripts/codemap.sh <file>` or grep |
 | *one at a time* | AI and engine-rules changes, and changes to the online messages |
 | *design-checked PRs* | engine-rules and AI entries (new moves and rules, the rivals' play) |
 | *review reference* | the design sections the entry names, in `docs/design/` |
 | *planning design* | the rivals' planning |
 | *hard work* | the AI's planning, the engine's rules and online sync (not a big-file split: its fingerprints and suites check it) |
 | *major version checks* | the full suites, and played through for what ships |
-| *Codex's checks* | `scripts/test.sh`, and `scripts/sim.sh` with the fingerprint for a change that should keep behaviour |
+| *other builders' checks* | `scripts/test.sh`, and `scripts/sim.sh` with the fingerprint for a change that should keep behaviour |
 | *computer players* | the rivals |
 | *measured players* | the rivals, each by name |
 | *what they are shown* | `aiView()` |

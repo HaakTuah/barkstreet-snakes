@@ -1,8 +1,7 @@
 # Game design
 
 The principles every game taking the core shares, read before a task changes a rule, a feature or how the computer
-players play, and before a polish-lane task; each game's own add to them. A feature is any move, rule or power a player
-can choose to use.
+players play, and before a polish-lane task. A feature is any move, rule or power a player can choose to use.
 
 - **The computer players never know who is a person** (core archive 87). Nothing in the logic of the *computer players*,
   nor in *what they are shown*, says whether another player is a person; they judge every player by behaviour alone, so
@@ -14,10 +13,10 @@ can choose to use.
   *use-against-ignore measurement* plays *measured players* that use it where it fits, as they play, against copies that
   always use it and copies that never do, the rule itself unchanged, and *where the numbers go* shows how often each
   used it, how often it worked and who came out ahead, by more than chance (its threshold a first guess, listed). If
-  those that use it where it fits do not beat both those that never and those that always do (core archive 114), the
-  change says why: the feature does not matter, and is reworked or cut, or they play it badly, fixed in the same change.
-  One too rare to move whole games is judged per use, each use played on with and without it; and every feature is
-  measured against players who play its counter (core archive 143).
+  those that use it where it fits do not beat both those that never and those that always do, the change says why: the
+  feature does not matter, and is reworked or cut, or they play it badly, fixed in the same change. One too rare to move
+  whole games is judged per use, each use played on with and without it; and every feature is measured against players
+  who play its counter (core archive 143).
 - **No feature only people use** (core archive 87, 88 and 89). Every feature a person can use, the *computer players*
   use too, where it pays and with success at least sometimes: one only people use goes untested and hands them an edge
   no rule intended. A feature is not finished until the *measured players* use it so, by the point above's numbers.
@@ -50,8 +49,8 @@ can choose to use.
 - **Levers, not luck** (core archive 110 and 111). Where chance enters, players have levers to prepare for it or answer
   it, so no outcome is decided by chance alone.
 - **Different data, same rules** (core archive 105). No rule checks which player, faction or character it is: what sets
-  one apart lives in its data and starting conditions, which every rule reads alike, never in a rule that names it; only
-  presentation and voice may name one.
+  one apart lives in its data and starting conditions, which every rule reads alike; only presentation and voice may
+  name one.
 - **The order of resolution never decides** (core archive 105). When two act at the same moment, the outcome does not
   depend on which the game settles first: they share, or a seeded draw decides.
 - **Everything new belongs** (core archive 105). Every new feature feels balanced, cohesive and purposeful, and fits the

@@ -47,15 +47,15 @@ the owner's notes of 2 November and the portals blue and orange, among them).
 
 *Done in the lane:* each line is in `docs/archive/workshop-lane-done.md`.
 
-- **The core's game rules this game does not meet yet** (the design session, 11 November 2026; the core's
-  `reports/2026-11-10-step-3-now.md`, "What each game does not yet do"): (1) whether one `tools/abtest.js` run plays all
-  three groups of "Using a feature must pay" (where it fits, always, never), and its threshold for "by more than chance"
-  listed as a first guess; (2) a check that nothing in `aiView()` says which snake is a person and that no rival's
-  timing gives one away ("The computer players never know who is a person"); (3) whatever the game shows from the past
-  showing its age ("No rule untaught"); (4) online rounds replaying from the log of every input ("Same seed, same
-  game"). What changes the AI, the engine's rules or the online messages goes to the main lane as an entry of its own.
-  The updating rule needs nothing: `docs/design/36-updating.md` takes a new version between rounds, as the core's
-  "Players always play the newest version" now says.
+- **The core's game rules this game does not meet yet** (the design session, 11 November 2026; from "What each game does
+  not yet do" in `reports/2026-11-10-step-3-now.md` of the core's own repository, which no copy holds): (1) whether one
+  `tools/abtest.js` run plays all three groups of "Using a feature must pay" (where it fits, always, never), and its
+  threshold for "by more than chance" listed as a first guess; (2) a check that nothing in `aiView()` says which snake
+  is a person and that no rival's timing gives one away ("The computer players never know who is a person"); (3)
+  whatever the game shows from the past showing its age ("No rule untaught"); (4) online rounds replaying from the log
+  of every input ("Same seed, same game"). What changes the AI, the engine's rules or the online messages goes to the
+  main lane as an entry of its own. The updating rule needs nothing: `docs/design/36-updating.md` takes a new version
+  between rounds, as the core's "Players always play the newest version" now says.
 - **The file-by-file review** (the owner, 2 November 2026; part 1, the docs every session reads, done in PR #334;
   part 2, `docs/design/`, PR #335; part 3, the code, PR #337): its spec is in
   `docs/handoff/queue-specs.md` under the same title.
