@@ -49,6 +49,8 @@ A slip shouldn't cost a round, and a press should never be lost without a word:
 - Waking from a nap goes through one quiet countdown beat (no YOU, no riser; the round's music carries on), so your
   hand is back on the keys before the board moves. An arrow skips the beat, and steers. A round napped before its Go
   gets its real Go on waking. Watching, waking is at once.
+- The game naps by itself when the tab is hidden or the window loses focus, so you never come back to a dead snake
+  (online the round goes on and an AI steers: "Play with friends" in `22-play-with-friends-online.md`).
 - A nap never covers a death that's about to be told: the card comes up as it would.
 - Stunned, the latest press wins (you get more than one guess while the stars go round, and a small inked chevron by
   your head shows which way you pressed, or the jump's hop or the dash's double chevron for a power asked for, until

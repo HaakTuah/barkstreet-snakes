@@ -69,7 +69,8 @@ names someone the same way in both, and plays the chatter through staged moments
 One file a rival in `chatter/voices/` (`addVoice` in `chatter/voices.js`): its lines by moment, their Chinese and its
 punchlines. A moment a voice has no lines for passes it by. Each speaks as itself, the way it plays: Mason only in
 phony Latin, Sovereign in the royal we, Mute only in stage directions, Copycat in Chinese, and Ouroboros in cycles:
-its lines come back round ("All things return.", "Round and round.", "…and begin again."). A Capricious in a mood
+its lines come back round ("All things return.", "Round and round.", "…and begin again."); Colonist is a pompous
+redcoat, and Ghost mostly says "…". A Capricious in a mood
 plays the part, with the mood's own lines where it has some.
 
 ### A pass over the lines

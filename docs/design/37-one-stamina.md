@@ -60,7 +60,7 @@ measurements behind each number are in PR #560.
   half as often again.
 - **Past the full bar it banks,** up to `STAMINA_BANK` bars in all (3, the owner's first guess), and a power is paid from
   the bank first. Only food banks: the bar's own refill stops at full.
-- **It still comes back on its own, as built** (`STAMINA_MS` from empty to full). A slower refill starved the snakes
+- **It still comes back on its own, as built** (`STAMINA_MS`, 11.5 s from empty to full). A slower refill starved the snakes
   that spend the most: at a quarter speed Star's flashes a minute halved (its trademark), and no food rate gave them
   back, so the economy's lever is the powers' price instead (below).
 - **The powers' prices** (`JUMP_STAMINA_MS`, `DASH_STAMINA_MS`, half and four fifths of the bar): set so that power

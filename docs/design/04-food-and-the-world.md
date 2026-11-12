@@ -1,5 +1,7 @@
 ## Food and the world
 
+Four snakes share a 24×24 log (`GRID`): you and three rivals, or four rivals when you watch.
+
 - **Everything moves smoothly.** Food used to snap to whole pixels, so its small bob moved in visible steps; now it's drawn at its true position. Each piece has its own shadow on the bark, apart from the sprite, so it lifts off it. **New food pops in** with a little overshoot, and at the start of a round the board's food pops in one piece after another. A mushroom that withers or a golden apple that rots goes with a small poof.
 - **Apples** bob up off their shadows, squash a touch as they come down, sway their leaf, and now and then a glint winks on them.
 - **The golden apple** bobs too, in a glow that breathes, with a small rotating sparkle star (a non-hue cue) and glints twinkling round it. Instead of blinking before it rots, it dims calmly.
@@ -22,6 +24,7 @@ was tried and measured, is in `docs/archive/design-food.md`).
 - **Two apples all round** (`APPLES`; one in winter, `SNOW_APPLES`: see "Weather"; a food season adds or takes one:
   see "Food seasons"): eaten or rotted, another drops somewhere. Beetles carry more of the food (see "Less fruit, more
   beetles").
+- **Only a meal that grows you resets the clock:** a mushroom doesn't count.
 - **A meal keeps you 12 s** (`HUNGER_MS`), one clock for the whole round (the owner, 9 November 2026, #616), so a
   meal is a trade-off to the end (entry 6, part 3): late in the round it buys life but costs room in a shrinking log.
   Its length is set by the endgame test, rivals that always eat and rivals that never eat in the woodpecker's frenzy
@@ -48,7 +51,8 @@ was tried and measured, is in `docs/archive/design-food.md`).
   `30-teaching-by-showing.md`.)
 - **More golden power food,** since golden powers stack and the rivals use them: a gust of wind may blow in a golden
   leaf (`LEAF_CHANCE`, 0.25 a gust, one at a time), a rain spell may bring up a golden mushroom (`GOLDCAP_CHANCE`, 0.55,
-  one a spell at most), and one beetle in six is golden (`GOLD_BEETLE_CHANCE`; see "Less fruit, more beetles").
+  one a spell at most), and one beetle in six is golden (`GOLD_BEETLE_CHANCE`; see "Less fruit, more beetles"). A
+  leaf and a golden mushroom are each +1 length, and each comes in about 6 rounds in 10 (measured: 25).
 - **No winter before 45 s** (`SNOW_FROM_MS`): snow in the first half-minute starved short snakes.
 - **Mushrooms never sprout within 2 cells of a head:** nobody could see one appear in front of them in time.
 - **Golden apples, leaves and mushrooms land somewhere quiet** (the farthest of 8 tries from every head), so each is a
@@ -156,7 +160,8 @@ beetles well, beetles carry more of the food (this section also holds what "Fewe
 
 - **Up to two beetles at once**, above ground or under (`BEETLE_MAX`), coming out at 0.008 a tick (`BEETLE_CHANCE`)
   while fewer are out, from 15 s (`BEETLE_FIRST_MS`) and in sudden death too; one in six is golden
-  (`GOLD_BEETLE_CHANCE`), about two a round.
+  (`GOLD_BEETLE_CHANCE`), about two a round. One nobody catches flies off after `BEETLE_TICKS` (260, about 30 s); it
+  crawls a cell every `BEETLE_EVERY` (3) ticks, faster when scared.
 - **A beetle scurries from a head within 6** (`BEETLE_FEAR`) at half a snake's speed, running for a burrow nearer than 7
   (`BEETLE_HOME_REACH`), and dives in.
 - **The escape band: at least a third** (the owner, 31 October 2026: "Yeah, I feel it should be at least a third of the
@@ -268,6 +273,9 @@ their little island"; burrows ran out as the woodpecker pecked them; and beetles
   read as holes there), where the engine stops it.
 
 ## The golden apple's worth (2z, measured 3 November 2026)
+
+A golden apple rots after `GOLDEN_TICKS` (120, about 12 s) and comes about five a round (`GOLDEN_CHANCE`, a tick's chance
+while none is out).
 
 The golden apple (+3) doesn't pay. The rivals eat every one, 19 ticks after it comes up, and only 12–15% are contested
 (another head within 5 cells). Played on from each eat with and without it (`tools/dev/fork-moves.js --move golden`; 903
