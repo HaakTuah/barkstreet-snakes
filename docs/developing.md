@@ -44,10 +44,11 @@ The REST calls from a cloud session: `core/modules/github-calls.md`. Updates, De
   itself once the description is put right. Where there is nothing to say, the heading stands with "None" under it.
 - **The security-review check** (`.github/workflows/security-review.yml`) runs the core's when a pull request opens or
   is marked ready, at each push, and whenever Codex's summary on it changes or a comment that opens "Security review:"
-  is posted by the owner, a member or a collaborator. It gives the head commit the status `security-review`, which
-  says whether the pull request's security review has run (floor rule 8). Advisory for now: the status always passes
-  and says what the check would have done, so nothing waits for it. A security review that Codex's app did not post
-  itself is posted in a comment that opens "Security review:" (`core/modules/reviews.md`, point 3).
+  is posted by the owner, a member or a collaborator (a pull request from a fork, or one Dependabot pushes to, gets its
+  status at the first such comment). It gives the head commit the status `security-review`, which says whether the pull
+  request's security review has run (floor rule 8). Advisory for now: the status always passes and says what the check
+  would have done, so nothing waits for it. A security review that Codex's app did not post itself is posted in a
+  comment that opens "Security review:" (`core/modules/reviews.md`, point 3).
 - **The licence check** (`.github/workflows/licences.yml`) runs the core's, `core/scripts/licences.mjs` with
   `tools/licence-check.json`, against the audit, `tools/licences.json`, and the notices, `THIRD-PARTY-NOTICES.txt`; what
   it and its scan hold is in the headers of `core/scripts/licences.mjs` and `core/scripts/licence-scan.mjs`. Beside it,
