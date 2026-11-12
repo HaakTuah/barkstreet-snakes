@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   licences:
-    uses: HaakTuah/agent-core/.github/workflows/licences.yml@50a5a85fd26ac4ccebe56a787e334c74077e85f0
+    uses: HaakTuah/agent-core/.github/workflows/licences.yml@8d9d418adf581dc8ff010c4a35606bcf8b825443
     with:
       config: tools/licence-check.json
 
@@ -19,10 +19,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: core/.node-version # the core's one exact Node ("Node" in core/modules/updates.md)
       - name: Every address the game loads, and each font, audited
