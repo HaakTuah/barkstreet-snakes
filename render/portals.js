@@ -77,7 +77,7 @@ function portalSwirl({ cx, cy, ix, iy }, fade, now, out) {
   ctx.arc(0, 0, a, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
-  ctx.save(); // (the swirl: three arms of a spiral, wound one way and drifting in, or the other and drifting out)
+  ctx.save(); // (the swirl: three arms of a spiral turning one way, wound so that they drift in at the entry and out at the exit)
   tracePortal(body);
   ctx.clip();
   ctx.lineWidth = 1.6;
@@ -86,7 +86,7 @@ function portalSwirl({ cx, cy, ix, iy }, fade, now, out) {
     ctx.globalAlpha = 0.3 * fade;
     ctx.beginPath();
     for (let i = 0; i <= 14; i++) {
-      const f = i / 14, r = f * 0.95, th = (out ? 1 : -1) * (t * 2.4 + r * 3.2) + k * Math.PI * 2 / 3;
+      const f = i / 14, r = f * 0.95, th = -t * 2.4 + (out ? r : -r) * 3.2 + k * Math.PI * 2 / 3;
       const x = Math.cos(th) * a * r * 0.9, y = Math.sin(th) * b * r * 0.9;
       i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
     }
