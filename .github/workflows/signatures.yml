@@ -1,19 +1,15 @@
-# The signature check (floor rule 7, "the registry's signature verified"), on a pull request that changes the tools'
-# package list, their lock file, their .npmrc or this workflow, Dependabot's included: the core's, in tools/. It
+# The signature check (floor rule 7, "the registry's signature verified"), on every pull request, Dependabot's
+# included: the core's, in tools/. It looks itself whether the pull request changes the tools' package list, their
+# lock file, an .npmrc, the Node version or this workflow, and passes at once where it changes none. Otherwise it
 # installs from npm's registry alone, running no package's install script, and runs npm's own check of the registry's
 # signature on each installed package. What it does not hold is in the header of the core's workflow. Read-only, and
-# no secrets. Never a required check: it reports only on the pull requests it runs on, so every other one would wait
-# for it for ever. On a pull request it runs on, the builder merges only once it is green, and not by auto-merge
-# alone, which waits only for required checks (floor rule 7: a check that fails holds the release back).
+# no secrets. It reports on every pull request, so a ruleset can require it; until one does, the builder merges only
+# once it is green, and not by auto-merge alone, which waits only for required checks (floor rule 7: a check that
+# fails holds the release back).
 name: signatures
 
 on:
   pull_request:
-    paths:
-      - tools/package.json
-      - tools/package-lock.json
-      - tools/.npmrc
-      - .github/workflows/signatures.yml
 
 permissions:
   contents: read
