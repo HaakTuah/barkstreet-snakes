@@ -17,8 +17,14 @@ a room on a newer version in `36-updating.md` ("Online"); the shared Hall of Fam
   `file://`, as the code alone. A room is full at four, and a friend on another protocol version is turned away
   (`{t:'reject', why}`: `'full'` or `'version'`).
 - **Connecting:** PeerJS (from cdnjs with an integrity hash, loaded only when someone opens Play with friends) and its
-  free public broker introduce the browsers; STUN finds a route for most networks. Strict ones need a relay (TURN),
-  which needs a signup, so it's left as a marked spot in `net.js`.
+  free public broker introduce the browsers; STUN finds a route for most networks. Strict ones need a relay (TURN).
+  No free one asks for nothing: each needs an account, and its key or password would sit in the page (November 2026:
+  Metered's Open Relay, ExpressTURN and Cloudflare's all need a signup), so it's left as a marked spot in `net.js`, for
+  the owner to decide on.
+- **When it fails, the lobby says which part:** *finding each other* (the broker didn't answer, there's no room behind
+  the code, or the room didn't answer) or *the route* (the room answered, but no network path let the browsers
+  connect: try another network). A room counts as answered once the browsers start trying routes (`net.js`'s
+  `explain`).
 - **The lobby** shows who's in, in their seat colours, and the rivals who'll take the empty seats (the line-up, its
   picker and the deck online: "The rival line-up" in `39-the-rivals.md`). Names are made unique (a friend called
   "Sniper" becomes "Sniper 2" in a round with the rival; two friends of one name, the second gets a 2). A friend who

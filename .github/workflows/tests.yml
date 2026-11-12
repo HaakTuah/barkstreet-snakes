@@ -89,6 +89,9 @@ jobs:
       - name: Online
         if: needs.changes.outputs.code == 'true'
         run: node tools/online-test.js
+      - name: Connections
+        if: needs.changes.outputs.code == 'true'
+        run: node tools/net-test.js
       # The online messages' types (net.js and online.js, see jsconfig.json): a
       # check only, with TypeScript installed for this step at tools/package.json's
       # version. Nothing is built or shipped.
