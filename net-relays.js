@@ -23,7 +23,8 @@ window.SnakeRelays = (() => {
   const MAX_GUESTS = 8;      // friends a room is shaking hands with at once (as net.js's MAX_CONNECTIONS)
   const HI_MS = 1000;        // a room answers one new handshake this often at most...
   const MAX_FAILS = 50;      // ...and leaves the relays after this many offers sealed with a wrong code
-  const MAX_HOSTS = 4;       // rooms a friend shakes hands with at once (rooms sharing a bucket)
+  const MAX_HOSTS = 4;       // rooms a friend shakes hands with at once (rooms sharing a bucket)...
+  const MAX_AGREED = 8;      // ...and keys it agrees in all, a room shaking hands anew once at most
   const BUCKETS = 4096;      // a room's topic is one of these: what a relay sees says little of the code
   const MAX_NOTE = 16000, MAX_SDP = 12000, MAX_DATA = 65536; // (characters: anything longer is dropped unread)
 
@@ -147,13 +148,17 @@ window.SnakeRelays = (() => {
     return { x, X: pack(plus(times(x), times(w, blind))) };
   }
   // The key both reach from their own half and the other's point (the other side's blind taken off), bound to who
-  // said what; null if the other's point is no point.
+  // said what; null if the other's point is off the curve (which says nothing of the code: dropped). A point that
+  // unblinds to nothing was made from the right code by one who knows no secret for it: it gets a key no one can
+  // match, so that a guess through it is answered like any other, and spent like any other.
   /** @param {bigint} w @param {bigint} x @param {'M' | 'N'} theirs @param {unknown} them @param {string[]} transcript */
   async function agree(w, x, theirs, them, transcript) {
     const T = unpack(them);
     if (!T) return null;
     let Z;
-    try { Z = times(x, plus(T, minus(times(w, (await spake())[theirs])))); } catch { return null; }
+    try { Z = times(x, plus(T, minus(times(w, (await spake())[theirs])))); } catch {
+      return crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+    }
     const raw = await sha256(enc.encode(['barkbite SPAKE2', ...transcript, pack(Z), w.toString(16)].join('|')));
     return crypto.subtle.importKey('raw', /** @type {BufferSource} */ (raw), 'AES-GCM', false, ['encrypt', 'decrypt']);
   }
@@ -308,8 +313,7 @@ window.SnakeRelays = (() => {
         lastHi = performance.now();
         const { x, X: Y } = await half(w, 'N');
         const key = await agree(w, x, 'M', note.X, [note.from, myId, note.X, Y]);
-        if (!key) return failed(); // (no honest friend sends a point that unblinds to nothing)
-        if (closed || guests.has(note.from)) return;
+        if (!key || closed || guests.has(note.from)) return;
         guests.set(note.from, { key, Y, since: performance.now(), sent: performance.now() });
         room.post({ k: 'hey', from: myId, to: note.from, Y, at: Date.now() });
         return;
@@ -357,8 +361,9 @@ window.SnakeRelays = (() => {
     const pc = new RTCPeerConnection({ iceServers });
     const conn = channel('host', pc, pc.createDataChannel('barkbite', { ordered: true }));
     const offered = (async () => { await pc.setLocalDescription(await pc.createOffer()); await gathered(pc); return pc.localDescription?.sdp || ''; })();
-    /** @type {Map<string, { key: CryptoKey, box: string, Y: string, tries: number }>} */
-    const hosts = new Map();
+    /** @type {Map<string, { key: CryptoKey, box: string, Y: string, tries: number, again: boolean }>} */
+    const hosts = new Map(), busy = new Set();
+    let agreed = 0;
     /** @type {Awaited<ReturnType<typeof board>> | null} */
     let room = null;
     try {
@@ -366,14 +371,19 @@ window.SnakeRelays = (() => {
         if (answered || note.k === 'hi' || note.to !== myId) return;
         if (note.k === 'hey') { // (a room that forgot us shakes hands anew, with a new Y: so do we)
           const known = hosts.get(note.from);
-          if (known ? known.Y === note.Y : hosts.size >= MAX_HOSTS) return;
-          const key = await agree(w, x, 'N', note.Y, [myId, note.from, X, note.Y]);
-          let sdp;
-          try { sdp = await offered; } catch { return; }
-          if (!key || answered) return;
-          const box = await seal(key, 'offer', sdp);
-          hosts.set(note.from, { key, box, Y: note.Y, tries: 0 });
-          room?.post({ k: 'offer', from: myId, to: note.from, box, at: Date.now() });
+          // (a slot is taken before any work, so a flood of handshakes gets MAX_HOSTS at most, each one at a time)
+          // (and keys agreed are few: each is one guess for a room that isn't one, against our offer)
+          if (busy.has(note.from) || agreed >= MAX_AGREED || (known ? known.Y === note.Y || known.again : hosts.size + busy.size >= MAX_HOSTS)) return;
+          busy.add(note.from);
+          agreed++;
+          try {
+            const key = await agree(w, x, 'N', note.Y, [myId, note.from, X, note.Y]);
+            const sdp = await offered;
+            if (!key || answered) return;
+            const box = await seal(key, 'offer', sdp);
+            hosts.set(note.from, { key, box, Y: note.Y, tries: 0, again: !!known });
+            room?.post({ k: 'offer', from: myId, to: note.from, box, at: Date.now() });
+          } catch { /* no offer of ours to send: the join fails on its own */ } finally { busy.delete(note.from); }
         } else if (note.k === 'answer') {
           const host = hosts.get(note.from), sdp = host && await unseal(host.key, 'answer', note.box);
           if (!sdp || answered) return;

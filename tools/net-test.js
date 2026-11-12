@@ -294,28 +294,66 @@ async function inChrome() {
       await sleep(30);
       const say = note => ws.send(JSON.stringify(['EVENT', { id: Math.random().toString(36), kind: 26517, tags: [['x', topic]], content: JSON.stringify({ ...note, at: Date.now() }), pubkey: '00', sig: '00', created_at: 0 }]));
       const hex = ([x, y]) => (y & 1n ? '03' : '02') + x.toString(16).padStart(64, '0');
+      const notes = () => [...posted.values()].map(c => { try { return JSON.parse(c); } catch { return {}; } });
+      const heyTo = id => notes().find(n => n.k === 'hey' && n.to === id);
+      // (a point that unblinds to nothing, made from the right code, is answered like any other, and its offer spent)
       await sleep(1100); say({ k: 'hi', from: 'bbbbbbbbbbbbbbb1', X: hex(R.times(w, M)) }); await sleep(300);
+      const identityHey = !!heyTo('bbbbbbbbbbbbbbb1');
+      if (identityHey) say({ k: 'offer', from: 'bbbbbbbbbbbbbbb1', to: heyTo('bbbbbbbbbbbbbbb1').from, box: btoa('through the blind') });
+      await sleep(300);
       const identity = room.fails();
+      const wrongBlind = hex(R.times((await R.roomOf('barkbite-yyyyy')).w, M));
+      await sleep(1100); say({ k: 'hi', from: 'bbbbbbbbbbbbbbb5', X: wrongBlind }); await sleep(300);
+      const wrongHey = !!heyTo('bbbbbbbbbbbbbbb5');
       let x = 1n; while (await R.agree(w, 1n, 'M', '02' + x.toString(16).padStart(64, '0'), []) !== null) x++;
       await sleep(1100); say({ k: 'hi', from: 'bbbbbbbbbbbbbbb2', X: '02' + x.toString(16).padStart(64, '0') }); await sleep(300);
-      const offCurve = room.fails();
+      const offCurve = room.fails(), offCurveHey = !!heyTo('bbbbbbbbbbbbbbb2');
       const guess = await R.half((await R.roomOf('barkbite-zzzzz')).w, 'M');
       await sleep(1100); say({ k: 'hi', from: 'bbbbbbbbbbbbbbb3', X: guess.X });
       let hey = null;
       for (let i = 0; i < 40 && !hey; i++) { await sleep(50); hey = [...posted.values()].map(c => { try { return JSON.parse(c); } catch { return {}; } }).find(n => n.k === 'hey' && n.to === 'bbbbbbbbbbbbbbb3'); }
-      for (let i = 0; i < 48; i++) say({ k: 'offer', from: 'bbbbbbbbbbbbbbb3', to: hey.from, box: btoa('a box sealed with another code, ' + i) });
+      for (let i = 0; i < 49; i++) say({ k: 'offer', from: 'bbbbbbbbbbbbbbb3', to: hey.from, box: btoa('a box sealed with another code, ' + i) });
       await sleep(500);
       const left = room.left(), fails = room.fails();
       await sleep(1100); say({ k: 'hi', from: 'bbbbbbbbbbbbbbb4', X: (await R.half(w, 'M')).X }); await sleep(500);
       const answeredAfter = [...posted.values()].some(c => c.includes('"hey"') && c.includes('bbbbbbbbbbbbbbb4'));
       conn.send({ t: 'k' }); await sleep(200);
-      const out = { identity, offCurve, fails, left, answeredAfter, friendStays: !!inRoom?.open && conn.open && heard > 0 };
+      const out = { identityHey, identity, wrongHey, offCurve, offCurveHey, fails, left, answeredAfter, friendStays: !!inRoom?.open && conn.open && heard > 0 };
       conn.close(); room.close(); ws.close();
       return out;
     })()`);
-    ok(limits.identity === 1 && limits.offCurve === 2, 'a guess through the room’s own blind, or with a point off the curve, counts against the room’s limit', JSON.stringify(limits));
+    ok(limits.identityHey && limits.wrongHey && limits.identity === 1, 'a guess through the room’s own blind is answered as one through another code’s, and spent like any', JSON.stringify(limits));
+    ok(!limits.offCurveHey && limits.offCurve === 1, 'a point off the curve (it says nothing of the code) is dropped unanswered', JSON.stringify(limits));
     ok(limits.fails === 50 && limits.left && !limits.answeredAfter, 'fifty failed guesses and the room leaves the relays: no handshake answered after', JSON.stringify(limits));
     ok(limits.friendStays, 'a friend already in stays when the room leaves the relays', JSON.stringify(limits));
+    // A friend flooded with handshakes from twenty rooms at once shakes hands with four at most (MAX_HOSTS).
+    const flood = await b.ev(`(async () => {
+      const R = SnakeRelays, name = 'barkbite-flood', sleep = ms => new Promise(r => setTimeout(r, ms));
+      const { w, topic } = await R.roomOf(name), ws = hub();
+      const before = new Set(posted.keys()), joining = friendWin.SnakeRelays.connect(name, [], 6000).catch(e => e.type);
+      let hi = null;
+      for (let i = 0; i < 100 && !hi; i++) { await sleep(50); hi = [...posted].filter(([id]) => !before.has(id)).map(([, c]) => JSON.parse(c)).find(n => n.k === 'hi'); }
+      const ids = Array.from({ length: 20 }, (_, i) => 'c'.repeat(14) + String(i).padStart(2, '0'));
+      const heys = await Promise.all(ids.map(async () => (await R.half(w, 'N')).X));
+      ids.forEach((id, i) => ws.send(JSON.stringify(['EVENT', { id: 'h' + i, kind: 26517, tags: [['x', topic]], content: JSON.stringify({ k: 'hey', from: id, to: hi.from, Y: heys[i], at: Date.now() }), pubkey: '00', sig: '00', created_at: 0 }])));
+      await sleep(3500); // (the friend's offer waits for its routes: GATHER_MS at most)
+      const parse = () => [...posted.values()].map(c => { try { return JSON.parse(c); } catch { return {}; } });
+      const offeredTo = new Set(parse().filter(n => n.k === 'offer' && n.from === hi.from).map(n => n.to));
+      // One room shaking hands anew twenty times: the friend agrees again once at most.
+      const before2 = new Set(posted.keys()), joining2 = friendWin.SnakeRelays.connect('barkbite-flood', [], 6000).catch(e => e.type);
+      let hi2 = null;
+      for (let i = 0; i < 100 && !hi2; i++) { await sleep(50); hi2 = [...posted].filter(([id]) => !before2.has(id)).map(([, c]) => JSON.parse(c)).find(n => n.k === 'hi'); }
+      const shake = async i => ws.send(JSON.stringify(['EVENT', { id: 'r' + i, kind: 26517, tags: [['x', topic]], content: JSON.stringify({ k: 'hey', from: 'dddddddddddddddd', to: hi2.from, Y: (await R.half(w, 'N')).X, at: Date.now() }), pubkey: '00', sig: '00', created_at: 0 }]));
+      await shake(0);
+      for (let i = 0; i < 100 && !parse().some(n => n.k === 'offer' && n.from === hi2.from); i++) await sleep(50);
+      for (let i = 1; i < 20; i++) { await shake(i); await sleep(60); } // (one at a time, each after the last was worked)
+      await sleep(500);
+      const boxes = new Set(parse().filter(n => n.k === 'offer' && n.from === hi2.from).map(n => n.box));
+      ws.close();
+      return { rooms: offeredTo.size, ended: await joining, oneRoomKeys: boxes.size, ended2: await joining2 };
+    })()`);
+    ok(flood.rooms >= 1 && flood.rooms <= 4, 'a friend flooded with handshakes from twenty rooms shakes hands with four at most', JSON.stringify(flood));
+    ok(flood.oneRoomKeys >= 1 && flood.oneRoomKeys <= 2, 'a room shaking hands anew twenty times gets two keys at most from the friend (each a guess for a room that isn’t one)', JSON.stringify(flood));
     ok(/^barkbite-[0-9a-f]{1,3}$/.test(keys.topic), 'a room’s topic is one of 4,096, so what a relay sees says little of the code', keys.topic);
     await b.ev(`friendWin.close(); 'ok'`);
     await until(`SnakeDebug.online().players.length === 1`);

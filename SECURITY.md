@@ -19,7 +19,9 @@ floor's numbers, what only this game has and what the floor leaves to it; who mi
      it). A note is kept only in its exact shape (a handshake's point on the curve, ids of our own alphabet and length,
      a sealed box) and fresh; a session description only if it opens with the key the handshake (SPAKE2) agreed, and
      is of bounded length. A room takes one new handshake a second, eight at once, and leaves the relays after 50
-     failed guesses (a handshake that unblinds to nothing, or an offer that doesn't open), friends already in staying. A relay's own message is read only as Nostr's `EVENT` for our
+     failed guesses (offers that don't open), friends already in staying; a point that unblinds to nothing is answered
+     like any other, so that silence says nothing. A joining friend shakes hands with four rooms at most and agrees
+     eight keys at most, each room once anew. A relay's own message is read only as Nostr's `EVENT` for our
      subscription, its size capped.
    - **Online peers** (PeerJS, `net.js`, `net-relays.js` and `online.js`): anyone with a room code. Their checks: each
      message's pinned shape (`tools/online-test.js`, `tools/protocol-shapes.json`); names through the one cleaner
