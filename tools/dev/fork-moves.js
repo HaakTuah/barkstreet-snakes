@@ -52,7 +52,7 @@ function patchAI(text) {
   // (power, 2u+: the plain jump or the plain flash forbidden, or the other forced: taken wherever it can go, priced at nothing)
   swap('consider = (d, flash, v, price, extra, wait = 0) => {', 'consider = (d, flash, v, price, extra, wait = 0) => { const pk = flash ? (me.dashes > 0 ? \'\' : \'pdash\') : (me.leaps > 0 ? \'\' : \'pjump\'), pf = !!pk && globalThis.__force[pk].has(me.id); if (pk && globalThis.__forbid[pk].has(me.id)) v = null; if (pf) { price = 0; wait = 0; }');
   swap('if (v > (bestPower ? bestPower.v : crawlScore + 1))', 'if (v > (bestPower ? bestPower.v : pf ? -Infinity : crawlScore + 1))');
-  swap('me.flashIn === 0 && (trapped || d === crawlDir', 'me.flashIn === 0 && (trapped || globalThis.__force.pdash.has(me.id) || d === crawlDir');
+  swap('me.flashIn === 0 && (dropping || d === crawlDir', 'me.flashIn === 0 && (dropping || globalThis.__force.pdash.has(me.id) || d === crawlDir');
   return text;
 }
 
