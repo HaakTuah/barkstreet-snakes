@@ -26,7 +26,8 @@
 
   // ---- by playing
   const decisionRng = (tick, id) => seeded((Math.imul(tick + 1, 0x9e3779b1) ^ Math.imul(id + 1, 0x85ebca6b)) >>> 0); // (each decision draws from a stream of its own, so who else decides shifts no one's)
-  const replacer = (k, v) => v instanceof Set || v instanceof Map ? [...v] : v;
+  const { isSet, isMap } = require('util').types; // (the game's collections are another context's: `instanceof Set` is false for them)
+  const replacer = (k, v) => isSet(v) || isMap(v) ? [...v] : v;
   const diffAt = (a, b, at = '') => {
     if (a === b) return '';
     if (!a || !b || typeof a !== 'object' || typeof b !== 'object') return at || '(whole)';
@@ -87,14 +88,15 @@
   }
 
   const keys = Object.keys(AI.PERSONAS), observed = new Set(), hungerRates = new Set(), fields = new Set();
-  let decisions = 0, tails = 0, coloured = 0;
+  let decisions = 0, tails = 0, coloured = 0, sets = 0;
   const note = (r, rivals, seats) => r.shown.forEach((v, i) => {
     observed.add(rivals[r.who[i]]); hungerRates.add(v.hungerRate); Object.keys(v).concat(Object.keys(v.me)).forEach(k => fields.add(k)); decisions++;
+    if (v.holes.length || v.fire.length || v.pecks.length || v.zone.length) sets++;
     for (const f of v.food) { if (f.kind === 'pellet' && f.owner < seats) tails++; if ('color' in f) coloured++; } // (a tail the seat dropped, as a rival sees it)
   });
   for (let n = 0; n * 3 < keys.length; n++) { // (every rival of the cast looks on, three at a time, beside a seat that is a rival's, then a person's)
     const rivals = keys.slice(n * 3, n * 3 + 3), lead = [keys[(n * 3 + 3) % keys.length]], snow = n % 2 === 1;
-    const r = swapped({ lead, rivals, time: n % 3 === 2 ? 68000 : 0, snow });
+    const r = swapped({ lead, rivals, time: [0, 0, 99000, 0, 0, 68000][n] ?? 0, snow });
     note(r, rivals, 1);
     check(`31: ${lead[0]}'s seat a rival's, then a person's: ${rivals.join(', ')} are shown the same, choose the same, decide on the same ticks${snow ? ' (in snow)' : ''}`, !r.bad, r.bad);
   }
@@ -103,6 +105,7 @@
     note(r, rivals, 2);
     check('31: two seats a rival\'s, then people\'s: the other two are shown the same, choose the same, decide on the same ticks', !r.bad, r.bad);
   }
+  check('31: ...the sets of cells a rival is shown (holes, fire, pecks, zone) were among what was compared, not left out as empty', sets > 0, `${sets} views with a hole, a mark or fire`);
   check('31: ...a tail dropped by the seat was among what was shown, as the pellet it is, with no colour of its own (a person chooses theirs)', tails > 0 && coloured === 0, `${tails} tails seen, ${coloured} with a colour`);
   check('31: ...all of the cast looked on, and the fields added lately (hunger rate, stamina, shield) were among what was compared',
     keys.every(k => observed.has(k)) && hungerRates.has(1) && hungerRates.has(T.SNOW_HUNGER) && ['hungerRate', 'hungerLeft', 'starveIn', 'stamina', 'shield'].every(k => fields.has(k)),
