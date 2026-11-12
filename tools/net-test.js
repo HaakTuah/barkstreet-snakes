@@ -281,6 +281,41 @@ async function inChrome() {
       return { same: await opens(kRoom, box), stranger: await opens(kRoom2, sbox), junk: await R.agree(a.w, room.x, 'M', '02' + 'f'.repeat(64), t), blinds: M[0] !== N[0], topic: a.topic };
     })()`);
     ok(keys.same && !keys.stranger && keys.junk === null && keys.blinds, 'the handshake: the same code reaches the same key, another code doesn’t, and a point off the curve is refused', JSON.stringify(keys));
+    // The limits, on a room of the relays alone with one friend in: guesses through the room's own blind or with a
+    // point off the curve count, as offers that don't open do; at MAX_FAILS (50) the room leaves the relays, and the
+    // friend already in stays.
+    const limits = await b.ev(`(async () => {
+      const R = SnakeRelays, F = friendWin.SnakeRelays, name = 'barkbite-limit', sleep = ms => new Promise(r => setTimeout(r, ms));
+      let inRoom = null, heard = 0;
+      const room = await R.listen(name, [], c => c.on('open', () => { inRoom = c; c.on('data', () => heard++); }));
+      const { conn } = await F.connect(name, [], 15000);
+      for (let i = 0; i < 100 && !inRoom; i++) await sleep(50);
+      const { w, topic } = await R.roomOf(name), { M } = await R.spake(), ws = hub();
+      await sleep(30);
+      const say = note => ws.send(JSON.stringify(['EVENT', { id: Math.random().toString(36), kind: 26517, tags: [['x', topic]], content: JSON.stringify({ ...note, at: Date.now() }), pubkey: '00', sig: '00', created_at: 0 }]));
+      const hex = ([x, y]) => (y & 1n ? '03' : '02') + x.toString(16).padStart(64, '0');
+      await sleep(1100); say({ k: 'hi', from: 'bbbbbbbbbbbbbbb1', X: hex(R.times(w, M)) }); await sleep(300);
+      const identity = room.fails();
+      let x = 1n; while (await R.agree(w, 1n, 'M', '02' + x.toString(16).padStart(64, '0'), []) !== null) x++;
+      await sleep(1100); say({ k: 'hi', from: 'bbbbbbbbbbbbbbb2', X: '02' + x.toString(16).padStart(64, '0') }); await sleep(300);
+      const offCurve = room.fails();
+      const guess = await R.half((await R.roomOf('barkbite-zzzzz')).w, 'M');
+      await sleep(1100); say({ k: 'hi', from: 'bbbbbbbbbbbbbbb3', X: guess.X });
+      let hey = null;
+      for (let i = 0; i < 40 && !hey; i++) { await sleep(50); hey = [...posted.values()].map(c => { try { return JSON.parse(c); } catch { return {}; } }).find(n => n.k === 'hey' && n.to === 'bbbbbbbbbbbbbbb3'); }
+      for (let i = 0; i < 48; i++) say({ k: 'offer', from: 'bbbbbbbbbbbbbbb3', to: hey.from, box: btoa('a box sealed with another code, ' + i) });
+      await sleep(500);
+      const left = room.left(), fails = room.fails();
+      await sleep(1100); say({ k: 'hi', from: 'bbbbbbbbbbbbbbb4', X: (await R.half(w, 'M')).X }); await sleep(500);
+      const answeredAfter = [...posted.values()].some(c => c.includes('"hey"') && c.includes('bbbbbbbbbbbbbbb4'));
+      conn.send({ t: 'k' }); await sleep(200);
+      const out = { identity, offCurve, fails, left, answeredAfter, friendStays: !!inRoom?.open && conn.open && heard > 0 };
+      conn.close(); room.close(); ws.close();
+      return out;
+    })()`);
+    ok(limits.identity === 1 && limits.offCurve === 2, 'a guess through the room’s own blind, or with a point off the curve, counts against the room’s limit', JSON.stringify(limits));
+    ok(limits.fails === 50 && limits.left && !limits.answeredAfter, 'fifty failed guesses and the room leaves the relays: no handshake answered after', JSON.stringify(limits));
+    ok(limits.friendStays, 'a friend already in stays when the room leaves the relays', JSON.stringify(limits));
     ok(/^barkbite-[0-9a-f]{1,3}$/.test(keys.topic), 'a room’s topic is one of 4,096, so what a relay sees says little of the code', keys.topic);
     await b.ev(`friendWin.close(); 'ok'`);
     await until(`SnakeDebug.online().players.length === 1`);

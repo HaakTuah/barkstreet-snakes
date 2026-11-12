@@ -283,8 +283,9 @@ window.SnakeRelays = (() => {
 
   // Host a room on the relays under its name: each friend's handshake is answered (one new one a HI_MS at most), and
   // an offer that opens with the key it agreed gets the room's answer; their channel is handed to onConnection before
-  // it opens. MAX_FAILS offers that don't open (codes guessed) and the room leaves the relays. Resolves once a relay
-  // is open.
+  // it opens. MAX_FAILS guesses (a handshake through the room's own blind, or an offer that doesn't open) and the room
+  // leaves the relays, friends already in staying. Resolves once a relay is open, with close() and, for the suite,
+  // how many guesses failed and whether it left.
   /** @param {string} name @param {RTCIceServer[]} iceServers @param {(conn: PeerJS.DataConnection) => void} onConnection */
   async function listen(name, iceServers, onConnection) {
     if (!window.RTCPeerConnection) throw { type: 'browser-incompatible' };
@@ -294,7 +295,10 @@ window.SnakeRelays = (() => {
     let lastHi = -Infinity, fails = 0, closed = false;
     const forget = (/** @type {string} */ id) => { guests.get(id)?.pc?.close(); guests.delete(id); };
     const sweep = setInterval(() => { for (const [id, g] of guests) if (!g.pc && performance.now() - g.since > 30000) forget(id); }, 5000);
-    const close = () => { closed = true; clearInterval(sweep); room.close(); for (const id of [...guests.keys()]) forget(id); };
+    // (leaving the relays forgets only the friends still shaking hands; closing the room, everyone)
+    const leave = () => { closed = true; clearInterval(sweep); room.close(); for (const [id, g] of guests) if (!g.pc) forget(id); };
+    const close = () => { leave(); for (const id of [...guests.keys()]) forget(id); };
+    const failed = () => { if (++fails >= MAX_FAILS) leave(); };
     /** @type {Awaited<ReturnType<typeof board>>} */
     const room = await board(topic, async note => {
       const guest = guests.get(note.from);
@@ -304,7 +308,8 @@ window.SnakeRelays = (() => {
         lastHi = performance.now();
         const { x, X: Y } = await half(w, 'N');
         const key = await agree(w, x, 'M', note.X, [note.from, myId, note.X, Y]);
-        if (!key || closed || guests.has(note.from)) return;
+        if (!key) return failed(); // (no honest friend sends a point that unblinds to nothing)
+        if (closed || guests.has(note.from)) return;
         guests.set(note.from, { key, Y, since: performance.now(), sent: performance.now() });
         room.post({ k: 'hey', from: myId, to: note.from, Y, at: Date.now() });
         return;
@@ -315,7 +320,7 @@ window.SnakeRelays = (() => {
         return;
       }
       const sdp = await unseal(guest.key, 'offer', note.box);
-      if (!sdp) { forget(note.from); if (++fails >= MAX_FAILS) close(); return; }
+      if (!sdp) return failed(); // (the friend stays: an offer under their id may be anyone's)
       if (closed || guest.pc) return;
       const pc = guest.pc = new RTCPeerConnection({ iceServers });
       const unopened = setTimeout(() => forget(note.from), 30000); // (never connected: the seat's place is freed)
@@ -335,7 +340,7 @@ window.SnakeRelays = (() => {
         room.post(guest.answer);
       } catch { clearTimeout(unopened); forget(note.from); }
     });
-    return { close };
+    return { close, fails: () => fails, left: () => closed };
   }
 
   // Join a room on the relays: our handshake goes out until a room answers it, then our offer, sealed with the key
@@ -352,19 +357,22 @@ window.SnakeRelays = (() => {
     const pc = new RTCPeerConnection({ iceServers });
     const conn = channel('host', pc, pc.createDataChannel('barkbite', { ordered: true }));
     const offered = (async () => { await pc.setLocalDescription(await pc.createOffer()); await gathered(pc); return pc.localDescription?.sdp || ''; })();
-    /** @type {Map<string, { key: CryptoKey, box: string }>} */
+    /** @type {Map<string, { key: CryptoKey, box: string, Y: string, tries: number }>} */
     const hosts = new Map();
     /** @type {Awaited<ReturnType<typeof board>> | null} */
     let room = null;
     try {
       room = await board(topic, async note => {
         if (answered || note.k === 'hi' || note.to !== myId) return;
-        if (note.k === 'hey') {
-          if (hosts.has(note.from) || hosts.size >= MAX_HOSTS) return;
+        if (note.k === 'hey') { // (a room that forgot us shakes hands anew, with a new Y: so do we)
+          const known = hosts.get(note.from);
+          if (known ? known.Y === note.Y : hosts.size >= MAX_HOSTS) return;
           const key = await agree(w, x, 'N', note.Y, [myId, note.from, X, note.Y]);
-          if (!key || hosts.has(note.from)) return;
-          const box = await seal(key, 'offer', await offered);
-          hosts.set(note.from, { key, box });
+          let sdp;
+          try { sdp = await offered; } catch { return; }
+          if (!key || answered) return;
+          const box = await seal(key, 'offer', sdp);
+          hosts.set(note.from, { key, box, Y: note.Y, tries: 0 });
           room?.post({ k: 'offer', from: myId, to: note.from, box, at: Date.now() });
         } else if (note.k === 'answer') {
           const host = hosts.get(note.from), sdp = host && await unseal(host.key, 'answer', note.box);
@@ -384,7 +392,10 @@ window.SnakeRelays = (() => {
       const again = () => {
         if (answered) return;
         posting.post({ k: 'hi', from: myId, X, at: Date.now() });
-        for (const [id, h] of hosts) posting.post({ k: 'offer', from: myId, to: id, box: h.box, at: Date.now() });
+        for (const [id, h] of hosts) {
+          if (++h.tries > 4) { hosts.delete(id); continue; } // (a room that never answers our offer: room for another)
+          posting.post({ k: 'offer', from: myId, to: id, box: h.box, at: Date.now() });
+        }
       };
       const resend = setInterval(again, RESEND_MS);
       again();

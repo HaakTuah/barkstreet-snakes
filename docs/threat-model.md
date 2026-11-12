@@ -11,7 +11,8 @@ reads both. Rules cited: `SECURITY.md`'s, whose numbers are the floor's.
 - **What the relays see:** which of 4,096 topics a room uses, and handshakes that say nothing of its code; the
   browsers' addresses go only inside notes sealed with the key the handshake agreed. Nothing seen there can be
   searched offline for the code: one who tries codes gets one guess a try against the room itself, which answers one
-  newcomer a second and leaves the relays after 50 wrong offers. Someone flooding a room's topic can keep its
-  handshakes busy, so that friends join through the broker only; that is all.
+  newcomer a second and leaves the relays after 50 failed guesses, so a code is found one time in about 140 at
+  most. Someone flooding a room's topic, or answering friends' handshakes as fake rooms, can keep the relays busy or
+  make the room leave them, so that friends join through the broker only; friends already in stay. That is all.
 - **Lower stakes:** the floor's slowdown or crash from input someone else shaped includes one reached by another player
   online. Cheating against the rivals in a single-player game is not a security matter.
