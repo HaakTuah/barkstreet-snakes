@@ -33,7 +33,7 @@ function drawPortals(now) {
 // bright rim whose edge flickers ragged and alive, a darker field of its
 // colour inside with a faint swirl (turning in at the entry, spilling out at
 // the exit), a soft glow around it and a thin gold trim just outside the rim.
-const PORTAL_HUES = { in: ['#06183a', '#1e7bff', '#a8d6ff'], out: ['#3d1604', '#ff8a1c', '#ffd9a8'] }; // (heart, rim, light)
+const PORTAL_HUES = { in: ['#0a2a70', '#1e7bff', '#a8d6ff'], out: ['#8a3606', '#ff8a1c', '#ffd9a8'] }; // (heart, rim, light: the field a deeper shade of the rim's colour, enough that it still reads blue or orange on bark)
 const PORTAL_STEPS = 56;
 // The oval's outline as points (the rim's flicker: each point pushed out or in along the ellipse, by waves running round it).
 function portalOutline(a, b, grow, t, phase) {
@@ -70,7 +70,7 @@ function portalSwirl({ cx, cy, ix, iy }, fade, now, out) {
   ctx.scale(1, b / a);
   const field = ctx.createRadialGradient(0, 0, 0, 0, 0, a);
   field.addColorStop(0, out ? rim : heart);
-  field.addColorStop(0.65, out ? heart : '#0a2a66');
+  field.addColorStop(0.65, out ? heart : '#0e3a96');
   field.addColorStop(1, heart);
   ctx.fillStyle = field;
   ctx.beginPath();
@@ -95,7 +95,7 @@ function portalSwirl({ cx, cy, ix, iy }, fade, now, out) {
   ctx.restore();
   ctx.globalAlpha = fade; // (the gold trim, just outside the rim; then the rim: thick, a bright core in it)
   tracePortal(portalOutline(a, b, 0.1, t, 0));
-  ctx.lineWidth = 1.2;
+  ctx.lineWidth = 1.8;
   ctx.strokeStyle = '#f5c542';
   ctx.stroke();
   tracePortal(body);
