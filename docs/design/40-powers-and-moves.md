@@ -328,7 +328,8 @@ Built in part 5 of round six B (PR #202):
 - Going off an edge while wrapping opens a pair of portals, one on each side, drawn to look like the game Portal's own
   (the owner, 9 November 2026, #592: a blue and orange scheme tells a player at once what they are; and 10 November
   2026: "I want them looking like Portal's portals"): the entry blue, the exit orange, each an upright oval about two
-  cells long along the edge and one deep, standing over the edge so most of it shows on the board; a bright, thick ring
+  cells long along the edge and one deep, standing over the edge (its middle a third of a cell inside, so four fifths of
+  it shows on the board); a bright, thick ring
   of its colour whose rim flickers, ragged and alive; inside, a darker field of the same colour with a faint swirl,
   turning in at the entry and spilling out at the exit; a soft glow around it; and a thin gold trim just outside the
   ring for the golden mushroom. With reduced motion the rim and the swirl stand still. The oval and its bright rim keep
