@@ -1,5 +1,5 @@
-// Round six B, part 5, gold portals for the wrap: a snake the edges wrap
-// for (a golden mushroom) that goes off one opens a pair of gold portals
+// Round six B, part 5, portals for the wrap: a snake the edges wrap
+// for (a golden mushroom) that goes off one opens a pair of portals
 // there, the entry (the edge cell it left, the way it went) and the exit
 // (where it came in). Anyone may follow it through the entry (see ahead)
 // while its body passes and for PORTAL_MS after; coming out onto its body

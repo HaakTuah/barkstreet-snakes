@@ -106,7 +106,7 @@ function fillRoom(headP, t, cap, need, eager, foodRange, mute, bodyMark, stampF,
         if (eager) { const i = unframed[q], v = foodValue[i]; if (v > 0) anyFood = Math.max(anyFood, v * (foodFrom[i] > by ? latePull(foodRange, t, by, foodFrom[i], mute) : pull)); }
       }
     }
-    // (A gold portal, open as I'd step through it from its entry: its exit
+    // (A portal, open as I'd step through it from its entry: its exit
     // is a move on from there, as near as any neighbour.)
     for (let n = 0; n < portalIn.length; n++) {
       const e = portalIn[n], q = portalEx[n];
@@ -171,7 +171,7 @@ function spreadTerritory(ns, t, age, bits, tags, stop, beadCount) {
         if (s <= T1) { B[q] = claim; theirs++; Q[write++] = q; } else if (s >= next && o && o !== tag) { if (o === 1) mine--; else theirs--; B[q] = next; }
       }
     }
-    // (A gold portal open at T + 1: whoever has its entry at T has its exit
+    // (A portal open at T + 1: whoever has its entry at T has its exit
     // at T + 1, as a neighbour, the same way.)
     for (let n = 0; n < portalIn.length; n++) {
       const e = portalIn[n], se = B[e], tag = se & tags;

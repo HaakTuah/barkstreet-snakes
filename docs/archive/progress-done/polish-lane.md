@@ -66,6 +66,9 @@ owner's three notes of 2 November merged as PRs #322 (the remains), #320 (the fl
 - The portals drawn as Portal's own (the owner, 10 November 2026, PR #708): each end a full upright oval two cells long
   and one deep, a thick flickering rim, a deeper shade of its colour inside with a swirl turning in at the entry and
   out at the exit, a glow and the thin gold trim; fingerprints on seeds 3 and 11 unchanged.
+- The portals worded as the game names them (PR #724): the code comments, check names and census lines that still
+  said "gold portals" say "portals"; `tools/rules/23-gold-portals.js` is now `23-portals.js`; fingerprints on seeds 3
+  and 11 unchanged.
 
 ## The slop audit, done so far
 
