@@ -2,6 +2,35 @@
 
 ## The queue, done
 
+### 2z. Online play that hangs on no single free service (the owner, 11 November 2026, on the design session's list of what would break: "fix all of it, expertly!"; a side lane now)
+
+Friends find each other only through PeerJS's free public broker, and connect only where Google's free STUN servers
+find a route (design 22, "Connecting"): if the broker goes down or turns us away, nobody can start or join a game, and
+friends behind strict networks (some mobile carriers, offices) cannot connect at all. Make online play survive both, at
+no cost and with no server of our own:
+1. **A second way to find each other,** independent of PeerJS's broker and tried when it cannot be reached, the room
+   code and link unchanged for players: free public relays any browser reaches over WebSocket (such as Nostr relays or
+   a public MQTT broker, as the MIT-licensed Trystero does), several at once so that no one of them is needed, loaded
+   only when Play with friends opens and pinned like PeerJS.
+2. **A relay for strict networks** (TURN), free and with nothing secret in the page; if none fits, the PR says so and
+   the marked spot in `net.js` stays, for the owner to decide on a paid one.
+3. **A plain answer when it fails:** the lobby says which part failed (finding each other, or the route) instead of
+   waiting.
+
+Each new host is one exact line in the content security policy and in `SECURITY.md`; licences by floor rule 10; the
+online round trip passes through each way in; no message changes (`tools/protocol-shapes.json` unchanged). It touches
+`net.js` and the lobby, not the online messages, so it runs beside the main lane, on Opus (online sync is the *hard
+work*).
+
+*Done* (PRs #710 and #712): (1) a room is on PeerJS's broker and five public Nostr relays at once; a friend
+tries the broker first and the relays when it can't find the room or after 4 s, the code and link unchanged.
+`net-relays.js` signs and seals its own notes on the browser's crypto, so nothing new is loaded and no licence is
+added; each relay is one exact host in the content security policy and in `SECURITY.md`. (2) No free TURN relay asks
+for nothing (each needs an account, its credentials in the page): the marked spot in `net.js` stays, and #709 asks the
+owner. (3) The lobby names the part that failed, finding each other or the route. `tools/net-test.js` plays every way
+a room is reached or not, and the round trip through the relays in two browser windows; the real broker and relays on
+the preview (`?way=broker`, `?way=relays`). No message changed.
+
 ### 2aa. Dash on the key you're going (the owner, 4 November 2026; an input entry, a side lane now)
 
 The steering key of the way you're going dashes again, as a swipe ahead does, behind touch's guard: its spec is in

@@ -8,12 +8,11 @@ to his words in the archive.
 
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
-**The main lane is 6** (round six C: the woodpecker in three acts; parts 1 and 2 done, part 3's clock in with its
-weighing open, 3+ next), the first open entry that waits on nothing (3c waits on 3b's Wildcard part, 3d on 3c, and 4 on
-5). Item 5's part 7 (one pricing model, built afresh) is next, now that 6's part 3 (PR #615) is in, as the queue's order
-says; 2y++'s last step waits on part 7. The entries before these are done
-(`docs/archive/progress-done/queue-done.md`). The polish lane and the workshop lane run beside it, each claimed by a
-draft PR, and so does 2z.
+**The main lane is 6** (round six C: the woodpecker in three acts; parts 1, 2 and 3 done, 3+ next), the first open entry
+that waits on nothing (3c waits on 3b's Wildcard part, 3d on 3c, and 4 on 5). Item 5's part 7 (one pricing model, built
+afresh) is next, now that 6's part 3 (PR #615) is in, as the queue's order says; 2y++'s last step waits on part 7. The
+entries before these are done (`docs/archive/progress-done/queue-done.md`). The polish lane and the workshop lane run
+beside it, each claimed by a draft PR.
 
 ## For the owner
 
@@ -36,7 +35,11 @@ The game's polish lane (`core/modules/work-flow.md`, point 4; the owner, 31 Octo
 - **How, here:** a lesson and an online lobby among the screens; the picture on `pr-media`, and play proven unchanged by
   the suites and the simulation's fingerprints (seeds 3 and 11); one line per fix under this lane.
 
-*Next find:* the code comments in `engine/`, `ai/`, `online.js`, `tuning.js` and the simulation tools that still say "gold portals", renamed to "portals" once #615 (open on those files) has merged; then look for more by playing, as "How" says.
+*Next find:* the code comments in `engine/`, `ai/`, `online.js`, `tuning.js` and the simulation tools that still say "gold portals", renamed to "portals" once #615 (open on those files) has merged; then the woodpecker's piece shaded faintly while the
+nicks close round it (#612, "Woodpecker: shade the piece it's cutting out before its last peck, so a person can see what
+the rivals see"), deepening to today's cut-loose shading at the last peck: `render/cut.js`, design 38's cue lines, the
+Field guide row and lesson, the wash differing from the cut-loose piece by more than colour, and the stand-in's notes on
+the pictures; then look for more by playing, as "How" says.
 
 *Done in the lane:* each fix's line is in `docs/archive/progress-done/polish-lane.md`, "The polish lane, done" (the README for
 players, any key wakes, the woodpecker bigger on a phone, the flash become the dash, the room card and Join on a phone,
@@ -80,26 +83,6 @@ the owner's notes of 2 November and the portals blue and orange, among them).
 ## The queue, in order
 
 **Done:** every finished entry, 1 to 2w, with its PR, is in `docs/archive/progress-done/queue-done.md`, "The queue, done".
-
-### 2z. Online play that hangs on no single free service (the owner, 11 November 2026, on the design session's list of what would break: "fix all of it, expertly!"; a side lane now)
-
-Friends find each other only through PeerJS's free public broker, and connect only where Google's free STUN servers
-find a route (design 22, "Connecting"): if the broker goes down or turns us away, nobody can start or join a game, and
-friends behind strict networks (some mobile carriers, offices) cannot connect at all. Make online play survive both, at
-no cost and with no server of our own:
-1. **A second way to find each other,** independent of PeerJS's broker and tried when it cannot be reached, the room
-   code and link unchanged for players: free public relays any browser reaches over WebSocket (such as Nostr relays or
-   a public MQTT broker, as the MIT-licensed Trystero does), several at once so that no one of them is needed, loaded
-   only when Play with friends opens and pinned like PeerJS.
-2. **A relay for strict networks** (TURN), free and with nothing secret in the page; if none fits, the PR says so and
-   the marked spot in `net.js` stays, for the owner to decide on a paid one.
-3. **A plain answer when it fails:** the lobby says which part failed (finding each other, or the route) instead of
-   waiting.
-
-Each new host is one exact line in the content security policy and in `SECURITY.md`; licences by floor rule 10; the
-online round trip passes through each way in; no message changes (`tools/protocol-shapes.json` unchanged). It touches
-`net.js` and the lobby, not the online messages, so it runs beside the main lane, on Opus (online sync is the *hard
-work*).
 
 ### 2y++. The golden flight, followed up (the owner, 2 November 2026; #399 and #401; side lanes now, the last step after part 7)
 
@@ -161,14 +144,19 @@ three acts" (its draft: `docs/handoff/woodpecker-acts-draft.md`). In six playabl
 1. **Done** (PR #605): the three acts (calm, the watcher and its gaze, the first pecks, the frenzy), `?acts=`; Sovereign's
    time at home asked in #607.
 2. **Done** (PR #610): it cuts shapes along an outline, down to a floor, then fights.
-3. **The clock done** (PR #615): hunger a factor to the end, by one hunger clock for the whole round (#616; design 04),
+3. **Done** (PR #615): hunger a conditional good to the end, by one hunger clock for the whole round (#616; design 04),
    and the opening it made too hungry eased: a lean round keeps both apples until the first beetles, and the rivals turn
-   desperate with 6 s of life left, not 11 (#673; design 04 and 39). **Open:** the rivals' weighing of a meal beats never eating but comes out only even with always eating, since in the
-   frenzy cuts take more length than meals give (design 39, "Hunger read against that length"); the rework, a rule that
-   makes length cost room, is the idea #655, built once the owner queues it. 3+. Islands that stay (#611; design 38, "The log stays one piece"). 4. The food A/B
-   (`?food=fall`), chips and a bounce if the knock stays (the old study patches, `tools/dev/r6-study-tools/patch-flex*.js`,
-   rebuilt for it). 5. Skeletons and trademark memorials. 6. 2h's numbers measured again, among them the endgame's
-   meals.
+   desperate with 6 s of life left, not 11 (#673; design 04 and 39). Its weighing beats never eating but only ties
+   always eating, and is finished by 3++. 3+. Islands
+   that stay (#611; design 38, "The log stays one piece"). 3++. Length costs room in the frenzy (#655, "Make length
+   cost more in the endgame, so always eating there loses clearly"): under today's rules no meal weighing beats always
+   eating, so a long snake must pay in room for the weighing to win. An engine-rules entry, run one at a time, with the
+   design check; it touches `logFloor` in `engine/outline.js` and design 38, "The floor". Test both floor shapes (the
+   floor counts each snake at its longest since the frenzy began; the floor frozen at the lengths when the frenzy
+   begins) and prefer the one a player can reason about. It needs an A/B test for round length and deaths, then the
+   three-way head to head again; taught in the woodpecker's Field guide row and lesson. 4. The food A/B (`?food=fall`),
+   chips and a bounce if the knock stays (the old study patches, `tools/dev/r6-study-tools/patch-flex*.js`, rebuilt for
+   it). 5. Skeletons and trademark memorials. 6. 2h's numbers measured again.
 
 ### 7. Then: local multiplayer (PR D)
 
@@ -177,6 +165,16 @@ As planned: up to 4 players, key sets, gamepads, and local and online play toget
 ### 8. Near the end: beetles who meet, fight (the owner, 29 October 2026; an engine-rules entry, last but the writing pass)
 
 Two beetles that meet fight a shoving match, and a snake that gets there in time can catch them while they do; last of the rules, before the writing pass. Spec: `docs/handoff/queue-specs.md`, "8. Near the end: beetles who meet, fight".
+
+### 8b. Fed rivals take the apple on the edge row (#595, "Idea: fed rivals turn from an apple on the edge row because the edge counts against their territory"; an AI entry, after 8, before the writing pass)
+
+A person takes a free apple on the edge, but eleven of the eighteen rivals refuse one three cells along it when fed: from
+the edge more of the board is nearer their head, so the meal looks like ground lost, though the snake leaves the edge
+on its next move. A line that has just eaten counts its territory as it will be once it leaves the edge. An AI entry,
+run one at a time, with the design check, after the hunger part (entry 6, part 3) merges, since it touches
+`ai/food.js`; measured both ways with `tools/abtest.js` on fresh seeds, with a staged-board rules test (a fed rival with
+no one near takes the apple), the rot by the edge from `tools/dev/nerve/census.js` and `--signatures` for every
+trademark. Spec: the issue's text; design 39, "A meal isn't a pin".
 
 ### 9. At the very end: the writing pass (the owner, 31 October 2026; Fable, after everything else, entry 8 included)
 

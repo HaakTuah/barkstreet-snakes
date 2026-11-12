@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Checks the page's content security policy (what it is for: SECURITY.md, point 7): first the policy as written,
 // pinned whole, then in headless Chrome (tools/browser.js) the page starting and playing with nothing refused, and
-// what the policy must refuse refused. That the real PeerJS file and broker work under it is shown by an online
-// round on the PR's preview, not here (no network in a suite).
+// what the policy must refuse refused. That the real PeerJS file, broker and relays work under it is shown by an
+// online round on the PR's preview, not here (no network in a suite).
 //
 //   node tools/csp-test.js
 const fs = require('fs');
@@ -15,6 +15,7 @@ const report = reporter(), { check } = report;
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const PEERJS = fs.readFileSync(path.join(root, 'net.js'), 'utf8').match(/const PEERJS = '([^']+)'/)[1];
 const BROKER = ['https://0.peerjs.com', 'wss://0.peerjs.com']; // (PeerJS's own broker: net.js names no other host)
+const RELAYS = JSON.parse(fs.readFileSync(path.join(root, 'net-relays.js'), 'utf8').match(/const RELAYS = (\[[^\]]+\])/)[1].replace(/'/g, '"')); // (net-relays.js's)
 
 // The policy as written.
 const metas = [...html.matchAll(/<meta http-equiv="Content-Security-Policy" content="([^"]*)">/gi)];
@@ -30,7 +31,7 @@ const inline = [...html.matchAll(/<script(?![^>]*\ssrc=)[^>]*>([\s\S]*?)<\/scrip
 const PINNED = {
   'default-src': ["'none'"],                     // (whatever it doesn't name is refused)
   'script-src': ["'self'", PEERJS, ...inline],   // (PeerJS's exact file, as net.js loads it; the inline scripts by hash)
-  'connect-src': ["'self'", ...BROKER],
+  'connect-src': ["'self'", ...BROKER, ...RELAYS], // (each relay one exact wss: host, never a wildcard)
   'style-src': ["'self'", "'unsafe-inline'"],    // (the markup's style attributes)
   'font-src': ["'self'"],
   'img-src': ["'self'", 'data:'],                // (the HUD's data: dots)
@@ -87,6 +88,10 @@ const WATCH = `window.__refused = []; addEventListener('securitypolicyviolation'
     await ev(`(() => { const w = new WebSocket('wss://0.peerjs.com/peerjs'); w.onerror = () => {}; setTimeout(() => w.close(), 100); return 'ok'; })()`);
     await b.sleep(300); // (a refusal comes after the call that opens the socket, never during it)
     check(await ev(`__refused.length === 0`), "PeerJS's broker's socket is let through", await ev(`__refused.join('; ')`));
+    await b.send('Runtime.callFunctionOn', { objectId: page.objectId, arguments: [{ value: RELAYS }],
+      functionDeclaration: `function (urls) { for (const u of urls) { const w = new WebSocket(u); w.onerror = () => {}; setTimeout(() => w.close(), 100); } }` });
+    await b.sleep(300);
+    check(await ev(`__refused.length === 0`), `the relays' sockets are let through (${RELAYS.length})`, await ev(`__refused.join('; ')`));
 
     // What it refuses.
     const refused = async (what, js, directive) => {
@@ -102,6 +107,7 @@ const WATCH = `window.__refused = []; addEventListener('securitypolicyviolation'
     await refused('another of PeerJS\'s versions from the same site', `new Promise(r => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js'; s.onload = () => r(true); s.onerror = () => r(false); document.head.append(s); })`, 'script-src');
     await refused('sending to another site', `fetch('https://collect.example.com/?d=1', { method: 'POST', body: 'x' }).then(() => true, () => false)`, 'connect-src');
     await refused('a socket to another site', `(() => { try { new WebSocket('wss://collect.example.com/'); } catch {} return false; })()`, 'connect-src');
+    await refused('a socket to a relay net-relays.js doesn\'t name', `(() => { try { new WebSocket('wss://relay.example.com/'); } catch {} return false; })()`, 'connect-src');
     await refused('a stylesheet from another site', `new Promise(r => { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'https://fonts.example.com/x.css'; l.onload = () => r(true); l.onerror = () => r(false); document.head.append(l); })`, 'style-src');
     await refused('a frame, even of this site', `(() => { const f = document.createElement('iframe'); f.src = location.href; document.body.append(f); setTimeout(() => f.remove(), 150); return false; })()`, 'frame-src');
     await refused('an image from another site (a way to send)', `new Promise(r => { const i = new Image(); i.onload = () => r(true); i.onerror = () => r(false); i.src = 'https://collect.example.com/p.gif?d=1'; })`, 'img-src');

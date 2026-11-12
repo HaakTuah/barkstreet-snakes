@@ -133,9 +133,27 @@ const KEYS = {
     await b.sleep(900);
   };
 
+  // What reads off your own death's card, read while that card is up. The rivals go on behind it and the round can end
+  // there (on a slow runner, before the card is looked at): then the round's end card is up, with other words and no
+  // carve. A round that ended behind the card, before or during the read, is played again (3 at most); null if every
+  // one did, so a check says so instead of reading whatever card is up. setup: run in the page once the round goes.
+  const onYourDeathCard = async (personas, setup, read) => {
+    const over = () => ev(`SnakeDebug.state() === 'over'`);
+    for (let tries = 0; tries < 3; tries++) {
+      await fresh(personas);
+      if (setup) await ev(setup);
+      await die();
+      if (await over()) continue;
+      let out;
+      try { out = await read(); } catch (e) { if (await over()) continue; throw e; } // (a button gone with the card)
+      if (!(await over())) return out;
+    }
+    return null;
+  };
+
   try {
 
-    await runParts.inside(path.join(__dirname, 'ui'), { launch, serve, HELPERS, HEADER_ROWS, results, check, PROBE, KEYS, site, b, ev, P, wait, key, mouse, tap, at, tag, nameAt, tagAt, powers, load, fresh, die });
+    await runParts.inside(path.join(__dirname, 'ui'), { launch, serve, HELPERS, HEADER_ROWS, results, check, PROBE, KEYS, site, b, ev, P, wait, key, mouse, tap, at, tag, nameAt, tagAt, powers, load, fresh, die, onYourDeathCard });
   } catch (e) {
     results.push(`FAIL ${e.message}`);
     report.failed++;
