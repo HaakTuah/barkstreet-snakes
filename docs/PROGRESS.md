@@ -51,7 +51,10 @@ the owner's notes of 2 November, the portals blue and orange and the woodpecker'
   threshold for "by more than chance" listed as a first guess; (2) a check that nothing in `aiView()` says which snake
   is a person and that no rival's timing gives one away ("The computer players never know who is a person") (done: PR
   #728, `tools/rules/31-never-know-a-person.js`; it found a dropped tail's colour in the food a rival is shown, taken
-  out); (3) whatever the game shows from the past showing its age ("No rule untaught"); (4) online rounds replaying from
+  out); (3) whatever the game shows from the past showing its age ("No rule untaught") (done: PR #740; the Field guide, the
+  lessons, the hints and the Hall hold no stale past; it fixed the dash chip's tooltip, which still said "flash", the
+  sudden-death banner's "Nothing grows now", and stale quotes in design 09, 40 and 42; three rules lack a Field guide
+  row: #739); (4) online rounds replaying from
   the log of every input ("Same seed, same game") (done: PR #730, `tools/rules/32-online-replay.js`; it found that the
   inputs alone don't replay a round: where a press lands among the rivals' thinking, and which rivals thought ahead,
   change the host's game, #729, fixed in PR #741: each decision draws from a stream of its own). What changes the AI, the engine's rules or the online messages goes to the

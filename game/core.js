@@ -122,7 +122,7 @@ const FLAVOR = {
   // The woodpecker's three acts (entry 6), as each starts: it comes and watches, it starts pecking, it's in a frenzy.
   woodpecker: ['The woodpecker has landed. It’s sizing up the log.', 'A woodpecker, watching the log. Kik!'],
   woodpeckerPecks: ['It’s started pecking! Keep off its mark.', 'Rat-a-tat. The woodpecker’s at the log.'],
-  woodpeckerFrenzy: ['Sudden death! The woodpecker’s in a frenzy.', 'Sudden death! Nothing grows now, and the bird’s furious.'],
+  woodpeckerFrenzy: ['Sudden death! The woodpecker’s in a frenzy.', 'Sudden death! Food’s running low, and the bird’s furious.'],
   // The new rules, as they first happen to you in a round: one idea each, short.
   // (A no-break space keeps "At 3" together: split, it reads as two statements.)
   youCrash: ['Crashes cost tail. At length\u00a03, or boxed in, one ends you.', 'That crash cost tail. At length\u00a03, or boxed in, you’re out.'],
@@ -229,7 +229,7 @@ const FLAVOR = {
     'Snow on the bark. Hard times: eat while you can.': 'Snow. Hard times: eat while you can.',
     'Winter. Less food, and everyone gets hungry faster.': 'Winter. Less food, and hunger comes faster.',
     'The woodpecker has landed. It’s sizing up the log.': 'The woodpecker has landed.',
-    'Sudden death! Nothing grows now, and the bird’s furious.': 'Sudden death! Nothing grows now.',
+    'Sudden death! Food’s running low, and the bird’s furious.': 'Sudden death! Food’s running low.',
     'A golden leaf blew onto the log: golden dashes, for the taking.': 'A golden leaf blew in: golden dashes to take.',
     'A golden leaf on the wind: golden dashes, for whoever eats it.': 'A golden leaf: golden dashes, for whoever eats it.',
     'A golden mushroom came up. Eat it: no edges for a while.': 'A golden mushroom came up: no edges for a while.',
