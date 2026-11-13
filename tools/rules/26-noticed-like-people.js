@@ -2,24 +2,29 @@
 // (39-the-rivals, "What a rival sees": a snake near a rival's head is seen REACTION_MS late, one across the
 // board later, up to REACTION_FAR_MS, give or take a little that drifts; never going back in time.)
 
-// How many ticks late snake 0 sees each other snake, read off the board's snapshots, over many ticks.
+// How many ticks late snake 0 sees each other snake, read off the board's snapshots, over many ticks: the snakes
+// crash into the wall within a few ticks, leaving about eight reads each, which one seed's jitter can leave
+// equal (one run in a hundred; found by #732's sweep), so 8 rounds each on its own seed are read together.
 {
-  const g = board([[line(3, 3, 4), 'right'], [line(3, 5, 4), 'right'], [line(12, 21, 4), 'right']], { time: 60000 });
-  g.weather = { kind: 'clear', since: 0, until: 1e9, nextGust: 0, nextStrike: 0 }; // (no snow starving them early, whatever the weather draws)
-  const lags = { near: [], far: [] }, seenAt = {};
+  const lags = { near: [], far: [] };
   let tick = 0, back = 0;
-  for (let t = 0; t < 80 && g.snakes.every(s => s.alive); t++) {
-    const was = g.time;
-    E.step(g); tick = g.time - was;
-    const v = E.aiView(g, g.snakes[0]), last = g.history.length - 1;
-    if (last < T.HISTORY - 1) continue;
-    for (const o of v.others) {
-      const k = [...g.history].reverse().findIndex(h => JSON.stringify(h.snakes.find(s => s.id === o.id)?.body) === JSON.stringify(o.body));
-      lags[o.id === g.snakes[1].id ? 'near' : 'far'].push(k);
-      if (g.tick - k < seenAt[o.id]) back++;
-      seenAt[o.id] = g.tick - k;
+  for (let sd = 1; sd <= 8; sd++) seededWhile(sd * 104729, () => {
+    const g = board([[line(3, 3, 4), 'right'], [line(3, 5, 4), 'right'], [line(12, 21, 4), 'right']], { time: 60000 });
+    g.weather = { kind: 'clear', since: 0, until: 1e9, nextGust: 0, nextStrike: 0 }; // (no snow starving them early, whatever the weather draws)
+    const seenAt = {};
+    for (let t = 0; t < 80 && g.snakes.every(s => s.alive); t++) {
+      const was = g.time;
+      E.step(g); tick = g.time - was;
+      const v = E.aiView(g, g.snakes[0]), last = g.history.length - 1;
+      if (last < T.HISTORY - 1) continue;
+      for (const o of v.others) {
+        const k = [...g.history].reverse().findIndex(h => JSON.stringify(h.snakes.find(s => s.id === o.id)?.body) === JSON.stringify(o.body));
+        lags[o.id === g.snakes[1].id ? 'near' : 'far'].push(k);
+        if (g.tick - k < seenAt[o.id]) back++;
+        seenAt[o.id] = g.tick - k;
+      }
     }
-  }
+  });
   const near = T.REACTION_MS / tick, mean = a => a.reduce((x, y) => x + y, 0) / a.length;
   check('2q: a snake beside a rival\'s head is seen its reaction time late, on average, give or take a tick',
     lags.near.length >= 6 && Math.min(...lags.near) >= Math.floor(near) && Math.abs(mean(lags.near) - near) < 0.6, `${lags.near.join(',')} (${near.toFixed(2)} ticks)`);
