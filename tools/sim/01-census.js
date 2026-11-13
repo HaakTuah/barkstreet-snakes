@@ -138,6 +138,7 @@ const totals = () => ({ rounds: 0, timeSum: 0, times: [], sudden: 0, draws: 0, s
 //   eats, beadsEaten   food eaten, and of it beads (Gobbler and Vulture by the minute, for Capricious's impressions of them)
 const DOUBLED = 3; // (cells beside itself in a row: a stretch of wall two thick)
 const LURE_TICKS = 4; // (a chaser's crash this soon after it was last chasing counts as led into it)
+const CRASHED = ['boxed', 'shorter', 'even', 'tiny', 'boom', 'hole']; // (the deaths that are crashes, as the step's collisions set them: not a cut, hunger, fire or the beak)
 const SIGNS = ['moves', 'runs', 'cells', 'doubled', 'boxKills', 'lured', 'long', 'coiled', 'riding', 'apart', 'foodShare', 'beadShare', 'homeTicks', 'atHome', 'skims', 'flashes', 'jumps', 'eats', 'beadsEaten', 'ticks'];
 
 // Capricious in a mood: its signatures count for it, and again under the
@@ -170,7 +171,7 @@ function signatures(g, T, per, was) {
   const crashed = new Set();
   for (const e of g.events) {
     const o = e.snake;
-    if ((e.type !== 'crash' && e.type !== 'death') || !o || crashed.has(o.id) || ['hunger', 'fire', 'pecked'].includes(o.fatal) || /^got pecked/.test(e.cause || '')) continue;
+    if (!o || crashed.has(o.id) || (e.type === 'crash' ? /^got pecked/.test(e.cause || '') : e.type !== 'death' || !CRASHED.includes(o.fatal))) continue;
     crashed.add(o.id);
     for (const s of g.snakes) {
       const w = was[s.id];
