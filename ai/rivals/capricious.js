@@ -24,7 +24,7 @@ DRIVERS.capricious = function () {
     } else {
       if (!memory.deck?.length) {
         const deck = memory.deck = [...MOODS];
-        for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
+        for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(aiDraw() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
         if (deck[deck.length - 1] === memory.lastMood) [deck[0], deck[deck.length - 1]] = [deck[deck.length - 1], deck[0]]; // (dealt from the end)
       }
       memory.mood = memory.deck.pop();

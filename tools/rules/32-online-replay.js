@@ -7,11 +7,12 @@
 // a link that is reliable and in order; one lands two ticks or more after it was made, and the host takes it then (no
 // rollback, no hold). The round holds the woodpecker's peck, a lean food season, the friend away and back, gone quiet
 // and handed back, and presses of every kind from both. The log keeps each input as it lands (the tick, the host's
-// clock, who and the message, and where among the rivals' thinking), each friend's silence as checkAway reads it, and
-// how many rivals thought ahead before each tick. Replayed in full through the same code from the seed alone, the host's
-// board on every tick and at the end, and the friend's screen on every tick (re-encoded), are the live round's. Replayed
-// from less, the inputs alone, it differs, a known failure listed with its issue: where a press lands among the rivals'
-// thinking, and which rivals thought ahead, change the game.
+// clock, who and the message) and each friend's silence as checkAway reads it, and nothing of the frames. Replayed
+// through the same code from the seed and those inputs alone, each tick's before the rivals think, with every rival
+// thinking ahead and with none (all deciding in the step), the host's board on every tick and at the end, and the
+// friend's screen on every tick (re-encoded), are the live round's: where a press lands among the rivals' thinking,
+// which rivals thought ahead, and a stand-in's thought thrown away when its person takes the wheel back change nothing
+// (#729: each decision draws from a stream of its own, and a hand-back puts back what the thought changed).
 {
   const { createHash } = require('crypto');
   const hash = v => createHash('sha256').update(JSON.stringify(v, replacer)).digest('hex').slice(0, 16); // (replacer, diffAt: part 31)
@@ -57,22 +58,20 @@
     c.online = { players: PEOPLE.map(p => ({ id: p.peer, away: false })), holesSent: g.holes.size,
       room: { quietFor: quiet, rtt: () => rtt, send() {}, broadcast: m => send(wire(m)) } };
     send(wire(O.round(g, humans, '', 'replayed')));
-    const h = { c, E, O, g, queue: g.snakes.filter(s => s.persona), shifted: 0, windows: [], ticks: [] }; // (game/round.js: the rivals think before the first tick)
+    const h = { c, E, O, g, queue: g.snakes.filter(s => s.persona), ticks: [] }; // (game/round.js: the rivals think before the first tick)
     h.tick = () => {
-      h.windows.push(h.shifted); // (how many were taken from the queue before this tick: the rest decided in the step)
       c.checkAway();
       E.step(g);
       send(wire(O.tick(g, { holesFrom: c.online.holesSent, tickLen: E.tickMs(g) })));
       c.online.holesSent = g.holes.size;
       c.planSent = false;
       h.queue = g.snakes.filter(s => s.alive && (!s.isPlayer || s.autopilot));
-      h.shifted = 0;
       h.ticks.push(JSON.stringify(g, replacer));
     };
     // A press as it lands on the host: a friend's message, or the host's own press come due (hostPress, its wait over).
     h.land = (from, msg) => from !== 'host' ? c.fromFriend(from, msg)
       : msg.t === 'pow' ? c.powerOf(c.player(), msg.k) : msg.t === 'swipe' ? c.swipeTo(msg.d, c.player()) : c.turn(msg.d, c.player());
-    h.think = () => { const s = h.queue.shift(); h.shifted++; if (E.canThinkAhead(g, s)) E.thinkAhead(g, s); }; // (game/core.js's think, one at a time)
+    h.think = () => { const s = h.queue.shift(); if (E.canThinkAhead(g, s)) E.thinkAhead(g, s); }; // (game/core.js's think, one at a time)
     h.over = () => g.snakes.filter(s => s.alive).length <= 1 || g.tick >= 300; // (a round's end, or 300 ticks: enough for all it must hold)
     return h;
   }
@@ -99,7 +98,7 @@
     let heard = 0, arrive = 0, now = 0, late = null;
     const h = hosted({ ...ROUND, season, rtt: 60, quiet: peer => { const ms = now - heard; quiet.push({ k: h.g.tick, peer, ms }); return ms; }, send: m => { friend.take(m); eyes.take(m); } });
     const { c, E, g } = h;
-    const inbox = [], landed = (from, msg) => log.push({ k: g.tick, after: h.shifted, at: now, from, msg });
+    const inbox = [], landed = (from, msg) => log.push({ k: g.tick, at: now, from, msg });
     const sendUp = (msg, extra = 0) => { arrive = Math.max(arrive, now + 30 + extra); const m = wire(msg); inbox.push({ at: arrive, msg: m }); return m; };
     const silent = () => now >= 7000 && now < 8200;
     const mind = [{}, {}];
@@ -151,13 +150,13 @@
       if (steps < 2) for (let n = Math.floor(chance() * 3); n > 0 && h.queue.length; n--) h.think();
       if (!c.planSent && !h.queue.length) c.sendPlan();
     }
-    return { log, quiet, windows: h.windows, host: h.ticks, friend: friend.ticks, late, g };
+    return { log, quiet, host: h.ticks, friend: friend.ticks, late, g };
   }
 
   // The replay: the log through the same code from the seed, each tick's inputs at the host's clock as they landed
-  // (hostPress with no wait: the wait is over when it lands). From the inputs alone, they land before the rivals think and
-  // every rival thinks ahead; `where`: also where each landed among the rivals' thinking, and how many thought ahead.
-  function replay(season, rec, where) { // (where: 'all', the log in full; 'presses', where each input landed; false, neither)
+  // (hostPress with no wait: the wait is over when it lands), before the rivals think; then every rival thinks ahead
+  // (`ahead`), or none does and all decide in the step.
+  function replay(season, rec, ahead) {
     const quiet = rec.quiet.slice(), friend = watching(ROUND.seed + 1), byTick = new Map();
     for (const e of rec.log) byTick.set(e.k, [...byTick.get(e.k) || [], e]);
     const h = hosted({ ...ROUND, season, rtt: 0, send: m => friend.take(m), quiet: peer => {
@@ -168,14 +167,12 @@
     const { c, g } = h;
     for (;;) {
       for (const e of byTick.get(g.tick) || []) {
-        if (where) while (h.shifted < e.after && h.queue.length) h.think();
         c.clock = e.at;
         if (e.from === 'host') c.hostPress(() => h.land('host', e.msg), e.msg.t === 'pow' && e.msg.k === 'letgo');
         else h.land(e.from, e.msg);
       }
       if (h.over()) break;
-      const to = where === 'all' ? rec.windows[h.windows.length] : Infinity;
-      while (h.shifted < to && h.queue.length) h.think();
+      while (ahead && h.queue.length) h.think();
       if (!c.planSent && !h.queue.length) c.sendPlan();
       h.tick();
     }
@@ -199,20 +196,11 @@
     `events: ${[...events].join(', ')}; inputs: ${[...kinds].join(', ')}`);
   check('32: ...a friend\'s press made on one tick that arrived late lands when it arrives, two ticks on or more (the host neither holds nor rolls back)',
     rec.late && rec.late.landed >= rec.late.made + 2 && rec.log.some(e => e.msg === rec.late.sent && e.k === rec.late.landed), JSON.stringify(rec.late && { made: rec.late.made, landed: rec.late.landed }));
-  // The replays. In full: the inputs, each where it landed among the rivals' thinking, and how many thought ahead each
-  // tick. With less, the replay differs from the live round, as listed with its issue (a known failure, printed, not
-  // counted; one that no longer differs says so).
-  const ISSUE = 729;
-  const replays = [
-    ['all', 'the log in full (each input where it landed among the rivals\' thinking, and how many thought ahead)'],
-    ['presses', 'the log with where each input landed, every rival thinking ahead'],
-    [false, 'the seed and the inputs alone, each tick\'s before the rivals think, every rival thinking ahead'],
-  ];
-  for (const [where, what] of replays) {
-    const r = replay(season, rec, where);
+  // The replays, from the seed and the inputs alone.
+  for (const [ahead, what] of [[true, 'every rival thinking ahead'], [false, 'none thinking ahead (all deciding in the step)']]) {
+    const r = replay(season, rec, ahead);
     const bad = differs(rec.host, r.host, 'host') || (JSON.stringify(rec.g, replacer) !== JSON.stringify(r.g, replacer) ? 'the end' : null), badFriend = differs(rec.friend, r.friend, 'friend');
-    const host = `32: replayed from ${what}: the host's board on every tick and at the end is the live round's`, guest = `32: ...and the friend's screen on every tick`;
-    if (where === 'all') { check(host, !bad, bad); check(guest, !badFriend, badFriend); continue; }
-    for (const [name, b] of [[host, bad], [guest, badFriend]]) console.log(b ? `known ${name} (#${ISSUE}: differs at ${b})` : `ok   ${name} (known to differ, #${ISSUE}, but not on this round)`);
+    check(`32: replayed from the seed and the inputs alone, each tick's before the rivals think, ${what}: the host's board on every tick and at the end is the live round's`, !bad, bad);
+    check('32: ...and the friend\'s screen on every tick', !badFriend, badFriend);
   }
 }

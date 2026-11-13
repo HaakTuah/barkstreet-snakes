@@ -3,16 +3,16 @@
 // The first cracks a burrow open where it's quiet; later ones come out of
 // a free burrow, or now and then open another.
 function beetleOut(game, place, beetles) {
-  if (beetles + game.unders.length >= T.BEETLE_MAX || game.time < T.BEETLE_FIRST_MS || Math.random() >= T.BEETLE_CHANCE * T.SEASONS[game.season].beetles) return; // (fewer in a lean season, more in plenty: 2i)
+  if (beetles + game.unders.length >= T.BEETLE_MAX || game.time < T.BEETLE_FIRST_MS || luck(game) >= T.BEETLE_CHANCE * T.SEASONS[game.season].beetles) return; // (fewer in a lean season, more in plenty: 2i)
   let b = freeBurrow(game, -1);
-  if (openBurrows(game) < T.BURROW_MAX && (!b || Math.random() < T.BURROW_NEW_CHANCE)) {
+  if (openBurrows(game) < T.BURROW_MAX && (!b || luck(game) < T.BURROW_NEW_CHANCE)) {
     const at = place(null, true, -1, T.BURROW_SPACING); // (quiet, and apart from the other burrows: burrows keep apart)
     if (at) b = openBurrow(game, at.x, at.y);
   }
   if (b) {
-    const gold = Math.random() < T.GOLD_BEETLE_CHANCE;
+    const gold = luck(game) < T.GOLD_BEETLE_CHANCE;
     b.used = game.time;
-    game.food.push({ x: b.x, y: b.y, kind: 'beetle', expires: game.tick + T.BEETLE_TICKS, dir: CRAWL[Math.floor(Math.random() * 4)], movedAt: game.tick, ...(gold ? { gold: 1 } : {}) });
+    game.food.push({ x: b.x, y: b.y, kind: 'beetle', expires: game.tick + T.BEETLE_TICKS, dir: CRAWL[Math.floor(luck(game) * 4)], movedAt: game.tick, ...(gold ? { gold: 1 } : {}) });
     game.events.push({ type: 'spawn', kind: 'beetle', x: b.x, y: b.y, gold });
   }
 }
@@ -43,7 +43,7 @@ const openBurrows = game => { let n = 0; for (const h of game.burrows) if (!h.sh
 function shutBurrow(game, b) {
   if (b.shutAt) return;
   b.shutFrom = game.time;
-  b.shutAt = game.time + Math.round(between(T.BURROW_SHUT_MIN_MS, T.BURROW_SHUT_MAX_MS));
+  b.shutAt = game.time + Math.round(between(game, T.BURROW_SHUT_MIN_MS, T.BURROW_SHUT_MAX_MS));
   game.events.push({ type: 'shut', x: b.x, y: b.y, at: b.shutAt });
 }
 // A burrow closes over: the last of the sawdust and moss fill it.
@@ -103,7 +103,7 @@ function crawl(game) {
     }
     if (!b) continue;
     b.used = game.time;
-    game.food.push({ x: b.x, y: b.y, kind: 'beetle', expires: u.expires, dir: CRAWL[Math.floor(Math.random() * 4)], movedAt: game.tick, ...(u.gold ? { gold: 1 } : {}) });
+    game.food.push({ x: b.x, y: b.y, kind: 'beetle', expires: u.expires, dir: CRAWL[Math.floor(luck(game) * 4)], movedAt: game.tick, ...(u.gold ? { gold: 1 } : {}) });
     game.events.push({ type: 'emerge', x: b.x, y: b.y });
     game.unders.splice(i--, 1);
   }
@@ -176,7 +176,7 @@ function crawl(game) {
     for (const d of CRAWL) {
       const nx = b.x + d.x, ny = b.y + d.y, nk = key(nx, ny);
       if (!inside(nx, ny) || bodyStamp[nk] === stamp || (w && !plan && w.target.includes(nk))) continue; // (...and the woodpecker's way, unless it's on it already)
-      let score = Math.random(); // a little wandering
+      let score = luck(game); // a little wandering
       if (d === b.dir) score += 1.5; // it likes to keep going
       else if (d.x === -b.dir.x && d.y === -b.dir.y) score -= 1;
       if (fled) score += 3 * (Math.abs(nx - hx) + Math.abs(ny - hy) - fear); // away from the nearest head...
@@ -202,5 +202,5 @@ function crawl(game) {
 // A beetle gone underground, where it went down (a burrow, or a dig): it
 // comes up a while later.
 function goUnder(game, b) {
-  game.unders.push({ until: game.tick + Math.round(between(T.BEETLE_UNDER_MIN, T.BEETLE_UNDER_MAX)), expires: b.expires, from: key(b.x, b.y), gold: !!b.gold });
+  game.unders.push({ until: game.tick + Math.round(between(game, T.BEETLE_UNDER_MIN, T.BEETLE_UNDER_MAX)), expires: b.expires, from: key(b.x, b.y), gold: !!b.gold });
 }

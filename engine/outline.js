@@ -165,7 +165,7 @@ function planCut(game, w) {
     if (near) seeds = seeds.filter(gazeNear);
     let best = null;
     for (let t = 0; t < T.CUT_SEEDS && seeds.length; t++) {
-      const seed = seeds.splice(Math.floor(Math.random() * seeds.length), 1)[0];
+      const seed = seeds.splice(Math.floor(luck(game) * seeds.length), 1)[0];
       const { inP, cut } = growPiece(game, owner, r, seed, size);
       if ([...inP, ...cut].some(k => heads.has(k)) || !cut.size || (near && ![...cut].some(gazeNear))) continue; // (the first: its cut starts where it looked)
       if (!oneTrunk(game, inP, cut) || inP.size + cut.size > room) continue; // (and never past the floor, its crumbs and all)

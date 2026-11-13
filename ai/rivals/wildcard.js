@@ -10,7 +10,7 @@ PERSONAS.wildcard = {
 
 // Wildcard: a random but sensible set of weights, drawn once per round.
 function randomWeights() {
-  const chance = p => Math.random() < p;
+  const chance = p => aiDraw() < p;
   const w = {
     space: rand(0.8, 2), territory: rand(0.2, 1.8), aggression: rand(0, 0.5),
     food: rand(2, 12), eat: rand(30, 300), pellet: rand(1, 3), foodRange: Math.round(rand(15, 60)),

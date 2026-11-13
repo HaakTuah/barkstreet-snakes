@@ -53,7 +53,7 @@ function step(game) {
     const f = s.flight;
     if (f?.gold) { // a golden flight: steered in the air, one turn a tick, on from where it is that way (round six B)
       if (f.held && f.flown < T.GOLD_FLY && !(s.isPlayer && !s.autopilot)) { // (a rival plans again where to come down, every move it's up: part 4, "the rivals fly it as a person would")
-        aiDecide(aiView(game, s), brainOf(s), s.memory);
+        decideNow(game, s);
         if (s.memory.flyAt === game.tick) { const t = s.memory.flyTurn; s.flyTurn = t ? { at: t.at, dir: Object.values(DIRS).find(q => q.x === t.dir.x && q.y === t.dir.y) } : null; }
       }
       const d = f.held ? airTurn(game, s, f) : null; // (steered only while held: a quick press is a plain-length hop, its turns waiting till it's down)
@@ -85,7 +85,7 @@ function step(game) {
           break;
         }
       } else {
-        s.dir = s.plannedTick === game.tick ? s.planned : aiDecide(aiView(game, s), brainOf(s), s.memory);
+        s.dir = s.plannedTick === game.tick ? s.planned : decideNow(game, s);
         if (s.memory.power === game.tick) { // (it asked to jump, or flash, as a person would: twice for now; held for as far as it means to fly)
           leap(game, s);
           if (s.memory.leapNow === game.tick) leap(game, s);
@@ -368,7 +368,7 @@ function step(game) {
       const k = key(x, y);
       if (bodyStamp[k] === stamp || game.holes.has(k) || game.fires.has(k)) return;
       bodyStamp[k] = stamp;
-      const expires = game.tick + Math.round(T.PELLET_TICKS * (cooked ? T.PELLET_COOKED : 1) * between(0.75, 1.25));
+      const expires = game.tick + Math.round(T.PELLET_TICKS * (cooked ? T.PELLET_COOKED : 1) * between(game, 0.75, 1.25));
       game.food.push(cooked ? { x, y, kind: 'pellet', color, owner, expires, cooked: 1 } : { x, y, kind: 'pellet', color, owner, expires });
     };
     for (const s of dying) spill(game, s); // (first: the beads keep off its cell)
@@ -393,5 +393,5 @@ function step(game) {
 
 window.SnakeEngine = {
   GRID, PLAYER_COLOR, PERSONAS, DIRS, WEATHER,
-  createGame, step, tickMs: tickLength, hungerLeft, hungerWarning, aiView, canThinkAhead, thinkAhead, suddenDeath, actOf, planCut, planFits, regions, leap, letGo, leapIn, flash, flashIn, stamina, staminaIn, staminaStep, seasonApples, rollSide, knockTo, knocks, beakDepth, beakGap,
+  createGame, step, tickMs: tickLength, hungerLeft, hungerWarning, aiView, canThinkAhead, thinkAhead, dropThought, suddenDeath, actOf, planCut, planFits, regions, leap, letGo, leapIn, flash, flashIn, stamina, staminaIn, staminaStep, seasonApples, rollSide, knockTo, knocks, beakDepth, beakGap,
 };

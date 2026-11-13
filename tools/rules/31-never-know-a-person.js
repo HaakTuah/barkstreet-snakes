@@ -30,12 +30,13 @@ const diffAt = (a, b, at = '') => {
   const seen = code('engine/view.js').split('\n').filter(l => !/^const (canThinkAhead|brainOf|foodSeen) = /.test(l)).join('\n');
   check('31: aiView() and what it works out read no person flag, name, colour, seat, queue or owner',
     /function aiView\(/.test(seen) && !PERSON.test(seen) && !/\b(owner|name|color|seat|queue)\b/.test(seen), (seen.match(/.*\b(isPlayer|autopilot|owner|name|color|seat|queue)\b.*/) || [''])[0].trim());
-  const handed = /\baiDecide\(aiView\(game, s\), brainOf\(s\), s\.memory\)/g, anyCall = /\baiDecide\(/g;
+  const handed = /\baiDecide\(aiView\(game, s\), brainOf\(s\), s\.memory, mindOf\(game, s\)\)/g, anyCall = /\baiDecide\(/g;
   const handedN = engineFiles.reduce((n, f) => n + (code(f).match(handed) || []).length, 0), callsN = engineFiles.reduce((n, f) => n + (code(f).match(anyCall) || []).length, 0);
-  check('31: the engine hands every decision nothing but aiView(), the snake\'s own brain and its memory', handedN >= 3 && handedN === callsN, `${handedN} of ${callsN} calls`);
+  const mind = (code('engine/core.js').match(/^function mindOf\([\s\S]*?\n}\n/m) || [''])[0];
+  check('31: the engine hands every decision nothing but aiView(), the snake\'s own brain, its memory and its draws (from the round\'s seed, the tick and the snake\'s id alone)',
+    handedN >= 1 && handedN === callsN && /game\.seed/.test(mind) && !(mind.match(/\b(?:game|s)\.(\w+)/g) || []).some(m => !['game.seed', 'game.tick', 's.id'].includes(m)), `${handedN} of ${callsN} calls; ${mind.trim().split('\n')[1]}`);
 
   // ---- by playing
-  const decisionRng = (tick, id) => seeded((Math.imul(tick + 1, 0x9e3779b1) ^ Math.imul(id + 1, 0x85ebca6b)) >>> 0); // (each decision draws from a stream of its own, so who else decides shifts no one's)
   // One round in a context of its own: `persons` people first (ids 0 up, as in a game), then the rival keys. The first `seats`
   // seats are quiet (no powers); `feed`, by tick, gives the person seats the moves a rival of the same seat made (names).
   function play({ persons, seats, keys, feed = {}, time, snow, ticks }) {
@@ -44,14 +45,10 @@ const diffAt = (a, b, at = '') => {
     M.random = seeded(7);
     GAME.filter(f => f === 'tuning.js' || isAI(f)).forEach(run);
     const decide = c.window.SnakeAI.decide;
-    c.window.SnakeAI.decide = (view, persona, memory) => { // (read by the engine as it loads: every decision, logged as it was shown and chose)
-      const world = M.random, shown = JSON.stringify(view, replacer);
-      M.random = decisionRng(view.tick, view.me.id);
-      try {
-        const d = decide(view, persona, memory);
-        log.push({ tick: view.tick, id: view.me.id, view: shown, dir: Object.keys(c.window.SnakeAI.DIRS).find(k => c.window.SnakeAI.DIRS[k] === d), memory: JSON.stringify(memory, replacer) });
-        return d;
-      } finally { M.random = world; }
+    c.window.SnakeAI.decide = (view, persona, memory, draw) => { // (read by the engine as it loads: every decision, logged as it was shown and chose)
+      const shown = JSON.stringify(view, replacer), d = decide(view, persona, memory, draw); // (draw: each decision's own stream, so who else decides shifts no one's)
+      log.push({ tick: view.tick, id: view.me.id, view: shown, dir: Object.keys(c.window.SnakeAI.DIRS).find(k => c.window.SnakeAI.DIRS[k] === d), memory: JSON.stringify(memory, replacer) });
+      return d;
     };
     GAME.filter(f => !(f === 'tuning.js' || isAI(f))).forEach(run);
     const { SnakeEngine: En, TUNING: Tu } = c.window;

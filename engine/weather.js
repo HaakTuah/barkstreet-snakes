@@ -12,13 +12,13 @@ function weather(game) {
     let next = 'clear';
     if (suddenDeath(game)) next = 'clear';
     else if (w.kind === 'clear') next = spell(game);
-    else if (w.kind === 'storm' && Math.random() < T.AFTER_STORM_RAIN) next = 'rain';
-    else if (w.kind === 'rain' && Math.random() < T.RAINBOW_CHANCE) rainbowAfter(game);
-    const span = next === 'clear' ? between(T.CLEAR_MIN_MS, T.CLEAR_MAX_MS) : between(T.SPELL_MIN_MS, T.SPELL_MAX_MS);
+    else if (w.kind === 'storm' && luck(game) < T.AFTER_STORM_RAIN) next = 'rain';
+    else if (w.kind === 'rain' && luck(game) < T.RAINBOW_CHANCE) rainbowAfter(game);
+    const span = next === 'clear' ? between(game, T.CLEAR_MIN_MS, T.CLEAR_MAX_MS) : between(game, T.SPELL_MIN_MS, T.SPELL_MAX_MS);
     if (next !== w.kind) game.events.push({ type: 'weather', kind: next });
-    game.weather = { kind: next, since: next === w.kind ? w.since : game.time, until: game.time + span, nextGust: game.time + 600, nextStrike: game.time + between(1200, 2500) };
+    game.weather = { kind: next, since: next === w.kind ? w.since : game.time, until: game.time + span, nextGust: game.time + 600, nextStrike: game.time + between(game, 1200, 2500) };
     // (Rain: once in a while, a golden mushroom comes up some time in it.)
-    if (next === 'rain' && Math.random() < T.GOLDCAP_CHANCE) game.weather.goldcapAt = game.time + between(1000, Math.max(1000, span - 4000));
+    if (next === 'rain' && luck(game) < T.GOLDCAP_CHANCE) game.weather.goldcapAt = game.time + between(game, 1000, Math.max(1000, span - 4000));
   }
   const now = game.weather;
   if (now.kind === 'wind' && game.time >= now.nextGust) {
@@ -29,7 +29,7 @@ function weather(game) {
     game.events.push({ type: 'gust', x: fell ? fell.x : -1, y: fell ? fell.y : -1 });
     // Now and then a gust brings a golden leaf (one at a time): dashes. It
     // lands somewhere quiet, like every golden thing.
-    if (Math.random() < T.LEAF_CHANCE && !game.food.some(f => f.kind === 'leaf')) {
+    if (luck(game) < T.LEAF_CHANCE && !game.food.some(f => f.kind === 'leaf')) {
       const at = foodPlacer(game)({ kind: 'leaf', expires: game.tick + T.LEAF_TICKS }, true);
       if (at) game.events.push({ type: 'spawn', kind: 'leaf', x: at.x, y: at.y });
     }
@@ -40,7 +40,7 @@ function weather(game) {
     if (at) game.events.push({ type: 'spawn', kind: 'goldcap', x: at.x, y: at.y });
   }
   if (now.kind === 'storm' && game.time >= now.nextStrike) {
-    now.nextStrike = game.time + between(T.STRIKE_MIN_MS, T.STRIKE_MAX_MS);
+    now.nextStrike = game.time + between(game, T.STRIKE_MIN_MS, T.STRIKE_MAX_MS);
     strike(game);
   }
   // Winter: hunger runs faster (the clock to everyone's next meal runs
@@ -62,7 +62,7 @@ function spell(game) {
   if (!bag.some(ok)) {
     const more = [];
     for (const [k, n] of Object.entries(T.WEATHER_ODDS)) for (let i = 0; i < n; i++) more.push(k);
-    for (let i = more.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [more[i], more[j]] = [more[j], more[i]]; }
+    for (let i = more.length - 1; i > 0; i--) { const j = Math.floor(luck(game) * (i + 1)); [more[i], more[j]] = [more[j], more[i]]; }
     bag.push(...more);
   }
   const i = bag.findIndex(ok);
@@ -87,7 +87,7 @@ function strike(game) {
     spots.push(k);
   }
   if (!spots.length) return;
-  const k = spots[Math.floor(Math.random() * spots.length)], from = game.tick + T.STRIKE_WARN_TICKS;
+  const k = spots[Math.floor(luck(game) * spots.length)], from = game.tick + T.STRIKE_WARN_TICKS;
   const group = ++game.fireGroup;
   game.fires.set(k, { from, until: from + T.FIRE_TICKS, group, strike: true });
   game.fireGroups.set(group, 1); game.fireTotals.set(group, 1);
@@ -109,15 +109,15 @@ function burn(game) {
     if (f.until <= next) { putOut(game, k); continue; } // burnt out
     if (f.strike && f.from === next) game.events.push({ type: 'strike', x: k % GRID, y: Math.floor(k / GRID) });
     // Wind: a burning leaf blown downwind (to the right), to start a small fire where it lands.
-    if (windy && !raining && !f.ember && game.tick >= f.from && game.fires.size < T.FIRE_BOARD_MAX && Math.random() < T.EMBER_CHANCE) ember(game, k);
-    if (f.ember || raining || game.tick < f.from || Math.random() >= T.FIRE_SPREAD || (game.fireGroups.get(f.group) || 0) >= T.FIRE_MAX || (game.fireTotals.get(f.group) || 1) >= T.FIRE_TOTAL || game.fires.size >= T.FIRE_BOARD_MAX) continue;
+    if (windy && !raining && !f.ember && game.tick >= f.from && game.fires.size < T.FIRE_BOARD_MAX && luck(game) < T.EMBER_CHANCE) ember(game, k);
+    if (f.ember || raining || game.tick < f.from || luck(game) >= T.FIRE_SPREAD || (game.fireGroups.get(f.group) || 0) >= T.FIRE_MAX || (game.fireTotals.get(f.group) || 1) >= T.FIRE_TOTAL || game.fires.size >= T.FIRE_BOARD_MAX) continue;
     if (!marked) {
       markBodies(game);
       for (const fo of game.food) if (fo.kind === 'beetle') bodyStamp[key(fo.x, fo.y)] = stamp; // (food can catch; a beetle runs)
       marked = true;
     }
     const x = k % GRID, y = Math.floor(k / GRID);
-    const d = CRAWL[Math.floor(Math.random() * 4)], nx = x + d.x, ny = y + d.y, nk = key(nx, ny);
+    const d = CRAWL[Math.floor(luck(game) * 4)], nx = x + d.x, ny = y + d.y, nk = key(nx, ny);
     if (!inside(nx, ny) || bodyStamp[nk] === stamp || game.holes.has(nk) || game.fires.has(nk) || burrowAt(game, nx, ny)) continue;
     const from = next + T.FIRE_SMOLDER_TICKS;
     game.fires.set(nk, { from, until: from + T.FIRE_TICKS, group: f.group, strike: false });
@@ -159,7 +159,7 @@ function ember(game, k) {
   markBodies(game);
   for (const fo of game.food) bodyStamp[key(fo.x, fo.y)] = stamp;
   const x = k % GRID, y = Math.floor(k / GRID);
-  const nx = x + 2 + Math.floor(Math.random() * (T.EMBER_REACH - 1)), ny = y + Math.floor(Math.random() * 3) - 1, nk = key(nx, ny);
+  const nx = x + 2 + Math.floor(luck(game) * (T.EMBER_REACH - 1)), ny = y + Math.floor(luck(game) * 3) - 1, nk = key(nx, ny);
   if (!inside(nx, ny) || bodyStamp[nk] === stamp || game.holes.has(nk) || game.fires.has(nk) || burrowAt(game, nx, ny) || headGap(game, nx, ny) <= 1) return;
   const from = game.tick + 1 + T.EMBER_SMOLDER_TICKS, group = ++game.fireGroup;
   game.fires.set(nk, { from, until: from + T.EMBER_FIRE_TICKS, group, strike: false, ember: true });

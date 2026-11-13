@@ -435,6 +435,7 @@ function checkAway() {
 }
 
 function handBack(s) {
+  Engine.dropThought(theGame, s); // (what the AI thought ahead for them is thrown away whole: #729)
   s.autopilot = null;
   s.awayPilot = false;
   if (s.awayToast) toast(FLAVOR.friendBack(s.name), 1500, '', 'round');

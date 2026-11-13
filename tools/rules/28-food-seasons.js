@@ -21,7 +21,9 @@
   const out = (season, draw) => {
     const g = board([[line(5, 5, 3), 'right']], { season, time: T.BEETLE_FIRST_MS });
     g.food = [{ x: 20, y: 20, kind: 'food' }, { x: 20, y: 18, kind: 'food' }, { x: 18, y: 20, kind: 'food' }, { x: 2, y: 20, kind: 'mushroom' }, { x: 2, y: 18, kind: 'mushroom' }];
-    return seededWhile(5, () => { const r = Math.random; Math.random = () => draw; try { E.step(g); } finally { Math.random = r; } return g.food.some(f => f.kind === 'beetle'); });
+    const r = ctx.luck; ctx.luck = () => draw; // (every draw the rules make: luck in engine/core.js)
+    try { E.step(g); } finally { ctx.luck = r; }
+    return g.food.some(f => f.kind === 'beetle');
   };
   const S = T.SEASONS, low = T.BEETLE_CHANCE * (S.lean.beetles + S.normal.beetles) / 2, high = T.BEETLE_CHANCE * (S.normal.beetles + S.plentiful.beetles) / 2;
   check('beetles come out less often in a lean season', !out('lean', low) && out('normal', low));
