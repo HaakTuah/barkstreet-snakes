@@ -6,7 +6,7 @@ PERSONAS.gobbler = {
   kill: ['Gobbler didn’t even stop chewing.', 'It burped. That was the eulogy.', 'Gobbler was thinking about apples. It always is.'],
   win: ['And it’s still hungry.', 'Not a crumb left.', 'Now, about pudding.'],
   w: {
-    style: { race: 0.5 }, // (7b: it races for food)
+    style: powerStyle({ race: 0.5 }), // (7b: it races for food)
     space: 1.6, territory: 0.2,
     food: 10, eat: 300, pellet: 3, foodRange: 60, contested: 1, mushroom: -6, // (twice what a mushroom costs anyone else: it hates them)
     hurry: 1.5, // (beetles are its food too: it keeps after one on the run longer than anyone. With two apples on the log, and rivals that read a beetle's dig, it won 16 / 15% at the usual 2; at 1.5, 20 / 26%)

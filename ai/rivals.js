@@ -61,10 +61,11 @@
 //                                   golden mushrooms) worth this many times what it's worth to anyone
 //                                   else, and a golden apple this many; contested: how much golden power
 //                                   food a rival reaches first still counts (0-1)
-//   style                         my power style (part 7b): { race, cut, chase, bead, tail, skim, swerve,
-//                                   wall: the share of a plain flash's spend I pay for one that does
-//                                   that; keep: my wait below the reserve times this; coil: a jump over
-//                                   my own body for its own sake } (see ai/styles.js)
+//   style                         my power style (part 7b; powerStyle gives it STYLE's shape): { race, cut,
+//                                   chase, seal, bead, tail, skim, swerve, wall: the share of a plain
+//                                   flash's price I pay for one that does that; keep: my wait below the
+//                                   reserve times this; coil: a jump over my own body for its own sake }
+//                                   (see ai/styles.js)
 //   hurry                         how much a move longer to catch a beetle counts against it (default
 //                                   BUG_HURRY: lower, it keeps after a beetle on the run longer)
 const DRAB = {
@@ -73,6 +74,10 @@ const DRAB = {
   margin: 8, headRisk: 700, zoneRisk: 150, spit: 0.05, leapNow: 4, // (hardly ever a mushroom on purpose; a leap now out of a trap, at four times the price)
 };
 const HUNT = { squeeze: 2.5, chase: 6, lead: 4 };
+// A power style, every one in one shape (as WEIGHTS, below): its own
+// shares over none (1), no more reserve minded, no coil jumps.
+const STYLE = { race: 1, cut: 1, chase: 1, seal: 1, bead: 1, tail: 1, skim: 1, swerve: 1, wall: 1, keep: 1, coil: false };
+const powerStyle = s => ({ ...STYLE, ...s });
 
 // Each persona: name, color, look (how it's drawn), driver (stateful
 // behaviour, optional), weights, and flavor text: a blurb for the start

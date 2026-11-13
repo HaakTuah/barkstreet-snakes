@@ -6,7 +6,7 @@ PERSONAS.ghost = {
   kill: ['Ghost? You never even saw it.', 'Ghost slipped through. You didn’t.', 'You felt a chill. Then nothing.'],
   win: ['Was it ever really here?', 'It never made a sound.'],
   w: {
-    style: { keep: 2 }, // (7b: it keeps a flash ready to escape)
+    style: powerStyle({ keep: 2 }), // (7b: it keeps a flash ready to escape)
     space: 2, territory: 0.6,
     food: 3, eat: 30, pellet: 1, foodRange: 15, hungryBelow: 18, fedFactor: 0.4,
     keep: 7, // (2h: the most sparing in the endgame)

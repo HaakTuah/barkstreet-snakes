@@ -158,8 +158,8 @@ room a snake needs to turn in.
   snake rarely has all three. So in the endgame a rival weighs dropping its tail as soon as the search sees it boxed in
   (every crawl ends in less room than it needs, or only through a gap a rival could shut), not only once every crawl
   crashes; what it drops below the length worth keeping costs an apple a segment. Each in its style (`drop`): Creeper
-  readily, all round; Ouroboros and Mason late, only out of a crash (Mason's walls are its body: dropping it planned,
-  its body lay beside itself 3.5 points less).
+  readily, all round; Mason late, only out of a crash (Mason's walls are its body: dropping it planned, its body lay
+  beside itself 3.5 points less); Ouroboros, late too until its power style (7b) had it drop its tail as anyone does.
 - **The denial play, tried and left out:** a rival seen starving (a segment off, as anyone sees one shrink) made food
   within 8 moves of its head worth eating to keep from it, whatever the eater's length, and a bead of the eater's own
   there worth squashing. Head to head both ways (seeds 71 and 73, 800 paired rounds), its users came out even (win% a
@@ -323,25 +323,30 @@ Each persona uses jumps and flashes its own way, through the same engine calls a
   flash on readily, each at a share of the flash's price (the spend and the wait below its reserve), found by the same
   tests whoever it is. A flash for one is weighed that way too, not only the way it would crawl, and the search must
   still see it beat crawling. Where the gain is sure the share is ½, where only the search guesses it 0.7 (first
-  guesses):
+  guesses). A style and a sure gain's discount (7a) don't stack: the better of the two counts, and neither takes a
+  power below its price before 7a (`SURE_FLOOR`), the floor 7a measured. Every style has one shape (`STYLE` in
+  `ai/rivals.js`, over which `powerStyle` lays a rival's own):
   | Rival | Its style | A flash that... | Share |
   | --- | --- | --- | --- |
   | Gobbler | races for food | wins a race for food | ½ |
   | Sniper | cuts off its target | cuts its target | ½ |
   | Vulture | flashes to beads | eats a bead on the way | ½ |
-  | Mute | seals its box | closes on its target, 6 cells or nearer | 0.7 |
+  | Mute | seals its box | ends beside its own body, its target 6 cells or nearer: a gap in the box shut | 0.7 |
   | Sovereign, Colonist | chase intruders off their land | closes on its target (an intruder), 6 cells or nearer | 0.7 |
-  | Creeper | flashes in behind tails | ends right behind a rival's tail | 0.7 |
+  | Creeper | flashes in behind tails | ends on a rival's tail tip as it moves off, or right behind it | 0.7 |
   | Desperado | for the thrill | ends beside a body, a head or the edge | 0.7 |
   | Joker | springs its lures | turns off its line with a rival's head 4 cells or nearer, and ends farther from it | 0.7 |
   | Mason | finishes walls | goes straight on, up to a wall (the edge, a hole or a body) | 0.7 |
 
   Two more are not a share of the flash: **Ghost keeps a flash ready to escape** (its wait below the reserve minded twice
-  as much: `keep` 2; out of a trap it's free, as anyone's), and **Ouroboros jumps its own coils** (a plain jump over its
-  own body for its own sake, where no rival could get to the landing before it's down, at the full price: `coil`).
-  **Star** is the addict (its habit: "Star"); **Capricious and Copycat** borrow the style of whoever they wear;
-  **Wildcard**, **Metagamer** and **Drab** take none of their own. The census counts each rival's plain flashes and
-  jumps pressed for its style (`style/min`).
+  as much: `keep` 2; out of a trap it's free, as anyone's), and **Ouroboros jumps its own coils and drops its own tail**
+  (a plain jump over its own body for its own sake, where no rival could get to the landing before it's down, at the
+  full price: `coil`; and its tail dropped as anyone's, once boxed in in the endgame, where 2h had it wait for a
+  crash). **Star** is the addict (its habit: "Star"); **Capricious and Copycat** borrow the style of whoever they wear;
+  **Wildcard** draws one of the cast's at random each round, half the time (`randomWeights`); **Drab**, the baseline,
+  has none. **Metagamer**, which reads its rivals, has none yet: its counters are its driver's, and a style of its own
+  waits for 7c. The census counts each rival's plain flashes and jumps pressed for its style (`style/min`); each style
+  has a staged rules test (`tools/rules/33-power-styles.js`).
 - **Built before it:** a style's own price for a leap now and for a flier's ring (`leapNow`, `landing`: "Rivals use their
   powers, when it pays") and for a mushroom shot (`spit`: "Mushrooms, to a rival"); everyone's island hop, and a tail
   dropped when trapped, or planned once boxed in the endgame ("The plain jump hops islands" and "Dropping your tail" in
@@ -359,7 +364,9 @@ Gobbler grows longest, and most of its deaths come late, in pockets too small fo
 ("Gobbler, at the floor" under "Round six A, measured" in `27-round-six-a-fairness-and-fixes.md`). Its style is the
 cure, not a number: it hops to the next island for food and drops its tail once boxed in, in the endgame (both
 everyone's, built), and races for food (its power style, 7b). The aim: Gobbler comfortably inside 15–35%, its food
-share still the field's biggest; 7a's dearer stamina already lifted it (17.8% to 39.3% head to head on seed 41).
+share still the field's biggest. (7a's dearer stamina lifted it in the head to head against the old prices, where its
+copies on the new ones won 39.3% of their rounds against 17.8% on the old, seed 41: a measure of one AI against another,
+not of the band.)
 
 ### The band
 

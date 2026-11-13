@@ -21,6 +21,7 @@ function randomWeights() {
   if (chance(0.3)) w.turn = rand(5, 30);
   if (chance(0.3)) w.tail = rand(10, 40);
   if (chance(0.4)) w.hunt = HUNT;
+  if (chance(0.5)) { const cast = Object.values(PERSONAS).filter(p => p.w.style); w.style = cast[Math.floor(aiDraw() * cast.length)].w.style; } // (7b: a power style from the cast's, at random)
   return w;
 }
 

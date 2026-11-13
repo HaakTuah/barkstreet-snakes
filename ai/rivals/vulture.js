@@ -6,7 +6,7 @@ PERSONAS.vulture = {
   kill: ['Vulture was waiting for this.', 'It circled. You slipped. It ate.', 'Vulture thanks you for the beads.'],
   win: ['Picking over the leftovers.', 'It waited everyone out.', 'Last one at the table.'],
   w: {
-    style: { bead: 0.5 }, // (7b: it flashes to beads)
+    style: powerStyle({ bead: 0.5 }), // (7b: it flashes to beads)
     space: 1.3, territory: 0.4,
     food: 4, eat: 60, normalFood: 0.15, pellet: 3, foodRange: 40, contested: true,
     margin: 6, headRisk: 900, zoneRisk: 200, lure: { weight: 8, dist: 8 },

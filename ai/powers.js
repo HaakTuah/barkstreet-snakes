@@ -63,14 +63,14 @@ function powerPick(crawlIn, crawlDirIn) {
   waitPrice = (cost, flash) => {
     if (trapped || (flash && habit.keepFlash !== undefined)) return 0;
     const reserve = flash ? TUNE.JUMP_STAMINA_MS * w.margin / RESERVE_MARGIN : TUNE.DASH_STAMINA_MS * (habit.keepFlash !== undefined ? 1 : w.margin / RESERVE_MARGIN);
-    return RESERVE_PRICE * (habit.keepFlash ?? 1) * (w.style?.keep ?? 1) * Math.max(0, reserve - (me.stamina - cost)) / TUNE.STAMINA_MS; // (Ghost's style minds it more: ai/styles.js)
+    return RESERVE_PRICE * (habit.keepFlash ?? 1) * (w.style ? w.style.keep : 1) * Math.max(0, reserve - (me.stamina - cost)) / TUNE.STAMINA_MS; // (Ghost's style minds it more: ai/styles.js)
   };
   keep = me.grow > 0 ? me.body.length : me.body.length - 1, stampM = ++markStamp;
   for (let j = 0; j < keep; j++) myCells[me.body[j].y * N + me.body[j].x] = stampM;
   trapped = crawlScore < DEAD / 2, boxed = crawlScore < -NECK_COST;
   // (2h: my own tail dropped while I still can, once the search sees me
   // boxed in, not only when every crawl crashes: in the endgame, and all
-  // round for a snake that drops readily (Creeper); a late one (Ouroboros)
+  // round for a snake that drops readily (Creeper); a late one (Mason)
   // waits for the crash. A boxed snake rarely still has its flash rested,
   // a body one thick and a free cell beyond, so it plans the drop.)
   dropping = trapped || (boxed && (w.drop === 'ready' || (endgame && w.drop !== 'late')));
@@ -106,12 +106,13 @@ function powerPick(crawlIn, crawlDirIn) {
   bugsOn = (s, hx, hy) => { for (let b = 0; b < bugCount; b++) if (ateBug & (1 << b)) { const n = b * BUG_SLOTS + s + 1; bugCell[n] = -1; bugDug[n] = -1; } else bugStep(b, s, s + 1, s, hx, hy, otherBug(b, s)); };
   cutter = !!w.hunt || (w.aggression || 0) >= 0.5; // (the hunters and the aggressive weigh a cut off to the side too)
   bestPower = null, ownCut = -1, cutKills = false, cutTarget = false; // (ownCut, cutKills, cutTarget: see flashOpt)
-  consider = (d, flash, v, price, extra, wait = 0, gain = 0, styled = false) => { // (wait: what it leaves me below my reserve, priced apart: a habit doesn't make that free; gain: what it surely gains, a plain power's)
+  consider = (d, flash, v, price, extra, wait = 0, gain = 0, share = 1) => { // (wait: what it leaves me below my reserve, priced apart: a habit doesn't make that free; gain: what it surely gains, a plain power's; share: my power style's, ai/styles.js)
     const full = endRisk > safe || idle;
     idle = false;
     if (v === null) return;
     const cost = (price * (full ? 1 : habit.price) + wait) * cheap;
-    v += extra - (cost - Math.min(SURE_BACK * gain, cost * (1 - SURE_FLOOR))) * U;
+    v += extra - Math.max(cost * SURE_FLOOR, Math.min(cost * share, cost - SURE_BACK * gain)) * U; // (a sure gain or my style takes it down, the better of the two, to what it was at most)
+    const styled = share < 1 || (!flash && coilJump);
     if (v > (bestPower ? bestPower.v : crawlScore + 1)) bestPower = { d, flash, v, now: !flash && leapNow, fly: flash ? 0 : leapFly, turn: flash ? null : leapTurn, styled };
   };
   if (air) { const v = leapOpt(air.dir); return v === null ? null : { d: air.dir, flash: false, v, now: false, fly: leapFly, turn: leapTurn }; } // (in the air: where to come down, from here)
@@ -119,8 +120,8 @@ function powerPick(crawlIn, crawlDirIn) {
     if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
     const extra = (intent.mimicDir && sameDir(d, intent.mimicDir) ? w.mimic : 0) - (w.turn && !sameDir(d, me.dir) ? w.turn : 0);
     if (me.dashes > 0) { const v = flashOpt(d, true); if (trapped || cutKills || habit.dashSpend || (dropping && ownCut >= 0)) consider(d, true, v, 0.6, extra); } // (a golden dash, held: out of a trap, or for a cut that puts a rival out; spent so, it gains (see part 4's chosen numbers); spent as it came, −0.11 ± 0.09 place a use; Star (dashSpend), its trademark, spends them as they come)
-    else if (me.flashIn === 0 && (dropping || d === crawlDir || habit.everyWay || (cutter && bodyNear(d)) || coverNear(d) || styleWay(d))) { const v = flashOpt(d, false), won = race(d), gold = won && won.kind === 'golden', share = gold ? 0 : styleShare(d, won, cutTarget); consider(d, true, v, share * STAMINA_PRICE * TUNE.DASH_STAMINA_MS / TUNE.STAMINA_MS * (trapped || cutTarget || won ? 0.5 : 1), extra, share * waitPrice(TUNE.DASH_STAMINA_MS, true), sureGain, share > 0 && share < 1); } // (a golden apple won: it fills the bar; my power style's share of the rest: ai/styles.js)
-    if (jump) { const v = leapOpt(d); consider(d, false, v, (me.leaps > 0 ? 0.35 : STAMINA_PRICE * TUNE.JUMP_STAMINA_MS / TUNE.STAMINA_MS) * (leapNow ? (w.leapNow ?? 1) : 1), extra, me.leaps > 0 ? 0 : waitPrice(TUNE.JUMP_STAMINA_MS, false), me.leaps > 0 ? 0 : sureGain, coilJump); } // (leap now, at the jump's price times my style's: only out of a trap, see leapOpt)
+    else if (me.flashIn === 0 && (dropping || d === crawlDir || habit.everyWay || (cutter && bodyNear(d)) || coverNear(d) || styleWay(d))) { const v = flashOpt(d, false), won = race(d), gold = won && won.kind === 'golden'; consider(d, true, v, gold ? 0 : STAMINA_PRICE * TUNE.DASH_STAMINA_MS / TUNE.STAMINA_MS * (trapped || cutTarget || won ? 0.5 : 1), extra, gold ? 0 : waitPrice(TUNE.DASH_STAMINA_MS, true), sureGain, gold ? 1 : styleShare(d, won, cutTarget)); } // (a golden apple won: it fills the bar; my power style's share: ai/styles.js)
+    if (jump) { const v = leapOpt(d); consider(d, false, v, (me.leaps > 0 ? 0.35 : STAMINA_PRICE * TUNE.JUMP_STAMINA_MS / TUNE.STAMINA_MS) * (leapNow ? (w.leapNow ?? 1) : 1), extra, me.leaps > 0 ? 0 : waitPrice(TUNE.JUMP_STAMINA_MS, false), me.leaps > 0 ? 0 : sureGain); } // (leap now, at the jump's price times my style's: only out of a trap, see leapOpt)
   }
   return bestPower;
 }
