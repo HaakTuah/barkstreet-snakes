@@ -10,8 +10,8 @@
 //   Both at two and a half times what they were (2 and 2.4 apples): the
 //   search's guess at what a power gains has to be that much bigger. What
 //   a power surely gains, that the crawl can't have (a cut, a flier's ring,
-//   an island, a rival shut in: sureGain), isn't a guess: each apple of it takes
-//   SURE_BACK apples off the price, down to what it was. A race for a golden
+//   an island: sureGain), isn't a guess: each apple of it takes SURE_BACK
+//   apples off the price, down to SURE_FLOOR of it, what it was. A race for a golden
 //   apple costs nothing: the apple fills the bar it spends.
 // - The flash, with its share in the bar: two cells in a tick along the
 //   ground, every one of them free by then, only the way I'd crawl anyway
@@ -41,7 +41,8 @@
 // it the full price.
 const STAMINA_PRICE = 5; // (apples, a full bar of stamina: each power costs its share of that; and a meal's stamina is worth as much, see ai/food.js)
 const RESERVE_PRICE = 6; // (apples, a full bar's worth of waiting below my reserve)
-const SURE_BACK = 1.5; // (apples off a plain power's price for each apple it surely gains, down to 1 / (1 + SURE_BACK) of it: the price at 2 and 2.4)
+const SURE_BACK = 1.5; // (apples off a plain power's price for each apple it surely gains)
+const SURE_FLOOR = 0.4; // (the least of its price a sure gain leaves: 2 of 5 and 2.4 of 6, the prices before part 7a)
 const RESERVE_MARGIN = DRAB.margin; // (the margin, spare room wanted, of a snake that keeps all the other power needs: the default's; less cautious, less; more, more)
 // (powerPick() sets these for each call:)
 let crawlScore, crawlDir, air, jump, U, habit, safe, cheap, keep, stampM, trapped, boxed, dropping, roomsHere, foodHere, hereFree,
@@ -110,7 +111,7 @@ function powerPick(crawlIn, crawlDirIn) {
     idle = false;
     if (v === null) return;
     const cost = (price * (full ? 1 : habit.price) + wait) * cheap;
-    v += extra - (cost - Math.min(SURE_BACK * gain, cost * SURE_BACK / (1 + SURE_BACK))) * U;
+    v += extra - (cost - Math.min(SURE_BACK * gain, cost * (1 - SURE_FLOOR))) * U;
     if (v > (bestPower ? bestPower.v : crawlScore + 1)) bestPower = { d, flash, v, now: !flash && leapNow, fly: flash ? 0 : leapFly, turn: flash ? null : leapTurn };
   };
   if (air) { const v = leapOpt(air.dir); return v === null ? null : { d: air.dir, flash: false, v, now: false, fly: leapFly, turn: leapTurn }; } // (in the air: where to come down, from here)

@@ -200,13 +200,13 @@ pressed only when it beats crawling (`powerPick` in `ai/powers.js`):
 - *The plain flash and jump* spend one stamina (2u), priced by what they take of it: see `ai/powers.js`. *One pricing
   model* (part 7a of round six B, PR #722): a full bar of stamina is worth 5 apples to a rival (it was 2), and a spend
   that leaves too little for the other power costs a little more (6 a bar's wait, was 2.4); a meal's stamina is worth as
-  much. A gain the power is sure of, that the crawl can't have (a cut, a flier's ring, an island, a rival shut in),
-  takes 1½ apples off the price for each apple of it, down to the old price at most: a gain only the search guesses has
-  to clear the full price. Measured: the old prices for everything lost to the same rivals at the new ones by about
-  five points of wins (seeds 3, 11 and 29), but at the new ones for everything they never hopped to an island, raced for
-  a golden or cut their target any more; this model keeps those and won by as much on seed 3 (+4.75 points, place
-  −0.13), dashing a sixth less (2.1 to 1.7 a minute) and jumping a little less, the split of uses between the two
-  about even as before (47% dashes).
+  much. A gain the power is sure of, that the crawl can't have (a cut, a flier's ring, an island), takes 1½ apples off
+  the price for each apple of it, down to the old price at most: a gain only the search guesses has to clear the full
+  price. Measured, head to head: the old prices for everything lost to the same rivals at the new ones (about five
+  points of wins on seeds 3 and 11, decided, and on 29, just short), but at the new ones for everything they never
+  hopped to an island, raced for a golden or cut their target any more; this model keeps those, and against the old
+  prices placed better on seed 3 (−0.13, decided; +4.75 points of wins, just short), dashing a sixth less (2.1 to 1.7
+  a minute) and jumping a little less, the split of uses between the two about even as before (47% dashes).
 - *The plain flash:* its price, or half to win a race for food (food a rival could reach as soon as it would crawl
   there, but not as soon as it flashes) or to get out of a crash; free to win a race for a golden apple, which fills the
   bar it spends. Weighed the way the rival would crawl anyway (any way, out of a crash; the hunters and the aggressive, a
@@ -317,8 +317,7 @@ jumps neither help nor hurt measurably, and stay because they're the character.
 
 Each persona uses jumps and flashes its own way, through the same engine calls as a person. Most of it is still to
 build (part 7b of round six B, on 7a's one pricing model: "Rivals use their powers, when it pays"; in
-`docs/PROGRESS.md`); "Balance targets",
-below, is its measure.
+`docs/PROGRESS.md`); "Balance targets", below, is its measure.
 - **Built so far:** Star's habit ("Star"); a style's own price for a leap now and for a flier's ring (`leapNow`,
   `landing`: "Rivals use their powers, when it pays") and for a mushroom shot (`spit`: "Mushrooms, to a rival");
   everyone's island hop, and a tail dropped when trapped, or planned once boxed in the endgame ("The plain jump hops

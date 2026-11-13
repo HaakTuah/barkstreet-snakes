@@ -52,8 +52,8 @@ and 3c. A playable draft PR as early as it can be, so the owner can try it.
 
 *Done so far:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195); their words and detail are in `docs/archive/progress-done/item-5-parts.md`, "Item 5, its done parts".
 
-*Where it stands:* the parts left and their order are in `docs/PROGRESS.md`, item 5 (part 6 is done, PR #584; part 7 is
-*parked* on `round6b/pricing`; part 3's numbers to watch there: Joker and Sovereign low on single seeds, Gobbler's and
+*Where it stands:* the parts left and their order are in `docs/PROGRESS.md`, item 5 (part 6 is done, PR #584; part 7 goes in
+three PRs, 7a (one pricing model) PR #722, built afresh with the parked `round6b/pricing` as notes; part 3's numbers to watch there: Joker and Sovereign low on single seeds, Gobbler's and
 Vulture's shares a little lower). Mason's double walls are kept (the owner, 29 October 2026). The 29 October status this
 replaced is in git history (the file-by-file review, 2 November 2026).
 

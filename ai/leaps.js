@@ -117,7 +117,7 @@ function landOpt(d, span, golden, now) {
   const take = coverAt(land, down), lone = golden && !air && span === TUNE.GOLD_FLY && !spare(span); // (down on a flier's ring before it; a held flight with nowhere else to come down, see spare)
   covered = coverHit;
   const gain = ateGain + isle * U - 0.6 * endRisk + shut * U + take - (lone ? SPARE * U : 0);
-  sureGain = Math.max(0, isle + shut + take / U); // (what the crawl can't have: the island, a rival shut in, a flier's ring; see consider)
+  sureGain = Math.max(0, isle + take / U); // (what the crawl can't have: the island, a flier's ring; see consider)
   const score = depth > down ? search(nb, ateL, ateG, depth - down, down, gain) : evaluate(nb, ateL, ateG, down) + gain;
   covered = 0;
   uneat();
