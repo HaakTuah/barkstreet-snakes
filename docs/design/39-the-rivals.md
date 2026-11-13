@@ -205,8 +205,9 @@ pressed only when it beats crawling (`powerPick` in `ai/powers.js`):
   price. Measured, head to head: the old prices for everything lost to the same rivals at the new ones (about five
   points of wins on seeds 3 and 11, decided, and on 29, just short), but at the new ones for everything they never
   hopped to an island, raced for a golden or cut their target any more; this model keeps those, and against the old
-  prices placed better on seed 3 (−0.13, decided; +4.75 points of wins, just short), dashing a sixth less (2.1 to 1.7
-  a minute) and jumping a little less, the split of uses between the two about even as before (47% dashes).
+  prices placed better on seed 3 (−0.13, decided; +4.75 points of wins, just short) and on fresh seed 41 (−0.15, alive
+  6 s longer and eating 5 more, decided; +4.6 points, just short; no persona lower, every trademark kept), dashing a
+  sixth less (2.1 to 1.7 a minute) and jumping a little less, the split of uses between the two about even as before (47% dashes).
 - *The plain flash:* its price, or half to win a race for food (food a rival could reach as soon as it would crawl
   there, but not as soon as it flashes) or to get out of a crash; free to win a race for a golden apple, which fills the
   bar it spends. Weighed the way the rival would crawl anyway (any way, out of a crash; the hunters and the aggressive, a
