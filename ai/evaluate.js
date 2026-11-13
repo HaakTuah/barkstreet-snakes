@@ -76,12 +76,13 @@ function lineFill(k, by, cap) {
 // on the first free cell beyond; never over the woodpecker's mark, never
 // off the board) that comes down on room for me, with a jump's worth of
 // stamina back by then (or a golden leap in hand: leapIn 0), and none of
-// it spent already on this line (powered: a jump or flash at its start).
+// it spent already on this line (linePowered: a jump or flash at its start;
+// a golden one too, which costs none: on the safe side, and rare).
 // What it goes over, as the engine judges it, at take-off. On the
 // territory board with my body placed (terr), before its search claims it.
-let powered = false;
+let linePowered = false;
 function jumpOut(body, t, need) {
-  if (powered || (me.leapIn || 0) > t * view.tickMs) return false;
+  if (linePowered || (me.leapIn || 0) > t * view.tickMs) return false;
   const hx = body[0].x, hy = body[0].y, bx = unit(body[1].x - hx), by = unit(body[1].y - hy);
   for (const d of DIR_LIST) {
     if (d.x === bx && d.y === by) continue;

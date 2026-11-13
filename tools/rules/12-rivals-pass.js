@@ -23,13 +23,15 @@ const marked = (more = {}) => aiView({ holes: new Set(MARK), pecks: new Set(MARK
 }
 
 { // 7c: a mark isn't a hole yet. A rival crosses it where it would be off it before the strike, with a move to spare,
-  // the depth of each cell from the bark beyond as the engine reckons it. An apple just past the 3x3 mark on row 11 (at
+  // walking onto the bark round the pits. An apple just past the 3x3 mark on row 11 (at
   // 16, 11): from right beside the mark, it heads straight in with the strike after its 13th move; already in it (at its
   // edge, 12, 11), it goes on across to the middle with the strike after its 13th, and with it after its 3rd, it steps off
-  // sideways (the middle, two from the bark, it would be off it only with the move before the strike).
-  const across = (strikeAt, head) => picks(() => marked({ strikeAt, me: aiMe(line(head, 11, 5), 'right'), others: [aiRival(1, line(20, 22, 5), 'right')], food: [{ x: 16, y: 11, kind: 'food', expires: 9999 }] }));
-  const toward = across(22, 11), early = across(22, 12), late = across(12, 12);
+  // sideways (the middle, two from the bark, it would be off it only with its last move before the strike). With fire on
+  // the mark's edge in front of it, it never crosses into the flames.
+  const across = (strikeAt, head, fire = new Set()) => picks(() => marked({ strikeAt, fire, me: aiMe(line(head, 11, 5), 'right'), others: [aiRival(1, line(20, 22, 5), 'right')], food: [{ x: 16, y: 11, kind: 'food', expires: 9999 }] }));
+  const toward = across(22, 11), early = across(22, 12), late = across(12, 12), burning = across(22, 11, new Set([K(12, 11)]));
   check('7c: a rival crosses the woodpecker\'s mark where it is out of it before the strike, and steps off where it wouldn\'t be', toward.right === 50 && early.right === 50 && !late.right, JSON.stringify({ toward, early, late }));
+  check('...but never into fire on the mark', !burning.right, JSON.stringify(burning));
 }
 
 { // ...and in the game: Gobbler heading along row 11 for an apple past the mark, the strike 12 ticks off. It goes straight

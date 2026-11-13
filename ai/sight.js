@@ -24,8 +24,8 @@ function seeBoard() {
 
   // Woodpecker holes never close: treat them like walls. (Its mark is one
   // too, but only once the bodies across it are read: see markFree.)
-  const marked = view.pecks || EMPTY;
-  for (const i of holes) if (!marked.has(i)) otherFree[i] = HOLE;
+  const marked = view.pecks || EMPTY, burns = i => (view.fire || EMPTY).has(i) || (view.zone || EMPTY).has(i); // (fire or the fight's plus in the mark: a wall still, never crossed)
+  for (const i of holes) if (!marked.has(i) || burns(i)) otherFree[i] = HOLE;
 
   // Opponent bodies as last seen. A segment j from the head leaves its cell
   // after (len - j) ticks; we ignore the time that has passed since the
@@ -65,7 +65,7 @@ function seeBoard() {
     heads.push({ x: hx, y: hy });
   }
   markFree.clear();
-  for (const i of marked) if (holes.has(i)) { markFree.set(i, mineFree[i]); mineFree[i] = otherFree[i] = HOLE; }
+  for (const i of marked) if (holes.has(i) && !burns(i)) { markFree.set(i, mineFree[i]); mineFree[i] = otherFree[i] = HOLE; }
   markOut.clear();
   const side = (i, f) => { const x = i % N; if (x > 0) f(i - 1); if (x < N - 1) f(i + 1); if (i >= N) f(i - N); if (i < N * (N - 1)) f(i + N); };
   let ring = [];

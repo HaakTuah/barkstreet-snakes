@@ -307,8 +307,9 @@ phone's address bar never resizes it.
   from it onto the bark, walking round the pits (`markOut` in `ai/sight.js`; the beetles' straight-line `beakDepth`
   would let it out across a pit), is no more than the moves before the strike less one (`canEnter` in
   `ai/evaluate.js`; the strike comes after move strikeAt − tick + 1); so it
-  crosses a mark for food beyond it, or onto a piece cut loose and back, and is off when the strike comes. Its room and
-  its trap tests still count the mark as the hole it will be. A jump of theirs may hop real holes but never a mark; a
+  crosses a mark for food beyond it, or onto a piece cut loose and back, and is off when the strike comes. Fire on the
+  mark (or the fight's plus) stays a wall. Its room and its trap tests still count the mark as the hole it will be; where
+  a rival could step next, and its wider reach, count the mark as crossable to it too (`readRisk` in `ai/risk.js`). A jump of theirs may hop real holes but never a mark; a
   flash, plain or golden, treats a mark as a wall.
 - **Knocked food:** a rival works out each landing with the engine's own `E.knocks`, on the board as it sees it (the
   other snakes a moment late), and values the food there from the move after the strike's tick, never where it lies.
