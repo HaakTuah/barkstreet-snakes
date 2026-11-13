@@ -81,7 +81,7 @@
     const c = screen(seed, false), E = c.window.SnakeEngine, O = c.window.SnakeOnline, w = { c, E, O, g: null, ticks: [] };
     w.take = m => {
       if (m.t === 'round') { w.g = E.createGame({ humans: m.humans, personas: m.personas }); O.apply(w.g, m.first, E.DIRS); }
-      else if (m.t === 'tick') { O.apply(w.g, m, E.DIRS); w.ticks.push(hash(O.tick(w.g, { holesFrom: 0, tickLen: m.ms }))); }
+      else if (m.t === 'tick') { O.apply(w.g, m, E.DIRS); w.ticks.push(hash(O.tick(w.g, { holesFrom: 0, tickLen: m.len }))); }
       else if (m.t === 'plan') O.applyPlan(w.g, m, E.DIRS, 1);
     };
     return w;
