@@ -122,8 +122,8 @@ hop rarely reaches the next island across a hollow.
   with a jumpable gap, "Space hops up to three cells. Hop the gap!" ("Tap to hop up to three cells. Hop the gap!" on a
   phone).
 - *The Field guide's Jump row:* "Space or a click on the log: hop snakes, holes or fire, up to 3 cells, to the first
-  free cell: across a gap too. Press twice to leap now, open ground too. A ring shows where you’ll land. It takes two
-  fifths of your stamina. Bump into a flier in the air and you drop: onto a body or into a hole, you’re out. Lie on a
+  free cell: across a gap too. Press twice to leap now, open ground too. A ring shows where you’ll land. It takes half
+  of your stamina. Bump into a flier in the air and you drop: onto a body or into a hole, you’re out. Lie on a
   flier’s ring before it lands and it’s out: rivals will try it on you." (On a phone: "A tap", "Tap twice".)
 - *The sound:* a springy boing up and a whoosh of air.
 - *The rivals* ask for it through the same call (`memory.power` from `decide()`: `leap()` in `engine/powers.js`), with
@@ -158,7 +158,7 @@ who never double-presses.
 - *The cue:* a gold ring marks where you'll land, from the moment you commit, and moves only as you steer. A golden
   leap rises higher than a plain one, with a puff of gold.
 - *The lesson:* on your first golden jump, "Hold the jump to fly 5 cells. Steer to land!"
-- *The Field guide's Golden beetle row:* "2 golden jumps: free, no rest. Tap for the plain hop; hold the jump and you
+- *The Field guide's Golden beetle row:* "2 golden jumps: free, no stamina. Tap for the plain hop; hold the jump and you
   fly 5 cells, always, steering in the air to land where it's safe. Hold up to 3."
 - *The rivals* plan a flight as they take off, straight or with one turn (left or right, after any number of cells):
   the plain hop, or the full 5. The engine flies it by the same rule as a person's turn (`airTurn`, from the rival's
@@ -238,7 +238,7 @@ on the ground (in the air, once it's down). *Why no tail:* a flash that cost a t
 starved snakes, in simulation.
 - *The cue:* ember speed lines either side, thinner and shorter than a golden flash's. The stamina ring has an ember
   notch at a flash's worth; when the stamina is back up to it, an ember flick and a small spark.
-- *The Field guide's Dash row:* "E, Shift, a right-click on the log or the key you’re going: two cells in a blink, for three quarters of
+- *The Field guide's Dash row:* "E, Shift, a right-click on the log or the key you’re going: two cells in a blink, for four fifths of
   your stamina." (each share is written from `tuning.js`)
   (On a phone: "A swipe the way you’re going".)
 - *The sound:* a short whoosh of air, lighter than a golden flash's zip.
