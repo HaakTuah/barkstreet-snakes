@@ -222,8 +222,9 @@ pressed only when it beats crawling (`powerPick` in `ai/powers.js`):
   Ghost 0.8, Desperado 0.6), and putting a flier out by lying on its ring (`landing`, 0.6 by default: Drab 0.15,
   Desperado 1.2, Sniper 1.5).
 
-How each move is used and seen used against them is in its own section in `40-powers-and-moves.md`; the power
-styles are still to build (part 7b of round six B, in `docs/PROGRESS.md`).
+How each move is used and seen used against them is in its own section in `40-powers-and-moves.md`; each rival's power
+style, a share of the plain flash's price for what it spends one on readily, is in "Every rival has a power style",
+below.
 
 ### A cornered AI makes the sensible last move
 
@@ -316,32 +317,49 @@ jumps neither help nor hurt measurably, and stay because they're the character.
 
 ### Every rival has a power style
 
-Each persona uses jumps and flashes its own way, through the same engine calls as a person. Most of it is still to
-build (part 7b of round six B, on 7a's one pricing model: "Rivals use their powers, when it pays"; in
-`docs/PROGRESS.md`); "Balance targets", below, is its measure.
-- **Built so far:** Star's habit ("Star"); a style's own price for a leap now and for a flier's ring (`leapNow`,
-  `landing`: "Rivals use their powers, when it pays") and for a mushroom shot (`spit`: "Mushrooms, to a rival");
-  everyone's island hop, and a tail dropped when trapped, or planned once boxed in the endgame ("The plain jump hops
-  islands" and "Dropping your tail" in `40-powers-and-moves.md`; "The endgame: a meal is worth the life it buys").
-- **To build, each its own:** Sniper cuts off its target; Mute seals boxes; Gobbler races for food; Vulture flashes to
-  beads; Ghost keeps a flash ready to escape. Sovereign and Colonist chase intruders off their land; Mason finishes
-  walls; Creeper flashes in behind tails; Desperado for the thrill; Joker springs its lures; Ouroboros jumps its own
-  coils and drops its own tail. Star is the addict; Wildcard is random; Capricious and Copycat borrow; Metagamer reads
-  its rivals; Drab is the baseline.
-- **To build, all of them:** a ready flash is worth keeping (a reserve value); length is worth trading for room when
-  boxed in (jump to an island, or drop the tail); keep a jumpable way out; cross the woodpecker's mark when they'll be
-  out of it before the strike (today they keep out of a mark as out of a hole: "The rivals tell a mark from a hole" in
-  `38-the-woodpecker.md`).
+Each persona uses jumps and flashes its own way, through the same engine calls as a person, on 7a's one pricing model
+("Rivals use their powers, when it pays"); "Balance targets", below, is its measure.
+- **Its style** (part 7b of round six B; `style` in its weights, read by `ai/styles.js`): the purposes it spends a plain
+  flash on readily, each at a share of the flash's price (the spend and the wait below its reserve), found by the same
+  tests whoever it is. A flash for one is weighed that way too, not only the way it would crawl, and the search must
+  still see it beat crawling. Where the gain is sure the share is ½, where only the search guesses it 0.7 (first
+  guesses):
+  | Rival | Its style | A flash that... | Share |
+  | --- | --- | --- | --- |
+  | Gobbler | races for food | wins a race for food | ½ |
+  | Sniper | cuts off its target | cuts its target | ½ |
+  | Vulture | flashes to beads | eats a bead on the way | ½ |
+  | Mute | seals its box | closes on its target, 6 cells or nearer | 0.7 |
+  | Sovereign, Colonist | chase intruders off their land | closes on its target (an intruder), 6 cells or nearer | 0.7 |
+  | Creeper | flashes in behind tails | ends right behind a rival's tail | 0.7 |
+  | Desperado | for the thrill | ends beside a body, a head or the edge | 0.7 |
+  | Joker | springs its lures | turns off its line with a rival's head 4 cells or nearer, and ends farther from it | 0.7 |
+  | Mason | finishes walls | goes straight on, up to a wall (the edge, a hole or a body) | 0.7 |
+
+  Two more are not a share of the flash: **Ghost keeps a flash ready to escape** (its wait below the reserve minded twice
+  as much: `keep` 2; out of a trap it's free, as anyone's), and **Ouroboros jumps its own coils** (a plain jump over its
+  own body for its own sake, where no rival could get to the landing before it's down, at the full price: `coil`).
+  **Star** is the addict (its habit: "Star"); **Capricious and Copycat** borrow the style of whoever they wear;
+  **Wildcard**, **Metagamer** and **Drab** take none of their own. The census counts each rival's plain flashes and
+  jumps pressed for its style (`style/min`).
+- **Built before it:** a style's own price for a leap now and for a flier's ring (`leapNow`, `landing`: "Rivals use their
+  powers, when it pays") and for a mushroom shot (`spit`: "Mushrooms, to a rival"); everyone's island hop, and a tail
+  dropped when trapped, or planned once boxed in the endgame ("The plain jump hops islands" and "Dropping your tail" in
+  `40-powers-and-moves.md`; "The endgame: a meal is worth the life it buys").
+- **For everyone, to build:** keep a jumpable way out; cross the woodpecker's mark when they'll be out of it before the
+  strike (today they keep out of a mark as out of a hole: "The rivals tell a mark from a hole" in `38-the-woodpecker.md`).
+  A ready flash's reserve value is the wait below the reserve (`RESERVE_PRICE`, 7a), and length is traded for room when
+  boxed in by the island hop and the tail drop, both built.
 - *The test case:* the owner's screenshot (Gobbler folded on a strip, an island across a hollow). The rival must find
-  the hop, the flight or the tail drop.
+  the hop, the flight or the tail drop (it hops: the rules suite's island test).
 
 ### Gobbler's endgame
 
-To build, with the power styles. Gobbler grows longest, and most of its deaths come late, in pockets too small for it;
-no weight change held it up ("Gobbler, at the floor" under "Round six A, measured" in
-`27-round-six-a-fairness-and-fixes.md`). Its style is the cure, not a number: it hops to the next island for food, and
-drops its tail when a pocket is too small. The aim: Gobbler comfortably inside 15–35%, its food share still the
-field's biggest.
+Gobbler grows longest, and most of its deaths come late, in pockets too small for it; no weight change held it up
+("Gobbler, at the floor" under "Round six A, measured" in `27-round-six-a-fairness-and-fixes.md`). Its style is the
+cure, not a number: it hops to the next island for food and drops its tail once boxed in, in the endgame (both
+everyone's, built), and races for food (its power style, 7b). The aim: Gobbler comfortably inside 15–35%, its food
+share still the field's biggest; 7a's dearer stamina already lifted it (17.8% to 39.3% head to head on seed 41).
 
 ### The band
 

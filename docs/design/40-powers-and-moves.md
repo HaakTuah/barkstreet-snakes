@@ -7,7 +7,7 @@ measured, is in `docs/archive/design-powers.md`). Elsewhere: how a held power, a
 (`03-the-snake-as-a-character.md`: "Gold means power", "A power is one token, not a ring", "Telling powers apart" and
 "Bridges and jumps you can see"); how often golden food comes, and food and beetles (`04-food-and-the-world.md`: "More golden
 power food" in "Food on the log"); the woodpecker's holes
-(`38-the-woodpecker.md`); how a rival weighs a power, and the power styles and pricing still to build
+(`38-the-woodpecker.md`); how a rival weighs a power, and each rival's power style
 (`39-the-rivals.md`, "Rivals use their powers, when it pays" and "Every rival has a power style"; "Balance targets" there); what each move measured, with the numbers chosen
 (round six B's "chosen numbers" in `docs/archive/design-powers.md`); the keys, swipes, taps and the mouse (`42-controls.md`); teaching
 (`30-teaching-by-showing.md`); Capricious, Copycat and Wildcard (`35-capricious-copycat-and-wildcard.md`); sound in

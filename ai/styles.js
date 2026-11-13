@@ -1,8 +1,8 @@
 // Every rival's power style (part 7b of round six B; design 39, "Every
 // rival has a power style"): what each spends a plain power on readily,
 // in its own way. A persona's `style` names the purposes it flashes for,
-// each with the share of the plain flash's spend it pays for one (its
-// wait below the reserve stays as anyone's); whoever it is, the same tests
+// each with the share of the plain flash's price it pays for one (the
+// spend and the wait below the reserve); whoever it is, the same tests
 // find the purpose, and a flash for one is weighed that way too, not only
 // the way I'd crawl. The search still has to see it beat crawling.
 //   race    wins a race for food (Gobbler)
@@ -75,7 +75,9 @@ function styleShare(d, won, cut) {
 function styleWay(d) {
   return !!w.style && styleShare(d, w.style.race !== undefined ? race(d) : null, false) < 1;
 }
-// Does a jump down on path[span] go over my own body?
+// Does a jump down on path[span] go over my own body? (coilJump: the last
+// plain jump weighed goes only for that, my style's: see landOpt)
+let coilJump = false;
 function hopsMine(span) {
   for (let i = 0; i < span; i++) if (myCells[path[i]] === stampM) return true;
   return false;

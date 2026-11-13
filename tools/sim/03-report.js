@@ -119,11 +119,11 @@ function report({ per, total }, withCensus) {
 
 // --census, for each personality: a round's worth of each (or a minute alive's).
 function reportCensus(per) {
-  console.log('census, each personality (a round played; flashes and jumps a minute alive; golden: golden power food picked up)');
+  console.log('census, each personality (a round played; flashes and jumps a minute alive, and of them pressed for its power style; golden: golden power food picked up)');
   console.table(Object.keys(per).sort().map(name => {
     const p = per[name], R = Math.max(1, p.rounds), minutes = Math.max(1e-9, p.aliveMs / 60000), f = (n, d = R) => +(n / d).toFixed(2);
     return { name, rounds: p.rounds, alive: `${Math.round(p.aliveMs / R / 1000)}s`, food: f(p.eaten), kills: f(p.kills), crashes: f(p.crashes), squashed: f(p.chokes), shrooms: f(p.shrooms), spits: f(p.spits), 'spit hits': f(p.hits), 'hit by': f(p.hitBy), 'leap now': f(p.now), bumps: f(p.bumps), 'go landing': f(p.ringGo),
-      'flash/min': f(p.flashes, minutes), 'jump/min': f(p.jumps, minutes), golden: f(p.golden), leaps: f(p.leaps), dashes: f(p.dashes) };
+      'flash/min': f(p.flashes, minutes), 'jump/min': f(p.jumps, minutes), 'style/min': f(p.styled, minutes), golden: f(p.golden), leaps: f(p.leaps), dashes: f(p.dashes) };
   }));
 }
 
