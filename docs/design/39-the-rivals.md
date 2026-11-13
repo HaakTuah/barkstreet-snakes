@@ -344,8 +344,10 @@ Each persona uses jumps and flashes its own way, through the same engine calls a
   full price: `coil`; and its tail dropped as anyone's, once boxed in in the endgame, where 2h had it wait for a
   crash). **Star** is the addict (its habit: "Star"); **Capricious and Copycat** borrow the style of whoever they wear;
   **Wildcard** draws one of the cast's at random each round, half the time (`randomWeights`); **Drab**, the baseline,
-  has none. **Metagamer**, which reads its rivals, has none yet: its counters are its driver's, and a style of its own
-  waits for 7c. The census counts each rival's plain flashes and jumps pressed for its style (`style/min`); each style
+  has none. **Metagamer**'s style is its counters (7c), read from what it has seen of the rivals about it, as its driver
+  labels them: against a greedy one it races for food (½), against an evasive one it cuts the one it hunts (½), and
+  with an aggressive one about it keeps a flash ready to escape (as Ghost: `keep` 2); a mix of them, all it has seen.
+  Whoever wears it (Capricious, Copycat) keeps its own weights under the counters. The census counts each rival's plain flashes and jumps pressed for its style (`style/min`); each style
   has a staged rules test (`tools/rules/33-power-styles.js`).
 - **Built before it:** a style's own price for a leap now and for a flier's ring (`leapNow`, `landing`: "Rivals use their
   powers, when it pays") and for a mushroom shot (`spit`: "Mushrooms, to a rival"); everyone's island hop, and a tail

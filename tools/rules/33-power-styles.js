@@ -59,3 +59,11 @@ for (const [key, seen] of Object.entries(STYLE_SEEN)) {
   }
   check('7b: Wildcard draws a cast member\'s power style, some rounds, and none others', some > 5 && none > 5 && !strange, JSON.stringify({ some, none, strange }));
 }
+{ // 7c: Metagamer's style is its counters, read from what it has seen of each rival: Gobbler's race above, to Metagamer,
+  // against a rival it has seen grow fast (greedy: it races it for food) and against the same rival seen not to grow
+  // (evasive, and Metagamer too short to hunt it: no style for the race), through the same weighing.
+  const seen = STYLE_SEEN.gobbler, rival = seen.view.others[0].id, len = seen.view.others[0].body.length;
+  const pressed = len0 => { let n = 0; for (let i = 0; i < 10; i++) { const memory = { ...structuredClone(seen.memory), obs: { [rival]: { len0, samples: 60, near: 0 } } }, v = seenView(seen.view); AI.decide(v, AI.PERSONAS.metagamer, memory); if (memory.flash === v.tick) n++; } return n; };
+  const greedy = pressed(2), evasive = pressed(len);
+  check('7c: Metagamer races a rival it reads as greedy to food, and crawls on beside one it reads as evasive', greedy === 10 && evasive === 0, JSON.stringify({ greedy, evasive }));
+}
