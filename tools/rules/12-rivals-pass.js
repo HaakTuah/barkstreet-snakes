@@ -21,6 +21,38 @@ const marked = (more = {}) => aiView({ holes: new Set(MARK), pecks: new Set(MARK
   check('...and never steps into the mark for it', !beside.right && (beside.up || 0) + (beside.down || 0) === 50, JSON.stringify(beside));
 }
 
+{ // 7c: a mark isn't a hole yet. A rival crosses it where it would be off it before the strike, with a move to spare,
+  // the depth of each cell from the bark beyond as the engine reckons it. An apple just past the 3x3 mark on row 11 (at
+  // 16, 11): from right beside the mark, it heads straight in with the strike 12 moves off; already in it (at its edge,
+  // 12, 11), it goes on across to the middle with the strike 12 off, and with it 3 off, it steps off sideways (the middle,
+  // two from the bark, it would still be in a move before the strike).
+  const across = (strikeAt, head) => picks(() => marked({ strikeAt, me: aiMe(line(head, 11, 5), 'right'), others: [aiRival(1, line(20, 22, 5), 'right')], food: [{ x: 16, y: 11, kind: 'food', expires: 9999 }] }));
+  const toward = across(22, 11), early = across(22, 12), late = across(13, 12);
+  check('7c: a rival crosses the woodpecker\'s mark where it is out of it before the strike, and steps off where it wouldn\'t be', toward.right === 50 && early.right === 50 && !late.right, JSON.stringify({ toward, early, late }));
+}
+
+{ // ...and in the game: Gobbler heading along row 11 for an apple past the mark, the strike 12 ticks off. It goes straight
+  // through the mark's middle, is off it before the strike, and eats the apple.
+  const g = E.createGame({ withPlayer: false, personas: ['gobbler', 'drab'] });
+  g.snakes = g.snakes.slice(0, 2);
+  const [a, b] = g.snakes;
+  g.time = FRENZY + 5000;
+  a.body = cellsOf(line(9, 11, 5)); a.dir = D.right;
+  b.body = cellsOf(line(20, 22, 4)); b.dir = D.right; b.isPlayer = true; b.persona = null; b.queue = []; b.stunUntil = 1e9;
+  lay(g, { x: 17, y: 11, kind: 'food', expires: 9999 });
+  g.unders = [{ until: 1e9, expires: 1e9, from: -1, gold: false }, { until: 1e9, expires: 1e9, from: -1, gold: false }]; // (no beetles come out meanwhile)
+  g.woodpecker = { x: 13, y: 11, at: g.time, target: [...MARK], strikeAt: g.tick + 12, last: [], struckAt: -1, restUntil: 1e9 };
+  lookNow(g);
+  g.history[0].pecks = [...MARK];
+  let through = false, ate = null;
+  for (let t = 0; t < 16 && a.alive; t++) {
+    feed(g); kept(g);
+    if (a.body[0].x === 13 && a.body[0].y === 11) through = true;
+    ate ||= g.events.find(e => e.type === 'eat' && e.snake === a);
+  }
+  check('...and in the game: Gobbler goes through the mark\'s middle, off it before the strike, and eats the apple past it', a.alive && through && ate && g.woodpecker.struckAt >= 0, JSON.stringify({ alive: a.alive, through, ate: !!ate, struck: g.woodpecker.struckAt, head: a.body[0] }));
+}
+
 { // Knocked food goes to whoever's nearer where it lands, as any food does. Heading right along row 11, 5 from where a
   // golden apple in the mark will land (the strike 6 ticks off); another golden apple 12 down. (Drab and Gobbler without
   // their taste for the board, so it's the food that decides.) With a rival's head 10 from the landing, it's Drab's, and

@@ -36,9 +36,10 @@ function pieces2s(g, mark) {
   check('...and the log is one piece: the piece is holes now', b.alive && peninK.every(k => g.holes.has(k)) && pieces2s(g, new Set()).length === 1 && !g.woodpecker.fall);
 }
 
-{ // The rivals see a piece a mark would cut loose as gone at the strike, and keep off it, through the same engine calls: a
-  // rival heading for food on a piece beyond a neck three wide goes for it with no mark there, and stays on the field with
-  // one (the neck and the piece in the mark, the piece to fall).
+{ // The rivals see a piece a mark would cut loose as gone at the strike, through the same engine calls: a rival heading
+  // for food on a piece beyond a neck three wide goes for it with no mark there; with one (the neck and the piece in the
+  // mark, the piece to fall, its food with it), it may cross onto it only while it'd be off it before the strike (7c),
+  // and is off it, alive, when the strike comes.
   const neck3 = rect(13, 9, 13, 11), piece3 = rect(14, 5, 19, 15), land3 = [...field2s, ...neck3, ...piece3];
   const run = marked => seededWhile(622, () => {
     const g = E.createGame({ withPlayer: false, personas: ['drab'] });
@@ -53,12 +54,12 @@ function pieces2s(g, mark) {
       ? { x: 13, y: 10, at: g.time, target: [...neck3, ...piece3].map(([x, y]) => K(x, y)), fall: piece3.map(([x, y]) => K(x, y)), strikeAt: g.tick + 20, last: [], struckAt: -1, restUntil: 0 }
       : { x: 3, y: 4, at: g.time, target: [K(3, 4)], strikeAt: g.tick + 20, last: [], struckAt: -1, restUntil: 0 };
     let on = 0;
-    for (let t = 0; t < 16 && r.alive; t++) { feed(g); quiet(g); if (piece3.some(([x, y]) => r.body[0].x === x && r.body[0].y === y)) on++; }
-    return { alive: r.alive, on, ate: !g.food.some(f => f.x === 15 && f.y === 10) };
+    for (let t = 0; t < 24 && r.alive; t++) { feed(g); quiet(g); if (piece3.some(([x, y]) => r.body[0].x === x && r.body[0].y === y)) on++; }
+    return { alive: r.alive, on, ate: !g.food.some(f => f.x === 15 && f.y === 10), struck: g.woodpecker.struckAt >= 0 || !g.woodpecker.target.length };
   });
   const free = run(false), shown = run(true);
   check('2s: with no mark there, a rival goes out onto the piece for its food', free.ate && free.on > 0, JSON.stringify(free));
-  check('...and with the piece marked to fall, it keeps off it', shown.alive && shown.on === 0 && !shown.ate, JSON.stringify(shown));
+  check('...and with the piece marked to fall, it is off it, alive, when the strike comes', shown.alive && shown.struck, JSON.stringify(shown));
 }
 
 { // The rivals are shown which cells fall (aiView's fall, the same for everyone), and the knock rule they work landings out

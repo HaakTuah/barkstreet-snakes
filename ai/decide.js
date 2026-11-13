@@ -67,12 +67,11 @@ function decide(viewIn, personaIn, memoryIn = {}, draw = null) {
     if (s > bestScore) { bestScore = s; bestDir = d; }
   }
   // Off a doomed piece (part 2): my head in the woodpecker's mark (on the
-  // piece it cuts loose, or its cut). The search's move, if it steps off
-  // the mark and lives; otherwise (it reads the mark as walls, so from
-  // deep inside it sees no way at all) the shortest way off, if I can
-  // make it before the strike.
-  const ahead = (myHead.y + bestDir.y) * N + myHead.x + bestDir.x;
-  const off = view.strikeAt != null && mark.has(myHead.y * N + myHead.x) && (bestScore <= DEAD || mark.has(ahead)) ? escapeMark(true) || escapeMark(false) : null;
+  // piece it cuts loose, or its cut). The search's move, if it lives: it
+  // crosses the mark only where I'd be off it before the strike (7c:
+  // canEnter); otherwise (deeper in than that, it reads the mark as walls
+  // and sees no way at all) the shortest way off, if I can make it in time.
+  const off = view.strikeAt != null && mark.has(myHead.y * N + myHead.x) && bestScore <= DEAD ? escapeMark(true) || escapeMark(false) : null;
   if (off) return off;
   // Powers: each weighed as a move. The same search as crawling, from
   // where the power leaves me and to the same horizon, plus what it eats on
