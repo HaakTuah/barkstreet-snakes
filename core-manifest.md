@@ -11,6 +11,7 @@ Floor: whole. Modules: all.
 | Slot | Here |
 | --- | --- |
 | *owner's account* | `HaakTuah` |
+| *follows* | `releases` |
 | *progress file* | `docs/PROGRESS.md` |
 | *report* | the PR's description |
 | *settling references* | "Rules that stand" in `AGENTS.md`, or the design section |
