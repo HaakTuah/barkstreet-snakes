@@ -119,7 +119,7 @@ const GUIDE_ROWS = [
 ];
 // (Until the renderer can draw a picture, a stand-in: it draws a kind it
 // doesn't know as an apple. Every kind has one, in case its picture fails.)
-const GUIDE_STAND_IN = { capricious: '🎭', copycat: '🐱', 'basic-win': '👑', 'basic-steer': '🐍', 'basic-crash': '💥', 'basic-hunger': '🍽️', apple: '🍎', lean: '🍎', plentiful: '🧺', golden: '🌟', beetle: '🪲', goldbeetle: '🪲', dig: '🪲', pellet: '🟢', squash: '💦', baked: '🍎', roast: '🍖', mushroom: '🍄', goldcap: '🍄', leaf: '🍂', spill: '🪙', jump: '⤴️', flash: '⚡', cut: '✂️', failflash: '💫', wrap: '🔁', held: '✨', rests: '⏳', fire: '🔥', knock: '🍎', hole: '🕳️', bridge: '🌉', land: '🚩', lostflag: '🚩' };
+const GUIDE_STAND_IN = { capricious: '🎭', copycat: '🐱', 'basic-win': '👑', 'basic-steer': '🐍', 'basic-crash': '💥', 'basic-hunger': '🍽️', apple: '🍎', lean: '🍂', plentiful: '🧺', golden: '🌟', beetle: '🪲', goldbeetle: '🪲', dig: '🪲', pellet: '🟢', squash: '💦', baked: '🍎', roast: '🍖', mushroom: '🍄', goldcap: '🍄', leaf: '🍂', spill: '🪙', jump: '⤴️', flash: '⚡', cut: '✂️', failflash: '💫', wrap: '🔁', held: '✨', rests: '⏳', fire: '🔥', knock: '🍎', hole: '🕳️', bridge: '🌉', land: '🚩', lostflag: '🚩' };
 const GUIDE_UNDRAWN = new Set();
 function renderGuide() {
   const px = Math.round(36 * (window.devicePixelRatio || 1));
