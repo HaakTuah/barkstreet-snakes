@@ -175,9 +175,9 @@ function rowsFor(As, Bs, groups = USUAL, margins = new Map()) {
   const sign = (v, name, k) => { const p = v.per[name]; return !p ? 0 : k === 'rounds' ? p.rounds : k === 'minutes' ? p.aliveMs / 60000 : p.sig?.[k] || 0; };
   for (const [who, what, a, b, unit] of TRADEMARKS) {
     if (!names.includes(who)) continue;
-    const spec = { num: v => sign(v, who, a), den: v => sign(v, who, b), scale: unit === '%' ? 100 : 1 };
+    const spec = { num: v => sign(v, who, a), den: v => sign(v, who, b), scale: unit === '%' ? 100 : unit };
     let margin = 2;
-    if (unit !== '%') { let N = 0, D = 0; for (const v of As) { N += spec.num(v); D += spec.den(v); } margin = D ? +(0.1 * N / D).toPrecision(2) : null; }
+    if (unit !== '%') { let N = 0, D = 0; for (const v of As) { N += spec.num(v); D += spec.den(v); } margin = D ? +(0.1 * spec.scale * N / D).toPrecision(2) : null; }
     add('trademarks', `trademark.${who}.${a}`, `${who}: ${what}`, unit === '%' ? '%' : '', spec, margin);
   }
   return rows;

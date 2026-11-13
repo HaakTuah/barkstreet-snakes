@@ -130,16 +130,16 @@ function reportCensus(per) {
 // --signatures: each trademark as a ratio of two sums (see SIGNS), for one
 // personality and for the field (everyone else together).
 const TRADEMARKS = [
-  ['Mason', 'straight run', 'moves', 'runs', 1], ['Mason', 'body beside itself', 'beside', 'cells', '%'],
+  ['Mason', 'straight run', 'moves', 'runs', 1], ['Mason', 'body in walls two thick', 'doubled', 'cells', '%'],
   ['Ouroboros', 'coiled (10 long or more)', 'coiled', 'long', '%'], ['Creeper', 'riding a tail', 'riding', 'ticks', '%'],
   ['Ghost', 'cells from the nearest head', 'apart', 'ticks', 1], ['Gobbler', 'share of the food', 'foodShare', 'rounds', '%'],
   ['Vulture', 'share of the beads', 'beadShare', 'rounds', '%'], ['Sovereign', 'at home', 'atHome', 'homeTicks', '%'],
-  ['Mute', 'closing the box (its target within 4, of ticks hunting)', 'boxing', 'hunting', '%'], ['Joker', 'luring a rival on', 'luring', 'ticks', '%'],
+  ['Mute', 'kills by boxing, a thousand ticks hunting', 'boxKills', 'hunting', 1000], ['Joker', 'chasers led into a crash, ten minutes alive', 'lured', 'minutes', 10],
   ['Desperado', 'skimming danger', 'skims', 'ticks', '%'], ['Star', 'flashes a minute', 'flashes', 'minutes', 1], ['Star', 'jumps a minute', 'jumps', 'minutes', 1],
 ];
 function reportSignatures(per) {
   const sum = (names, k) => names.reduce((n, name) => n + (k === 'rounds' ? per[name].rounds : k === 'minutes' ? per[name].aliveMs / 60000 : per[name].sig[k]), 0);
-  const ratio = (names, a, b, unit) => { const v = sum(names, a) / Math.max(1e-9, sum(names, b)); return unit === '%' ? (100 * v).toFixed(1) + '%' : v.toFixed(2); };
+  const ratio = (names, a, b, unit) => { const v = sum(names, a) / Math.max(1e-9, sum(names, b)); return unit === '%' ? (100 * v).toFixed(1) + '%' : (unit * v).toFixed(2); };
   const names = Object.keys(per);
   console.log('trademarks (each against the field: everyone else together)');
   for (const [who, what, a, b, unit] of TRADEMARKS) {
@@ -158,13 +158,13 @@ function reportSignatures(per) {
       const mood = who.toLowerCase(), d = moodSum(mood, b);
       if (!(d > 0)) continue;
       const v = moodSum(mood, a) / d;
-      console.log(`  Capricious as ${who}, ${what}: ${unit === '%' ? (100 * v).toFixed(1) + '%' : v.toFixed(2)} · ${who} ${per[who] && sum([who], b) > 0 ? ratio([who], a, b, unit) : 'not played'}`);
+      console.log(`  Capricious as ${who}, ${what}: ${unit === '%' ? (100 * v).toFixed(1) + '%' : (unit * v).toFixed(2)} · ${who} ${per[who] && sum([who], b) > 0 ? ratio([who], a, b, unit) : 'not played'}`);
     }
   }
   console.table(names.sort().map(name => {
     const one = [name], r = (a, b, unit) => sum(one, b) > 0 ? ratio(one, a, b, unit) : '';
-    return { name, run: r('moves', 'runs', 1), beside: r('beside', 'cells', '%'), coiled: r('coiled', 'long', '%'), riding: r('riding', 'ticks', '%'), apart: r('apart', 'ticks', 1),
-      food: r('foodShare', 'rounds', '%'), beads: r('beadShare', 'rounds', '%'), home: r('atHome', 'homeTicks', '%'), boxing: r('boxing', 'hunting', '%'), luring: r('luring', 'ticks', '%'),
+    return { name, run: r('moves', 'runs', 1), doubled: r('doubled', 'cells', '%'), coiled: r('coiled', 'long', '%'), riding: r('riding', 'ticks', '%'), apart: r('apart', 'ticks', 1),
+      food: r('foodShare', 'rounds', '%'), beads: r('beadShare', 'rounds', '%'), home: r('atHome', 'homeTicks', '%'), 'box kills': r('boxKills', 'hunting', 1000), lured: r('lured', 'minutes', 10),
       skims: r('skims', 'ticks', '%'), 'flash/min': r('flashes', 'minutes', 1), 'jump/min': r('jumps', 'minutes', 1) };
   }));
 }

@@ -47,10 +47,10 @@
 //             survived, time alive, food and kills
 //   --signatures  also print each personality's trademark, measured on
 //             every snake so each has the field to stand against: Mason's
-//             straight runs and its body lying beside itself, Ouroboros's
+//             straight runs and its walls two thick, Ouroboros's
 //             coils, Creeper riding tails, Ghost's distance, Gobbler's share
 //             of the food and Vulture's of the beads, Sovereign at home,
-//             Mute boxing its target, Joker's lures, Desperado's skims and
+//             Mute's kills by boxing, chasers Joker leads into a crash, Desperado's skims and
 //             Star's powers (see SIGNS)
 //   --root    play another copy of the game (to compare versions)
 //   --versus DIR  head to head: DIR's AI steers half the snakes of every
