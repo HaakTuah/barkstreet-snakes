@@ -82,7 +82,7 @@ const GUIDE_ROWS = [
   ]],
   ['Food', [
     ['apple', 'Apple', `Worth 1, and a full tummy. ${inWords(TUNE.APPLES).replace(/^./, c => c.toUpperCase())} on the log at a time (a season can change that); leave one too long and it rots.`],
-    ['season', 'Seasons', `Each round has its food season; a lean or plentiful one is named after Go. A lean one: ${inWords(Engine.seasonApples('lean'))} apple at a time after the first ${secs(TUNE.BEETLE_FIRST_MS)} s, fewer beetles, and shorter meals, so some snakes starve. Plenty: ${inWords(Engine.seasonApples('plentiful'))} apples and more beetles, so snakes grow long and the log crowds. The rest are normal.`],
+    [['lean', 'plentiful'], 'Seasons', `Each round has its food season. A lean or plentiful one is named after Go, then marked under the board: a bitten apple for a lean one, a basket for plenty. Lean: ${inWords(Engine.seasonApples('lean'))} apple at a time after the first ${secs(TUNE.BEETLE_FIRST_MS)} s, fewer beetles, and shorter meals, so some snakes starve. Plenty: ${inWords(Engine.seasonApples('plentiful'))} apples and more beetles, so snakes grow long and the log crowds. A normal round has no mark.`],
     ['golden', 'Golden apple', `Worth ${TUNE.GOLDEN_GROWTH}, a full bar of stamina, and a shield round your head for ${secs(TUNE.GOLDEN_SHIELD_MS)} s: it takes your next bump (no tail lost). Boxed in, it can’t save you. Everyone saw it land.`],
     ['beetle', 'Beetles', `Worth ${TUNE.BEETLE_GROWTH}, up to ${inWords(TUNE.BEETLE_MAX ?? 2)} out at once, even in sudden death. They scurry from heads at half your speed. A cornered one digs in: come straight at it and it’s gone, so be nearer, or cut it off from its burrow. They flee the woodpecker’s mark too, and it eats any still on it when it strikes.`],
     ['dig', 'Burrows', `${TUNE.BURROW_FROM_DIG ? 'A beetle that digs in leaves a burrow, taking the place of any burrow near it (burrows keep apart). ' : ''}A burrow left unused grows shut (past ${inWords(TUNE.BURROW_MAX)}, the one unused longest): beetles still go in, but none come out.`],
@@ -119,7 +119,7 @@ const GUIDE_ROWS = [
 ];
 // (Until the renderer can draw a picture, a stand-in: it draws a kind it
 // doesn't know as an apple. Every kind has one, in case its picture fails.)
-const GUIDE_STAND_IN = { capricious: '🎭', copycat: '🐱', 'basic-win': '👑', 'basic-steer': '🐍', 'basic-crash': '💥', 'basic-hunger': '🍽️', apple: '🍎', season: '🧺', golden: '🌟', beetle: '🪲', goldbeetle: '🪲', dig: '🪲', pellet: '🟢', squash: '💦', baked: '🍎', roast: '🍖', mushroom: '🍄', goldcap: '🍄', leaf: '🍂', spill: '🪙', jump: '⤴️', flash: '⚡', cut: '✂️', failflash: '💫', wrap: '🔁', held: '✨', rests: '⏳', fire: '🔥', knock: '🍎', hole: '🕳️', bridge: '🌉', land: '🚩', lostflag: '🚩' };
+const GUIDE_STAND_IN = { capricious: '🎭', copycat: '🐱', 'basic-win': '👑', 'basic-steer': '🐍', 'basic-crash': '💥', 'basic-hunger': '🍽️', apple: '🍎', lean: '🍂', plentiful: '🧺', golden: '🌟', beetle: '🪲', goldbeetle: '🪲', dig: '🪲', pellet: '🟢', squash: '💦', baked: '🍎', roast: '🍖', mushroom: '🍄', goldcap: '🍄', leaf: '🍂', spill: '🪙', jump: '⤴️', flash: '⚡', cut: '✂️', failflash: '💫', wrap: '🔁', held: '✨', rests: '⏳', fire: '🔥', knock: '🍎', hole: '🕳️', bridge: '🌉', land: '🚩', lostflag: '🚩' };
 const GUIDE_UNDRAWN = new Set();
 function renderGuide() {
   const px = Math.round(36 * (window.devicePixelRatio || 1));

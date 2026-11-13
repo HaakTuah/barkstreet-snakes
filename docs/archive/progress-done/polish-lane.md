@@ -84,3 +84,7 @@ owner's three notes of 2 November merged as PRs #322 (the remains), #320 (the fl
 - The news lines: the repeated "no longer", semicolon lists, "islands" and a stray "Leap now!" gone, the top line left to the milestone (PR #561).
 - The README's player text: run-ons with piled brackets, "So …" summaries and one phrase four times, facts unchanged (PR #562).
 - **Done: the woodpecker's piece washed while its nicks close** (PR #725, issue #612; the stand-in's verdict: yes, sure it is wanted): the piece its outline cuts round, exactly `aiView`'s `piece`, lies under a faint dark wash with a dashed pale edge until the last peck is aimed, then the cut-loose shading with its sliding streaks takes over (`render/cut.js`, design 38 "It cuts a shape"); the lesson, the Field guide row and the news line say it; looks only, the fingerprints unchanged (seeds 3 and 11).
+- **The food season's mark, done** (PR #754, issue #603; the owner, 13 November 2026: "I concur with all, expertly!"): a
+  lean or plentiful round keeps its mark in the row under the board from Go on (the log's apple with a bite out of it,
+  or a basket heaped with apples; none in a normal round), the picture of its Field guide row, named "A lean season" or
+  "A season of plenty" in its tooltip; design 04, "Food seasons".

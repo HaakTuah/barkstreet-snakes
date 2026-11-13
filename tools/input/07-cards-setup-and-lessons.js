@@ -117,6 +117,32 @@ const seasonSaid = async season => {
     '2i: a lean or plentiful round names its season after Go, its rule following; a normal round says nothing of it', `lean: ${lean.join(' / ')}; plenty: ${plenty.join(' / ')}; normal: ${normal.join(' / ')}`);
 }
 
+// 2i: a lean or plentiful round keeps its mark under the board from Go to its end (its banner lasts seconds), the
+// picture of its Field guide row, named for a tooltip and a screen reader; a normal round has none, and none shows
+// before Go. (Nothing for the rivals: aiView() holds the season already.)
+const seasonMark = async season => {
+  await ev(`window.__autoRaf = true; 'ok'`);
+  await b.go(site.url + '?debug', { settle: 0 });
+  await ev('new Promise(r => __raf(() => __raf(r)))');
+  return ev(`(() => {
+    window.__autoRaf = false; const el = document.getElementById('season'), at = () => ({ hidden: el.hidden, title: el.title, label: el.getAttribute('aria-label'), pic: !!el.querySelector('canvas, .stand-in'), box: el.hidden ? 0 : el.getBoundingClientRect().width });
+    document.getElementById('start').click();
+    SnakeDebug.game().season = '${season}';
+    SnakeDebug.frames(1, ${P});
+    const before = at();
+    for (let i = 0; i < 600 && SnakeDebug.state() !== 'running'; i++) SnakeDebug.frames(1, ${P});
+    SnakeDebug.frames(60, ${P});
+    return { before, after: at(), words: SnakeDebug.flavor().seasonMark };
+  })()`);
+};
+{
+  const lean = await seasonMark('lean'), plenty = await seasonMark('plentiful'), normal = await seasonMark('normal');
+  const mark = (r, season) => r.before.hidden && !r.after.hidden && r.after.title === r.words[season] && r.after.label === r.words[season] && r.after.pic && r.after.box > 0;
+  check(mark(lean, 'lean') && mark(plenty, 'plentiful') && normal.before.hidden && normal.after.hidden && !normal.after.title,
+    '2i: a lean or plentiful round keeps its mark under the board after Go, named; a normal round has none, and none shows before Go',
+    `lean: ${lean.after.title} (${lean.after.box} px); plenty: ${plenty.after.title} (${plenty.after.box} px); normal: ${normal.after.hidden ? 'none' : 'shown'}`);
+}
+
 
 // On a phone held upright a banner is one line, over the header's title
 // row (DESIGN "Teaching by showing"): every banner of the game's, round
