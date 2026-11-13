@@ -272,8 +272,11 @@ driver are in `ai/rivals/`, over the shared template in `ai/rivals.js` (`DRAB`, 
 | Copycat | "Copies whoever leads: their colours, paled, and how they play. Party member." | | its driver: `35-capricious-copycat-and-wildcard.md` |
 | Wildcard | "A random mix of habits, new every round. Great hair." | | its driver: `35-capricious-copycat-and-wildcard.md` |
 
-Still to build (part 7 of round six B, in `docs/PROGRESS.md`): measures that catch Mute's boxing, Joker's lures and
-Mason's body beside itself, which show little over the field on a simple measure, and Joker lifted into the band.
+Measured (part 7c): Mason's walls two thick (`doubled`: cells in a run of three or more lying beside the body), the
+chasers Joker leads into a crash (`lured`), and Mute's kills by boxing (`boxKills`: a rival dead on Mute's own body,
+boxed in, while Mute closed on it). Mason and Joker lead the field on these; Mute, which lagged, presses its boxed
+victim harder (`aggression` 1, from 0.8) so it leads its kills. Joker sits in the band after 7a and 7b (its win rate
+no longer costs it); Star, the one persona still below it, is lifted in 7c (below, "Star").
 
 ### Ouroboros
 

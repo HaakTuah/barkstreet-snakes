@@ -129,8 +129,8 @@ const totals = () => ({ rounds: 0, timeSum: 0, times: [], sudden: 0, draws: 0, s
 //   apart              distance from the nearest rival head, summed over ticks (capped at 14: Ghost)
 //   foodShare, beadShare  its share of the round's food eaten, and of the beads (summed over rounds: Gobbler, Vulture)
 //   homeTicks, atHome  ticks with a realm, and of those, the head on it (Sovereign)
-//   hunting, boxKills  ticks with a target, and its target out boxed in (no room left after a crash) while its head was
-//                        within 4 of its own, closing the box (the rule Mute's mood ring shows): a kill by boxing (Mute)
+//   boxKills           a rival dead on my body, boxed in (no room left after the crash), while my head was within 4 of
+//                        it, closing the box (the rule Mute's mood ring shows): a kill by boxing (Mute, ten minutes alive)
 //   lured              crashes (out or bounced; not fire, hunger or the woodpecker) of a rival that, in the 4 ticks
 //                        before, had its head within 4 of its own and was heading at it: a chaser led into a crash (Joker)
 //   skims              ticks with the head beside the edge, a hole or a body (not its own neck), or a rival head within 2 (Desperado)
@@ -138,7 +138,7 @@ const totals = () => ({ rounds: 0, timeSum: 0, times: [], sudden: 0, draws: 0, s
 //   eats, beadsEaten   food eaten, and of it beads (Gobbler and Vulture by the minute, for Capricious's impressions of them)
 const DOUBLED = 3; // (cells beside itself in a row: a stretch of wall two thick)
 const LURE_TICKS = 4; // (a chaser's crash this soon after it was last chasing counts as led into it)
-const SIGNS = ['moves', 'runs', 'cells', 'doubled', 'boxKills', 'lured', 'long', 'coiled', 'riding', 'apart', 'foodShare', 'beadShare', 'homeTicks', 'atHome', 'hunting', 'skims', 'flashes', 'jumps', 'eats', 'beadsEaten', 'ticks'];
+const SIGNS = ['moves', 'runs', 'cells', 'doubled', 'boxKills', 'lured', 'long', 'coiled', 'riding', 'apart', 'foodShare', 'beadShare', 'homeTicks', 'atHome', 'skims', 'flashes', 'jumps', 'eats', 'beadsEaten', 'ticks'];
 
 // Capricious in a mood: its signatures count for it, and again under the
 // mood's name ('mason.runs'...), so each impression's trademark can be read
@@ -176,7 +176,7 @@ function signatures(g, T, per, was) {
       const w = was[s.id];
       if (s === o || !w) continue;
       if ((w.chasers?.[o.id] ?? -Infinity) >= g.tick - LURE_TICKS) sigOf(per, s).lured++;
-      if (e.type === 'death' && o.fatal === 'boxed' && w.boxing === o.id) sigOf(per, s).boxKills++;
+      if (e.type === 'death' && o.fatal === 'boxed' && o.killerId === s.id && w.boxing === o.id) sigOf(per, s).boxKills++; // (it died on my body, boxed, while I was closing on it)
     }
   }
   for (const s of alive) {
@@ -222,11 +222,7 @@ function signatures(g, T, per, was) {
     if (home) { p.homeTicks++; if (Math.hypot(h.x - home.x, h.y - home.y) <= home.radius + T.LAND_REACH) p.atHome++; }
     const victim = s.memory.victimId != null && g.snakes.find(o => o.id === s.memory.victimId);
     w.boxing = null;
-    if (victim && victim.alive) {
-      p.hunting++;
-      const vh = victim.body[0];
-      if (Math.abs(vh.x - h.x) + Math.abs(vh.y - h.y) <= 4) w.boxing = victim.id;
-    }
+    if (victim && victim.alive && Math.abs(victim.body[0].x - h.x) + Math.abs(victim.body[0].y - h.y) <= 4) w.boxing = victim.id;
   }
   for (const e of g.events) {
     if (e.type === 'dash') sigOf(per, e.snake).flashes++;

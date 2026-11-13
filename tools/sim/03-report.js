@@ -134,7 +134,7 @@ const TRADEMARKS = [
   ['Ouroboros', 'coiled (10 long or more)', 'coiled', 'long', '%'], ['Creeper', 'riding a tail', 'riding', 'ticks', '%'],
   ['Ghost', 'cells from the nearest head', 'apart', 'ticks', 1], ['Gobbler', 'share of the food', 'foodShare', 'rounds', '%'],
   ['Vulture', 'share of the beads', 'beadShare', 'rounds', '%'], ['Sovereign', 'at home', 'atHome', 'homeTicks', '%'],
-  ['Mute', 'kills by boxing, a thousand ticks hunting', 'boxKills', 'hunting', 1000], ['Joker', 'chasers led into a crash, ten minutes alive', 'lured', 'minutes', 10],
+  ['Mute', 'its target boxed in, ten minutes alive', 'boxKills', 'minutes', 10], ['Joker', 'chasers led into a crash, ten minutes alive', 'lured', 'minutes', 10],
   ['Desperado', 'skimming danger', 'skims', 'ticks', '%'], ['Star', 'flashes a minute', 'flashes', 'minutes', 1], ['Star', 'jumps a minute', 'jumps', 'minutes', 1],
 ];
 function reportSignatures(per) {
@@ -164,7 +164,7 @@ function reportSignatures(per) {
   console.table(names.sort().map(name => {
     const one = [name], r = (a, b, unit) => sum(one, b) > 0 ? ratio(one, a, b, unit) : '';
     return { name, run: r('moves', 'runs', 1), doubled: r('doubled', 'cells', '%'), coiled: r('coiled', 'long', '%'), riding: r('riding', 'ticks', '%'), apart: r('apart', 'ticks', 1),
-      food: r('foodShare', 'rounds', '%'), beads: r('beadShare', 'rounds', '%'), home: r('atHome', 'homeTicks', '%'), 'box kills': r('boxKills', 'hunting', 1000), lured: r('lured', 'minutes', 10),
+      food: r('foodShare', 'rounds', '%'), beads: r('beadShare', 'rounds', '%'), home: r('atHome', 'homeTicks', '%'), 'box kills': r('boxKills', 'minutes', 10), lured: r('lured', 'minutes', 10),
       skims: r('skims', 'ticks', '%'), 'flash/min': r('flashes', 'minutes', 1), 'jump/min': r('jumps', 'minutes', 1) };
   }));
 }
