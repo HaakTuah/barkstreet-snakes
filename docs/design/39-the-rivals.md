@@ -364,8 +364,10 @@ Each persona uses jumps and flashes its own way, through the same engine calls a
 - **For everyone (7c):** a jumpable way out kept: in the search, a line that ends boxed in (less room than its length
   needs, and no way onto its own trail) is no sure trap while a jump from there would still be its, straight on or to a
   side as the engine takes one, onto room for its length, with a jump's worth of stamina back by then (`jumpOut` in
-  `ai/evaluate.js`): it costs as much as a neck a rival could shut (`NECK_COST`), so of two dead ends it takes the one it
-  can hop out of. And the woodpecker's mark crossed when they'll be off it before the strike ("A mark isn't a hole yet"
+  `ai/evaluate.js`): such a box is half as bad as one with no jump out (`TRAPPED / 2` back), so of two dead ends it
+  takes the one it can hop out of, but never a box over open ground or a neck. (Counted as no trap at all, as dear as a
+  neck, a line crawled on into the box and put the jump off till it was gone: deaths into themselves rose by half on
+  seed 3, part 7c(ii)'s first census.) And the woodpecker's mark crossed when they'll be off it before the strike ("A mark isn't a hole yet"
   in `38-the-woodpecker.md`). A ready flash's reserve value is the wait below the reserve (`RESERVE_PRICE`, 7a), and
   length is traded for room when boxed in by the island hop and the tail drop, both built. Each is staged in the rules
   suite (`33-power-styles.js`, `12-rivals-pass.js`, `21-the-log-in-one-piece.js`).

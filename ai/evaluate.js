@@ -274,9 +274,11 @@ function evaluate(body, len, grow, t) {
   }
 
   // Trapped: less room than I need, and no way onto my own trail. With a
-  // jump out still mine (7c), it's no sure trap: as dear as a neck a rival
-  // could shut, the jump's price and its risk.
-  if (space < need && trail === HOLE) return score - (jumpable ? NECK_COST : TRAPPED + 100 * (need - space));
+  // jump out still mine (7c), half as bad: of two boxes I take the one I
+  // can hop out of, but never one over open ground or a neck (counted as
+  // no trap at all, a line would crawl on in, putting the jump off till
+  // it was gone: deaths into themselves rose by half).
+  if (space < need && trail === HOLE) return score - TRAPPED - 100 * (need - space) + (jumpable ? TRAPPED / 2 : 0);
   // Nearly as bad: the room I need is through a neck that a rival could
   // get to and shut before I'm through, leaving me only the pocket on my
   // side of it. (Necks nearest first; one I'd get through well before
