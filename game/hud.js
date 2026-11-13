@@ -227,7 +227,7 @@ function rest(t, kind, left, full, gold) {
   t.last[kind] = now;
   el.classList.toggle('ready', now === 'ready');
   if (typeof now === 'number') el.style.setProperty('--fill', `${now}%`);
-  if (!gold) el.title = `Your ${kind}${now === 'ready' ? ' is ready' : ' is resting'} (${kind === 'jump' ? (touchFirst ? 'tap' : 'Space or a click') : touchFirst ? 'swipe ahead' : 'E, Shift, right-click or the key ahead'})`;
+  if (!gold) el.title = `Your ${kind === 'flash' ? 'dash' : kind}${now === 'ready' ? ' is ready' : ' is resting'} (${kind === 'jump' ? (touchFirst ? 'tap' : 'Space or a click') : touchFirst ? 'swipe ahead' : 'E, Shift, right-click or the key ahead'})`;
 }
 
 // The chips' icons: small inline drawings in ink (no fallback-font glyphs).

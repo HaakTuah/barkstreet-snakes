@@ -377,7 +377,7 @@ function updateHelp() {
   if (text !== helpText) { helpText = text; setHint(helpEl, text); }
 }
 
-// Hints wrap only between items ("E, Shift or right-click flashes" never splits across lines).
+// Hints wrap only between items ("E, Shift, right-click or the key you’re going dashes" never splits across lines).
 // Items joined by " · ", each kept whole, a line breaking only after a dot
 // (the dot rides with the item before it); ⏸ drawn as the pause button's bars.
 function setHint(el, text) {

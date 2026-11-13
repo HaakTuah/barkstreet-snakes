@@ -51,6 +51,9 @@ print lives in the Field guide, or comes when it happens (*Snip!*).
   (4.5 s, the fade and the breather), so it can wait out one but not two. Up to three lessons wait. One that no longer
   holds (`opts.still`, as yours once you're out) is let go while it waits, and fades early while it shows. The
   woodpecker's rule waits from when its news comes up (`opts.follows`), since its moment is the news's.
+- **Rules with only one of the two** (audit of 13 November 2026, "No rule untaught"): the weather and the rainbow, a
+  friend going quiet (an AI steering) and the Jump row's silence on a press made too early have a cue and a banner or
+  lesson but no Field guide row or clause; the idea is #739.
 
 ### The banner
 
