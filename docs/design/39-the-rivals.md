@@ -274,9 +274,10 @@ driver are in `ai/rivals/`, over the shared template in `ai/rivals.js` (`DRAB`, 
 
 Measured (part 7c): Mason's walls two thick (`doubled`: cells in a run of three or more lying beside the body), the
 chasers Joker leads into a crash (`lured`), and Mute's kills by boxing (`boxKills`: a rival dead on Mute's own body,
-boxed in, while Mute closed on it). Mason and Joker lead the field on these; Mute, which lagged, presses its boxed
-victim harder (`aggression` 1, from 0.8) so it leads its kills. Joker sits in the band after 7a and 7b (its win rate
-no longer costs it); Star, the one persona still below it, is lifted in 7c (below, "Star").
+boxed in, while Mute closed on it). Each leads the field on its own, so none needed more teeth (seeds 3 and 11 on
+`main` at 7b's merge: Mason 19.2% and 19.6% against 16.4% and 16.1%; Joker 17.0 and 14.4 against 13.7 and 13.0; Mute
+0.99 and 0.44 against 0.23 and 0.31). Joker sits in the band after 7a and 7b; Star, the one persona still below it, is
+lifted in 7c (below, "Star").
 
 ### Ouroboros
 
