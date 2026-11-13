@@ -48,9 +48,9 @@ function patchAI(text) {
   swap('spillWorth = f => Math.max(', 'spillWorth = f => globalThis.__forbid.grab.has(me.id) ? 0 : Math.max('); // (grab: dropped charges worth nothing to me)
   swap('if (me.dashes > 0) { const v', 'if (me.dashes > 0 && !globalThis.__forbid.dash.has(me.id)) { const v');
   // (--forced: the move's price waived, so it's taken wherever it scores above the crawl)
-  swap('v += extra - (price * (full ? 1 : habit.price) + wait) * cheap * U;', 'v += extra - (globalThis.__force.any.has(me.id) && (flash ? globalThis.__force.dash.has(me.id) : (globalThis.__force.fly.has(me.id) && leapFly) || (globalThis.__force.now.has(me.id) && leapNow)) ? 0 : (price * (full ? 1 : habit.price) + wait) * cheap * U);');
+  swap('v += extra - (cost - Math.min(SURE_BACK * gain, cost * SURE_BACK / (1 + SURE_BACK))) * U;', 'v += extra - (globalThis.__force.any.has(me.id) && (flash ? globalThis.__force.dash.has(me.id) : (globalThis.__force.fly.has(me.id) && leapFly) || (globalThis.__force.now.has(me.id) && leapNow)) ? 0 : (cost - Math.min(SURE_BACK * gain, cost * SURE_BACK / (1 + SURE_BACK))) * U);');
   // (power, 2u+: the plain jump or the plain flash forbidden, or the other forced: taken wherever it can go, priced at nothing)
-  swap('consider = (d, flash, v, price, extra, wait = 0) => {', 'consider = (d, flash, v, price, extra, wait = 0) => { const pk = flash ? (me.dashes > 0 ? \'\' : \'pdash\') : (me.leaps > 0 ? \'\' : \'pjump\'), pf = !!pk && globalThis.__force[pk].has(me.id); if (pk && globalThis.__forbid[pk].has(me.id)) v = null; if (pf) { price = 0; wait = 0; }');
+  swap('consider = (d, flash, v, price, extra, wait = 0, gain = 0) => {', 'consider = (d, flash, v, price, extra, wait = 0, gain = 0) => { const pk = flash ? (me.dashes > 0 ? \'\' : \'pdash\') : (me.leaps > 0 ? \'\' : \'pjump\'), pf = !!pk && globalThis.__force[pk].has(me.id); if (pk && globalThis.__forbid[pk].has(me.id)) v = null; if (pf) { price = 0; wait = 0; }');
   swap('if (v > (bestPower ? bestPower.v : crawlScore + 1))', 'if (v > (bestPower ? bestPower.v : pf ? -Infinity : crawlScore + 1))');
   swap('me.flashIn === 0 && (dropping || d === crawlDir', 'me.flashIn === 0 && (dropping || globalThis.__force.pdash.has(me.id) || d === crawlDir');
   return text;

@@ -7,6 +7,12 @@
 //   cautious: my margin), and a spend that leaves less costs RESERVE_PRICE
 //   apples a full bar for the wait till it's back. Out of a trap (every
 //   crawl ends in a crash) the reserve is what it's for: no wait is priced.
+//   Both at two and a half times what they were (2 and 2.4 apples): the
+//   search's guess at what a power gains has to be that much bigger. What
+//   a power surely gains, that the crawl can't have (a cut, a flier's ring,
+//   an island, a rival shut in: sureGain), isn't a guess: each apple of it takes
+//   SURE_BACK apples off the price, down to what it was. A race for a golden
+//   apple costs nothing: the apple fills the bar it spends.
 // - The flash, with its share in the bar: two cells in a tick along the
 //   ground, every one of them free by then, only the way I'd crawl anyway
 //   (or any way out of a crash). Its full price (when it rested apart, two
@@ -33,15 +39,15 @@
 // same tests of where each goes (it never takes one into a crash) and the
 // same risk where it ends. One that ends where a rival could strike costs
 // it the full price.
-const STAMINA_PRICE = 2; // (apples, a full bar of stamina: each power costs its share of that)
-const RESERVE_PRICE = 2.4; // (apples, a full bar's worth of waiting below my reserve)
-const GAIN_PRICE = 2.5; // (a flash for food or room alone, at this many times its share of a bar: one out of a trap, to win a race or to cut keeps the share, halved)
+const STAMINA_PRICE = 5; // (apples, a full bar of stamina: each power costs its share of that; and a meal's stamina is worth as much, see ai/food.js)
+const RESERVE_PRICE = 6; // (apples, a full bar's worth of waiting below my reserve)
+const SURE_BACK = 1.5; // (apples off a plain power's price for each apple it surely gains, down to 1 / (1 + SURE_BACK) of it: the price at 2 and 2.4)
 const RESERVE_MARGIN = DRAB.margin; // (the margin, spare room wanted, of a snake that keeps all the other power needs: the default's; less cautious, less; more, more)
 // (powerPick() sets these for each call:)
 let crawlScore, crawlDir, air, jump, U, habit, safe, cheap, keep, stampM, trapped, boxed, dropping, roomsHere, foodHere, hereFree,
   hereFood, landFood, landCells, pecks, cellAt, freeSoon, inTheWay, path, straight, leapNow, leapFly, leapTurn, ate, ateV,
-  ateL, ateG, ateGain, endRisk, leapKeep, idle, muteWas, ateBug, ateWas, meal, bugsOn, cutter, bestPower, ownCut, cutKills, cutTarget, consider,
-  waitPrice;
+  ateL, ateG, ateGain, endRisk, idle, muteWas, ateBug, ateWas, meal, bugsOn, cutter, bestPower, ownCut, cutKills, cutTarget, consider,
+  waitPrice, sureGain = 0;
 function powerPick(crawlIn, crawlDirIn) {
   crawlScore = crawlIn; crawlDir = crawlDirIn;
   air = me.flight || null; // (up on a golden flight: only where to come down is weighed, see leapOpt)
@@ -99,11 +105,12 @@ function powerPick(crawlIn, crawlDirIn) {
   bugsOn = (s, hx, hy) => { for (let b = 0; b < bugCount; b++) if (ateBug & (1 << b)) { const n = b * BUG_SLOTS + s + 1; bugCell[n] = -1; bugDug[n] = -1; } else bugStep(b, s, s + 1, s, hx, hy, otherBug(b, s)); };
   cutter = !!w.hunt || (w.aggression || 0) >= 0.5; // (the hunters and the aggressive weigh a cut off to the side too)
   bestPower = null, ownCut = -1, cutKills = false, cutTarget = false; // (ownCut, cutKills, cutTarget: see flashOpt)
-  consider = (d, flash, v, price, extra, wait = 0) => { // (wait: what it leaves me below my reserve, priced apart: a habit doesn't make that free)
+  consider = (d, flash, v, price, extra, wait = 0, gain = 0) => { // (wait: what it leaves me below my reserve, priced apart: a habit doesn't make that free; gain: what it surely gains, a plain power's)
     const full = endRisk > safe || idle;
     idle = false;
     if (v === null) return;
-    v += extra - (price * (full ? 1 : habit.price) + wait) * cheap * U;
+    const cost = (price * (full ? 1 : habit.price) + wait) * cheap;
+    v += extra - (cost - Math.min(SURE_BACK * gain, cost * SURE_BACK / (1 + SURE_BACK))) * U;
     if (v > (bestPower ? bestPower.v : crawlScore + 1)) bestPower = { d, flash, v, now: !flash && leapNow, fly: flash ? 0 : leapFly, turn: flash ? null : leapTurn };
   };
   if (air) { const v = leapOpt(air.dir); return v === null ? null : { d: air.dir, flash: false, v, now: false, fly: leapFly, turn: leapTurn }; } // (in the air: where to come down, from here)
@@ -111,8 +118,8 @@ function powerPick(crawlIn, crawlDirIn) {
     if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
     const extra = (intent.mimicDir && sameDir(d, intent.mimicDir) ? w.mimic : 0) - (w.turn && !sameDir(d, me.dir) ? w.turn : 0);
     if (me.dashes > 0) { const v = flashOpt(d, true); if (trapped || cutKills || habit.dashSpend || (dropping && ownCut >= 0)) consider(d, true, v, 0.6, extra); } // (a golden dash, held: out of a trap, or for a cut that puts a rival out; spent so, it gains (see part 4's chosen numbers); spent as it came, −0.11 ± 0.09 place a use; Star (dashSpend), its trademark, spends them as they come)
-    else if (me.flashIn === 0 && (dropping || d === crawlDir || habit.everyWay || (cutter && bodyNear(d)) || coverNear(d))) { const v = flashOpt(d, false), sure = trapped || cutTarget || race(d); consider(d, true, v, STAMINA_PRICE * TUNE.DASH_STAMINA_MS / TUNE.STAMINA_MS * (sure ? 0.5 : GAIN_PRICE), extra, waitPrice(TUNE.DASH_STAMINA_MS, true) * (sure ? 1 : GAIN_PRICE)); }
-    if (jump) { leapKeep = false; const v = leapOpt(d), k = trapped || leapKeep || leapNow ? 1 : GAIN_PRICE; consider(d, false, v, (me.leaps > 0 ? 0.35 : k * STAMINA_PRICE * TUNE.JUMP_STAMINA_MS / TUNE.STAMINA_MS) * (leapNow ? (w.leapNow ?? 1) : 1), extra, me.leaps > 0 ? 0 : k * waitPrice(TUNE.JUMP_STAMINA_MS, false)); } // (leap now, at the jump's price times my style's: only out of a trap, see leapOpt)
+    else if (me.flashIn === 0 && (dropping || d === crawlDir || habit.everyWay || (cutter && bodyNear(d)) || coverNear(d))) { const v = flashOpt(d, false), won = race(d), gold = won && won.kind === 'golden'; consider(d, true, v, gold ? 0 : STAMINA_PRICE * TUNE.DASH_STAMINA_MS / TUNE.STAMINA_MS * (trapped || cutTarget || won ? 0.5 : 1), extra, gold ? 0 : waitPrice(TUNE.DASH_STAMINA_MS, true), sureGain); } // (a golden apple won: it fills the bar)
+    if (jump) { const v = leapOpt(d); consider(d, false, v, (me.leaps > 0 ? 0.35 : STAMINA_PRICE * TUNE.JUMP_STAMINA_MS / TUNE.STAMINA_MS) * (leapNow ? (w.leapNow ?? 1) : 1), extra, me.leaps > 0 ? 0 : waitPrice(TUNE.JUMP_STAMINA_MS, false), me.leaps > 0 ? 0 : sureGain); } // (leap now, at the jump's price times my style's: only out of a trap, see leapOpt)
   }
   return bestPower;
 }
@@ -131,6 +138,7 @@ function groundOpt(n, bonus) {
   bugsOn(0, path[n - 1] % N, (path[n - 1] - path[n - 1] % N) / N);
   endRisk = risk[path[n - 1]] + strikes[path[n - 1]] + ringRisk(path[n - 1], 1);
   const gain = bonus + ateGain - endRisk;
+  sureGain = Math.max(0, bonus / U); // (a cut, a flier's ring: what the crawl can't have; food on the way it has a tick later)
   const score = depth > 1 ? search(nb, ateL, ateG, depth - 1, 1, gain) : evaluate(nb, ateL, ateG, 1) + gain;
   covered = 0;
   uneat();

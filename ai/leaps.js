@@ -91,8 +91,8 @@ function leapOpt(d) {
 function landOpt(d, span, golden, now) {
   const land = path[span];
   const down = span + 1;
+  sureGain = 0;
   const isle = islandGain(land);
-  if (!golden) leapKeep = boxed || isle > 0; // (a plain jump out of a box or to an island: one I keep at today's price)
   const doom = doomed(land, span, golden);
   if (doom >= 0) return DEAD + (span + 1 + doom) * 1000; // (the death it is, that many moves on: taken only if staying is worse)
   if (!golden && !boxed && !isle && !meal(land, down) && !now) { // (the plain jump: out of a crash or a box, to an island, or onto food, or just short of it)
@@ -117,6 +117,7 @@ function landOpt(d, span, golden, now) {
   const take = coverAt(land, down), lone = golden && !air && span === TUNE.GOLD_FLY && !spare(span); // (down on a flier's ring before it; a held flight with nowhere else to come down, see spare)
   covered = coverHit;
   const gain = ateGain + isle * U - 0.6 * endRisk + shut * U + take - (lone ? SPARE * U : 0);
+  sureGain = Math.max(0, isle + shut + take / U); // (what the crawl can't have: the island, a rival shut in, a flier's ring; see consider)
   const score = depth > down ? search(nb, ateL, ateG, depth - down, down, gain) : evaluate(nb, ateL, ateG, down) + gain;
   covered = 0;
   uneat();

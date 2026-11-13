@@ -3,13 +3,13 @@
 
 // A race: food straight on, or that way, that a rival could get to
 // just as soon as I'd crawl there (but not as soon as I'd flash there,
-// a tick sooner).
+// a tick sooner). The food, or null.
 function race(d) {
   for (const f of food) {
     const i = f.y * N + f.x, k = Math.abs(f.x - myHead.x) + Math.abs(f.y - myHead.y);
-    if (foodValue[i] > 0 && reach[framed[i]] === k && Math.abs(f.x - myHead.x - 2 * d.x) + Math.abs(f.y - myHead.y - 2 * d.y) === k - 2) return true;
+    if (foodValue[i] > 0 && reach[framed[i]] === k && Math.abs(f.x - myHead.x - 2 * d.x) + Math.abs(f.y - myHead.y - 2 * d.y) === k - 2) return f;
   }
-  return false;
+  return null;
 }
 
 // The cells a power passes, from my head, into path; false if one's off the board.
