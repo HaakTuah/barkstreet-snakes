@@ -52,7 +52,9 @@ the owner's notes of 2 November, the portals blue and orange and the woodpecker'
   is a person and that no rival's timing gives one away ("The computer players never know who is a person") (done: PR
   #728, `tools/rules/31-never-know-a-person.js`; it found a dropped tail's colour in the food a rival is shown, taken
   out); (3) whatever the game shows from the past showing its age ("No rule untaught"); (4) online rounds replaying from
-  the log of every input ("Same seed, same game"). What changes the AI, the engine's rules or the online messages goes to the
+  the log of every input ("Same seed, same game") (done: PR #730, `tools/rules/32-online-replay.js`; it found that the
+  inputs alone don't replay a round: where a press lands among the rivals' thinking, and which rivals thought ahead,
+  change the host's game, #729). What changes the AI, the engine's rules or the online messages goes to the
   main lane as an entry of its own. The updating rule needs nothing: `docs/design/36-updating.md` takes a new version
   between rounds, as the core's "Players always play the newest version" now says.
 - **The file-by-file review** (the owner, 2 November 2026; part 1, the docs every session reads, done in PR #334;

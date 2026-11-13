@@ -5,6 +5,16 @@
 // view, its own brain and its memory. (2) By playing: the same board twice, a seat first a rival's, then a person's, with
 // the same randomness and the same moves; every rival is shown the same view, picks the same move and decides on the same
 // ticks. The seat in question has its powers kept empty, so that its moves alone can be played back into the person.
+// (Two boards or views compared, here and in the parts after: the game's collections as lists, and where two first differ,
+// with what each holds there.)
+const { isSet, isMap } = require('util').types; // (the game's collections are another context's: `instanceof Set` is false for them)
+const replacer = (k, v) => isSet(v) || isMap(v) ? [...v] : v;
+const diffAt = (a, b, at = '') => {
+  if (a === b) return '';
+  if (!a || !b || typeof a !== 'object' || typeof b !== 'object') return `${at || '(whole)'}: ${JSON.stringify(a, replacer)?.slice(0, 60)} against ${JSON.stringify(b, replacer)?.slice(0, 60)}`;
+  for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) { const d = diffAt(a[k], b[k], `${at}.${k}`); if (d) return d; }
+  return '';
+};
 {
   const gameFiles = require('./game-files.js'), isAI = gameFiles.ai;
   const strip = s => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, ''); // (code only: the comments speak of people freely)
@@ -26,14 +36,6 @@
 
   // ---- by playing
   const decisionRng = (tick, id) => seeded((Math.imul(tick + 1, 0x9e3779b1) ^ Math.imul(id + 1, 0x85ebca6b)) >>> 0); // (each decision draws from a stream of its own, so who else decides shifts no one's)
-  const { isSet, isMap } = require('util').types; // (the game's collections are another context's: `instanceof Set` is false for them)
-  const replacer = (k, v) => isSet(v) || isMap(v) ? [...v] : v;
-  const diffAt = (a, b, at = '') => {
-    if (a === b) return '';
-    if (!a || !b || typeof a !== 'object' || typeof b !== 'object') return at || '(whole)';
-    for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) { const d = diffAt(a[k], b[k], `${at}.${k}`); if (d) return d; }
-    return '';
-  };
   // One round in a context of its own: `persons` people first (ids 0 up, as in a game), then the rival keys. The first `seats`
   // seats are quiet (no powers); `feed`, by tick, gives the person seats the moves a rival of the same seat made (names).
   function play({ persons, seats, keys, feed = {}, time, snow, ticks }) {
