@@ -122,18 +122,24 @@ const totals = () => ({ rounds: 0, timeSum: 0, times: [], sudden: 0, draws: 0, s
 // What --signatures measures, per snake (summed over its ticks and rounds;
 // each trademark is read against everyone else's, the field):
 //   moves, runs        moves made, and runs of them the same way (Mason: long straight runs)
-//   cells, beside      body cells, and those lying beside another part of the same body (Mason's thick walls)
+//   cells, doubled     body cells, and those in a stretch of three or more along the body, each lying beside another part
+//                        of the same body: a wall two thick (Mason's)
 //   long, coiled       ticks 10 or more long, and of those, with the head within 3 of its own tail (Ouroboros)
 //   riding             ticks with the head within 2 of the tail end of a rival 8 or longer (Creeper)
 //   apart              distance from the nearest rival head, summed over ticks (capped at 14: Ghost)
 //   foodShare, beadShare  its share of the round's food eaten, and of the beads (summed over rounds: Gobbler, Vulture)
 //   homeTicks, atHome  ticks with a realm, and of those, the head on it (Sovereign)
-//   hunting, boxing    ticks with a target, and of those, closing the box: the target's head within 4 of its own (Mute: the rule its mood ring shows)
-//   luring             ticks with a rival head 2 to 4 away: just out of its reach, close enough to follow (Joker)
+//   boxKills           a rival dead on my body, boxed in (no room left after the crash), while my head was within 4 of
+//                        it, closing the box (the rule Mute's mood ring shows): a kill by boxing (Mute, ten minutes alive)
+//   lured              crashes (out or bounced; not fire, hunger or the woodpecker) of a rival that, in the 4 ticks
+//                        before, had its head within 4 of its own and was heading at it: a chaser led into a crash (Joker)
 //   skims              ticks with the head beside the edge, a hole or a body (not its own neck), or a rival head within 2 (Desperado)
 //   flashes, jumps     plain and golden flashes, and jumps of both kinds (Star: a minute alive)
 //   eats, beadsEaten   food eaten, and of it beads (Gobbler and Vulture by the minute, for Capricious's impressions of them)
-const SIGNS = ['moves', 'runs', 'cells', 'beside', 'long', 'coiled', 'riding', 'apart', 'foodShare', 'beadShare', 'homeTicks', 'atHome', 'hunting', 'boxing', 'luring', 'skims', 'flashes', 'jumps', 'eats', 'beadsEaten', 'ticks'];
+const DOUBLED = 3; // (cells beside itself in a row: a stretch of wall two thick)
+const LURE_TICKS = 4; // (a chaser's crash this soon after it was last chasing counts as led into it)
+const CRASHED = ['boxed', 'shorter', 'even', 'tiny', 'boom', 'hole']; // (the deaths that are crashes, as the step's collisions set them: not a cut, hunger, fire or the beak)
+const SIGNS = ['moves', 'runs', 'cells', 'doubled', 'boxKills', 'lured', 'long', 'coiled', 'riding', 'apart', 'foodShare', 'beadShare', 'homeTicks', 'atHome', 'skims', 'flashes', 'jumps', 'eats', 'beadsEaten', 'ticks'];
 
 // Capricious in a mood: its signatures count for it, and again under the
 // mood's name ('mason.runs'...), so each impression's trademark can be read
@@ -161,6 +167,19 @@ function signatures(g, T, per, was) {
   const all = stampOf(); // (every living body's cells, for the skims)
   for (const s of alive) for (const c of s.body) mark[c.y * N + c.x] = all;
   const bodyAt = (x, y) => x >= 0 && y >= 0 && x < N && y < N && mark[y * N + x] === all;
+  // Kills by boxing and chasers led into a crash, by what the tick before saw (was: each one's targets and chasers then).
+  const crashed = new Set();
+  for (const e of g.events) {
+    const o = e.snake;
+    if (!o || crashed.has(o.id) || (e.type === 'crash' ? /^got pecked/.test(e.cause || '') : e.type !== 'death' || !CRASHED.includes(o.fatal))) continue;
+    crashed.add(o.id);
+    for (const s of g.snakes) {
+      const w = was[s.id];
+      if (s === o || !w) continue;
+      if ((w.chasers?.[o.id] ?? -Infinity) >= g.tick - LURE_TICKS) sigOf(per, s).lured++;
+      if (e.type === 'death' && o.fatal === 'boxed' && o.killerId === s.id && w.boxing === o.id) sigOf(per, s).boxKills++; // (it died on my body, boxed, while I was closing on it)
+    }
+  }
   for (const s of alive) {
     const p = sigOf(per, s), h = s.body[0], L = s.body.length;
     const w = was[s.id];
@@ -170,25 +189,28 @@ function signatures(g, T, per, was) {
     // Lying beside itself: a cell with another of its own (not the one before or after it) beside it.
     const index = signatures.index ||= new Int32Array(N * N), own = stampOf();
     s.body.forEach((c, j) => { mark[c.y * N + c.x] = own; index[c.y * N + c.x] = j; });
+    let stretch = 0; // (cells beside itself in a row, along the body)
     s.body.forEach((c, j) => {
       p.cells++;
+      let by = false;
       for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
         const x = c.x + dx, y = c.y + dy, i = y * N + x;
-        if (x >= 0 && y >= 0 && x < N && y < N && mark[i] === own && Math.abs(index[i] - j) > 1) { p.beside++; break; }
+        if (x >= 0 && y >= 0 && x < N && y < N && mark[i] === own && Math.abs(index[i] - j) > 1) { by = true; break; }
       }
+      if (by) { stretch++; if (stretch === DOUBLED) p.doubled += DOUBLED; else if (stretch > DOUBLED) p.doubled++; } else stretch = 0;
     });
     for (const c of s.body) mark[c.y * N + c.x] = all; // (back to everyone's)
     if (L >= 10) { p.long++; if (Math.abs(h.x - s.body[L - 1].x) + Math.abs(h.y - s.body[L - 1].y) <= 3) p.coiled++; }
-    let nearest = 14, lure = false, ride = false;
+    let nearest = 14, ride = false;
+    const chasers = w.chasers ||= {};
     for (const o of alive) {
       if (o === s) continue;
       const oh = o.body[0], d = Math.abs(oh.x - h.x) + Math.abs(oh.y - h.y), t = o.body[o.body.length - 1];
       nearest = Math.min(nearest, d);
-      if (d >= 2 && d <= 4) lure = true;
+      if (d <= 4 && o.dir.x * (h.x - oh.x) + o.dir.y * (h.y - oh.y) > 0) chasers[o.id] = g.tick; // (its head near and heading at mine: chasing me)
       if (o.body.length >= 8 && Math.abs(t.x - h.x) + Math.abs(t.y - h.y) <= 2) ride = true;
     }
     p.apart += nearest;
-    if (lure) p.luring++;
     if (ride) p.riding++;
     let skim = nearest <= 2;
     for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
@@ -200,11 +222,8 @@ function signatures(g, T, per, was) {
     const home = s.memory.home;
     if (home) { p.homeTicks++; if (Math.hypot(h.x - home.x, h.y - home.y) <= home.radius + T.LAND_REACH) p.atHome++; }
     const victim = s.memory.victimId != null && g.snakes.find(o => o.id === s.memory.victimId);
-    if (victim && victim.alive) {
-      p.hunting++;
-      const vh = victim.body[0];
-      if (Math.abs(vh.x - h.x) + Math.abs(vh.y - h.y) <= 4) p.boxing++;
-    }
+    w.boxing = null;
+    if (victim && victim.alive && Math.abs(victim.body[0].x - h.x) + Math.abs(victim.body[0].y - h.y) <= 4) w.boxing = victim.id;
   }
   for (const e of g.events) {
     if (e.type === 'dash') sigOf(per, e.snake).flashes++;

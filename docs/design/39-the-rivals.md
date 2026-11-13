@@ -248,22 +248,22 @@ Mason's longer straight runs (29 October 2026: `docs/archive/progress-done/owner
 ### The cast and their trademarks
 
 Every rival keeps its trademark, measured before and after any change to the rivals ("Rules that stand" in
-`AGENTS.md`; the measures are the census's, as in "Trademarks" under "Round six A, measured"). Each rival's weights and
+`AGENTS.md`; the measures are the census's, `TRADEMARKS` in `tools/sim/03-report.js`: first measured under "Round six A, measured", and three new in part 7c, below). Each rival's weights and
 driver are in `ai/rivals/`, over the shared template in `ai/rivals.js` (`DRAB`, `HUNT`).
 
 | Rival | Its blurb | Its trademark, as measured | What makes it |
 | --- | --- | --- | --- |
-| Mason | "Walls off the board, then keeps the biggest piece." | Straight runs (cells between turns) | `turn` 25, `territory` 1.8, `thick` 60 |
+| Mason | "Walls off the board, then keeps the biggest piece." | Straight runs (cells between turns), and its body in walls two thick | `turn` 25, `territory` 1.8, `thick` 60 |
 | Ouroboros | "Chases its own tail, then moves as a ring. Mind the middle." | Coiling (coiled, 10 long or more) | `coil` (20, from 10) |
 | Creeper | "Sneaks up and rides right behind other snakes’ tails." | Tail-riding | `tail` 45 |
 | Ghost | "Keeps its distance from everyone, and slips through the gaps." | Distance (cells from the nearest head) | `distance` 5, `space` 2 |
 | Gobbler | "Eats everything, even a rival’s apple. Hates mushrooms." | Food share | `food` 10, `eat` 300, `contested` 1, `hurry` 1.5, `headRisk` 2200, `nerve` |
 | Vulture | "Circles snakes in trouble and feasts on what they leave behind." | Beads (its share of them) | its driver (the snake with least room for its length), `lure`, `pellet` 3 |
 | Sovereign | "Rules its own patch of bark and attacks anyone who trespasses." | Time home | its driver, `home` |
-| Mute | "A mime. Picks someone and closes an invisible box round them." | Boxing (closing the box) | Sniper's driver, `hunt` (`squeeze` 4), `aggression` 0.8 |
-| Joker | "Lures chasers into dead ends and swerves away at the last moment." | Lures (luring a rival on) | its driver, `lure` (6, 3 cells) |
+| Mute | "A mime. Picks someone and closes an invisible box round them." | Its target boxed in on its body (ten minutes alive) | Sniper's driver, `hunt` (`squeeze` 4), `aggression` 0.8 |
+| Joker | "Lures chasers into dead ends and swerves away at the last moment." | Chasers led into a crash (ten minutes alive) | its driver, `lure` (6, 3 cells) |
 | Desperado | "Skims edges, bodies and heads for the thrill of it. Yeehaw." | Skims (skimming danger) | `thrill` 25, `nerve` 0.7 |
-| Star | "Jumps and dashes every chance it gets. Catch it when it dims." | Flash rate (flashes a minute) | `powers` (Star's habit), `golden` |
+| Star | "Jumps and dashes every chance it gets. Catch it when it dims." | Flash and jump rates (a minute) | `powers` (Star's habit), `golden` |
 | Sniper | "Picks whichever snake it has the best shot at and cuts it off." | | its driver, `hunt` |
 | Colonist | "A redcoat who plants flags all over and defends every one." | | its driver, `colony` |
 | Metagamer | "Studies how each rival plays, then counters it." | | its driver |
@@ -272,8 +272,12 @@ driver are in `ai/rivals/`, over the shared template in `ai/rivals.js` (`DRAB`, 
 | Copycat | "Copies whoever leads: their colours, paled, and how they play. Party member." | | its driver: `35-capricious-copycat-and-wildcard.md` |
 | Wildcard | "A random mix of habits, new every round. Great hair." | | its driver: `35-capricious-copycat-and-wildcard.md` |
 
-Still to build (part 7 of round six B, in `docs/PROGRESS.md`): measures that catch Mute's boxing, Joker's lures and
-Mason's body beside itself, which show little over the field on a simple measure, and Joker lifted into the band.
+Measured (part 7c): Mason's walls two thick (`doubled`: cells in a run of three or more lying beside the body), the
+chasers Joker leads into a crash (`lured`), and Mute's kills by boxing (`boxKills`: a rival dead on Mute's own body,
+boxed in, while Mute closed on it). Each leads the field on its own, so none needed more teeth (Mason's and Joker's thin
+leads are checked again on fresh seeds in 7c(iii); seeds 3 and 11 on `main` at 7b's merge: Mason 19.2% and 19.6% against
+16.4% and 16.1%; Joker 16.6 and 13.9 against 13.4 and 12.6; Mute 0.99 and 0.44 against 0.23 and 0.31). Joker sits in the
+band after 7a and 7b; Star, the one persona still below it, is lifted in 7c (below, "Star").
 
 ### Ouroboros
 
@@ -295,9 +299,13 @@ It prices powers far below anyone else, by the same rules and the same engine ca
 are off for everyone else, so rounds without Star play exactly as if it didn't exist:
 - **`w.powers`** `{ price: 0, risk: 350, everyWay, jumpAny, dashSpend, keepFlash: 0.01 }`. Its powers are free to it, unless one ends
   where its risk is over 350 (a rival could strike there: in reach of its powers, or nearer), and there it pays the
-  full price, as anyone would. A power still has to beat crawling by a point.
-  - **Flashes:** whenever it has a flash's worth of stamina and the flash doesn't run into anything, weighed every
-    way, not just the way it would crawl: about three times as often as the median rival.
+  full price, as anyone would. A power still has to beat crawling by a point, and a flash pays the wait below a jump's
+  worth of stamina, as anyone's does (7c).
+  - **Flashes:** whenever the flash doesn't run into anything and gains more than that wait, weighed every way, not
+    just the way it would crawl: over twice as often as the median rival. (Free of the wait, it flashed three times
+    as often, spent every flash, and died boxed in its own coils with nothing left to jump out or drop its tail: 12%
+    of its rounds won with Star in every round, seeds 101 and 103; minding it, 17% and 18%, its deaths against
+    itself and the edge a fifth fewer.)
   - **Jumps:** any hurdle with somewhere free to land beyond it that no rival could get to before it's down, not just
     out of a crash or onto food: over twice as often as the median rival. What it keeps is a flash's worth of stamina
     (`keepFlash`): a jump that leaves less costs it a hundredth of the wait it costs anyone, so its jumps don't eat
@@ -344,8 +352,10 @@ Each persona uses jumps and flashes its own way, through the same engine calls a
   full price: `coil`; and its tail dropped as anyone's, once boxed in in the endgame, where 2h had it wait for a
   crash). **Star** is the addict (its habit: "Star"); **Capricious and Copycat** borrow the style of whoever they wear;
   **Wildcard** draws one of the cast's at random each round, half the time (`randomWeights`); **Drab**, the baseline,
-  has none. **Metagamer**, which reads its rivals, has none yet: its counters are its driver's, and a style of its own
-  waits for 7c. The census counts each rival's plain flashes and jumps pressed for its style (`style/min`); each style
+  has none. **Metagamer**'s style is its counters (7c), read from what it has seen of the rivals about it, as its driver
+  labels them: against a greedy one it races for food (½), against an evasive one it cuts the one it hunts (½), and
+  with an aggressive one about it keeps a flash ready to escape (as Ghost: `keep` 2); a mix of them, all it has seen.
+  Whoever wears it (Capricious, Copycat) keeps its own weights under the counters. The census counts each rival's plain flashes and jumps pressed for its style (`style/min`); each style
   has a staged rules test (`tools/rules/33-power-styles.js`).
 - **Built before it:** a style's own price for a leap now and for a flier's ring (`leapNow`, `landing`: "Rivals use their
   powers, when it pays") and for a mushroom shot (`spit`: "Mushrooms, to a rival"); everyone's island hop, and a tail
