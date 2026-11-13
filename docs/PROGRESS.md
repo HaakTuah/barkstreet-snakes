@@ -35,7 +35,8 @@ The game's polish lane (`core/modules/work-flow.md`, point 4; the owner, 31 Octo
 - **How, here:** a lesson and an online lobby among the screens; the picture on `pr-media`, and play proven unchanged by
   the suites and the simulation's fingerprints (seeds 3 and 11); one line per fix under this lane.
 
-*Next find:* none queued: look for more by playing, as "How" says.
+*Next find:* [the round's food season shown on screen, not only in the banner before Go](https://github.com/HaakTuah/barkstreet-snakes/issues/603)
+(the owner's yes, 13 November 2026), with pictures before and after; then more by playing, as "How" says.
 
 *Done in the lane:* each fix's line is in `docs/archive/progress-done/polish-lane.md`, "The polish lane, done" (the README for
 players, any key wakes, the woodpecker bigger on a phone, the flash become the dash, the room card and Join on a phone,
