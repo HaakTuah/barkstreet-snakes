@@ -10,6 +10,7 @@
 window.SnakeVersion = {
   build: 'dev',
   news: [
+    { on: '2026-11-13', line: 'Rivals dash less, keeping stamina for what pays.' },
     { on: '2026-11-12', line: 'The woodpecker’s piece is shaded as it’s cut.' },
     { on: '2026-11-12', line: 'Hunger bites 12 s after every meal, all round.' },
     { on: '2026-11-12', line: 'Joining friends now works even if PeerJS is down.' },
