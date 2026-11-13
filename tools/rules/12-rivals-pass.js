@@ -15,19 +15,20 @@ const marked = (more = {}) => aiView({ holes: new Set(MARK), pecks: new Set(MARK
     food: [{ x: 13, y: 11, kind: 'golden', expires: 9999 }, { x: 2, y: 20, kind: 'food', expires: 9999 }] });
   const knocked = picks(view(13)), blind = picks(view(null));
   check('an AI values food in the mark where the strike will knock it (the rings), and heads there', ring.x === 11 && ring.y === 11 && knocked.right === 50 && blind.right < 40, JSON.stringify({ ring, knocked, blind }));
-  // ...and never into the mark for it: right beside the mark with the apple in front of its head, it doesn't wait in the
-  // mark for the strike (it's a hole by then), nor go for the apple where it lies.
-  const beside = picks(() => marked({ me: aiMe(line(11, 11, 5), 'right'), others: [aiRival(1, line(20, 22, 5), 'right')], food: [{ x: 12, y: 11, kind: 'food', expires: 9999 }] }));
+  // ...and never into the mark for it: right beside the mark with the apple in front of its head and the strike after
+  // its second move, too soon to cross (7c, below), it doesn't wait in the mark for the strike (it's a hole by then), nor
+  // go for the apple where it lies.
+  const beside = picks(() => marked({ strikeAt: 11, me: aiMe(line(11, 11, 5), 'right'), others: [aiRival(1, line(20, 22, 5), 'right')], food: [{ x: 12, y: 11, kind: 'food', expires: 9999 }] }));
   check('...and never steps into the mark for it', !beside.right && (beside.up || 0) + (beside.down || 0) === 50, JSON.stringify(beside));
 }
 
 { // 7c: a mark isn't a hole yet. A rival crosses it where it would be off it before the strike, with a move to spare,
   // the depth of each cell from the bark beyond as the engine reckons it. An apple just past the 3x3 mark on row 11 (at
-  // 16, 11): from right beside the mark, it heads straight in with the strike 12 moves off; already in it (at its edge,
-  // 12, 11), it goes on across to the middle with the strike 12 off, and with it 3 off, it steps off sideways (the middle,
-  // two from the bark, it would still be in a move before the strike).
+  // 16, 11): from right beside the mark, it heads straight in with the strike after its 13th move; already in it (at its
+  // edge, 12, 11), it goes on across to the middle with the strike after its 13th, and with it after its 3rd, it steps off
+  // sideways (the middle, two from the bark, it would be off it only with the move before the strike).
   const across = (strikeAt, head) => picks(() => marked({ strikeAt, me: aiMe(line(head, 11, 5), 'right'), others: [aiRival(1, line(20, 22, 5), 'right')], food: [{ x: 16, y: 11, kind: 'food', expires: 9999 }] }));
-  const toward = across(22, 11), early = across(22, 12), late = across(13, 12);
+  const toward = across(22, 11), early = across(22, 12), late = across(12, 12);
   check('7c: a rival crosses the woodpecker\'s mark where it is out of it before the strike, and steps off where it wouldn\'t be', toward.right === 50 && early.right === 50 && !late.right, JSON.stringify({ toward, early, late }));
 }
 

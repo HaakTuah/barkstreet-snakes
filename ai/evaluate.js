@@ -3,12 +3,13 @@
 
 // Can my head step into cell (x, y) as move number `step` from now? (A
 // bridge, while it lasts; the woodpecker's mark, while I'd still be off it
-// before the strike with a move to spare, its depth from the bark beyond
-// as the engine reckons it: beakOf, while the bird aims.)
+// before the strike with a move to spare, walking onto the bark round the
+// pits: markOut, while the bird aims. The strike comes after my move
+// strikeAt - tick + 1.)
 function canEnter(body, len, grow, x, y, step) {
   if (!inGrid(x, y)) return false;
   const i = y * N + x;
-  if (mineFree[i] > step && !(bridgeUntil[i] > step) && !(beakOf && beakOf.has(i) && step + beakOf.get(i) < strikeAt - view.tick && markFree.get(i) <= step)) return false;
+  if (mineFree[i] > step && !(bridgeUntil[i] > step) && !(strikeAt >= 0 && markOut.has(i) && step + markOut.get(i) <= strikeAt - view.tick && markFree.get(i) <= step)) return false;
   const keep = grow > 0 ? len : len - 1;
   for (let j = 0; j < keep; j++) if (body[j].x === x && body[j].y === y) return false;
   return true;
@@ -74,16 +75,19 @@ function lineFill(k, by, cap) {
 // in front, on over up to LEAP_REACH cells of hurdles, a cell a tick, down
 // on the first free cell beyond; never over the woodpecker's mark, never
 // off the board) that comes down on room for me, with a jump's worth of
-// stamina back by then (or a golden leap in hand: leapIn 0). On the
+// stamina back by then (or a golden leap in hand: leapIn 0), and none of
+// it spent already on this line (powered: a jump or flash at its start).
+// What it goes over, as the engine judges it, at take-off. On the
 // territory board with my body placed (terr), before its search claims it.
+let powered = false;
 function jumpOut(body, t, need) {
-  if ((me.leapIn || 0) > t * (view.tickMs || 110)) return false;
+  if (powered || (me.leapIn || 0) > t * view.tickMs) return false;
   const hx = body[0].x, hy = body[0].y, bx = unit(body[1].x - hx), by = unit(body[1].y - hy);
   for (const d of DIR_LIST) {
     if (d.x === bx && d.y === by) continue;
     for (let k = 1, x = hx + d.x, y = hy + d.y; k <= TUNE.LEAP_REACH + 1 && inGrid(x, y) && !mark.has(y * N + x); k++, x += d.x, y += d.y) {
       const p = framed[y * N + x];
-      if (terr[p] > t + k) continue; // (a hurdle as I'd go over it)
+      if (terr[p] > t + 1) continue; // (a hurdle as I take off)
       if (k > 1 && roomOn(p, t + k) >= need) return true;
       break; // (open ground right in front is no hop; the first free cell beyond is where I'd come down)
     }

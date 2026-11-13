@@ -38,8 +38,8 @@ function pieces2s(g, mark) {
 
 { // The rivals see a piece a mark would cut loose as gone at the strike, through the same engine calls: a rival heading
   // for food on a piece beyond a neck three wide goes for it with no mark there; with one (the neck and the piece in the
-  // mark, the piece to fall, its food with it), it may cross onto it only while it'd be off it before the strike (7c),
-  // and is off it, alive, when the strike comes.
+  // mark, the piece to fall, its food with it), it may cross onto it only while it'd be off it before the strike (7c):
+  // with the strike 20 ticks off, it still goes out for the food, and is off it, alive, when the strike comes.
   const neck3 = rect(13, 9, 13, 11), piece3 = rect(14, 5, 19, 15), land3 = [...field2s, ...neck3, ...piece3];
   const run = marked => seededWhile(622, () => {
     const g = E.createGame({ withPlayer: false, personas: ['drab'] });
@@ -59,7 +59,7 @@ function pieces2s(g, mark) {
   });
   const free = run(false), shown = run(true);
   check('2s: with no mark there, a rival goes out onto the piece for its food', free.ate && free.on > 0, JSON.stringify(free));
-  check('...and with the piece marked to fall, it is off it, alive, when the strike comes', shown.alive && shown.struck, JSON.stringify(shown));
+  check('...and with the piece marked to fall, it still goes out for the food in time, and is off it, alive, when the strike comes', shown.alive && shown.struck && shown.on > 0 && shown.ate, JSON.stringify(shown));
 }
 
 { // The rivals are shown which cells fall (aiView's fall, the same for everyone), and the knock rule they work landings out

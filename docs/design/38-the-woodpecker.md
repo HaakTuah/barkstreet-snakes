@@ -303,8 +303,10 @@ phone's address bar never resizes it.
   makes it before the strike (`escapeMark` in `ai/decide.js`), reading bodies as its search does, never a first step a
   rival's head could take too, and onto room for its length if it can.
 - **A mark isn't a hole yet** (7c of round six B). While the bird aims, a rival crawls onto the mark wherever it would
-  be off it before the strike with a move to spare: a cell of the mark at move s is open to it while s plus its depth
-  from the bark beyond (the engine's `beakDepth`) is less than the moves left (`canEnter` in `ai/evaluate.js`); so it
+  be off it before the strike with a move to spare: a cell of the mark at move s is open to it while s plus the moves
+  from it onto the bark, walking round the pits (`markOut` in `ai/sight.js`; the beetles' straight-line `beakDepth`
+  would let it out across a pit), is no more than the moves before the strike less one (`canEnter` in
+  `ai/evaluate.js`; the strike comes after move strikeAt − tick + 1); so it
   crosses a mark for food beyond it, or onto a piece cut loose and back, and is off when the strike comes. Its room and
   its trap tests still count the mark as the hole it will be. A jump of theirs may hop real holes but never a mark; a
   flash, plain or golden, treats a mark as a wall.

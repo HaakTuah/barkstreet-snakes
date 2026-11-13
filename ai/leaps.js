@@ -121,8 +121,9 @@ function landOpt(d, span, golden, now) {
   covered = coverHit;
   const gain = ateGain + isle * U - 0.6 * endRisk + shut * U + take - (lone ? SPARE * U : 0);
   sureGain = Math.max(0, isle + take / U); // (what the crawl can't have: the island, a flier's ring; see consider)
+  powered = true; // (the jump this line starts with: no second one to count on, see jumpOut)
   const score = depth > down ? search(nb, ateL, ateG, depth - down, down, gain) : evaluate(nb, ateL, ateG, down) + gain;
-  covered = 0;
+  covered = 0; powered = false;
   uneat();
   return score;
 }

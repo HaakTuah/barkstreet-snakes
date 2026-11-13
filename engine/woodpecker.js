@@ -44,7 +44,8 @@ function beakDepth(target, isHole) {
 // where it fights (engine/fight.js). Each peck: the cells of its outline
 // (PECK_CLEARANCE cells from every head, shutting nobody in, while there's
 // such a spot: see nextPeck), eyed for PECK_AIM_TICKS (everyone sees
-// where, and the AIs keep out of it, like a hole), hammered out at
+// where, and the AIs keep out of it, but for a crossing they'd finish
+// before the strike: ai/evaluate.js, canEnter), hammered out at
 // once, and a rest. Food in the patch when it strikes is
 // knocked aside (see knockTo), or eaten if there's nowhere to knock it (a
 // beetle still there is eaten: it had the rings' warning to run, see crawl); fire and a burrow there go. A head on the ground

@@ -6,6 +6,7 @@
 let N, me, others, food, age, holes, depth, steps, inGrid, myHead, stunLeft, pitHole, heads, laterCount, tagBits,
   tags, roomFood;
 const markFree = new Map(); // (each cell of the woodpecker's mark: when it's free of bodies, as mineFree has it; the mark itself a wall to everything else)
+const markOut = new Map(); // (each cell of the mark: the moves from it onto bark, walking round the pits; none: no way off)
 function seeBoard() {
   N = view.grid;
   ;({ me, others, food, age } = view);
@@ -65,6 +66,11 @@ function seeBoard() {
   }
   markFree.clear();
   for (const i of marked) if (holes.has(i)) { markFree.set(i, mineFree[i]); mineFree[i] = otherFree[i] = HOLE; }
+  markOut.clear();
+  const side = (i, f) => { const x = i % N; if (x > 0) f(i - 1); if (x < N - 1) f(i + 1); if (i >= N) f(i - N); if (i < N * (N - 1)) f(i + N); };
+  let ring = [];
+  for (const i of markFree.keys()) side(i, j => { if (!holes.has(j) && !markOut.has(i)) { markOut.set(i, 1); ring.push(i); } });
+  for (let d = 2; ring.length; d++) { const next = []; for (const i of ring) side(i, j => { if (markFree.has(j) && !markOut.has(j)) { markOut.set(j, d); next.push(j); } }); ring = next; }
   // The territory search's board, from the same tables.
   laterCount = frameBoards(N);
   tagBits = 32 - Math.clz32(others.length + 1), tags = (1 << tagBits) - 1; // (see evaluate)

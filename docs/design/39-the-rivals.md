@@ -363,7 +363,8 @@ Each persona uses jumps and flashes its own way, through the same engine calls a
   `40-powers-and-moves.md`; "The endgame: a meal is worth the life it buys").
 - **For everyone (7c):** a jumpable way out kept: in the search, a line that ends boxed in (less room than its length
   needs, and no way onto its own trail) is no sure trap while a jump from there would still be its, straight on or to a
-  side as the engine takes one, onto room for its length, with a jump's worth of stamina back by then (`jumpOut` in
+  side as the engine takes one (what it goes over judged at take-off), onto room for its length, with a jump's worth of
+  stamina back by then and none spent on that line already, by a jump or flash at its start (`jumpOut` in
   `ai/evaluate.js`): such a box is half as bad as one with no jump out (`TRAPPED / 2` back), so of two dead ends it
   takes the one it can hop out of, but never a box over open ground or a neck. (Counted as no trap at all, as dear as a
   neck, a line crawled on into the box and put the jump off till it was gone: deaths into themselves rose by half on
