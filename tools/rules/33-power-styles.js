@@ -59,11 +59,18 @@ for (const [key, seen] of Object.entries(STYLE_SEEN)) {
   }
   check('7b: Wildcard draws a cast member\'s power style, some rounds, and none others', some > 5 && none > 5 && !strange, JSON.stringify({ some, none, strange }));
 }
-{ // 7c: Metagamer's style is its counters, read from what it has seen of each rival: Gobbler's race above, to Metagamer,
-  // against a rival it has seen grow fast (greedy: it races it for food) and against the same rival seen not to grow
-  // (evasive, and Metagamer too short to hunt it: no style for the race), through the same weighing.
-  const seen = STYLE_SEEN.gobbler, rival = seen.view.others[0].id, len = seen.view.others[0].body.length;
-  const pressed = len0 => { let n = 0; for (let i = 0; i < 10; i++) { const memory = { ...structuredClone(seen.memory), obs: { [rival]: { len0, samples: 60, near: 0 } } }, v = seenView(seen.view); AI.decide(v, AI.PERSONAS.metagamer, memory); if (memory.flash === v.tick) n++; } return n; };
-  const greedy = pressed(2), evasive = pressed(len);
-  check('7c: Metagamer races a rival it reads as greedy to food, and crawls on beside one it reads as evasive', greedy === 10 && evasive === 0, JSON.stringify({ greedy, evasive }));
+{ // 7c: Metagamer's style is its counters, read from what it has seen of each rival (memory.obs: a rival that grew fast
+  // reads greedy, one seen near heads aggressive, the rest evasive), through the same weighing: it races a greedy one for
+  // food (Gobbler's race above), cuts the evasive one it hunts (Sniper's cut above, Metagamer grown long enough to hunt),
+  // and, with an aggressive one about, keeps a flash ready (the race above, stamina near the reserve, a far-off snake about).
+  const reads = { greedy: o => ({ len0: 2, samples: 60, near: 0 }), evasive: o => ({ len0: o.body.length, samples: 60, near: 0 }), aggressive: o => ({ len0: o.body.length, samples: 60, near: 30 }) };
+  const flashes = (seen, labels, view = seen.view) => { let n = 0; for (let i = 0; i < 10; i++) { const obs = {}; view.others.forEach((o, k) => obs[o.id] = reads[labels[k] ?? labels[0]](o)); const memory = { ...structuredClone(seen.memory), obs }, v = seenView(view); AI.decide(v, AI.PERSONAS.metagamer, memory); if (memory.flash === v.tick) n++; } return n; };
+  const g = STYLE_SEEN.gobbler, s = STYLE_SEEN.sniper;
+  const race = { greedy: flashes(g, ['greedy']), evasive: flashes(g, ['evasive']) };
+  check('7c: Metagamer races a rival it reads as greedy to food, and crawls on beside one it reads as evasive', race.greedy === 10 && race.evasive === 0, JSON.stringify(race));
+  const grown = { ...s.view, me: { ...s.view.me, grow: 9 } }, cut = { evasive: flashes(s, ['evasive'], grown), greedy: flashes(s, ['greedy'], grown), aggressive: flashes(s, ['aggressive'], grown) };
+  check('7c: Metagamer cuts off a rival it reads as evasive, and crawls on beside the same rivals read as greedy or aggressive', cut.evasive === 10 && cut.greedy === 0 && cut.aggressive === 0, JSON.stringify(cut));
+  const low = { ...g.view, me: { ...g.view.me, stamina: 13000 }, others: [g.view.others[0], { ...g.view.others[0], id: 2, body: [[18, 20], [19, 20], [20, 20], [21, 20]], dir: 'left' }] };
+  const keep = { evasive: flashes(g, ['greedy', 'evasive'], low), aggressive: flashes(g, ['greedy', 'aggressive'], low) };
+  check('7c: Metagamer keeps a flash ready with a rival it reads as aggressive about, and races beside the same one read as evasive', keep.evasive === 10 && keep.aggressive === 0, JSON.stringify(keep));
 }

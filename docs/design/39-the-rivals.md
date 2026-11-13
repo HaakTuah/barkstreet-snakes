@@ -248,22 +248,22 @@ Mason's longer straight runs (29 October 2026: `docs/archive/progress-done/owner
 ### The cast and their trademarks
 
 Every rival keeps its trademark, measured before and after any change to the rivals ("Rules that stand" in
-`AGENTS.md`; the measures are the census's, as in "Trademarks" under "Round six A, measured"). Each rival's weights and
+`AGENTS.md`; the measures are the census's, `TRADEMARKS` in `tools/sim/03-report.js`: first measured under "Round six A, measured", and three new in part 7c, below). Each rival's weights and
 driver are in `ai/rivals/`, over the shared template in `ai/rivals.js` (`DRAB`, `HUNT`).
 
 | Rival | Its blurb | Its trademark, as measured | What makes it |
 | --- | --- | --- | --- |
-| Mason | "Walls off the board, then keeps the biggest piece." | Straight runs (cells between turns) | `turn` 25, `territory` 1.8, `thick` 60 |
+| Mason | "Walls off the board, then keeps the biggest piece." | Straight runs (cells between turns), and its body in walls two thick | `turn` 25, `territory` 1.8, `thick` 60 |
 | Ouroboros | "Chases its own tail, then moves as a ring. Mind the middle." | Coiling (coiled, 10 long or more) | `coil` (20, from 10) |
 | Creeper | "Sneaks up and rides right behind other snakes’ tails." | Tail-riding | `tail` 45 |
 | Ghost | "Keeps its distance from everyone, and slips through the gaps." | Distance (cells from the nearest head) | `distance` 5, `space` 2 |
 | Gobbler | "Eats everything, even a rival’s apple. Hates mushrooms." | Food share | `food` 10, `eat` 300, `contested` 1, `hurry` 1.5, `headRisk` 2200, `nerve` |
 | Vulture | "Circles snakes in trouble and feasts on what they leave behind." | Beads (its share of them) | its driver (the snake with least room for its length), `lure`, `pellet` 3 |
 | Sovereign | "Rules its own patch of bark and attacks anyone who trespasses." | Time home | its driver, `home` |
-| Mute | "A mime. Picks someone and closes an invisible box round them." | Boxing (closing the box) | Sniper's driver, `hunt` (`squeeze` 4), `aggression` 0.8 |
-| Joker | "Lures chasers into dead ends and swerves away at the last moment." | Lures (luring a rival on) | its driver, `lure` (6, 3 cells) |
+| Mute | "A mime. Picks someone and closes an invisible box round them." | Its target boxed in on its body (ten minutes alive) | Sniper's driver, `hunt` (`squeeze` 4), `aggression` 0.8 |
+| Joker | "Lures chasers into dead ends and swerves away at the last moment." | Chasers led into a crash (ten minutes alive) | its driver, `lure` (6, 3 cells) |
 | Desperado | "Skims edges, bodies and heads for the thrill of it. Yeehaw." | Skims (skimming danger) | `thrill` 25, `nerve` 0.7 |
-| Star | "Jumps and dashes every chance it gets. Catch it when it dims." | Flash rate (flashes a minute) | `powers` (Star's habit), `golden` |
+| Star | "Jumps and dashes every chance it gets. Catch it when it dims." | Flash and jump rates (a minute) | `powers` (Star's habit), `golden` |
 | Sniper | "Picks whichever snake it has the best shot at and cuts it off." | | its driver, `hunt` |
 | Colonist | "A redcoat who plants flags all over and defends every one." | | its driver, `colony` |
 | Metagamer | "Studies how each rival plays, then counters it." | | its driver |
