@@ -8,7 +8,7 @@ window.TUNING = Object.freeze({
 
   // ------------------------------------------------------------------ food
   APPLES: 2,                // green apples on the board at all times (eaten or rotted, another drops somewhere): two since round six A, with beetles carrying more of the food (three was "a bit too plentiful")
-  // Each round's food season (2i), drawn at the start (SEASON_ODDS of each) and shown in a banner: apples on top of
+  // Each round's food season (2i), drawn at the start (SEASON_ODDS of each) and shown in a banner, then by a mark under the board: apples on top of
   // APPLES (or SNOW_APPLES; never below one), beetles coming out at this many times BEETLE_CHANCE, and a meal
   // keeping a snake this many times as long (meal). Lean rounds starve snakes now and then; plentiful ones grow
   // them long, and crowd the log.
