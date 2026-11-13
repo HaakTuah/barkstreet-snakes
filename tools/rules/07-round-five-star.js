@@ -13,10 +13,11 @@ const habits = (view, keys, n = 10) => Object.fromEntries(keys.map(key => {
 const rest = Object.keys(AI.PERSONAS).filter(k => k !== 'star');
 const powered = (got, mark) => Object.entries(got).filter(([, out]) => Object.keys(out).some(k => k.includes(mark))).map(([key]) => key);
 
-{ // Star flashes every chance it gets: rested on open ground, an apple four on, it flashes for it; nobody else thinks an apple worth that.
-  const view = () => aiView({ me: aiMe(line(6, 12, 5), 'right', { flashIn: 0 }), others: [aiRival(1, line(20, 2, 5), 'right')], food: [{ x: 10, y: 12, kind: 'food', expires: 999 }] });
+{ // Star flashes far more readily than anyone: rested on open ground, two apples four on, it flashes for them; nobody else thinks
+  // them worth that. (7c: its flashes pay the wait below a jump's worth, as anyone's, so one apple alone no longer does it.)
+  const view = () => aiView({ me: aiMe(line(6, 12, 5), 'right', { flashIn: 0 }), others: [aiRival(1, line(20, 2, 5), 'right')], food: [{ x: 10, y: 12, kind: 'food', expires: 999 }, { x: 11, y: 12, kind: 'food', expires: 999 }] });
   const star = habits(view, ['star']).star, others = powered(habits(view, rest, 4), '+flash');
-  check('Star flashes where no one else would (an apple four on, open ground)', star['right+flash'] === 10 && !others.length, JSON.stringify({ star, others }));
+  check('Star flashes where no one else would (two apples four on, open ground)', star['right+flash'] === 10 && !others.length, JSON.stringify({ star, others }));
 }
 
 { // ...weighed every way, but never into a failed flash: with a body two thick two on across its way, it flashes off to the side.

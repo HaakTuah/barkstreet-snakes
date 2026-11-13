@@ -58,12 +58,14 @@ function powerPick(crawlIn, crawlDirIn) {
   habit = w.powers || NO_HABIT, safe = habit.risk ?? Infinity;
   cheap = desperate ? 0.5 : 1;
   // (the wait a plain spend leaves me below what I keep for the other
-  // power. Star (keepFlash) keeps only a flash's worth, for its flashes,
-  // its trademark, and minds the wait keepFlash as much as anyone)
+  // power. Star (keepFlash) keeps only a flash's worth for its jumps, for
+  // its flashes, its trademark, and minds that wait keepFlash as much as
+  // anyone; its flashes mind the jump's worth as anyone's do, 7c: spent
+  // to the last, it had nothing left to get out of a box)
   waitPrice = (cost, flash) => {
-    if (trapped || (flash && habit.keepFlash !== undefined)) return 0;
+    if (trapped) return 0;
     const reserve = flash ? TUNE.JUMP_STAMINA_MS * w.margin / RESERVE_MARGIN : TUNE.DASH_STAMINA_MS * (habit.keepFlash !== undefined ? 1 : w.margin / RESERVE_MARGIN);
-    return RESERVE_PRICE * (habit.keepFlash ?? 1) * (w.style ? w.style.keep : 1) * Math.max(0, reserve - (me.stamina - cost)) / TUNE.STAMINA_MS; // (Ghost's style minds it more: ai/styles.js)
+    return RESERVE_PRICE * (flash ? 1 : habit.keepFlash ?? 1) * (w.style ? w.style.keep : 1) * Math.max(0, reserve - (me.stamina - cost)) / TUNE.STAMINA_MS; // (Ghost's style minds it more: ai/styles.js)
   };
   keep = me.grow > 0 ? me.body.length : me.body.length - 1, stampM = ++markStamp;
   for (let j = 0; j < keep; j++) myCells[me.body[j].y * N + me.body[j].x] = stampM;

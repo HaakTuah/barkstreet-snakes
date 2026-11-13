@@ -55,8 +55,9 @@
 //                                   just out of a crash or onto food; dashSpend: golden dashes spent on
 //                                   speed too (at the full price), and not kept for a trap (or a cut
 //                                   that puts a rival out) as everyone else's; keepFlash: the reserve
-//                                   I keep is a flash's worth, for flashes, and a jump that leaves less
-//                                   costs this share of the wait it costs anyone (2u)
+//                                   I keep for jumps is a flash's worth, for flashes, and a jump that
+//                                   leaves less costs this share of the wait it costs anyone (2u); my
+//                                   flashes mind the jump's worth as anyone's (7c)
 //   golden                        { power, apple, contested }: golden power food (golden beetles, leaves,
 //                                   golden mushrooms) worth this many times what it's worth to anyone
 //                                   else, and a golden apple this many; contested: how much golden power

@@ -17,6 +17,9 @@ PERSONAS.star = {
     // at keepFlash times what it costs anyone, so its jumps don't eat its
     // flashes. (At a tenth, they did the other way round: its jumps fell
     // to a quarter of its plain powers; at a hundredth both keep in band.)
+    // Its flashes mind the wait below a jump's worth as anyone's do (7c:
+    // free of it, it spent every flash and died boxed in its own coils,
+    // with nothing left to jump or drop its tail: 12% of its rounds won).
     powers: { price: 0, risk: 350, everyWay: true, jumpAny: true, dashSpend: true, keepFlash: 0.01 },
     golden: { power: 6, apple: 1.5, contested: 0.5 }, // (it eats about twice as much golden power food as anyone)
   },
