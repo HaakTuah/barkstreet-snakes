@@ -77,8 +77,14 @@ what each changes: `SEASONS` in `tuning.js`).
 - **Plentiful:** one apple more and beetles half again as often (winter keeps two). Snakes grow long, and the log crowds.
 - **Seen and taught:** a lean or plentiful round says so in a banner after Go ("A lean season…", "A season of
   plenty!"), its colour dry bark or fresh leaves, and the first time each comes in a visit a lesson follows with its
-  rule; a normal round says nothing. The Field guide's "Seasons" row (after the apple) holds the rule. Everyone, the
-  rivals included, sees the season (`aiView().season`).
+  rule. A banner lasts seconds, so the season also keeps a mark for the rest of the round (#603): in the row under the
+  board, beside the chatter's switch, the log's own apple with a bite out of it for a lean season and a basket heaped
+  with apples for plenty, from Go on and none before it. A normal round has no banner and no mark. It is the Field
+  guide's own picture (`Render.guideSprite`, kinds `lean` and `plentiful`), quiet, still, told apart by shape and not by
+  colour, with the season's name as its tooltip and what a screen reader hears (`FLAVOR.seasonMark`); it never covers
+  the board, the hunger bars or the powers' chips, and the header's rows stay as they were. The Field guide's "Seasons"
+  row (after the apple) holds the rule and shows both marks. Everyone, the rivals included, sees the season
+  (`aiView().season`), and a friend online reads it from the host's `sky` as the banner does.
 - **The rivals play it** (`readAppetite` in `ai/food.js`): in a lean round none is ever too fed to eat (Ghost's and
   Sniper's `hungryBelow` doesn't apply), and in a plentiful one each weighs growth past `AI_CROWD_KEEP` times its
   endgame keep against the room it costs, as everyone does from the woodpecker on ("The endgame: a meal is worth the
