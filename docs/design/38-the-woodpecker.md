@@ -292,18 +292,22 @@ phone's address bar never resizes it.
   `GAZE_NEAR` of its spot counts as risky to linger in (`AI_GAZE_RISK` of each rival's soft zone at its middle, less
   out to the edge, in `ai/risk.js`), so a careful rival like Ghost gives it a wide berth and Desperado, whose zone
   counts for little, skims it; in the frenzy every rival not desperate wants `AI_FRENZY_MARGIN` (2) more spare room
-  (`ai/decide.js`). Its marks they keep out of as before (below).
+  (`ai/decide.js`). Its marks: below.
 
 - **What they see** (`aiView`): the piece its outline cuts round (`piece`: ground to get off, `AI_CUT_RISK` of each
   rival's soft zone on it, `ai/risk.js`), a fight's plus (`zone`: walls, never a pit), the mark apart from the holes (`view.pecks`), the strike's tick while the bird aims
   (`strikeAt`: anyone sees it drum the patch, its last blow on the strike), the pieces it cuts loose (`fall`), and, from
   the promise, the promised landings (`landings`: the rings show them to everyone).
-- **Off a doomed piece:** a rival whose head is in the mark takes its search's move if that steps off the mark and lives;
-  deeper in, where its search reads the mark as walls and sees no way out, it walks off the shortest way that makes it
-  before the strike (`escapeMark` in `ai/decide.js`), reading bodies as its search does, never a first step a rival's
-  head could take too, and onto room for its length if it can.
-- **A mark isn't a hole yet.** They keep out of it as out of a hole; a jump of theirs may hop real holes but never a
-  mark; a flash, plain or golden, treats a mark as a wall.
+- **Off a doomed piece:** a rival whose head is in the mark takes its search's move if that lives; deeper in than the
+  search lets it cross (below), where it reads the mark as walls and sees no way out, it walks off the shortest way that
+  makes it before the strike (`escapeMark` in `ai/decide.js`), reading bodies as its search does, never a first step a
+  rival's head could take too, and onto room for its length if it can.
+- **A mark isn't a hole yet** (7c of round six B). While the bird aims, a rival crawls onto the mark wherever it would
+  be off it before the strike with a move to spare: a cell of the mark at move s is open to it while s plus its depth
+  from the bark beyond (the engine's `beakDepth`) is less than the moves left (`canEnter` in `ai/evaluate.js`); so it
+  crosses a mark for food beyond it, or onto a piece cut loose and back, and is off when the strike comes. Its room and
+  its trap tests still count the mark as the hole it will be. A jump of theirs may hop real holes but never a mark; a
+  flash, plain or golden, treats a mark as a wall.
 - **Knocked food:** a rival works out each landing with the engine's own `E.knocks`, on the board as it sees it (the
   other snakes a moment late), and values the food there from the move after the strike's tick, never where it lies.
   Knocked food is anyone's: whoever would get to the landing first counts it as theirs. It pulls from when it lands, and
