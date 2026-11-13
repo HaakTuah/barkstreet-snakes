@@ -276,7 +276,7 @@ Measured (part 7c): Mason's walls two thick (`doubled`: cells in a run of three 
 chasers Joker leads into a crash (`lured`), and Mute's kills by boxing (`boxKills`: a rival dead on Mute's own body,
 boxed in, while Mute closed on it). Each leads the field on its own, so none needed more teeth (Mason's and Joker's thin
 leads are checked again on fresh seeds in 7c(iii); seeds 3 and 11 on `main` at 7b's merge: Mason 19.2% and 19.6% against
-16.4% and 16.1%; Joker 17.0 and 14.4 against 13.7 and 13.0; Mute 0.99 and 0.44 against 0.23 and 0.31). Joker sits in the
+16.4% and 16.1%; Joker 16.6 and 13.9 against 13.4 and 12.6; Mute 0.99 and 0.44 against 0.23 and 0.31). Joker sits in the
 band after 7a and 7b; Star, the one persona still below it, is lifted in 7c (below, "Star").
 
 ### Ouroboros
