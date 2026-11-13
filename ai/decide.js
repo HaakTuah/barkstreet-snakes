@@ -1,4 +1,4 @@
-// decide(view, persona, memory): the AI's one way in. It reads the board in
+// decide(view, persona, memory, draw): the AI's one way in. It reads the board in
 // parts (seeBoard, readRisk, ...: see ai/core.js), runs the persona's driver,
 // picks the best move, then weighs the powers against it.
 
@@ -9,10 +9,11 @@
 //          fall: the cells of its mark on pieces it cuts loose (2s: they fall at the strike, with any food on them),
 //          burrows: [{ x, y, shutAt (once it grows shut: the game time it closes over) }] }
 // memory: an object kept for this snake for the whole round.
+// draw: the stream this decision draws its chances from (the engine gives each its own; Math.random if none).
 // What decide() sees and weighs, set afresh for each decision (the rest is set in its parts, each where it's read):
 let view, persona, memory, intent, indexOf, fire, mark, pitAt, pit, all, w, bestDir, bestScore, picked;
-function decide(viewIn, personaIn, memoryIn = {}) {
-  view = viewIn; persona = personaIn; memory = memoryIn;
+function decide(viewIn, personaIn, memoryIn = {}, draw = null) {
+  view = viewIn; persona = personaIn; memory = memoryIn; aiDraw = draw || MATH_DRAW;
   seeBoard();
 
   // ------------------------------------------------------------- drivers
@@ -62,7 +63,7 @@ function decide(viewIn, personaIn, memoryIn = {}) {
       s = throughFire(nx, ny) ? 1.5 * DEAD : 2 * DEAD + maybeFree(nx, ny);
     }
     else if (intent.mimicDir && sameDir(d, intent.mimicDir)) s += w.mimic;
-    s += Math.random() * 1e-3; // tie-break
+    s += aiDraw() * 1e-3; // tie-break
     if (s > bestScore) { bestScore = s; bestDir = d; }
   }
   // Off a doomed piece (part 2): my head in the woodpecker's mark (on the

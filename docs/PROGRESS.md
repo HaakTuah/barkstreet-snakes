@@ -57,7 +57,7 @@ the owner's notes of 2 November, the portals blue and orange and the woodpecker'
   row: #739); (4) online rounds replaying from
   the log of every input ("Same seed, same game") (done: PR #730, `tools/rules/32-online-replay.js`; it found that the
   inputs alone don't replay a round: where a press lands among the rivals' thinking, and which rivals thought ahead,
-  change the host's game, #729). What changes the AI, the engine's rules or the online messages goes to the
+  change the host's game, #729, fixed in PR #741: each decision draws from a stream of its own). What changes the AI, the engine's rules or the online messages goes to the
   main lane as an entry of its own. The updating rule needs nothing: `docs/design/36-updating.md` takes a new version
   between rounds, as the core's "Players always play the newest version" now says.
 - **The file-by-file review** (the owner, 2 November 2026; part 1, the docs every session reads, done in PR #334;

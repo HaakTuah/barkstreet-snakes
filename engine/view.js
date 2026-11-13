@@ -158,7 +158,24 @@ const canThinkAhead = (game, s) => s.alive && (!s.isPlayer || !!s.autopilot) && 
 const spitDue = game => game.spits.length > 0 || game.snakes.some(o => o.alive && o.cheek && o.cheek.spitAt <= game.tick);
 // A person's snake is handed to an AI (autopilot: a persona) when they leave.
 const brainOf = s => s.autopilot || s.persona;
+// A decision, as it sees the board now, drawing from its own stream (mindOf: the same thought ahead or in the step).
+const decideNow = (game, s) => aiDecide(aiView(game, s), brainOf(s), s.memory, mindOf(game, s));
 function thinkAhead(game, s) {
-  s.planned = aiDecide(aiView(game, s), brainOf(s), s.memory);
+  unthought.set(s, { memory: copied(s.memory), noticed: { ...s.noticed } }); // (every thinker's alike, for dropThought)
+  s.planned = decideNow(game, s);
   s.plannedTick = game.tick;
 }
+// A stand-in's thought ahead (an AI at a person's wheel) is thrown away whole when its person takes the wheel back
+// before the tick (handBack in game/friends.js): what it changed (its memory, and the moments it noticed each snake in
+// aiView) goes back as it was, so the round goes on as though it had never thought, whenever the press came (#729).
+const unthought = new WeakMap();
+function dropThought(game, s) {
+  const was = s.plannedTick === game.tick && unthought.get(s);
+  if (was) for (const k of ['memory', 'noticed']) { const o = s[k]; for (const f of Object.keys(o)) delete o[f]; Object.assign(o, was[k]); } // (in place: whatever holds them still does)
+  unthought.delete(s);
+  s.planned = null;
+  s.plannedTick = -1;
+}
+// A copy of a memory, all the way down (plain objects, arrays, Sets and Maps: what a rival keeps).
+const copied = v => Array.isArray(v) ? v.map(copied) : v instanceof Set ? new Set([...v].map(copied))
+  : v instanceof Map ? new Map([...v].map(([k, x]) => [k, copied(x)])) : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, copied(x)])) : v;

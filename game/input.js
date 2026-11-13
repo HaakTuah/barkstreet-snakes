@@ -123,7 +123,7 @@ const unleap = (g, s) => { if (s?.alive && s.leapArmed >= g.tick) s.leapArmed = 
 let hostPressAt = 0;
 function hostPress(fn, letGo = false) {
   const me = player();
-  if (me.autopilot && !letGo) me.autopilot = null; // back from a hidden tab: your hands again
+  if (me.autopilot && !letGo) handBack(me); // back from a hidden tab: your hands again (what the AI thought for you thrown away)
   const now = performance.now();
   const at = Math.max(now + Math.min(TUNE.HOST_DELAY_MAX, online.room.rtt()), hostPressAt);
   hostPressAt = at;

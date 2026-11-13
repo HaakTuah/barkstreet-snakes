@@ -148,11 +148,11 @@ function record(files) {
   let kept = [], seen = 0;
   const game = load(files, 'record', (decide, personas) => {
     const keyOf = new Map(Object.entries(personas).map(([k, p]) => [p, k]));
-    return (view, persona, memory) => {
+    return (view, persona, memory, draw) => {
       const j = seen < PER ? seen : Math.floor(pick() * (seen + 1));
       if (j < PER) kept[j] = { n: seen, position: v8.serialize({ view, key: keyOf.get(persona), memory }) };
       seen++;
-      return decide(view, persona, memory);
+      return decide(view, persona, memory, draw);
     };
   });
   const cast = game.AI.POOL || Object.keys(game.AI.PERSONAS);

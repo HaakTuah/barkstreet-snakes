@@ -104,7 +104,11 @@ const SOONER = perStep(0.85), RISK_AHEAD = perStep(0.6), TURN_AHEAD = perStep(0.
 
 const manhattan = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
 const sameDir = (a, b) => a.x === b.x && a.y === b.y;
-const rand = (a, b) => a + Math.random() * (b - a);
+// The stream a decision draws from: the one the engine hands decide (each decision's own: mindOf in engine/luck.js), or
+// Math.random for a caller that hands none.
+const MATH_DRAW = () => Math.random();
+let aiDraw = MATH_DRAW;
+const rand = (a, b) => a + aiDraw() * (b - a);
 // Land (Sovereign's realm, a colony): a cell whose centre is within the
 // field's radius, and LAND_REACH, of its centre. (One rule everywhere: the
 // AI, the chatter, the tags and the borders drawn.)

@@ -14,6 +14,7 @@
 // both).
 //
 //   core.js        tuning, the grid and the occupancy stamps, snakes and a new game, the tick's length, hunger and meals
+//   luck.js        the round's random draws, and each decision's own (Same seed, same game)
 //   food.js        apples and filling the board with food, the food placer, eating, mushrooms' cheeks and spitting
 //   roll.js        knocked food rolling: which way a head's step went, and where food goes
 //   beetles.js     beetles, their burrows, their crawl and going under
@@ -59,7 +60,6 @@ function ahead(game, s, x, y, d) {
   if (wraps(game, s) || (!inside(nx, ny) && portalAt(game, x, y, d))) { nx = (nx + GRID) % GRID; ny = (ny + GRID) % GRID; }
   return { x: nx, y: ny };
 }
-const between = (a, b) => a + Math.random() * (b - a);
 const WEATHER = ['clear', 'sun', 'wind', 'rain', 'storm', 'snow'];
 function makeSnake(id, spawn, props) {
   const d = spawn.dir;
@@ -89,10 +89,10 @@ const aiSnake = (id, spawn, key) => {
   const p = PERSONAS[key];
   return makeSnake(id, spawn, { name: p.name, color: p.color, persona: p, personaKey: key });
 };
-function pickOpponents(n) {
+function pickOpponents(game, n) {
   const pool = [...POOL];
   const picks = [];
-  while (picks.length < n && pool.length) picks.push(...pool.splice(Math.floor(Math.random() * pool.length), 1));
+  while (picks.length < n && pool.length) picks.push(...pool.splice(Math.floor(luck(game) * pool.length), 1));
   return picks;
 }
 // humans: [{ name, color }] for the snakes people steer (isPlayer: driven by
@@ -103,11 +103,13 @@ function pickOpponents(n) {
 // (2i: a key of SEASONS; drawn by SEASON_ODDS if not given, as the host
 // draws it for everyone online). acts: when the woodpecker's acts start
 // (entry 6: [watch, pecks, frenzy], ms of game time, as ?acts= pins them;
-// drawn in their windows if not given, as the host draws them).
-function createGame({ humans = null, withPlayer = true, personas = null, season = null, acts = null } = {}) {
+// drawn in their windows if not given, as the host draws them). seed: the
+// round's own (a whole number; see luck), drawn if not given.
+function createGame({ humans = null, withPlayer = true, personas = null, season = null, acts = null, seed = null } = {}) {
+  const own = Number.isInteger(seed) ? seed >>> 0 : Math.floor(Math.random() * 4294967296), luckOf = { seed: own, rng: own }; // (the round's seed: as given, or drawn)
   const people = (humans || (withPlayer ? [{ name: 'Green', color: PLAYER_COLOR }] : [])).slice(0, SPAWNS.length);
   const wanted = T.OPPONENTS + 1 - people.length;
-  const keys = (personas || pickOpponents(wanted)).filter(k => Object.prototype.hasOwnProperty.call(PERSONAS, k)).slice(0, wanted);
+  const keys = (personas || pickOpponents(luckOf, wanted)).filter(k => Object.prototype.hasOwnProperty.call(PERSONAS, k)).slice(0, wanted);
   const snakes = [];
   // (The killer of a snake that hit the edge, itself, hunger, fire or the woodpecker is that word, so no one may be called it.)
   const taken = new Set([...keys.map(k => PERSONAS[k].name), 'wall', 'self', 'hunger', 'fire', 'woodpecker']);
@@ -123,6 +125,7 @@ function createGame({ humans = null, withPlayer = true, personas = null, season 
     snakes.push(aiSnake(id, SPAWNS[id % SPAWNS.length], k));
   });
   const game = {
+    seed: luckOf.seed, rng: luckOf.rng, // (the round's luck: see luck)
     snakes, food: [], tick: 0, time: 0, history: [], withPlayer: people.length > 0, events: [],
     holes: new Set(), woodpecker: null,
     // Beetle burrows ({ x, y, at: the tick it cracked open, used, dug: see openBurrow }), the beetles
@@ -139,17 +142,18 @@ function createGame({ humans = null, withPlayer = true, personas = null, season 
     portals: [], spits: [], burrows: [], unders: [], fires: new Map(), fireGroups: new Map(), fireTotals: new Map(), fireGroup: 0,
     weather: { kind: 'clear', since: 0, until: T.WEATHER_FIRST_MS, nextGust: 0, nextStrike: 0 }, weatherBag: [],
     sdApples: 0, sdAppleAt: null,
-    season: Object.prototype.hasOwnProperty.call(T.SEASONS, season) ? season : drawSeason(),
-    acts: drawActs(acts),
+    season: null, acts: null,
   };
+  game.season = Object.prototype.hasOwnProperty.call(T.SEASONS, season) ? season : drawSeason(game);
+  game.acts = drawActs(game, acts);
   fillFood(game);
   snapshot(game);
   return game;
 }
 // A round's food season, SEASON_ODDS of each.
-function drawSeason() {
+function drawSeason(game) {
   const odds = Object.entries(T.SEASON_ODDS);
-  let r = Math.random() * odds.reduce((a, [, n]) => a + n, 0);
+  let r = luck(game) * odds.reduce((a, [, n]) => a + n, 0);
   for (const [k, n] of odds) if ((r -= n) < 0) return k;
   return 'normal';
 }
@@ -157,12 +161,12 @@ function drawSeason() {
 // of game time, each at a random time inside its window after the one
 // before (ACT_WATCH_MS, ACT_PECKS_MS, ACT_FRENZY_MS), or as pinned (three
 // rising times, ms).
-function drawActs(pinned) {
+function drawActs(game, pinned) {
   if (Array.isArray(pinned) && pinned.length === 3 && pinned.every((t, i) => Number.isFinite(t) && t >= 0 && (!i || t > pinned[i - 1]))) {
     return { watch: pinned[0], pecks: pinned[1], frenzy: pinned[2] };
   }
-  const watch = Math.round(between(...T.ACT_WATCH_MS)), pecks = watch + Math.round(between(...T.ACT_PECKS_MS));
-  return { watch, pecks, frenzy: pecks + Math.round(between(...T.ACT_FRENZY_MS)) };
+  const watch = Math.round(between(game, ...T.ACT_WATCH_MS)), pecks = watch + Math.round(between(game, ...T.ACT_PECKS_MS));
+  return { watch, pecks, frenzy: pecks + Math.round(between(game, ...T.ACT_FRENZY_MS)) };
 }
 // How long the next tick lasts. The opening ticks ease from OPENING_TICK down
 // to START_TICK, then the speed ramps gently toward MIN_TICK.

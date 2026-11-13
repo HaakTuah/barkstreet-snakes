@@ -64,7 +64,7 @@ function peck(game, dying, drops) {
   if (!act) return;
   let w = game.woodpecker;
   if (!w) {
-    const changes = Math.floor(between(T.WATCH_LOOKS[0], T.WATCH_LOOKS[1] + 1)), unit = Math.max(0, game.acts.pecks - game.time) / (changes + T.WATCH_LAST);
+    const changes = Math.floor(between(game, T.WATCH_LOOKS[0], T.WATCH_LOOKS[1] + 1)), unit = Math.max(0, game.acts.pecks - game.time) / (changes + T.WATCH_LAST);
     w = game.woodpecker = { x: GRID / 2, y: 0, at: game.time, came: game.tick, target: [], strikeAt: -1, last: [], struckAt: -1, restUntil: -1, gaze: -1, lookAt: game.tick, looks: changes, unit, lookUntil: game.time + unit };
     if (act === 1) watchSpot(game, w);
     game.events.push({ type: 'woodpecker' });
@@ -159,7 +159,7 @@ function watchSpot(game, w) {
   const { owner, sizes } = regions(game), r = richest(game, sizes)[0];
   const seeds = r === undefined ? [] : cutSeeds(game, owner, r);
   for (let t = 0; t < 50; t++) {
-    const k = seeds.length ? seeds[Math.floor(Math.random() * seeds.length)] : Math.floor(Math.random() * CELLS);
+    const k = seeds.length ? seeds[Math.floor(luck(game) * seeds.length)] : Math.floor(luck(game) * CELLS);
     if (game.holes.has(k)) continue;
     w.gaze = k; w.x = k % GRID; w.y = (k - w.x) / GRID;
     return;

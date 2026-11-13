@@ -1,5 +1,5 @@
 // An apple: it rots away after a while (and another drops somewhere else).
-const apple = game => ({ kind: 'food', expires: game.tick + Math.round(T.APPLE_TICKS * between(0.75, 1.25)) });
+const apple = game => ({ kind: 'food', expires: game.tick + Math.round(T.APPLE_TICKS * between(game, 0.75, 1.25)) });
 // How many apples the board keeps: two; in winter, one; one fewer in a lean
 // season (from the first beetles: in the opening everyone is at its
 // smallest, #616) and one more in a plentiful one (2i), never none.
@@ -52,7 +52,7 @@ function fillFood(game) {
   for (; !winter && mushrooms < T.MUSHROOMS + (raining ? T.RAIN_MUSHROOMS : 0); mushrooms++) place({ kind: 'mushroom', expires: game.tick + T.MUSHROOM_TICKS }, false, T.SHROOM_GAP);
   // (Sun: golden hour. Winter: hardly any. It lands somewhere quiet: a race you can see.)
   const goldenChance = winter ? 0 : T.GOLDEN_CHANCE * (game.weather.kind === 'sun' ? T.SUN_GOLDEN : 1); // (none in winter)
-  if (!golden && Math.random() < goldenChance && place({ kind: 'golden', expires: game.tick + T.GOLDEN_TICKS }, true)) {
+  if (!golden && luck(game) < goldenChance && place({ kind: 'golden', expires: game.tick + T.GOLDEN_TICKS }, true)) {
     const g = game.food[game.food.length - 1];
     game.events.push({ type: 'spawn', kind: 'golden', x: g.x, y: g.y });
   }
@@ -85,13 +85,13 @@ function foodPlacer(game) {
       for (let i = 0; i < free.length; i++) { const x = free[i] % GRID, y = Math.floor(free[i] / GRID); if (game.burrows.every(h => Math.abs(h.x - x) + Math.abs(h.y - y) >= apart)) pool.push(i); }
       if (!pool.length) pool = null; // (nowhere that far from them: anywhere, as before)
     }
-    const any = () => pool ? pool[Math.floor(Math.random() * pool.length)] : Math.floor(Math.random() * free.length);
+    const any = () => pool ? pool[Math.floor(luck(game) * pool.length)] : Math.floor(luck(game) * free.length);
     let at = any();
     if (gap >= 0 && headGap(game, free[at] % GRID, Math.floor(free[at] / GRID)) <= gap) { // (too close: another, from the cells far enough away)
       const far = [];
       for (let i = 0; i < free.length; i++) if (headGap(game, free[i] % GRID, Math.floor(free[i] / GRID)) > gap) far.push(i);
       if (!far.length) return null;
-      at = far[Math.floor(Math.random() * far.length)];
+      at = far[Math.floor(luck(game) * far.length)];
     }
     if (quiet) {
       let best = -1;

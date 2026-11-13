@@ -112,7 +112,9 @@ object literal has) and every event the engine makes, so a new kind can't skip t
 - **Never stalls:** a friend's browser says "still here" four times a second (`KEEPALIVE_MS`). After 0.75 s of silence
   (`AWAY_MS`) an AI steers their snake (Drab's, so a hiccup doesn't drive them into a wall), and any turn they send, or
   their messages coming again, hands it straight back; a banner appears only if the silence lasts 2 s
-  (`AWAY_TOAST_MS`).
+  (`AWAY_TOAST_MS`). What the AI had thought ahead for them is thrown away whole (its memory and what it noticed:
+  `dropThought` in `engine/view.js`), so the round goes on as though it had never thought, wherever the press fell; the
+  same for the host's own snake back from a hidden tab.
 - **A friend who switches tabs says so at once** (`away`), and the AI steers until they turn again. The host's own
   snake gets the same stand-in while the host's tab is hidden.
 - **The host's tab may be hidden:** browsers stop animation frames there, so a tiny worker clock keeps the round going.
@@ -124,6 +126,11 @@ object literal has) and every event the engine makes, so a new kind can't skip t
 - **Everything new works online** ("In a game played online, everything new works online" in
   `core/modules/game-design.md`). Each move or rule says what it sends in its own topic file (above); this file holds
   only the general rules.
+- **A round replays from its seed and the log of every input** ("Same seed, same game"): the host's rules draw from the
+  round's own seed, each rival's decision from a stream of its own (the round, the tick and the snake), and the
+  drawing, the chatter and the room codes from the page's unseeded `Math.random`, so neither the frames' timing, nor
+  where a press lands among the rivals' thinking, nor which rivals thought ahead changes the game
+  (`tools/rules/32-online-replay.js`, for the host's board and the friend's screen on every tick).
 - `tools/online-test.js` checks that a friend's board matches the host's on every tick of whole rounds, crossing every
   kind of event (staging any the rounds bring too few of), and two real browsers matched on every tick of whole rounds.
 - **What changes online:** no napping, no countdown skipping, no watching speeds; your Hall of Fame and stats keep only
