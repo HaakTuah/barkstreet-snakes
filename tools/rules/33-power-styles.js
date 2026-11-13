@@ -43,6 +43,12 @@ for (const [key, seen] of Object.entries(STYLE_SEEN)) {
   const ok = key === 'ghost' ? own === 0 && without === 10 : own === 10 && without === 0;
   check(`7b: ${STYLE_SAYS[key]}: with its style it ${key === 'ghost' ? 'holds' : seen.out === 'jump' ? 'jumps' : 'flashes'}, without it ${key === 'ghost' ? 'it spends' : 'it crawls on'}`, ok, JSON.stringify({ own, without }));
 }
+{ // ...but a bead it can't eat on the way, its mouth full (a mushroom in its cheek), is no reason: Vulture crawls on.
+  const seen = STYLE_SEEN.vulture, full = { ...seen.view, me: { ...seen.view.me, spitIn: 2, spitPower: 1 } };
+  let n = 0;
+  for (let i = 0; i < 10; i++) { const memory = structuredClone(seen.memory), v = seenView(full); AI.decide(v, AI.PERSONAS.vulture, memory); if (memory.flash === v.tick) n++; }
+  check('7b: ...but not for a bead it can\'t eat on the way, its mouth full', n === 0, `flashed ${n} of 10`);
+}
 { // Wildcard draws a power style from the cast's at random, half its rounds: never one of its own.
   const styles = new Set(Object.values(AI.PERSONAS).filter(p => p.w.style).map(p => p.w.style));
   let some = 0, none = 0, strange = 0;

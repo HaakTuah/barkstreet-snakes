@@ -39,7 +39,7 @@ function styleReach(d) {
     c = cellAt(x + d.x, y + d.y);
     if (c < 0) return -1;
     x = c % N; y = (c - x) / N;
-    if (foodValue[c] > 0) for (const f of food) if (f.kind === 'pellet' && f.owner !== me.id && f.y * N + f.x === c) styleBead = true;
+    if (foodValue[c] > 0 && foodFrom[c] <= 1 && mute < 1) for (const f of food) if (f.kind === 'pellet' && f.owner !== me.id && f.y * N + f.x === c) styleBead = true; // (one I can eat on the way: not with my mouth full, see eatOn)
   }
   styleX = x; styleY = y;
   return c;
