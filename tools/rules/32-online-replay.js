@@ -202,7 +202,7 @@
   // The replays. In full: the inputs, each where it landed among the rivals' thinking, and how many thought ahead each
   // tick. With less, the replay differs from the live round, as listed with its issue (a known failure, printed, not
   // counted; one that no longer differs says so).
-  const ISSUE = 'NNN';
+  const ISSUE = 729;
   const replays = [
     ['all', 'the log in full (each input where it landed among the rivals\' thinking, and how many thought ahead)'],
     ['presses', 'the log with where each input landed, every rival thinking ahead'],
