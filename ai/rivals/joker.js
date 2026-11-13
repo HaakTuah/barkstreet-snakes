@@ -6,6 +6,7 @@ PERSONAS.joker = {
   kill: ['Joker led you on. You followed.', 'It swerved. You didn’t.', 'You fell for it. Everyone does.'],
   win: ['Who’s laughing now?', 'Thank you! It’s here all week.', 'And the last laugh.'],
   w: {
+    style: powerStyle({ swerve: 0.7 }), // (7b: it springs its lure with a flash off its line)
     space: 1, territory: 0.6,
     food: 5, eat: 70, pellet: 1.2, foodRange: 40,
     margin: 6, headRisk: 600, zoneRisk: 40, turn: -12, // (at 4, once the rivals read knocked food and digging beetles, it won 12 / 18%: it wants a little more room behind its lures)

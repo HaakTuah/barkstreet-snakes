@@ -6,6 +6,7 @@ PERSONAS.desperado = {
   kill: ['Desperado drew first.', 'Another notch on the six-shooter.', 'Every showdown has a loser.'],
   win: ['Rides off into the sunset.', 'Last snake in town.', 'Not a scratch on the hat.'],
   w: {
+    style: powerStyle({ skim: 0.7 }), // (7b: it flashes for the thrill, to skim danger)
     space: 1, territory: 0.6,
     food: 6, eat: 80, pellet: 1.5, foodRange: 40,
     margin: 5, headRisk: 450, zoneRisk: 25, thrill: 25, leapNow: 0.6, landing: 1.2, // (a leap now out of a trap, cheaper still; a flier's ring for the thrill of it)

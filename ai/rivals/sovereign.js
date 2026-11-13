@@ -6,6 +6,7 @@ PERSONAS.sovereign = {
   kill: ['The Sovereign does not share.', 'Removed by royal decree.', 'Every inch is royal. You were on one.'],
   win: ['Long live the Sovereign.', 'The realm is the whole log now.', 'We are, at last, amused.'],
   w: {
+    style: powerStyle({ chase: 0.7 }), // (7b: it chases intruders off its land)
     space: 1.5, territory: 1, aggression: 0.2,
     food: 5, eat: 70, pellet: 1.2, foodRange: 30,
     margin: 3, headRisk: 500, zoneRisk: 80,

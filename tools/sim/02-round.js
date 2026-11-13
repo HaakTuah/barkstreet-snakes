@@ -17,7 +17,7 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
     for (const s of g.snakes) {
       per[s.name] ||= {
         rounds: 0, wins: 0, placeSum: 0, eaten: 0, pellets: 0, beetles: 0, kills: 0, aliveMs: 0, deaths: {},
-        flashes: 0, jumps: 0, dashes: 0, leaps: 0, golden: 0, chokes: 0, crashes: 0, shrooms: 0, spits: 0, hits: 0, hitBy: 0, now: 0, bumps: 0, flown: 0, flights: 0, ringGo: 0, follows: 0, followOut: 0, grabs: 0, grabOut: 0, // (round six B: mushrooms eaten, spat, spits that hit a head, and taken; (for --census: plain flashes and jumps, golden dashes and leaps, golden power food, own beads squashed (chokes before round six B), crashes survived)
+        flashes: 0, jumps: 0, dashes: 0, leaps: 0, golden: 0, chokes: 0, crashes: 0, shrooms: 0, spits: 0, hits: 0, hitBy: 0, now: 0, bumps: 0, flown: 0, flights: 0, ringGo: 0, follows: 0, followOut: 0, grabs: 0, grabOut: 0, styled: 0, // (part 7b: plain flashes and jumps pressed for its power style; round six B: mushrooms eaten, spat, spits that hit a head, and taken; (for --census: plain flashes and jumps, golden dashes and leaps, golden power food, own beads squashed (chokes before round six B), crashes survived)
         ...(signs ? { sig: Object.fromEntries(SIGNS.map(k => [k, 0])) } : {}),
       };
       per[s.name].rounds++;
@@ -136,11 +136,11 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
         const w = g.woodpecker; // (entry 6: its first cut, against where it looked last: is the tell kept?)
         if (!w.pecks && w.gaze >= 0) { c.tellAims++; if (w.target.some(k => Math.abs(k % N - w.gaze % N) + Math.abs(Math.floor(k / N) - Math.floor(w.gaze / N)) <= T.GAZE_NEAR)) c.tellKept++; }
       }
-      else if (e.type === 'leap') { if (e.gold) { c.goldLeaps++; per[e.snake.name].leaps++; } else { c.jumps++; per[e.snake.name].jumps++; } }
+      else if (e.type === 'leap') { if (e.gold) { c.goldLeaps++; per[e.snake.name].leaps++; } else { c.jumps++; per[e.snake.name].jumps++; if (e.snake.memory?.styled != null && e.snake.memory.styled === e.snake.memory.power) per[e.snake.name].styled++; } }
       if (e.type === 'leap' && e.now) { c.leapsNow++; per[e.snake.name].now++; (st.nowAt ||= new Map()).set(e.snake, g.tick); (st.nowN ||= new Map()).set(e.snake, (st.nowN.get(e.snake) || 0) + 1); } // (round six B part 4: leap now, pressed twice)
       if (e.type === 'crash' && e.air) { c.bumps++; per[e.snake.name].bumps++; }
       if (e.type === 'death' && /^came down on/.test(e.snake.cause || '')) c.downOnBody++;
-      if (e.type === 'dash') { if (e.plain) { c.flashes++; per[e.snake.name].flashes++; } else { c.dashes++; per[e.snake.name].dashes++; } }
+      if (e.type === 'dash') { if (e.plain) { c.flashes++; per[e.snake.name].flashes++; if (e.snake.memory?.styled != null && e.snake.memory.styled === e.snake.memory.flash) per[e.snake.name].styled++; } else { c.dashes++; per[e.snake.name].dashes++; } }
       if (e.type === 'spit') { c.spits++; per[e.snake.name].spits++; }
       if (e.type === 'spat') { if (e.hit >= 0) { c.spitHits++; per[e.snake.name].hits++; per[g.snakes[e.hit].name].hitBy++; } else if (e.lx != null) c.spitLies++; }
       if (e.type === 'squash') { c.chokes++; per[e.snake.name].chokes++; seen.add('choke'); } // (round six B: its own bead squashed, counted where the chokes were)

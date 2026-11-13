@@ -82,6 +82,7 @@ function decide(viewIn, personaIn, memoryIn = {}, draw = null) {
   picked = powerPick(bestScore, bestDir);
   if (picked) {
     bestDir = picked.d;
+    if (picked.styled) memory.styled = view.tick; // (pressed for my power style: the census counts these)
     if (picked.flash) memory.flash = view.tick;
     else { memory.power = view.tick; memory.leapNow = picked.now ? view.tick : -1; memory.fly = picked.fly || 0; memory.flyTurn = picked.turn || null; } // (pressed twice for now; held for as far as it means to fly, steered where it means to turn)
   }
