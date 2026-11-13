@@ -240,7 +240,7 @@ function spitScene(key, rival, person, { back = 3, food = [] } = {}) {
   check('...and the mushroom stays where it lay', e && g.food.some(f => f.kind === 'mushroom' && f.x === e.lx && f.y === e.ly));
   // After OWN_SPIT_TICKS it's a mushroom like any: turned down, the mushroom put in its way on the last move it
   // slides (it came down on move 1 of OWN_SPIT_TICKS), then again on the first move after.
-  const [h] = scene(), r = h.snakes[0], m = h.food.find(f => f.kind === 'mushroom');
+  const [h] = scene(), r = h.snakes[0], m = h.food.find(f => f.kind === 'mushroom' && f.power); // (the spat one: a mushroom the round grows at (10,10), where the first lay, is kept by calm() and comes first)
   r.queue.push(D.down);
   for (let i = 2; i < T.OWN_SPIT_TICKS; i++) calm(h);
   const inWay = () => Object.assign(m, { x: r.body[0].x, y: r.body[0].y + 1 });

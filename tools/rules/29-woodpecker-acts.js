@@ -33,15 +33,15 @@ const runTo = (g, until, each = () => {}) => {
 
 { // Act 1, the watcher: it comes at its time, and looks (a spot on the log), moving on 2 to 4 times; no pecks.
   const g = actsBoard(ACTS[0] - 500);
-  const looks = new Set();
+  const looks = new Set(), spots = new Set(); // (a look is counted by the tick it began: it may draw a spot it had before)
   let came = null, aims = 0;
   runTo(g, ACTS[1] - 100, g => {
     if (g.events.some(e => e.type === 'woodpecker')) came = g.time;
-    if (g.woodpecker) looks.add(g.woodpecker.gaze);
+    if (g.woodpecker) { looks.add(g.woodpecker.lookAt); spots.add(g.woodpecker.gaze); }
     aims += g.events.filter(e => e.type === 'aim' || e.type === 'peck').length;
   });
   check('act 1: the woodpecker comes when the watcher\'s act starts', came !== null && came >= ACTS[0] && came < ACTS[0] + 200, `${came}`);
-  check('...watches spots on the log, 3 to 5 in all (it moves on 2 to 4 times)', looks.size >= T.WATCH_LOOKS[0] + 1 && looks.size <= T.WATCH_LOOKS[1] + 1 && [...looks].every(k => k >= 0 && !g.holes.has(k)), [...looks].join());
+  check('...watches spots on the log, 3 to 5 in all (it moves on 2 to 4 times)', looks.size >= T.WATCH_LOOKS[0] + 1 && looks.size <= T.WATCH_LOOKS[1] + 1 && [...spots].every(k => k >= 0 && !g.holes.has(k)), `${looks.size} looks: ${[...spots].join()}`);
   check('...and pecks nothing', aims === 0 && g.holes.size === 0);
   const v = E.aiView(g, g.snakes[0]);
   check('...and every rival sees the act, and where it looks', v.act === 1 && v.gaze === g.woodpecker.gaze);
@@ -49,18 +49,35 @@ const runTo = (g, until, each = () => {}) => {
 
 { // Act 2, the first pecks: its first cut starts where it looked last; a few cells a peck, a long rest; food still grows.
   const g = actsBoard(ACTS[0] - 500);
-  let gaze = -1, first = null, rest = null, sizes = [];
+  let first = null, rest = null, sizes = [];
   let grows = false;
   runTo(g, ACTS[2] - 100, g => {
     if (g.time > ACTS[1] + 10000 && !grows) { g.food = g.food.filter(f => f.kind !== 'food'); E.step(g); grows = g.food.some(f => f.kind === 'food'); }
-    if (g.time < ACTS[1] && g.woodpecker) gaze = g.woodpecker.gaze;
     for (const e of g.events) if (e.type === 'peck') { sizes.push(e.cells.length - (e.fall || []).length); if (rest === null && first) rest = g.woodpecker.restUntil - g.woodpecker.struckAt; first ||= e.cells; }
   });
   check('...and food still grows', grows);
-  const gx = gaze % T.GRID, gy = Math.floor(gaze / T.GRID);
-  const near = first && first.some(k => Math.abs(k % T.GRID - gx) + Math.abs(Math.floor(k / T.GRID) - gy) <= T.GAZE_NEAR);
-  check('act 2: its first cut starts where it looked last (its gaze is a tell)', near, `gaze ${gx},${gy}; patch ${first}`);
   check('...each peck a few cells of its outline (the piece it cuts loose aside), and a long rest between', sizes.length >= 2 && sizes.every(n => n <= T.CUT_STEP_2) && rest === T.FIRST_REST_TICKS, `${sizes} rest ${rest}`);
+}
+
+{ // Act 2's gaze, the tell: its first cut starts within GAZE_NEAR of where it looked last, "while it can" (38-the-woodpecker:
+  // 86-89% of rounds). Not every round: a spot on the log's rim with a head near, or a piece too big to cut from the rim
+  // within GAZE_NEAR, falls to the richest region (planCut), so it is a share of rounds, as many as the rounds drawn here
+  // each by its own seed (a single draw passed or failed with the suite's seed, #732). On this board about two in three
+  // are near their gaze, against about one in six for another round's gaze: the bar is half.
+  const ROUNDS = 40;
+  let near = 0, pecked = 0;
+  for (let sd = 1; sd <= ROUNDS; sd++) seededWhile(sd * 7919, () => {
+    const g = actsBoard(ACTS[0] - 500);
+    let gaze = -1, first = null;
+    runTo(g, ACTS[2] - 100, g => {
+      if (g.time < ACTS[1] && g.woodpecker) gaze = g.woodpecker.gaze;
+      if (!first) for (const e of g.events) if (e.type === 'peck') first = e.cells;
+    });
+    const gx = gaze % T.GRID, gy = Math.floor(gaze / T.GRID);
+    if (first) pecked++;
+    if (first && first.some(k => Math.abs(k % T.GRID - gx) + Math.abs(Math.floor(k / T.GRID) - gy) <= T.GAZE_NEAR)) near++;
+  });
+  check('act 2: every round makes its first cut, and it starts where it looked last in at least half (its gaze is a tell)', pecked === ROUNDS && near * 2 >= ROUNDS, `${near} of ${ROUNDS} near their gaze, ${pecked} cut`);
 }
 
 { // Act 3, the frenzy: sudden death, nothing new grows, and it gets hungrier from its first strike in the frenzy.
