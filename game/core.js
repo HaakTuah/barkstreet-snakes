@@ -36,7 +36,7 @@ const overlay = $('overlay'), cardTitle = $('overlay-title'), cardText = $('over
 const flavorEl = $('overlay-flavor'), badgeEl = $('overlay-badge'), opponentsEl = $('opponents');
 const nameRow = $('name-row'), nameRank = $('name-rank'), nameInput = $('name-input');
 const startBtn = $('start'), watchBtn = $('watch');
-const toastEl = $('toast'), speedEl = $('speed'), announcer = $('announcer'), hintEl = $('hint'), helpEl = $('help');
+const toastEl = $('toast'), speedEl = $('speed'), announcer = $('announcer'), hintEl = $('hint'), helpEl = $('help'), seasonEl = $('season');
 const pauseBtn = $('pause'), muteBtn = $('mute'), musicBtn = $('music'), voicesBtn = $('voices-toggle'), chatterBtn = $('chatter-toggle'), chatlogEl = $('chatlog');
 const recordsEl = $('records'), recordsBody = $('records-body'), resetBtn = $('records-reset');
 const recordsTabs = [...document.querySelectorAll('#records .tab[data-tab]')];
@@ -108,6 +108,7 @@ const FLAVOR = {
     lean: ['A lean season. Food is scarce this round.', 'Lean times on the log: little food about.'],
     plentiful: ['A season of plenty!', 'Plenty on the log this round.'],
   },
+  seasonMark: { lean: 'A lean season: less food this round.', plentiful: 'A season of plenty: more food this round.' }, // (its mark under the board, for the rest of the round: its tooltip and what a screen reader hears)
   seasonRule: k => k === 'lean' // (one idea, 60 characters at most, as every lesson)
     ? `Lean: ${inWords(Engine.seasonApples(k))} apple from 0:${Math.round(TUNE.BEETLE_FIRST_MS / 1000)}, fewer beetles, short meals.`
     : `Plenty: ${inWords(Engine.seasonApples(k))} apples, more beetles. Mind the crowd.`,

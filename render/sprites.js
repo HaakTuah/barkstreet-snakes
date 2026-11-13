@@ -81,12 +81,14 @@ function guideSprite(kind, px) {
   return c;
 }
 const GUIDE_TILE = { hole: 1.5, bridge: 1.5, land: 1.25, fire: 0.95, mushroom: 0.95, held: 1.1, rests: 1.05, squash: 1.15, cut: 1.15, failflash: 1.15, lostflag: 1.2, dig: 0.9, knock: 1.35, 'basic-win': 1.1, 'basic-steer': 1.1, 'basic-crash': 1.1 }; // (on a tile of bark this many cells either side of the middle)
+const LEAN_BITE = [[0.3, -0.14, 0.1], [0.37, 0, 0.1], [0.3, 0.14, 0.09]]; // (the bite, three scallops out of the apple's right side: x, y, radius in cells)
 const SQUASH_SPLAT = [[1.25, -0.32, 0.07], [1.35, 0.3, 0.06], [0.1, 0.36, 0.05], [1.6, 0.02, 0.05]]; // (the guide's squash: the splat's drops, x, y, radius in cells)
 const DIG_SPRAY = [[-0.62, -0.42, 0.045], [0.6, -0.5, 0.04], [0.66, 0.36, 0.05], [-0.5, 0.58, 0.04], [0.05, -0.7, 0.035], [-0.72, 0.1, 0.035]];
 const GUIDE = {
   apple: g => drawApple(g, 'fresh'),
   baked: g => drawApple(g, 'baked'),
-  season: g => { for (const [x, a] of [[-0.66, 1], [0, 1], [0.66, 0.35]]) { g.save(); g.globalAlpha = a; g.translate(CELL * x, 0); g.scale(0.6, 0.6); drawApple(g, 'fresh'); g.restore(); } }, // (2i: three apples, the third faint: one more, or one fewer)
+  lean: g => { g.scale(1.3, 1.3); drawApple(g, 'fresh'); g.globalCompositeOperation = 'destination-out'; for (const [x, y, r] of LEAN_BITE) { g.beginPath(); g.arc(CELL * x, CELL * y, CELL * r, 0, TAU); g.fill(); } }, // (2i: the apple of the log with a bite out of it: a lean season's mark, and its row's picture)
+  plentiful: g => { g.scale(1.12, 1.12); drawBasket(g); }, // (2i: a basket heaped with apples: a season of plenty's mark)
   golden: g => { guideGlow(g); drawGolden(g); g.translate(CELL * 0.2, -CELL * 0.22); drawStar(g); },
   mushroom: g => { g.scale(1.2, 1.2); drawHaze(g); g.translate(0, CELL * 0.04); drawMushroom(g); }, // (on bark, as on the log: its cream stem vanished on the card; and the purple haze its rule mentions)
   goldcap: g => { guideGlow(g); g.translate(0, CELL * 0.04); drawGoldcap(g); },
@@ -264,6 +266,26 @@ function guideSnake(g, color, you, marks) {
   } finally { ctx = was; }
 }
 const guideGlow = g => { g.save(); g.scale(0.72, 0.72); drawGlow(g); g.restore(); }; // (a power's glow, all of it inside the picture)
+// A basket heaped with the log's apples (a season of plenty's mark), its weave inked like every other pickup.
+function drawBasket(g) {
+  const c = CELL;
+  for (const [x, y] of [[0, -0.17], [-0.2, -0.04], [0.2, -0.04]]) { g.save(); g.translate(c * x, c * y); g.scale(0.62, 0.62); drawApple(g, 'fresh'); g.restore(); }
+  g.lineJoin = 'round';
+  g.strokeStyle = '#3a2614';
+  g.lineWidth = c * 0.05;
+  g.fillStyle = '#b9772f';
+  g.beginPath(); g.moveTo(-c * 0.44, c * 0.06); g.lineTo(c * 0.44, c * 0.06); g.lineTo(c * 0.34, c * 0.46); g.lineTo(-c * 0.34, c * 0.46); g.closePath(); g.fill(); g.stroke();
+  g.strokeStyle = 'rgba(58,38,20,0.55)';
+  g.lineWidth = c * 0.035;
+  g.beginPath();
+  for (const y of [0.2, 0.33]) { g.moveTo(-c * (0.44 - y * 0.25), c * y); g.lineTo(c * (0.44 - y * 0.25), c * y); }
+  for (const x of [-0.2, 0, 0.2]) { g.moveTo(c * x, c * 0.06); g.lineTo(c * x * 0.8, c * 0.46); }
+  g.stroke();
+  g.fillStyle = '#8a5522';
+  g.strokeStyle = '#3a2614';
+  g.lineWidth = c * 0.05;
+  g.beginPath(); g.roundRect(-c * 0.49, -c * 0.02, c * 0.98, c * 0.1, c * 0.05); g.fill(); g.stroke();
+}
 // The cells of the guide's hole (an L, in the middle of a board) and its land (a staircase across it).
 const GUIDE_HOLE = [[11, 11], [12, 11], [11, 12]], GUIDE_PIT = [[12, 12]], GUIDE_LAND = [];
 for (let y = 9; y < 16; y++) for (let x = 9; x < 16; x++) if (x + y >= 24) GUIDE_LAND.push([x, y]);

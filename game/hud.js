@@ -131,7 +131,22 @@ function yourPowerWords(s) {
 const goldWords = s => [s.leaps > 0 && `${s.leaps} golden jump${s.leaps === 1 ? '' : 's'}`, s.dashes > 0 && `${s.dashes} golden dash${s.dashes === 1 ? '' : 'es'}`].filter(Boolean);
 const powerWords = s => { const held = goldWords(s); return (held.length ? ` Holding ${held.join(' and ')}.` : '') + (s.wrapUntil > theGame.time ? ' The edges wrap for it.' : ''); };
 
+// The round's food season (2i), kept in sight after its banner: a lean or plentiful round has its mark under the
+// board, the picture of its Field guide row, and a normal one has none (nor does any round before its Go).
+let seasonShown = '';
+function showSeason() {
+  const kind = theGame.went && FLAVOR.seasonMark[theGame.season] ? theGame.season : '';
+  if (kind === seasonShown) return;
+  seasonShown = kind;
+  seasonEl.hidden = !kind;
+  seasonEl.title = kind && FLAVOR.seasonMark[kind];
+  seasonEl.setAttribute('aria-label', seasonEl.title);
+  seasonEl.replaceChildren(...(kind ? [guidePic(kind, Math.round(26 * (window.devicePixelRatio || 1)))] : []));
+  fitColumn(); // (the row under the board has a mark more, or one less)
+}
+
 function updateHud(force = false) {
+  showSeason();
   const score = player()?.eaten ?? 0;
   if (force || scoreEl.textContent !== String(score)) scoreEl.textContent = score;
   // Best follows your score live once you pass it (it's saved when your round ends).
