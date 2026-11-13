@@ -21,9 +21,9 @@ mouse works for the powers.
 - **The words:** the start card, the help under the board and online read "Arrow keys steer (or WASD) · Space or click
   jumps · E, Shift or right-click dashes · …" (the mouse named, or nobody would find it), and the hint beside YOU
   "Arrow keys to steer (or WASD)"; on touch, "Swipe to steer · Tap to jump · Swipe ahead to dash", and alone "· Tap ⏸
-  to nap" after it. The Field guide's Jump and Dash rows say "Space or a click on the log" and "E, Shift or a
-  right-click on the log". The lessons name the mouse too, on a keyboard (on a phone they say the touch): the dash's
-  "Your dash is ready: E, Shift or right-click.", a golden leaf's "2 golden dashes: E or right-click. Never at edges or
+  to nap" after it. The Field guide's Jump and Dash rows say "Space or a click on the log" and "E, Shift, a
+  right-click on the log or the key you’re going". The lessons name the mouse too, on a keyboard (on a phone they say the touch): the dash's
+  "Your dash is ready: E, Shift, or the key you’re going.", a golden leaf's "2 golden dashes: E or right-click. Never at edges or
   holes." (one key and the mouse, Shift being the Field guide's, to keep it to 60 characters), a golden beetle's "…
   Space or a click to jump."; and so do the power words for screen readers ("Space or a click jumps: ready. E, Shift
   or right-click dashes: ready.") and the pips' tooltips. A lesson keeps to 60 characters, with keys and on touch.

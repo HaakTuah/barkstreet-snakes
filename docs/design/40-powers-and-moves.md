@@ -147,7 +147,7 @@ who never double-presses.
 
 ### The golden jump flies
 
-- **A quick press** is the plain hop, free and with no rest.
+- **A quick press** is the plain hop, free and with no stamina.
 - **Held past it,** you commit to the full flight: always `GOLD_FLY` (5) cells in the air, steering as you go (turns
   work in flight as on the ground, one a tick, and the body follows the bend; `airTurn`), and letting go no longer
   brings you down early (`letGo()`). It never flies off the board. So the flight is a trade-off, not a free upgrade of
