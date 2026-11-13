@@ -40,7 +40,7 @@ const RESERVE_MARGIN = DRAB.margin; // (the margin, spare room wanted, of a snak
 // (powerPick() sets these for each call:)
 let crawlScore, crawlDir, air, jump, U, habit, safe, cheap, keep, stampM, trapped, boxed, dropping, roomsHere, foodHere, hereFree,
   hereFood, landFood, landCells, pecks, cellAt, freeSoon, inTheWay, path, straight, leapNow, leapFly, leapTurn, ate, ateV,
-  ateL, ateG, ateGain, endRisk, idle, muteWas, ateBug, ateWas, meal, bugsOn, cutter, bestPower, ownCut, cutKills, cutTarget, consider,
+  ateL, ateG, ateGain, endRisk, leapKeep, idle, muteWas, ateBug, ateWas, meal, bugsOn, cutter, bestPower, ownCut, cutKills, cutTarget, consider,
   waitPrice;
 function powerPick(crawlIn, crawlDirIn) {
   crawlScore = crawlIn; crawlDir = crawlDirIn;
@@ -111,8 +111,8 @@ function powerPick(crawlIn, crawlDirIn) {
     if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
     const extra = (intent.mimicDir && sameDir(d, intent.mimicDir) ? w.mimic : 0) - (w.turn && !sameDir(d, me.dir) ? w.turn : 0);
     if (me.dashes > 0) { const v = flashOpt(d, true); if (trapped || cutKills || habit.dashSpend || (dropping && ownCut >= 0)) consider(d, true, v, 0.6, extra); } // (a golden dash, held: out of a trap, or for a cut that puts a rival out; spent so, it gains (see part 4's chosen numbers); spent as it came, −0.11 ± 0.09 place a use; Star (dashSpend), its trademark, spends them as they come)
-    else if (me.flashIn === 0 && (dropping || d === crawlDir || habit.everyWay || (cutter && bodyNear(d)) || coverNear(d))) consider(d, true, flashOpt(d, false), STAMINA_PRICE * TUNE.DASH_STAMINA_MS / TUNE.STAMINA_MS * (trapped || cutTarget || race(d) ? 0.5 : GAIN_PRICE), extra, waitPrice(TUNE.DASH_STAMINA_MS, true));
-    if (jump) { const v = leapOpt(d); consider(d, false, v, (me.leaps > 0 ? 0.35 : STAMINA_PRICE * TUNE.JUMP_STAMINA_MS / TUNE.STAMINA_MS) * (leapNow ? (w.leapNow ?? 1) : 1), extra, me.leaps > 0 ? 0 : waitPrice(TUNE.JUMP_STAMINA_MS, false)); } // (leap now, at the jump's price times my style's: only out of a trap, see leapOpt)
+    else if (me.flashIn === 0 && (dropping || d === crawlDir || habit.everyWay || (cutter && bodyNear(d)) || coverNear(d))) { const v = flashOpt(d, false), sure = trapped || cutTarget || race(d); consider(d, true, v, STAMINA_PRICE * TUNE.DASH_STAMINA_MS / TUNE.STAMINA_MS * (sure ? 0.5 : GAIN_PRICE), extra, waitPrice(TUNE.DASH_STAMINA_MS, true) * (sure ? 1 : GAIN_PRICE)); }
+    if (jump) { leapKeep = false; const v = leapOpt(d), k = trapped || leapKeep || leapNow ? 1 : GAIN_PRICE; consider(d, false, v, (me.leaps > 0 ? 0.35 : k * STAMINA_PRICE * TUNE.JUMP_STAMINA_MS / TUNE.STAMINA_MS) * (leapNow ? (w.leapNow ?? 1) : 1), extra, me.leaps > 0 ? 0 : k * waitPrice(TUNE.JUMP_STAMINA_MS, false)); } // (leap now, at the jump's price times my style's: only out of a trap, see leapOpt)
   }
   return bestPower;
 }

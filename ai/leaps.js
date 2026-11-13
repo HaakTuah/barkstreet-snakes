@@ -92,6 +92,7 @@ function landOpt(d, span, golden, now) {
   const land = path[span];
   const down = span + 1;
   const isle = islandGain(land);
+  if (!golden) leapKeep = boxed || isle > 0; // (a plain jump out of a box or to an island: one I keep at today's price)
   const doom = doomed(land, span, golden);
   if (doom >= 0) return DEAD + (span + 1 + doom) * 1000; // (the death it is, that many moves on: taken only if staying is worse)
   if (!golden && !boxed && !isle && !meal(land, down) && !now) { // (the plain jump: out of a crash or a box, to an island, or onto food, or just short of it)
