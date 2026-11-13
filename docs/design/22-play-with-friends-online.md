@@ -113,7 +113,8 @@ object literal has) and every event the engine makes, so a new kind can't skip t
   (`AWAY_MS`) an AI steers their snake (Drab's, so a hiccup doesn't drive them into a wall), and any turn they send, or
   their messages coming again, hands it straight back; a banner appears only if the silence lasts 2 s
   (`AWAY_TOAST_MS`). What the AI had thought ahead for them is thrown away whole (its memory and what it noticed:
-  `dropThought` in `engine/view.js`), so the round goes on as though it had never thought, wherever the press fell.
+  `dropThought` in `engine/view.js`), so the round goes on as though it had never thought, wherever the press fell; the
+  same for the host's own snake back from a hidden tab.
 - **A friend who switches tabs says so at once** (`away`), and the AI steers until they turn again. The host's own
   snake gets the same stand-in while the host's tab is hidden.
 - **The host's tab may be hidden:** browsers stop animation frames there, so a tiny worker clock keeps the round going.

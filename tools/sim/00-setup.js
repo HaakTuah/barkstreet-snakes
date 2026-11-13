@@ -47,7 +47,7 @@ function loadGame(texts, versus = null) {
     if (versus && f === GAME_FILES.find(gameFiles.ai)) { vm.runInContext(versus, ctx, { filename: 'versus/ai' }); other = ctx.window.SnakeAI; }
     if (other && f === GAME_FILES.find(gameFiles.engine)) {
       const mine = ctx.window.SnakeAI, keyOf = new Map(Object.entries(mine.PERSONAS).map(([k, p]) => [p, k]));
-      ctx.window.SnakeAI = { ...mine, decide: (view, brain, memory) => theirs.has(memory) ? other.decide(view, other.PERSONAS[keyOf.get(brain)], memory) : mine.decide(view, brain, memory) };
+      ctx.window.SnakeAI = { ...mine, decide: (view, brain, memory, draw) => theirs.has(memory) ? other.decide(view, other.PERSONAS[keyOf.get(brain)], memory, draw) : mine.decide(view, brain, memory, draw) };
       theirKeys = new Set(Object.keys(other.PERSONAS));
     }
     vm.runInContext(texts[i], ctx, { filename: f });

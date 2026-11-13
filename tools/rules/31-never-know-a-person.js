@@ -32,7 +32,7 @@ const diffAt = (a, b, at = '') => {
     /function aiView\(/.test(seen) && !PERSON.test(seen) && !/\b(owner|name|color|seat|queue)\b/.test(seen), (seen.match(/.*\b(isPlayer|autopilot|owner|name|color|seat|queue)\b.*/) || [''])[0].trim());
   const handed = /\baiDecide\(aiView\(game, s\), brainOf\(s\), s\.memory, mindOf\(game, s\)\)/g, anyCall = /\baiDecide\(/g;
   const handedN = engineFiles.reduce((n, f) => n + (code(f).match(handed) || []).length, 0), callsN = engineFiles.reduce((n, f) => n + (code(f).match(anyCall) || []).length, 0);
-  const mind = (code('engine/core.js').match(/^function mindOf\([\s\S]*?\n}\n/m) || [''])[0];
+  const mind = (code('engine/luck.js').match(/^function mindOf\([\s\S]*?\n}\n/m) || [''])[0];
   check('31: the engine hands every decision nothing but aiView(), the snake\'s own brain, its memory and its draws (from the round\'s seed, the tick and the snake\'s id alone)',
     handedN >= 1 && handedN === callsN && /game\.seed/.test(mind) && !(mind.match(/\b(?:game|s)\.(\w+)/g) || []).some(m => !['game.seed', 'game.tick', 's.id'].includes(m)), `${handedN} of ${callsN} calls; ${mind.trim().split('\n')[1]}`);
 

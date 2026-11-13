@@ -21,7 +21,7 @@
   const out = (season, draw) => {
     const g = board([[line(5, 5, 3), 'right']], { season, time: T.BEETLE_FIRST_MS });
     g.food = [{ x: 20, y: 20, kind: 'food' }, { x: 20, y: 18, kind: 'food' }, { x: 18, y: 20, kind: 'food' }, { x: 2, y: 20, kind: 'mushroom' }, { x: 2, y: 18, kind: 'mushroom' }];
-    const r = ctx.luck; ctx.luck = () => draw; // (every draw the rules make: luck in engine/core.js)
+    const r = ctx.luck; ctx.luck = () => draw; // (every draw the rules make: luck in engine/luck.js)
     try { E.step(g); } finally { ctx.luck = r; }
     return g.food.some(f => f.kind === 'beetle');
   };

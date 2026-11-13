@@ -14,6 +14,7 @@
 // both).
 //
 //   core.js        tuning, the grid and the occupancy stamps, snakes and a new game, the tick's length, hunger and meals
+//   luck.js        the round's random draws, and each decision's own (Same seed, same game)
 //   food.js        apples and filling the board with food, the food placer, eating, mushrooms' cheeks and spitting
 //   roll.js        knocked food rolling: which way a head's step went, and where food goes
 //   beetles.js     beetles, their burrows, their crawl and going under
@@ -59,23 +60,6 @@ function ahead(game, s, x, y, d) {
   if (wraps(game, s) || (!inside(nx, ny) && portalAt(game, x, y, d))) { nx = (nx + GRID) % GRID; ny = (ny + GRID) % GRID; }
   return { x: nx, y: ny };
 }
-// The round's luck ("Same seed, same game"): every draw the rules make comes from the round's own stream (luck: game.rng,
-// from game.seed), and each decision a rival makes from a stream of its own, seeded from the round, the tick and the
-// snake (mindOf, handed to decide). So neither the order the rivals think in, nor whether one thought ahead, nor what the
-// drawing, the chatter and the room codes draw (Math.random: unseeded in the page) changes the game (#729). mulberry32,
-// as tools/seeded.js; the seed is the round's own, or one drawn from Math.random when createGame is given none.
-const MULBERRY = 0x6d2b79f5;
-function mulberry(a) {
-  let t = Math.imul(a ^ (a >>> 15), a | 1);
-  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-}
-function luck(game) { return mulberry(game.rng = (game.rng + MULBERRY) >>> 0); } // (game: anything holding a stream's state as rng)
-function mindOf(game, s) {
-  let a = Math.imul(game.seed ^ Math.imul(game.tick + 1, 0x9e3779b1) ^ Math.imul(s.id + 1, 0x85ebca6b), 0xc2b2ae35) >>> 0;
-  return () => mulberry(a = (a + MULBERRY) >>> 0);
-}
-const between = (game, a, b) => a + luck(game) * (b - a);
 const WEATHER = ['clear', 'sun', 'wind', 'rain', 'storm', 'snow'];
 function makeSnake(id, spawn, props) {
   const d = spawn.dir;

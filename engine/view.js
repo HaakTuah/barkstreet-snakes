@@ -171,7 +171,7 @@ function thinkAhead(game, s) {
 const unthought = new WeakMap();
 function dropThought(game, s) {
   const was = s.plannedTick === game.tick && unthought.get(s);
-  if (was) { s.memory = was.memory; s.noticed = was.noticed; }
+  if (was) for (const k of ['memory', 'noticed']) { const o = s[k]; for (const f of Object.keys(o)) delete o[f]; Object.assign(o, was[k]); } // (in place: whatever holds them still does)
   unthought.delete(s);
   s.planned = null;
   s.plannedTick = -1;

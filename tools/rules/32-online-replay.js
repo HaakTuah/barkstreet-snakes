@@ -87,6 +87,32 @@
   }
   const ROUND = { seed: 3201, keys: ['wildcard', 'capricious'], acts: [1500, 4000, 30000] };
 
+  // The smallest setups first: (1) on a board 40 ticks in, a stand-in that thought ahead, handed back (a friend's press,
+  // or the host's own back from a hidden tab), leaves the round as though it had never thought; (2) before the first tick,
+  // where Wildcard draws its mix and Capricious when its first mood comes, the rivals thinking ahead in either order, or
+  // not at all, make the same tick.
+  {
+    const at = k => { const h = hosted({ ...ROUND, season: 'normal', rtt: 0, quiet: () => 0, send() {} }); while (h.g.tick < k) h.tick(); return h; };
+    const MEMOS = ['blocked', 'fireSet', 'peckSet', 'zoneSet']; // (what aiView works out of a past snapshot and keeps on it: a look fills them in, and the next would the same)
+    const board = h => JSON.stringify(h.g, (k, v) => MEMOS.includes(k) ? undefined : replacer(k, v));
+    for (const [who, id, back] of [['a friend\'s press', 1, (h, s) => h.c.fromFriend(s.peer, { t: 'turn', d: 'up' })], ['the host\'s own press', 0, h => h.c.hostPress(() => {})]]) {
+      const [thought, not] = [true, false].map(ahead => {
+        const h = at(40), s = h.g.snakes[id];
+        s.autopilot = h.E.PERSONAS.drab;
+        if (ahead) h.E.thinkAhead(h.g, s);
+        back(h, s);
+        const now = board(h);
+        h.tick();
+        return { now, then: board(h), back: !s.autopilot };
+      });
+      check(`32: a stand-in that thought ahead, handed back by ${who}, leaves the round as though it had never thought, and the tick after`,
+        thought.back && not.back && thought.now === not.now && thought.then === not.then, diffAt(JSON.parse(thought.now), JSON.parse(not.now)) || diffAt(JSON.parse(thought.then), JSON.parse(not.then)));
+    }
+    const ticked = order => { const h = at(0); for (const id of order) h.E.thinkAhead(h.g, h.g.snakes[id]); h.tick(); return board(h); };
+    const [ab, ba, none] = [[2, 3], [3, 2], []].map(ticked);
+    check('32: the rivals thinking ahead in either order, or not at all, make the same tick', ab === ba && ab === none, diffAt(JSON.parse(ab), JSON.parse(ba)) || diffAt(JSON.parse(ab), JSON.parse(none)));
+  }
+
   // The live round. Frames of 10 to 40 ms (now and then a hitch of 400, which ticks three times and leaves the rivals to
   // decide in the step); each frame first takes what has arrived and the host's own presses come due, then ticks, then lets a
   // rival or two think. Both people steer as Drab would, from a screen of their own (the friend's own, the host's a copy),

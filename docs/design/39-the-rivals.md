@@ -360,12 +360,14 @@ failed flashes rare enough to be a risk you take on purpose. The numbers chosen 
 of `40-powers-and-moves.md`; the text as it was, with the A/B as it stood then, is in
 `docs/archive/design-arc-and-history.md`.
 
-### How a change to the rivals is measured
+### Their chances are their own
 
-- **Their chances are their own:** each decision draws from a stream of its own, seeded from the round's seed, the tick
-  and the snake (`mindOf` in `engine/core.js`, handed to `decide`), and the rules from the round's own (`luck`), so a
-  plan made in the frames before the tick is the decision the tick would make, draws and all, and a draw added to one
-  rival's thinking moves no one else's game (#729).
+Each decision draws from a stream of its own, seeded from the round's seed, the tick and the snake (`mindOf` in
+`engine/luck.js`, handed to `decide`), and the rules from the round's own (`luck`). So a plan made in the frames before
+the tick is the decision the tick would make, draws and all, and a draw added to one rival's thinking moves no one
+else's game (#729).
+
+### How a change to the rivals is measured
 
 - **A change meant to keep every decision:** `tools/bench-ai.js` first (every position the same way, its memory and
   random draws too), then the fingerprints.
