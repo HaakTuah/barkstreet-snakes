@@ -390,7 +390,7 @@ them where its head fell, one golden pickup anyone can grab (a bump it lives thr
   cells, against 5 for those grabbed) and fade or outlast it, one in five another takes, almost none it has no room
   for. How far a charge is worth going (part 7a, PR #722, `--move grab`, seeds 942–945, about 190 spills each way):
   as far as any food of its worth. Wanted as today, a spill gains its nearest rival +0.05 ± 0.05 place; wanted twice
-  as much, it is grabbed three points more often and gains +0.06 ± 0.05, nothing more, near or far.
+  as much, it is grabbed three percentage points more often and gains +0.06 ± 0.05, nothing more, near or far.
 
 ### Mushrooms come back up
 

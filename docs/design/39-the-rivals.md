@@ -198,12 +198,15 @@ Each power is weighed as a move in the rival's own search, from where the power 
 what it eats on the way, less the risk where it ends and a price in apples (what an apple is worth to it now), and
 pressed only when it beats crawling (`powerPick` in `ai/powers.js`):
 - *The plain flash and jump* spend one stamina (2u), priced by what they take of it: see `ai/powers.js`. *One pricing
-  model* (part 7a of round six B, PR #722): stamina at 5 apples a bar, and 6 for a bar's wait below what the other
-  power needs; a meal's stamina is worth as much to them. A gain the power is sure of, that the crawl can't have (a cut,
-  a flier's ring, an island, a rival shut in), takes 1½ apples off its price for each apple of it, never below 2 and
-  2.4: the search's guess has to clear the full price, a sure gain only the old one. At 2 and 2.4 for everything the
-  rivals flashed about two times a minute and lost to the same rivals at 5 and 6 by about five points of wins, on three
-  seeds; at 5 and 6 for everything, they never hopped to an island, raced for a golden or cut their target any more.
+  model* (part 7a of round six B, PR #722): a full bar of stamina is worth 5 apples to a rival (it was 2), and a spend
+  that leaves too little for the other power costs a little more (6 a bar's wait, was 2.4); a meal's stamina is worth as
+  much. A gain the power is sure of, that the crawl can't have (a cut, a flier's ring, an island, a rival shut in),
+  takes 1½ apples off the price for each apple of it, down to the old price at most: a gain only the search guesses has
+  to clear the full price. Measured: the old prices for everything lost to the same rivals at the new ones by about
+  five points of wins (seeds 3, 11 and 29), but at the new ones for everything they never hopped to an island, raced for
+  a golden or cut their target any more; this model keeps those and won by as much on seed 3 (+4.75 points, place
+  −0.13), dashing a sixth less (2.1 to 1.7 a minute) and jumping a little less, the split of uses between the two
+  about even as before (47% dashes).
 - *The plain flash:* its price, or half to win a race for food (food a rival could reach as soon as it would crawl
   there, but not as soon as it flashes) or to get out of a crash; free to win a race for a golden apple, which fills the
   bar it spends. Weighed the way the rival would crawl anyway (any way, out of a crash; the hunters and the aggressive, a
