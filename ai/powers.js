@@ -63,7 +63,7 @@ function powerPick(crawlIn, crawlDirIn) {
   waitPrice = (cost, flash) => {
     if (trapped || (flash && habit.keepFlash !== undefined)) return 0;
     const reserve = flash ? TUNE.JUMP_STAMINA_MS * w.margin / RESERVE_MARGIN : TUNE.DASH_STAMINA_MS * (habit.keepFlash !== undefined ? 1 : w.margin / RESERVE_MARGIN);
-    return RESERVE_PRICE * (habit.keepFlash ?? 1) * Math.max(0, reserve - (me.stamina - cost)) / TUNE.STAMINA_MS;
+    return RESERVE_PRICE * (habit.keepFlash ?? 1) * (w.style?.keep ?? 1) * Math.max(0, reserve - (me.stamina - cost)) / TUNE.STAMINA_MS; // (Ghost's style minds it more: ai/styles.js)
   };
   keep = me.grow > 0 ? me.body.length : me.body.length - 1, stampM = ++markStamp;
   for (let j = 0; j < keep; j++) myCells[me.body[j].y * N + me.body[j].x] = stampM;
@@ -119,7 +119,7 @@ function powerPick(crawlIn, crawlDirIn) {
     if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
     const extra = (intent.mimicDir && sameDir(d, intent.mimicDir) ? w.mimic : 0) - (w.turn && !sameDir(d, me.dir) ? w.turn : 0);
     if (me.dashes > 0) { const v = flashOpt(d, true); if (trapped || cutKills || habit.dashSpend || (dropping && ownCut >= 0)) consider(d, true, v, 0.6, extra); } // (a golden dash, held: out of a trap, or for a cut that puts a rival out; spent so, it gains (see part 4's chosen numbers); spent as it came, −0.11 ± 0.09 place a use; Star (dashSpend), its trademark, spends them as they come)
-    else if (me.flashIn === 0 && (dropping || d === crawlDir || habit.everyWay || (cutter && bodyNear(d)) || coverNear(d))) { const v = flashOpt(d, false), won = race(d), gold = won && won.kind === 'golden'; consider(d, true, v, gold ? 0 : STAMINA_PRICE * TUNE.DASH_STAMINA_MS / TUNE.STAMINA_MS * (trapped || cutTarget || won ? 0.5 : 1), extra, gold ? 0 : waitPrice(TUNE.DASH_STAMINA_MS, true), sureGain); } // (a golden apple won: it fills the bar)
+    else if (me.flashIn === 0 && (dropping || d === crawlDir || habit.everyWay || (cutter && bodyNear(d)) || coverNear(d) || styleWay(d))) { const v = flashOpt(d, false), won = race(d), gold = won && won.kind === 'golden'; consider(d, true, v, gold ? 0 : STAMINA_PRICE * TUNE.DASH_STAMINA_MS / TUNE.STAMINA_MS * (trapped || cutTarget || won ? 0.5 : 1) * styleShare(d, won, cutTarget), extra, gold ? 0 : waitPrice(TUNE.DASH_STAMINA_MS, true), sureGain); } // (a golden apple won: it fills the bar; my power style's share: ai/styles.js)
     if (jump) { const v = leapOpt(d); consider(d, false, v, (me.leaps > 0 ? 0.35 : STAMINA_PRICE * TUNE.JUMP_STAMINA_MS / TUNE.STAMINA_MS) * (leapNow ? (w.leapNow ?? 1) : 1), extra, me.leaps > 0 ? 0 : waitPrice(TUNE.JUMP_STAMINA_MS, false), me.leaps > 0 ? 0 : sureGain); } // (leap now, at the jump's price times my style's: only out of a trap, see leapOpt)
   }
   return bestPower;

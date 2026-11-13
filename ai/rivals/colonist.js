@@ -6,6 +6,7 @@ PERSONAS.colonist = {
   kill: ['Another patch of bark for the Crown.', 'You were annexed. Politely.', 'All very civilised, of course.'],
   win: ['The final flag is planted.', 'An empire of one log.', 'Victory, then tea.'],
   w: {
+    style: { chase: 0.5 }, // (7b: it chases intruders off its flags)
     space: 1.2, territory: 1.3, aggression: 0.2, // (at 1.4, once the rivals read knocked food and digging beetles, it won 27 / 37%)
     food: 5, eat: 70, pellet: 1.2, foodRange: 30,
     margin: 5, headRisk: 700, zoneRisk: 120,

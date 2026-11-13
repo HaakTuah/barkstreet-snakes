@@ -6,6 +6,7 @@ PERSONAS.ouroboros = {
   kill: ['Ouroboros came full circle.', 'What goes around came around.', 'First its own tail. Then you.'],
   win: ['And round again.', 'It’s won this one before.'],
   w: {
+    style: { coil: true }, // (7b: it jumps its own coils)
     space: 1.0, territory: 0.6, aggression: 0.2,
     food: 3, eat: 45, pellet: 1.2, foodRange: 40,
     margin: 3, headRisk: 800, zoneRisk: 150,

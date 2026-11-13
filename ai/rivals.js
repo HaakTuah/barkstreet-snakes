@@ -61,6 +61,10 @@
 //                                   golden mushrooms) worth this many times what it's worth to anyone
 //                                   else, and a golden apple this many; contested: how much golden power
 //                                   food a rival reaches first still counts (0-1)
+//   style                         my power style (part 7b): { race, cut, chase, bead, tail, skim, swerve,
+//                                   wall: the share of a plain flash's spend I pay for one that does
+//                                   that; keep: my wait below the reserve times this; coil: a jump over
+//                                   my own body for its own sake } (see ai/styles.js)
 //   hurry                         how much a move longer to catch a beetle counts against it (default
 //                                   BUG_HURRY: lower, it keeps after a beetle on the run longer)
 const DRAB = {
@@ -89,7 +93,7 @@ const WEIGHTS = {
   margin: undefined, headRisk: undefined, zoneRisk: undefined, nerve: undefined, distance: undefined,
   hunt: undefined, home: undefined, lure: undefined, turn: undefined, tail: undefined, mimic: undefined,
   colony: undefined, goal: undefined, thrill: undefined, coil: undefined, thick: undefined, powers: undefined, golden: undefined, hurry: undefined,
-  spit: undefined, leapNow: undefined, landing: undefined,
+  spit: undefined, leapNow: undefined, landing: undefined, style: undefined,
 };
 const weighed = w => Object.assign({ ...WEIGHTS }, w);
 

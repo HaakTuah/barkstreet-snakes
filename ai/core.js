@@ -48,6 +48,7 @@
 //   search.js      moving and searching ahead, and a move that looks fatal
 //   powers.js      the powers weighed as moves (powerPick), and where one leaves me
 //   flash.js       the flash and golden dashes: races, cuts
+//   styles.js      each rival's power style: what it spends a plain power on readily
 //   leaps.js       the jump and golden flights: where each comes down, a flier's ring, a landing that shuts a rival in
 //   decide.js      decide(): its parts in turn, the best move, and window.SnakeAI
 const DIRS = {

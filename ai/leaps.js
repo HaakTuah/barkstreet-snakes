@@ -100,7 +100,7 @@ function landOpt(d, span, golden, now) {
     // (A habit's jump, for its own sake, only where no rival could get
     // to the landing before I'm down: one moving in as I take off and
     // the jump doesn't go, and I crawl into what I meant to hop.)
-    if (!(past >= 0 && meal(past, down + 1)) && !(habit.jumpAny && reach[framed[land]] > down)) return null;
+    if (!(past >= 0 && meal(past, down + 1)) && !((habit.jumpAny || (w.style?.coil && hopsMine(span))) && reach[framed[land]] > down)) return null; // (Ouroboros's style: over its own coils, ai/styles.js)
   }
   let L = me.body.length, g = me.grow;
   for (let i = 0; i <= span; i++) { if (g > 0) g--; else L--; L++; }
