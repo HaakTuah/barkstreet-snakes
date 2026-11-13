@@ -298,9 +298,13 @@ It prices powers far below anyone else, by the same rules and the same engine ca
 are off for everyone else, so rounds without Star play exactly as if it didn't exist:
 - **`w.powers`** `{ price: 0, risk: 350, everyWay, jumpAny, dashSpend, keepFlash: 0.01 }`. Its powers are free to it, unless one ends
   where its risk is over 350 (a rival could strike there: in reach of its powers, or nearer), and there it pays the
-  full price, as anyone would. A power still has to beat crawling by a point.
-  - **Flashes:** whenever it has a flash's worth of stamina and the flash doesn't run into anything, weighed every
-    way, not just the way it would crawl: about three times as often as the median rival.
+  full price, as anyone would. A power still has to beat crawling by a point, and a flash pays the wait below a jump's
+  worth of stamina, as anyone's does (7c).
+  - **Flashes:** whenever the flash doesn't run into anything and gains more than that wait, weighed every way, not
+    just the way it would crawl: over twice as often as the median rival. (Free of the wait, it flashed three times
+    as often, spent every flash, and died boxed in its own coils with nothing left to jump out or drop its tail: 12%
+    of its rounds won with Star in every round, seeds 101 and 103; minding it, 17% and 18%, its deaths against
+    itself and the edge a fifth fewer.)
   - **Jumps:** any hurdle with somewhere free to land beyond it that no rival could get to before it's down, not just
     out of a crash or onto food: over twice as often as the median rival. What it keeps is a flash's worth of stamina
     (`keepFlash`): a jump that leaves less costs it a hundredth of the wait it costs anyone, so its jumps don't eat
