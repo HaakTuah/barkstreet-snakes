@@ -10,7 +10,7 @@
 window.SnakeVersion = {
   build: 'dev',
   news: [
-    { on: '2026-11-13', line: 'Star keeps a jump in hand; Metagamer counters you.' },
+    { on: '2026-11-13', line: 'Star dashes less, jumps more; Metagamer reads you.' },
     { on: '2026-11-13', line: 'Rivals dash in style: Sniper cuts, Gobbler races.' },
     { on: '2026-11-13', line: 'Rivals dash less, keeping stamina for what pays.' },
     { on: '2026-11-12', line: 'The woodpecker’s piece is shaded as it’s cut.' },
