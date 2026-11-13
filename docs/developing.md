@@ -101,6 +101,11 @@ A balance question ("does this shorten sudden death?", "did my change hurt anyon
 
    `node tools/simulate.js 600 --seed 29 --census --root ../variant` (and `--seed 41`). `--census` includes a table for each personality (flashes and jumps a minute, golden pickups, chokes, crashes survived, time alive, food, kills), so there's no need for a harness of your own.
 
+   For one rival's win rate, `--with KEY` puts it in every round (about four and a half times its rounds in a plain run).
+   For whether a power pays, `tools/dev/power-modes.js` turns a copy into one whose rivals never use a plain jump or
+   flash, or always do, the rules unchanged; `tools/abtest.js . <that copy> --head-to-head` sets them against rivals that
+   use the powers where they fit (against never, it's design 39's seat-split A/B).
+
 Every seeded round is cached by the files that played it, so asking again or for more plays only the new ones: the A side of one experiment is free in the next, and the confirming abtest's rounds are free in its `--census`.
 
 ## How it's put together

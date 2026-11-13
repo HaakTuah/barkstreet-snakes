@@ -1,7 +1,7 @@
 if (isMainThread && require.main === module) {
   const args = process.argv.slice(2);
   const flag = name => args.includes(name);
-  const WITH_VALUE = ['--seed', '--root', '--workers', '--save-at', '--save', '--from', '--versus', '--seats'];
+  const WITH_VALUE = ['--seed', '--root', '--workers', '--save-at', '--save', '--from', '--versus', '--seats', '--with'];
   const text = name => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : null; };
   const value = name => { const v = text(name); return v == null ? null : Number(v); };
   const fail = why => { console.error(why); process.exit(1); };
@@ -13,6 +13,8 @@ if (isMainThread && require.main === module) {
   const versus = text('--versus') && path.resolve(text('--versus')), seats = versus ? ['even', 'odd'].indexOf(text('--seats') || 'even') : null;
   if (versus && (saveAt != null || fromFile)) fail("--versus doesn't go with --save-at or --from");
   if (seats < 0) fail('--seats is even or odd');
+  const withKey = text('--with');
+  if (withKey && (saveAt != null || fromFile)) fail("--with doesn't go with --save-at or --from");
   if (versus && !fs.existsSync(path.join(versus, 'index.html'))) fail(`${versus} isn't a copy of the game (no index.html)`);
   try { os.setPriority(os.constants.priority.PRIORITY_BELOW_NORMAL); } catch {} // (the machine's own user comes first; the worker threads share this priority)
   const hash = (...parts) => crypto.createHash('sha1').update(parts.join('\u0000')).digest('hex');
@@ -28,7 +30,7 @@ if (isMainThread && require.main === module) {
   const SELF = { text: module.joined, file: __filename }, STATE_FILE = require.resolve('./snapshots/state.js'), SEEDED_FILE = require.resolve('./seeded.js');
   const snapshot = () => {
     const game = GAME_FILES.map(f => read(path.join(ROOT, f))), state = read(STATE_FILE), seededText = read(SEEDED_FILE), other = versus ? gameFiles.apart(gameFiles(versus).filter(gameFiles.ai).map(f => read(path.join(versus, f)))) : null;
-    return { game, state, other, key: hash(...game, SELF.text, seededText, state, ...(versus ? [other, seats] : [])) };
+    return { game, state, other, key: hash(...game, SELF.text, seededText, state, ...(versus ? [other, seats] : []), ...(withKey ? ['with', withKey] : [])) };
   };
   let files = snapshot();
   const CACHE = path.join(os.tmpdir(), 'barkbite-sim-cache');
@@ -163,7 +165,7 @@ if (isMainThread && require.main === module) {
   // same whichever core plays it, after whichever round.)
   const queue = [...todo], cores = Math.min(workers, todo.length), cpu = process.cpuUsage(), t0 = Date.now();
   Promise.all(Array.from({ length: cores }, () => new Promise((resolve, reject) => {
-    const w = new Worker(BOOT, { eval: true, workerData: { self: SELF.text, selfFile: SELF.file, game: files.game, other: files.other, seats, state: files.state, stateFile: STATE_FILE, root: ROOT, seed, ahead, signs, saveAt } });
+    const w = new Worker(BOOT, { eval: true, workerData: { self: SELF.text, selfFile: SELF.file, game: files.game, other: files.other, seats, state: files.state, stateFile: STATE_FILE, root: ROOT, seed, ahead, signs, saveAt, withKey } });
     const feed = () => { const r = queue.shift(); w.postMessage(r === undefined ? null : { r, saved: stored ? stored.get(r) : null }); };
     w.on('message', ({ r, line }) => { have.set(r, line); feed(); });
     w.once('error', reject);
