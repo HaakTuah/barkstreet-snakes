@@ -1,9 +1,15 @@
 // Scoring a line of moves (evaluate), and the board as a line of mine
 // leaves it for the rivals (the neck and the hunted rival's room).
 
-// Can my head step into cell (x, y) as move number `step` from now?
+// Can my head step into cell (x, y) as move number `step` from now? (A
+// bridge, while it lasts; the woodpecker's mark, while I'd still be off it
+// before the strike with a move to spare, walking onto the bark round the
+// pits: markOut, while the bird aims. The strike comes after my move
+// strikeAt - tick + 1.)
 function canEnter(body, len, grow, x, y, step) {
-  if (!inGrid(x, y) || (mineFree[y * N + x] > step && !(bridgeUntil[y * N + x] > step))) return false; // (a bridge: while it lasts)
+  if (!inGrid(x, y)) return false;
+  const i = y * N + x;
+  if (mineFree[i] > step && !(bridgeUntil[i] > step) && !(strikeAt >= 0 && markOut.has(i) && step + markOut.get(i) <= strikeAt - view.tick && markFree.get(i) <= step)) return false;
   const keep = grow > 0 ? len : len - 1;
   for (let j = 0; j < keep; j++) if (body[j].x === x && body[j].y === y) return false;
   return true;
@@ -64,6 +70,31 @@ function lineFill(k, by, cap) {
   }
   return cap > 0 ? Math.min(count, cap) : stampL;
 }
+// A jumpable way out (7c): from my head in this search state, a jump
+// straight on or to a side, as the engine takes one (up over what's right
+// in front, on over up to LEAP_REACH cells of hurdles, a cell a tick, down
+// on the first free cell beyond; never over the woodpecker's mark, never
+// off the board) that comes down on room for me, with a jump's worth of
+// stamina back by then (or a golden leap in hand: leapIn 0), and none of
+// it spent already on this line (linePowered: a jump or flash at its start;
+// a golden one too, which costs none: on the safe side, and rare).
+// What it goes over, as the engine judges it, at take-off. On the
+// territory board with my body placed (terr), before its search claims it.
+let linePowered = false;
+function jumpOut(body, t, need) {
+  if (linePowered || (me.leapIn || 0) > t * view.tickMs) return false;
+  const hx = body[0].x, hy = body[0].y, bx = unit(body[1].x - hx), by = unit(body[1].y - hy);
+  for (const d of DIR_LIST) {
+    if (d.x === bx && d.y === by) continue;
+    for (let k = 1, x = hx + d.x, y = hy + d.y; k <= TUNE.LEAP_REACH + 1 && inGrid(x, y) && !mark.has(y * N + x); k++, x += d.x, y += d.y) {
+      const p = framed[y * N + x];
+      if (terr[p] > t + 1) continue; // (a hurdle as I take off)
+      if (k > 1 && roomOn(p, t + k) >= need) return true;
+      break; // (open ground right in front is no hop; the first free cell beyond is where I'd come down)
+    }
+  }
+  return false;
+}
 function evaluate(body, len, grow, t) {
   const L = len + grow;
   const head = body[0];
@@ -108,6 +139,7 @@ function evaluate(body, len, grow, t) {
     }
   }
   space = Math.min(space, cap);
+  const jumpable = space < need && trail === HOLE && jumpOut(body, t, need); // (7c: boxed in, but with a jump out: on the board as it stands, before the territory search claims it)
   // (What the hunting and the thrill (see 4. and on) want of the board as it
   // is, before the territory search claims it: the victim's room, and
   // how much right next to my head is taken a move on, the edge too.)
@@ -246,8 +278,12 @@ function evaluate(body, len, grow, t) {
     score += w.tail * best;
   }
 
-  // Trapped: less room than I need, and no way onto my own trail.
-  if (space < need && trail === HOLE) return score - TRAPPED - 100 * (need - space);
+  // Trapped: less room than I need, and no way onto my own trail. With a
+  // jump out still mine (7c), half as bad: of two boxes I take the one I
+  // can hop out of, but never one over open ground or a neck (counted as
+  // no trap at all, a line would crawl on in, putting the jump off till
+  // it was gone: deaths into themselves rose by half).
+  if (space < need && trail === HOLE) return score - TRAPPED - 100 * (need - space) + (jumpable ? TRAPPED / 2 : 0);
   // Nearly as bad: the room I need is through a neck that a rival could
   // get to and shut before I'm through, leaving me only the pocket on my
   // side of it. (Necks nearest first; one I'd get through well before

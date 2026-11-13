@@ -361,10 +361,17 @@ Each persona uses jumps and flashes its own way, through the same engine calls a
   powers, when it pays") and for a mushroom shot (`spit`: "Mushrooms, to a rival"); everyone's island hop, and a tail
   dropped when trapped, or planned once boxed in the endgame ("The plain jump hops islands" and "Dropping your tail" in
   `40-powers-and-moves.md`; "The endgame: a meal is worth the life it buys").
-- **For everyone, to build (7c):** keep a jumpable way out; cross the woodpecker's mark when they'll be out of it before the
-  strike (today they keep out of a mark as out of a hole: "The rivals tell a mark from a hole" in `38-the-woodpecker.md`).
-  A ready flash's reserve value is the wait below the reserve (`RESERVE_PRICE`, 7a), and length is traded for room when
-  boxed in by the island hop and the tail drop, both built.
+- **For everyone (7c):** a jumpable way out kept: in the search, a line that ends boxed in (less room than its length
+  needs, and no way onto its own trail) is no sure trap while a jump from there would still be its, straight on or to a
+  side as the engine takes one (what it goes over judged at take-off), onto room for its length, with a jump's worth of
+  stamina back by then and none spent on that line already, by a jump or flash at its start (`jumpOut` in
+  `ai/evaluate.js`): such a box is half as bad as one with no jump out (`TRAPPED / 2` back), so of two dead ends it
+  takes the one it can hop out of, but never a box over open ground or a neck. (Counted as no trap at all, as dear as a
+  neck, a line crawled on into the box and put the jump off till it was gone: deaths into themselves rose by half on
+  seed 3, part 7c(ii)'s first census.) And the woodpecker's mark crossed when they'll be off it before the strike ("A mark isn't a hole yet"
+  in `38-the-woodpecker.md`). A ready flash's reserve value is the wait below the reserve (`RESERVE_PRICE`, 7a), and
+  length is traded for room when boxed in by the island hop and the tail drop, both built. Each is staged in the rules
+  suite (`33-power-styles.js`, `12-rivals-pass.js`, `21-the-log-in-one-piece.js`).
 - *The test case:* the owner's screenshot (Gobbler folded on a strip, an island across a hollow). The rival must find
   the hop, the flight or the tail drop (it hops: the rules suite's island test).
 

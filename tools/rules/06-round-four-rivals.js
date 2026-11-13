@@ -3,7 +3,7 @@
 const cellsOf = a => a.map(([x, y]) => ({ x, y }));
 const aiMe = (body, dir, more = {}) => ({ id: 0, body: cellsOf(body), dir: D[dir], grow: 0, hungerLeft: 99999, starveIn: 99999, leaps: 0, dashes: 0, wrap: 0, leapIn: 9999, flashIn: 9999, stamina: T.STAMINA_MS, ...more }); // (the stamina full: a power on, leapIn or flashIn 0, goes from a full bar)
 const aiRival = (id, body, dir) => ({ id, body: cellsOf(body), dir: D[dir], stun: 0, leaps: 0, dashes: 0, wrap: 0 });
-const aiView = more => ({ grid: T.GRID, food: [], holes: new Set(), fire: new Set(), age: 2, tick: 10, timeMs: 30000, ...more });
+const aiView = more => ({ grid: T.GRID, food: [], holes: new Set(), fire: new Set(), age: 2, tick: 10, timeMs: 30000, tickMs: T.START_TICK, ...more });
 const picks = (view, persona = 'drab', n = 50) => {
   const out = {};
   for (let i = 0; i < n; i++) { const d = AI.decide(view(), AI.PERSONAS[persona], {}); const k = Object.keys(D).find(q => D[q] === d); out[k] = (out[k] || 0) + 1; }
@@ -99,9 +99,9 @@ const picks = (view, persona = 'drab', n = 50) => {
   look(g);
   g.history[0].pecks = mark;
   const view = E.aiView(g, a);
-  check("the woodpecker's mark is among what an AI keeps out of", mark.every(k => view.holes.has(k)));
+  check("the woodpecker's mark is among the holes an AI sees", mark.every(k => view.holes.has(k)));
   const d = AI.decide(view, AI.PERSONAS.drab, {});
-  check('...so it steers clear of it', d !== D.right, Object.keys(D).find(q => D[q] === d));
+  check('...so with no strike in sight, it steers clear of it', d !== D.right, Object.keys(D).find(q => D[q] === d));
 }
 
 { // An AI flashes when it pays: a golden apple it and a rival would get to at the same moment, crawling.

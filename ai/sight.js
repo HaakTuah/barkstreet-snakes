@@ -5,6 +5,8 @@
 // (seeBoard() sets these for each decision:)
 let N, me, others, food, age, holes, depth, steps, inGrid, myHead, stunLeft, pitHole, heads, laterCount, tagBits,
   tags, roomFood;
+const markFree = new Map(); // (each cell of the woodpecker's mark: when it's free of bodies, as mineFree has it; the mark itself a wall to everything else)
+const markOut = new Map(); // (each cell of the mark: the moves from it onto bark, walking round the pits; none: no way off)
 function seeBoard() {
   N = view.grid;
   ;({ me, others, food, age } = view);
@@ -20,8 +22,10 @@ function seeBoard() {
   myHead = me.body[0];
   readPortals(); // (the portals open now: a rival may have gone through one since I saw it)
 
-  // Woodpecker holes never close: treat them like walls.
-  for (const i of holes) otherFree[i] = HOLE;
+  // Woodpecker holes never close: treat them like walls. (Its mark is one
+  // too, but only once the bodies across it are read: see markFree.)
+  const marked = view.pecks || EMPTY, burns = i => (view.fire || EMPTY).has(i) || (view.zone || EMPTY).has(i); // (fire or the fight's plus in the mark: a wall still, never crossed)
+  for (const i of holes) if (!marked.has(i) || burns(i)) otherFree[i] = HOLE;
 
   // Opponent bodies as last seen. A segment j from the head leaves its cell
   // after (len - j) ticks; we ignore the time that has passed since the
@@ -60,6 +64,13 @@ function seeBoard() {
     headX[heads.length] = hx; headY[heads.length] = hy;
     heads.push({ x: hx, y: hy });
   }
+  markFree.clear();
+  for (const i of marked) if (holes.has(i) && !burns(i)) { markFree.set(i, mineFree[i]); mineFree[i] = otherFree[i] = HOLE; }
+  markOut.clear();
+  const side = (i, f) => { const x = i % N; if (x > 0) f(i - 1); if (x < N - 1) f(i + 1); if (i >= N) f(i - N); if (i < N * (N - 1)) f(i + N); };
+  let ring = [];
+  for (const i of markFree.keys()) side(i, j => { if (!holes.has(j) && !markOut.has(i)) { markOut.set(i, 1); ring.push(i); } });
+  for (let d = 2; ring.length; d++) { const next = []; for (const i of ring) side(i, j => { if (markFree.has(j) && !markOut.has(j)) { markOut.set(j, d); next.push(j); } }); ring = next; }
   // The territory search's board, from the same tables.
   laterCount = frameBoards(N);
   tagBits = 32 - Math.clz32(others.length + 1), tags = (1 << tagBits) - 1; // (see evaluate)

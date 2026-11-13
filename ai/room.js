@@ -28,8 +28,9 @@ function reachFrom(h, t0) {
 
 // How much room a rival has from its head at start, with my body on the
 // territory board in its way (see decide's roomOf: the same count, for a
-// search state), marked in seenH.
-function roomOn(start) {
+// search state), marked in seenH. (From `from` moves on: mine, from where
+// a jump would come down, in jumpOut.)
+function roomOn(start, from = 0) {
   const stampS = ++markStamp, Q = queue, S = seenH, B = terr, Wd = W;
   S[start] = stampS;
   Q[0] = start;
@@ -38,14 +39,15 @@ function roomOn(start) {
     const levelEnd = write;
     while (read < levelEnd) {
       const p = Q[read++];
+      const at = from + d;
       let q = p - Wd;
-      if (S[q] !== stampS && B[q] <= d) { S[q] = stampS; room++; Q[write++] = q; }
+      if (S[q] !== stampS && B[q] <= at) { S[q] = stampS; room++; Q[write++] = q; }
       q = p + Wd;
-      if (S[q] !== stampS && B[q] <= d) { S[q] = stampS; room++; Q[write++] = q; }
+      if (S[q] !== stampS && B[q] <= at) { S[q] = stampS; room++; Q[write++] = q; }
       q = p - 1;
-      if (S[q] !== stampS && B[q] <= d) { S[q] = stampS; room++; Q[write++] = q; }
+      if (S[q] !== stampS && B[q] <= at) { S[q] = stampS; room++; Q[write++] = q; }
       q = p + 1;
-      if (S[q] !== stampS && B[q] <= d) { S[q] = stampS; room++; Q[write++] = q; }
+      if (S[q] !== stampS && B[q] <= at) { S[q] = stampS; room++; Q[write++] = q; }
     }
   }
   return Math.min(room, ROOM_CAP);

@@ -10,6 +10,7 @@
 window.SnakeVersion = {
   build: 'dev',
   news: [
+    { on: '2026-11-13', line: 'Rivals beat the woodpecker and hop out of traps.' },
     { on: '2026-11-13', line: 'Lean and plentiful seasons stay marked all round.' },
     { on: '2026-11-13', line: 'Star dashes less, jumps more; Metagamer reads you.' },
     { on: '2026-11-13', line: 'Rivals dash in style: Sniper cuts, Gobbler races.' },

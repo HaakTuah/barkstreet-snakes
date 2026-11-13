@@ -74,3 +74,13 @@ for (const [key, seen] of Object.entries(STYLE_SEEN)) {
   const keep = { evasive: flashes(g, ['greedy', 'evasive'], low), aggressive: flashes(g, ['greedy', 'aggressive'], low) };
   check('7c: Metagamer keeps a flash ready with a rival it reads as aggressive about, and races beside the same one read as evasive', keep.evasive === 10 && keep.aggressive === 0, JSON.stringify(keep));
 }
+{ // 7c, for everyone: a jumpable way out. Heading right along row 10 (its head at 10, 10) into a hole, with two dead ends
+  // of three cells to choose between, up and down, both too small for it, all else holes but the open ground to the
+  // right of the upper one, a hole away (12..20, 2..8): it hops that from the upper dead end. With a jump's worth of
+  // stamina in hand it takes the upper one every time; with none, the two are alike to it.
+  const land = [...line(10, 10, 7), ...rect(10, 7, 10, 9), ...rect(10, 11, 10, 13), ...rect(12, 2, 20, 8)].map(([x, y]) => K(x, y));
+  const holes = new Set(); for (let k = 0; k < T.GRID * T.GRID; k++) if (!land.includes(k)) holes.add(k);
+  const way = leapIn => picks(() => aiView({ holes, me: aiMe(line(10, 10, 7), 'right', { leapIn }), others: [aiRival(1, line(20, 4, 4), 'right')] }));
+  const jump = way(0), none = way(9999);
+  check('7c: a rival boxed in either way keeps a jumpable way out: the dead end it can hop out of, with a jump in hand', jump.up === 50 && none.up > 0 && none.down > 0, JSON.stringify({ jump, none }));
+}

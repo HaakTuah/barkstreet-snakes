@@ -143,8 +143,9 @@ function groundOpt(n, bonus) {
   endRisk = risk[path[n - 1]] + strikes[path[n - 1]] + ringRisk(path[n - 1], 1);
   const gain = bonus + ateGain - endRisk;
   sureGain = Math.max(0, bonus / U); // (a cut, a flier's ring: what the crawl can't have; food on the way it has a tick later)
+  linePowered = true; // (the flash this line starts with: see jumpOut)
   const score = depth > 1 ? search(nb, ateL, ateG, depth - 1, 1, gain) : evaluate(nb, ateL, ateG, 1) + gain;
-  covered = 0;
+  covered = 0; linePowered = false;
   uneat();
   return score;
 }

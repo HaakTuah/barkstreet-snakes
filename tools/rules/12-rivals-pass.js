@@ -15,10 +15,45 @@ const marked = (more = {}) => aiView({ holes: new Set(MARK), pecks: new Set(MARK
     food: [{ x: 13, y: 11, kind: 'golden', expires: 9999 }, { x: 2, y: 20, kind: 'food', expires: 9999 }] });
   const knocked = picks(view(13)), blind = picks(view(null));
   check('an AI values food in the mark where the strike will knock it (the rings), and heads there', ring.x === 11 && ring.y === 11 && knocked.right === 50 && blind.right < 40, JSON.stringify({ ring, knocked, blind }));
-  // ...and never into the mark for it: right beside the mark with the apple in front of its head, it doesn't wait in the
-  // mark for the strike (it's a hole by then), nor go for the apple where it lies.
-  const beside = picks(() => marked({ me: aiMe(line(11, 11, 5), 'right'), others: [aiRival(1, line(20, 22, 5), 'right')], food: [{ x: 12, y: 11, kind: 'food', expires: 9999 }] }));
+  // ...and never into the mark for it: right beside the mark with the apple in front of its head and the strike after
+  // its second move, too soon to cross (7c, below), it doesn't wait in the mark for the strike (it's a hole by then), nor
+  // go for the apple where it lies.
+  const beside = picks(() => marked({ strikeAt: 11, me: aiMe(line(11, 11, 5), 'right'), others: [aiRival(1, line(20, 22, 5), 'right')], food: [{ x: 12, y: 11, kind: 'food', expires: 9999 }] }));
   check('...and never steps into the mark for it', !beside.right && (beside.up || 0) + (beside.down || 0) === 50, JSON.stringify(beside));
+}
+
+{ // 7c: a mark isn't a hole yet. A rival crosses it where it would be off it before the strike, with a move to spare,
+  // walking onto the bark round the pits. An apple just past the 3x3 mark on row 11 (at
+  // 16, 11): from right beside the mark, it heads straight in with the strike after its 13th move; already in it (at its
+  // edge, 12, 11), it goes on across to the middle with the strike after its 13th, and with it after its 3rd, it steps off
+  // sideways (the middle, two from the bark, it would be off it only with its last move before the strike). With fire on
+  // the mark's edge in front of it, it never crosses into the flames.
+  const across = (strikeAt, head, fire = new Set()) => picks(() => marked({ strikeAt, fire, me: aiMe(line(head, 11, 5), 'right'), others: [aiRival(1, line(20, 22, 5), 'right')], food: [{ x: 16, y: 11, kind: 'food', expires: 9999 }] }));
+  const toward = across(22, 11), early = across(22, 12), late = across(12, 12), burning = across(22, 11, new Set([K(12, 11)]));
+  check('7c: a rival crosses the woodpecker\'s mark where it is out of it before the strike, and steps off where it wouldn\'t be', toward.right === 50 && early.right === 50 && !late.right, JSON.stringify({ toward, early, late }));
+  check('...but never into fire on the mark', !burning.right, JSON.stringify(burning));
+}
+
+{ // ...and in the game: Gobbler heading along row 11 for an apple past the mark, the strike 12 ticks off. It goes straight
+  // through the mark's middle, is off it before the strike, and eats the apple.
+  const g = E.createGame({ withPlayer: false, personas: ['gobbler', 'drab'] });
+  g.snakes = g.snakes.slice(0, 2);
+  const [a, b] = g.snakes;
+  g.time = FRENZY + 5000;
+  a.body = cellsOf(line(9, 11, 5)); a.dir = D.right;
+  b.body = cellsOf(line(20, 22, 4)); b.dir = D.right; b.isPlayer = true; b.persona = null; b.queue = []; b.stunUntil = 1e9;
+  lay(g, { x: 17, y: 11, kind: 'food', expires: 9999 });
+  g.unders = [{ until: 1e9, expires: 1e9, from: -1, gold: false }, { until: 1e9, expires: 1e9, from: -1, gold: false }]; // (no beetles come out meanwhile)
+  g.woodpecker = { x: 13, y: 11, at: g.time, target: [...MARK], strikeAt: g.tick + 12, last: [], struckAt: -1, restUntil: 1e9 };
+  lookNow(g);
+  g.history[0].pecks = [...MARK];
+  let through = false, ate = null;
+  for (let t = 0; t < 16 && a.alive; t++) {
+    feed(g); kept(g);
+    if (a.body[0].x === 13 && a.body[0].y === 11) through = true;
+    ate ||= g.events.find(e => e.type === 'eat' && e.snake === a);
+  }
+  check('...and in the game: Gobbler goes through the mark\'s middle, off it before the strike, and eats the apple past it', a.alive && through && ate && g.woodpecker.struckAt >= 0, JSON.stringify({ alive: a.alive, through, ate: !!ate, struck: g.woodpecker.struckAt, head: a.body[0] }));
 }
 
 { // Knocked food goes to whoever's nearer where it lands, as any food does. Heading right along row 11, 5 from where a

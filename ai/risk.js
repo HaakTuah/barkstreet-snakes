@@ -19,6 +19,7 @@
 let rings, ringRisk;
 function readRisk() {
   rings = [];
+  const freeFor = i => view.strikeAt != null && markOut.has(i) ? markFree.get(i) : otherFree[i]; // (a rival may cross the woodpecker's mark too, as I may: see canEnter)
   ringRisk = (i, t) => { let v = 0; for (let n = 0; n < rings.length; n += 3) if (rings[n + 1] === i && Math.abs(rings[n] - t) <= 1) v += rings[n] === t ? rings[n + 2] : rings[n + 2] / 2; return v; };
   others.forEach((o, k) => {
     const strike = stunLeft(o) > 1 ? 0 : w.headRisk * (o.id === me.bumped ? 2 : 1) * (o.shield && !me.shield ? 2 : 1);
@@ -27,7 +28,7 @@ function readRisk() {
       if (d.x === -o.dir.x && d.y === -o.dir.y) continue; // (its neck)
       let nx = at(heads[k].x + d.x), ny = at(heads[k].y + d.y);
       if (!inGrid(nx, ny) && portalOut(heads[k].x, heads[k].y, d, 1)) { nx = (nx + N) % N; ny = (ny + N) % N; } // (through a portal, out at its exit)
-      if (inGrid(nx, ny) && otherFree[ny * N + nx] - age <= 1) strikes[ny * N + nx] += strike; // (a body as seen, `age` ago)
+      if (inGrid(nx, ny) && freeFor(ny * N + nx) - age <= 1) strikes[ny * N + nx] += strike; // (a body as seen, `age` ago)
     }
     // (Its powers reach further straight on: a dash three cells; anyone's
     // flash two, and anyone's leap LEAP_REACH + 1 if there's something in
@@ -64,7 +65,7 @@ function readRisk() {
         const i = queue[read++];
         for (let n = 4 * i; n < 4 * i + 4; n++) {
           const ni = nbr[n];
-          if (ni < 0 || visited[ni] === stampZ || otherFree[ni] > s) continue;
+          if (ni < 0 || visited[ni] === stampZ || freeFor(ni) > s) continue;
           visited[ni] = stampZ;
           risk[ni] += w.zoneRisk;
           queue[write++] = ni;
