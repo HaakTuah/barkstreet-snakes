@@ -362,6 +362,11 @@ of `40-powers-and-moves.md`; the text as it was, with the A/B as it stood then, 
 
 ### How a change to the rivals is measured
 
+- **Their chances are their own:** each decision draws from a stream of its own, seeded from the round's seed, the tick
+  and the snake (`mindOf` in `engine/core.js`, handed to `decide`), and the rules from the round's own (`luck`), so a
+  plan made in the frames before the tick is the decision the tick would make, draws and all, and a draw added to one
+  rival's thinking moves no one else's game (#729).
+
 - **A change meant to keep every decision:** `tools/bench-ai.js` first (every position the same way, its memory and
   random draws too), then the fingerprints.
 - **A change that moves decisions:** old against new with `tools/abtest.js` on fresh seeds, head to head (win rate, food

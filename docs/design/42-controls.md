@@ -71,7 +71,8 @@ reach a cell was late. The AI looked swift because it decides on the tick, again
   changes the drawing only, never a rule:
   - rivals' next step comes from the plans they've already made, and they make them before the board is drawn into
     their next move: in the frames after the tick, up to the one that draws the next move, one decision a frame and at
-    most two, never in the frame that ticked unless none is left;
+    most two, never in the frame that ticked unless none is left; each the decision the tick would make, its random
+    draws too (each decision draws from its own stream: "How a change to the rivals is measured" in `39-the-rivals.md`);
   - a head about to crash holds at its cell centre instead of overshooting (fire isn't a crash, so a head heading into
     fire doesn't hold);
   - a guess that turns out wrong (a plan made late, a press in the second half of a tick) eases to the right place,

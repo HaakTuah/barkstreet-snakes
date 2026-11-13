@@ -474,7 +474,9 @@ function easeLead(dt, held = false) {
   else if (!held) leadAt = Math.max(want, leadAt - 0.5 * dt / tickLen);
 }
 // Let the AIs think about the next tick in the frames before it (same
-// information, same decisions), before the board is drawn into their next
+// information and the same draws, each decision its own stream: the same
+// decisions; a stand-in's thrown away when its person takes the wheel
+// back, Engine.dropThought), before the board is drawn into their next
 // move (see R.setLead; the frame that draws it thinks first). Spread over
 // the frames that are left, one a frame, two when they're few (at full
 // speed, playing, there are about two); not in a frame that ticked, which
