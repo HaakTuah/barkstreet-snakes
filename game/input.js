@@ -101,7 +101,7 @@ function steerTo(name, swipe = false) {
   else if (state === 'running') { heard(); press(name, player()); }
 }
 
-// A power: Space or a tap jumps; E, Shift or a fresh swipe or key ahead flashes.
+// A power: Space or a tap jumps; E, Shift or a fresh swipe or key ahead dashes.
 // Only while you're playing a round that's going (asked for while you're
 // stunned, it goes when the stun's over): they never start, wake or
 // dismiss anything. Online it goes to the host's game, as your turns do.

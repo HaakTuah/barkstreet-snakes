@@ -19,14 +19,15 @@ mouse works for the powers.
   the music and V the voices; watching, 1, 2 and 4 set the speed (3 too, for the third button). A held key's repeats
   do nothing: its first press did.
 - **The words:** the start card, the help under the board and online read "Arrow keys steer (or WASD) · Space or click
-  jumps · E, Shift or right-click dashes · …" (the mouse named, or nobody would find it), and the hint beside YOU
-  "Arrow keys to steer (or WASD)"; on touch, "Swipe to steer · Tap to jump · Swipe ahead to dash", and alone "· Tap ⏸
-  to nap" after it. The Field guide's Jump and Dash rows say "Space or a click on the log" and "E, Shift, a
-  right-click on the log or the key you’re going". The lessons name the mouse too, on a keyboard (on a phone they say the touch): the dash's
-  "Your dash is ready: E, Shift, or the key you’re going.", a golden leaf's "2 golden dashes: E or right-click. Never at edges or
-  holes." (one key and the mouse, Shift being the Field guide's, to keep it to 60 characters), a golden beetle's "…
-  Space or a click to jump."; and so do the power words for screen readers ("Space or a click jumps: ready. E, Shift
-  or right-click dashes: ready.") and the pips' tooltips. A lesson keeps to 60 characters, with keys and on touch.
+  jumps · E, Shift, right-click or the key you’re going dashes · …" (the mouse named, or nobody would find it), and the
+  hint beside YOU "Arrow keys to steer (or WASD)"; on touch, "Swipe to steer · Tap to jump · Swipe ahead to dash", and
+  alone "· Tap ⏸ to nap" after it. The Field guide's Jump and Dash rows say "Space or a click on the log" and "E, Shift,
+  a right-click on the log or the key you’re going". The lessons name the mouse too, on a keyboard (on a phone they say
+  the touch): the dash's "Your dash is ready: E, Shift, or the key you’re going.", a golden leaf's "2 golden dashes: E
+  or right-click. Never at edges or holes." (one key and the mouse, Shift being the Field guide's, to keep it to 60
+  characters), a golden beetle's "… Space or a click to jump."; and so do the power words for screen readers ("Space or
+  a click jumps: ready. E, Shift, right-click or the key ahead dashes: ready.") and the pips' tooltips. A lesson keeps
+  to 60 characters, with keys and on touch.
 - **The mouse:** the left button jumps and the right one dashes, with no menu popping up over the board. Its buttons
   only, so taps, swipes and pens are as they are; only on the board itself with no card over it, so a card's clicks and
   buttons keep their meaning. A right press while the left is held counts (the jump, then the dash, as with the keys);
