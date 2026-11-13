@@ -28,7 +28,10 @@ in `25-round-four-measured.md`, "Round five, measured" in `26-round-five-star.md
   weather and the woodpecker's strike and promised landings as they are now ("Rivals see food as it is" in
   `04-food-and-the-world.md`). All of it comes through `aiView()` (`engine/view.js`).
 - **Nobody is singled out.** A rival is never told which snake is a person: every snake is an id and a body, and it reads
-  a person by what they do, as any snake ("Rules that stand" in `AGENTS.md`).
+  a person by what they do, as any snake ("Rules that stand" in `AGENTS.md`). So the food it is shown has no colour on a
+  dropped tail (a person chooses the colour of theirs; the pellet is known by its owner, a snake's id), and nothing in
+  its timing differs: the rules suite (`tools/rules/31-never-know-a-person.js`) plays a board with a seat first a rival's,
+  then a person's, and every rival is shown the same, chooses the same and decides on the same ticks.
 - **What shows, it reads:** a snake's stun (its stars), the golden leaps and dashes it holds, its wrap, the ring of a
   flight coming down, a mushroom in its cheek. Nobody's rests are told.
 
