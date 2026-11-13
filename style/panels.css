@@ -514,6 +514,7 @@ header:has(> .toast.above:not([hidden]):not(.leaving)) .stats .stat { opacity: 0
 .season[hidden] { display: none; }
 .season canvas, .season .stand-in { width: 26px; height: 26px; }
 .season .stand-in { display: inline-flex; align-items: center; justify-content: center; font-size: 18px; line-height: 1; }
+@media (min-aspect-ratio: 5/4) and (max-height: 500px) and (min-width: 480px) { .season { margin-inline: -8px -6px; } .season canvas, .season .stand-in { width: 20px; height: 20px; } } /* (a phone on its side: the help beside the switch keeps its lines) */
 @media (max-width: 340px) { .season { margin-inline: -5px; } .season canvas, .season .stand-in { width: 22px; height: 22px; } } /* (the narrowest phones: the help keeps its two lines) */
 main.help-yields .help { display: none; } /* (where it doesn't fit the row, its items squeezed past its box or its lines past the page's bottom; and watching, where it would leave the chatter no row: it only says what the speed buttons do. snake.js fitColumn) */
 .hint span, .help span, #overlay-text span.whole { white-space: nowrap; } /* (each item whole, a line breaking only after its dot; a long reason may wrap, rather than run off a phone's card) */
