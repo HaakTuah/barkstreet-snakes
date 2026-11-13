@@ -346,7 +346,7 @@ Each persona uses jumps and flashes its own way, through the same engine calls a
   powers, when it pays") and for a mushroom shot (`spit`: "Mushrooms, to a rival"); everyone's island hop, and a tail
   dropped when trapped, or planned once boxed in the endgame ("The plain jump hops islands" and "Dropping your tail" in
   `40-powers-and-moves.md`; "The endgame: a meal is worth the life it buys").
-- **For everyone, to build:** keep a jumpable way out; cross the woodpecker's mark when they'll be out of it before the
+- **For everyone, to build (7c):** keep a jumpable way out; cross the woodpecker's mark when they'll be out of it before the
   strike (today they keep out of a mark as out of a hole: "The rivals tell a mark from a hole" in `38-the-woodpecker.md`).
   A ready flash's reserve value is the wait below the reserve (`RESERVE_PRICE`, 7a), and length is traded for room when
   boxed in by the island hop and the tail drop, both built.
