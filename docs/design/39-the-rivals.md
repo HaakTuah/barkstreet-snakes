@@ -197,10 +197,17 @@ spit flies along the line" in `40-powers-and-moves.md`. Desperate, it takes no s
 Each power is weighed as a move in the rival's own search, from where the power leaves it and to the same horizon, plus
 what it eats on the way, less the risk where it ends and a price in apples (what an apple is worth to it now), and
 pressed only when it beats crawling (`powerPick` in `ai/powers.js`):
-- *The plain flash and jump* spend one stamina (2u), priced by what they take of it: see `ai/powers.js`.
+- *The plain flash and jump* spend one stamina (2u), priced by what they take of it: see `ai/powers.js`. *One pricing
+  model* (part 7a of round six B, PR #722): stamina at 5 apples a bar, and 6 for a bar's wait below what the other
+  power needs; a meal's stamina is worth as much to them. A gain the power is sure of, that the crawl can't have (a cut,
+  a flier's ring, an island, a rival shut in), takes 1½ apples off its price for each apple of it, never below 2 and
+  2.4: the search's guess has to clear the full price, a sure gain only the old one. At 2 and 2.4 for everything the
+  rivals flashed about two times a minute and lost to the same rivals at 5 and 6 by about five points of wins, on three
+  seeds; at 5 and 6 for everything, they never hopped to an island, raced for a golden or cut their target any more.
 - *The plain flash:* its price, or half to win a race for food (food a rival could reach as soon as it would crawl
-  there, but not as soon as it flashes) or to get out of a crash. Weighed the way the rival would crawl anyway (any way,
-  out of a crash; the hunters and the aggressive, a cut to the side too).
+  there, but not as soon as it flashes) or to get out of a crash; free to win a race for a golden apple, which fills the
+  bar it spends. Weighed the way the rival would crawl anyway (any way, out of a crash; the hunters and the aggressive, a
+  cut to the side too).
 - *The plain jump:* out of a crash or a box, to another island, or to come down on food or just short of it, at its
   price.
 - *Golden jumps:* whenever one pays, at a third of an apple (0.35).
@@ -212,7 +219,7 @@ pressed only when it beats crawling (`powerPick` in `ai/powers.js`):
   Desperado 1.2, Sniper 1.5).
 
 How each move is used and seen used against them is in its own section in `40-powers-and-moves.md`; the power
-styles and one pricing model for every power are still to build (part 7 of round six B, in `docs/PROGRESS.md`).
+styles are still to build (part 7b of round six B, in `docs/PROGRESS.md`).
 
 ### A cornered AI makes the sensible last move
 
@@ -306,7 +313,8 @@ jumps neither help nor hurt measurably, and stay because they're the character.
 ### Every rival has a power style
 
 Each persona uses jumps and flashes its own way, through the same engine calls as a person. Most of it is still to
-build (part 7 of round six B, with one pricing model for every power, in `docs/PROGRESS.md`); "Balance targets",
+build (part 7b of round six B, on 7a's one pricing model: "Rivals use their powers, when it pays"; in
+`docs/PROGRESS.md`); "Balance targets",
 below, is its measure.
 - **Built so far:** Star's habit ("Star"); a style's own price for a leap now and for a flier's ring (`leapNow`,
   `landing`: "Rivals use their powers, when it pays") and for a mushroom shot (`spit`: "Mushrooms, to a rival");
