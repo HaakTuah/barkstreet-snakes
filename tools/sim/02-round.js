@@ -115,6 +115,7 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats, withKey }, save
       if (land.holes !== g.holes.size) labelLand(g, N);
       const h = s.body[0], k = land.comp[h.y * N + h.x];
       if (k >= 0 && (was < 0 || k !== land.comp[was]) && land.sizes[k] < s.body.length) c.smallIsle++;
+      if (k >= 0 && was >= 0 && land.comp[was] >= 0 && k !== land.comp[was]) c.isleHop++; // (3+: down on another piece of log than it left)
     }
     for (const e of g.events) {
       if (e.type === 'leap') { // (the island hop: how far, over a hole, and when, for a jumper out soon after)

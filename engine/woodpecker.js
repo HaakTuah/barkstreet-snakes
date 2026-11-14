@@ -167,13 +167,21 @@ function watchSpot(game, w) {
   }
 }
 // The log stays one piece (2s, the owner, 31 October 2026: "we want to avoid
-// the islands stuff"): the log is the biggest piece of bark left once the
-// patch (inP) is out (of two as big, the one with more heads on it); every
-// other piece, cut loose, falls with the strike, so it goes into the mark
-// from the start (shaded as it will fall: w.fall) and anyone sees it
-// coming. Returns its cells ([] if none). No size is banned from falling;
-// who may be on it is the peck's to judge (see nextPeck).
+// the islands stuff"), but for islands that stay (3+, the owner, 9 November
+// 2026, #611: "islands should always be attached to the edges, one must be
+// able to tell clearly what will fall, and what will stay!"): the log is the
+// biggest piece of bark left once the patch (inP) is out (of two as big, the
+// one with more heads on it); every other piece, cut loose, falls with the
+// strike, so it goes into the mark from the start (shaded as it will fall:
+// w.fall) and anyone sees it coming; except an island, a piece that still
+// touches the board's edge and lies a jump from the log (see isleHolds),
+// which stays standing for as long as both hold. The piece the woodpecker
+// is cutting out (its plan's) is never an island: it falls. Returns the
+// cells that fall ([] if none). No size is banned from falling; who may be
+// on it is the peck's to judge (see nextPeck). Each cell's piece stays in
+// pieceOf, the log's number in logPiece (for oneTrunk and the fight).
 const pieceOf = new Int32Array(CELLS), pieceQ = new Int32Array(CELLS);
+let logPiece = -1;
 function cutLoose(game, inP) {
   pieceOf.fill(-1);
   const sizes = [];
@@ -194,12 +202,42 @@ function cutLoose(game, inP) {
     }
     sizes.push(w);
   }
+  logPiece = sizes.length ? 0 : -1;
   if (sizes.length < 2) return [];
   const heads = sizes.map(() => 0); // (two pieces as big: the log is the one with more heads on it)
   for (const s of game.snakes) if (s.alive) { const k = key(s.body[0].x, s.body[0].y); if (pieceOf[k] >= 0) heads[pieceOf[k]]++; }
   let log = 0;
   for (let i = 1; i < sizes.length; i++) if (sizes[i] > sizes[log] || (sizes[i] === sizes[log] && heads[i] > heads[log])) log = i;
-  const fall = [];
-  for (let k = 0; k < CELLS; k++) if (pieceOf[k] >= 0 && pieceOf[k] !== log) fall.push(k);
+  logPiece = log;
+  const holds = isleHolds(game, sizes.length, log), fall = [];
+  for (let k = 0; k < CELLS; k++) if (pieceOf[k] >= 0 && pieceOf[k] !== log && !holds[pieceOf[k]]) fall.push(k);
   return fall;
+}
+// Which pieces (of n, pieceOf's) stay as islands: each that touches the
+// board's edge, and from one of whose cells a jump (LEAP_REACH cells or
+// fewer of gap, straight across, the gap holes or the patch) comes down on
+// the log; never one holding a cell of the piece the woodpecker is cutting
+// out. holds[log] is false (it's the log).
+function isleHolds(game, n, log) {
+  const edge = new Uint8Array(n), hop = new Uint8Array(n), shape = new Uint8Array(n), holds = [];
+  for (const k of game.woodpecker?.plan?.piece || []) if (pieceOf[k] >= 0) shape[pieceOf[k]] = 1;
+  for (let k = 0; k < CELLS; k++) {
+    const p = pieceOf[k];
+    if (p < 0 || p === log || shape[p] || (edge[p] && hop[p])) continue;
+    const x = k % GRID, y = (k - x) / GRID;
+    if (!x || !y || x === GRID - 1 || y === GRID - 1) edge[p] = 1;
+    if (hop[p]) continue;
+    for (const d of CRAWL) {
+      for (let j = 1; j <= T.LEAP_REACH + 1; j++) {
+        const nx = x + d.x * j, ny = y + d.y * j;
+        if (!inside(nx, ny)) break;
+        const o = pieceOf[key(nx, ny)];
+        if (o === log) { hop[p] = 1; break; }
+        if (o >= 0) break; // (bark, not a gap: no jump across)
+      }
+      if (hop[p]) break;
+    }
+  }
+  for (let p = 0; p < n; p++) holds.push(p !== log && !shape[p] && !!edge[p] && !!hop[p]);
+  return holds;
 }

@@ -90,14 +90,29 @@ function growPiece(game, owner, r, seed, size) {
     inP.add(best);
   }
 }
-// Does taking these cells leave the rest of the log in one piece? Crumbs
-// of PECK_NO_ORPHANS or fewer it adds to `inP` (they go with the piece);
-// a bigger second piece: false.
-function oneTrunk(game, inP, cut) {
-  const fall = cutLoose(game, new Set([...inP, ...cut])), sizes = new Map();
-  for (const k of fall) sizes.set(pieceOf[k], (sizes.get(pieceOf[k]) || 0) + 1);
-  for (const n of sizes.values()) if (n > T.PECK_NO_ORPHANS) return false;
-  for (const k of fall) inP.add(k);
+// Does taking these cells leave the rest of the log in one piece, but for
+// islands that stay (see cutLoose)? Crumbs of PECK_NO_ORPHANS or fewer,
+// cut loose or left beside the cut, it adds to `inP` (they go with the
+// piece); a bigger piece that would fall, or an island it leaves bigger
+// than a piece may be (`cap` cells: an island is never half the trunk),
+// false.
+function oneTrunk(game, inP, cut, cap) {
+  const gone = new Set([...inP, ...cut]), fall = new Set(cutLoose(game, gone)), sizes = new Map(), near = new Set(), falls = new Set();
+  for (let k = 0; k < CELLS; k++) {
+    const p = pieceOf[k];
+    if (p < 0 || p === logPiece) continue;
+    sizes.set(p, (sizes.get(p) || 0) + 1);
+    if (fall.has(k)) falls.add(p);
+    const x = k % GRID, y = (k - x) / GRID;
+    if (CRAWL.some(d => inside(x + d.x, y + d.y) && gone.has(key(x + d.x, y + d.y)))) near.add(p); // (beside the cut: a piece it makes)
+  }
+  const crumbs = new Set();
+  for (const [p, n] of sizes) {
+    if (!falls.has(p) && !near.has(p)) continue; // (an island already standing, untouched)
+    if (n <= T.PECK_NO_ORPHANS) crumbs.add(p);
+    else if (falls.has(p) || n > cap) return false;
+  }
+  for (let k = 0; k < CELLS; k++) if (crumbs.has(pieceOf[k])) inP.add(k);
   return true;
 }
 // Where a cut may start in region r: its cells on the board's edge or an
@@ -168,7 +183,7 @@ function planCut(game, w) {
       const seed = seeds.splice(Math.floor(luck(game) * seeds.length), 1)[0];
       const { inP, cut } = growPiece(game, owner, r, seed, size);
       if ([...inP, ...cut].some(k => heads.has(k)) || !cut.size || (near && ![...cut].some(gazeNear))) continue; // (the first: its cut starts where it looked)
-      if (!oneTrunk(game, inP, cut) || inP.size + cut.size > room) continue; // (and never past the floor, its crumbs and all)
+      if (!oneTrunk(game, inP, cut, Math.floor(share * log)) || inP.size + cut.size > room) continue; // (and never past the floor, its crumbs and all)
       const score = cut.size / (inP.size + cut.size);
       if (!best || score < best.score) best = { score, inP, cut };
     }

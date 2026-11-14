@@ -393,5 +393,5 @@ function step(game) {
 
 window.SnakeEngine = {
   GRID, PLAYER_COLOR, PERSONAS, DIRS, WEATHER,
-  createGame, step, tickMs: tickLength, hungerLeft, hungerWarning, aiView, canThinkAhead, thinkAhead, dropThought, suddenDeath, actOf, planCut, planFits, regions, leap, letGo, leapIn, flash, flashIn, stamina, staminaIn, staminaStep, seasonApples, rollSide, knockTo, knocks, beakDepth, beakGap,
+  createGame, step, tickMs: tickLength, hungerLeft, hungerWarning, aiView, canThinkAhead, thinkAhead, dropThought, suddenDeath, actOf, planCut, planFits, regions, cutLoose, leap, letGo, leapIn, flash, flashIn, stamina, staminaIn, staminaStep, seasonApples, rollSide, knockTo, knocks, beakDepth, beakGap,
 };

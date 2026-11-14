@@ -11,7 +11,7 @@ const census = () => ({
   goldEaten: 0, goldContested: 0, goldGone: 0, goldGoneNear: 0, goldTicks: 0, goldEaters: 0, goldEaterWins: 0, goldEaterPlace: 0, goldOthers: 0, goldOtherWins: 0, goldOtherPlace: 0, // (2z, the golden apple's worth: eaten (another head within GOLD_NEAR cells then: contested), gone uneaten (with a head that near), ticks from coming up to eaten; in rounds where one was eaten, its eaters and the rest: how many, wins, places)
   cutsPlain: 0, cutsGold: 0, cutsOwn: 0, failed: 0, failedGold: 0, edgeTicks: 0, huggers: 0, huggerWins: 0, huggerPlace: 0, others: 0, otherWins: 0, otherPlace: 0, // (round six B, the flashes cut: cuts by plain flashes and dashes, of them its own tail dropped; failed flashes (golden ones); snake-ticks with the head on the board's edge; snakes whose head was on the edge an eighth of their time or more (twice the field's 6% before part 3) ("huggers"), and the rest: how many, wins, places)
   rides: 0, rideTicks: 0, rideDeaths: 0, rideFalls: 0, // (bridges: rides begun, snake-ticks with a head on another's back over a pit, deaths while on one, and of them falls)
-  hop1: 0, hop2: 0, hop3: 0, hopHole: 0, hopFail: 0, hopDie: 0, smallIsle: 0, // (round six B's island hop: jumps by the cells they went over, those over a hole, those whose landing crashed, jumpers out within 3 s of taking off, and jumps down on another island smaller than the jumper (2r))
+  hop1: 0, hop2: 0, hop3: 0, hopHole: 0, hopFail: 0, hopDie: 0, smallIsle: 0, isleHop: 0, // (round six B's island hop: jumps by the cells they went over, those over a hole, those whose landing crashed, jumpers out within 3 s of taking off, jumps down on another island smaller than the jumper (2r), and jumps down on another piece of log than they left (3+, islands that stay))
   pecks: 0, holes: 0, aims: 0, aimsNear: 0, tellAims: 0, tellKept: 0, flashes: 0, jumps: 0, goldLeaps: 0, goldGot: 0, dashes: 0, pickups: 0, greedy: 0,
   aliveEarly: 0, hungryEarly: 0, starvingEarly: 0, aliveLate: 0, hungryLate: 0, starvingLate: 0, // (snake-ticks before and after the woodpecker: alive, in the hunger warning, starving)
   beads: 0, ownBeads: 0, chokes: 0, chokeRounds: 0, nudges: 0, nudgedBeads: 0, // (beads eaten, and by the snake they broke off; own beads squashed (chokes before round six B); food nudged aside coughing, and the beads among it, before round six B)
@@ -38,7 +38,7 @@ const census = () => ({
   // off (with food on them, a snake on them); and the rounds whose last
   // snakes ended up on islands of their own, of them how often the one on
   // the biggest won (chance: what a blind pick would get).
-  seals: 0, sealedOut: 0, falls: 0, fallCells: 0, fallBig: 0, bigFalls: [], fights: 0, fightHits: 0, floorRounds: 0, cutDeaths: 0, cutVictim: 0, cutChance: 0, fellOut: 0, piecesLeft: 0, split: 0, splitBiggest: 0, splitChance: 0,
+  seals: 0, sealedOut: 0, falls: 0, fallCells: 0, fallBig: 0, bigFalls: [], fights: 0, fightHits: 0, floorRounds: 0, cutDeaths: 0, cutVictim: 0, cutChance: 0, fellOut: 0, piecesLeft: 0, isleRounds: 0, split: 0, splitBiggest: 0, splitChance: 0,
   causesSD: {}, sdTimes: [],
   ...endgameCounts(),
 });
@@ -295,7 +295,7 @@ function woodpeckerCensus(g, c, st, dying, N, T) {
         st.bigFall = Math.max(st.bigFall || 0, e.fall.length);
       }
       if (e.zone) { c.fights++; if (!st.fought) { st.fought = true; c.floorRounds++; } } // (part 2: a fight's strike, at the floor; and the rounds with one)
-      if (sizes.length > 1) c.piecesLeft++; // (2s: a strike that left the log in pieces)
+      if (sizes.length > 1) { c.piecesLeft++; if (!st.isled) { st.isled = true; c.isleRounds++; } } // (2s: a strike that left the log in pieces, islands that stay since 3+; and the rounds with one)
     }
   }
   for (const s of dying) if (s.fell) c.fellOut++; // (2s: down with a piece cut loose)
