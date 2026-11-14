@@ -175,11 +175,13 @@ function watchSpot(game, w) {
 // strike, so it goes into the mark from the start (shaded as it will fall:
 // w.fall) and anyone sees it coming; except an island, a piece that still
 // touches the board's edge and lies a jump from the log (see isleHolds),
-// which stays standing for as long as both hold. The piece the woodpecker
-// is cutting out (its plan's) is never an island: it falls. Returns the
-// cells that fall ([] if none). No size is banned from falling; who may be
-// on it is the peck's to judge (see nextPeck). Each cell's piece stays in
-// pieceOf, the log's number in logPiece (for oneTrunk and the fight).
+// which stays standing for as long as both hold. So before the frenzy the
+// piece it cuts out at the edge stays, an island; in the frenzy the piece
+// it cuts out falls, wherever it is (its plan's), and an island falls once
+// the log is out of a jump's reach. Returns the cells that fall ([] if
+// none). No size is banned from falling; who may be on it is the peck's to
+// judge (see nextPeck). Each cell's piece stays in pieceOf, the log's
+// number in logPiece (for oneTrunk, the fight and newIsles).
 const pieceOf = new Int32Array(CELLS), pieceQ = new Int32Array(CELLS);
 let logPiece = -1;
 function cutLoose(game, inP) {
@@ -216,11 +218,11 @@ function cutLoose(game, inP) {
 // Which pieces (of n, pieceOf's) stay as islands: each that touches the
 // board's edge, and from one of whose cells a jump (LEAP_REACH cells or
 // fewer of gap, straight across, the gap holes or the patch) comes down on
-// the log; never one holding a cell of the piece the woodpecker is cutting
-// out. holds[log] is false (it's the log).
+// the log; in the frenzy, never one holding a cell of the piece the
+// woodpecker is cutting out. holds[log] is false (it's the log).
 function isleHolds(game, n, log) {
   const edge = new Uint8Array(n), hop = new Uint8Array(n), shape = new Uint8Array(n), holds = [];
-  for (const k of game.woodpecker?.plan?.piece || []) if (pieceOf[k] >= 0) shape[pieceOf[k]] = 1;
+  if (actOf(game) === 3) for (const k of game.woodpecker?.plan?.piece || []) if (pieceOf[k] >= 0) shape[pieceOf[k]] = 1;
   for (let k = 0; k < CELLS; k++) {
     const p = pieceOf[k];
     if (p < 0 || p === log || shape[p] || (edge[p] && hop[p])) continue;
@@ -240,4 +242,16 @@ function isleHolds(game, n, log) {
   }
   for (let p = 0; p < n; p++) holds.push(p !== log && !shape[p] && !!edge[p] && !!hop[p]);
   return holds;
+}
+// The islands a mark (its cells) leaves standing that weren't standing
+// before: the pieces beside it, off the log, that don't fall (a Set of
+// cells; the cue, render/cut.js, and the lesson, game/banners.js).
+function newIsles(game, mark) {
+  const inP = new Set(mark), falls = new Set(cutLoose(game, inP)), near = new Set(), out = new Set();
+  for (const k of inP) {
+    const x = k % GRID, y = (k - x) / GRID;
+    for (const d of CRAWL) if (inside(x + d.x, y + d.y)) { const p = pieceOf[key(x + d.x, y + d.y)]; if (p >= 0 && p !== logPiece) near.add(p); }
+  }
+  if (near.size) for (let k = 0; k < CELLS; k++) if (near.has(pieceOf[k]) && !falls.has(k)) out.add(k);
+  return out;
 }

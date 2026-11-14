@@ -92,10 +92,11 @@ function growPiece(game, owner, r, seed, size) {
 }
 // Does taking these cells leave the rest of the log in one piece, but for
 // islands that stay (see cutLoose)? Crumbs of PECK_NO_ORPHANS or fewer,
-// cut loose or left beside the cut, it adds to `inP` (they go with the
-// piece); a bigger piece that would fall, or an island it leaves bigger
-// than a piece may be (`cap` cells: an island is never half the trunk),
-// false.
+// cut loose or left beside the cut, and islands already standing that it
+// leaves out of a jump's reach, it adds to `inP` (they go with the piece,
+// washed as it is); a bigger piece beside the cut that would fall, or an
+// island it leaves bigger than a piece may be (`cap` cells: an island is
+// never half the trunk), false.
 function oneTrunk(game, inP, cut, cap) {
   const gone = new Set([...inP, ...cut]), fall = new Set(cutLoose(game, gone)), sizes = new Map(), near = new Set(), falls = new Set();
   for (let k = 0; k < CELLS; k++) {
@@ -106,13 +107,13 @@ function oneTrunk(game, inP, cut, cap) {
     const x = k % GRID, y = (k - x) / GRID;
     if (CRAWL.some(d => inside(x + d.x, y + d.y) && gone.has(key(x + d.x, y + d.y)))) near.add(p); // (beside the cut: a piece it makes)
   }
-  const crumbs = new Set();
+  const goes = new Set();
   for (const [p, n] of sizes) {
-    if (!falls.has(p) && !near.has(p)) continue; // (an island already standing, untouched)
-    if (n <= T.PECK_NO_ORPHANS) crumbs.add(p);
+    if (!near.has(p)) { if (falls.has(p)) goes.add(p); continue; } // (an island already standing: untouched, or out of reach now, falling with the piece)
+    if (n <= T.PECK_NO_ORPHANS) goes.add(p);
     else if (falls.has(p) || n > cap) return false;
   }
-  for (let k = 0; k < CELLS; k++) if (crumbs.has(pieceOf[k])) inP.add(k);
+  for (let k = 0; k < CELLS; k++) if (goes.has(pieceOf[k])) inP.add(k);
   return true;
 }
 // Where a cut may start in region r: its cells on the board's edge or an

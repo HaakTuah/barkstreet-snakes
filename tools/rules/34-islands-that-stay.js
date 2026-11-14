@@ -2,11 +2,12 @@
 // (the owner, 9 November 2026, #611: "islands should always be attached to the edges, one must be able to tell clearly
 // what will fall, and what will stay!"; 38-the-woodpecker, "The log stays one piece"; engine/woodpecker.js, cutLoose.)
 // A piece cut off from the log stays, as an island, while it touches the board's edge and lies a jump (LEAP_REACH cells
-// of gap or fewer, straight across) from the log; anything else cut off falls, the piece the woodpecker cuts out too.
+// of gap or fewer, straight across) from the log; anything else cut off falls. So before the frenzy the piece the
+// woodpecker cuts out at the edge stays, an island; in the frenzy the piece it cuts out falls, as part 2 built it.
 
 // A frenzy board with these holes (cells: [x, y]) and two snakes far off on the log, out of the way.
-const isleBoard = holes => {
-  const g = board([[[[6, 12], [5, 12], [4, 12]], 'right'], [[[6, 18], [5, 18], [4, 18]], 'right']], { time: FRENZY });
+const isleBoard = (holes, time = FRENZY) => {
+  const g = board([[[[6, 12], [5, 12], [4, 12]], 'right'], [[[6, 18], [5, 18], [4, 18]], 'right']], { time });
   for (const [x, y] of holes) g.holes.add(K(x, y));
   return g;
 };
@@ -33,12 +34,18 @@ const same = (a, b) => a.length === b.length && a.every(k => b.includes(k));
   check('3+: a piece cut off that touches no edge of the board falls, a jump from the log or not', same(falls, block), JSON.stringify(falls));
 }
 
-{ // The piece the woodpecker is cutting out is never an island: the corner, as its plan's piece, falls though it touches
-  // the edge a cell from the log.
-  const g = isleBoard(band(1));
-  g.woodpecker = { x: 19, y: 2, at: g.time, target: [], strikeAt: -1, last: [], struckAt: -1, restUntil: 0, plan: { cut: neck(1), piece: cornerK, waitFrom: -1 } };
-  const falls = E.cutLoose(g, new Set(neck(1)));
-  check('3+: the piece the woodpecker cuts out falls, at the edge and a jump from the log as it is', same(falls, cornerK), JSON.stringify(falls));
+{ // The piece the woodpecker is cutting out, the corner (its plan's piece, at the edge a cell from the log): in the
+  // frenzy it falls, as part 2 built it; before the frenzy it stays, an island, and its mark says so (newIsles, the cue's).
+  const plain = time => {
+    const g = isleBoard(band(1), time);
+    g.woodpecker = { x: 19, y: 2, at: g.time, target: [], strikeAt: -1, last: [], struckAt: -1, restUntil: 0, plan: { cut: neck(1), piece: cornerK, waitFrom: -1 } };
+    return g;
+  };
+  const frenzy = plain(FRENZY), pecks = plain((ACTS[1] + ACTS[2]) / 2);
+  check('3+: in the frenzy, the piece the woodpecker cuts out falls, at the edge and a jump from the log as it is', E.actOf(frenzy) === 3 && same(E.cutLoose(frenzy, new Set(neck(1))), cornerK), JSON.stringify(E.cutLoose(frenzy, new Set(neck(1)))));
+  const stays = E.cutLoose(pecks, new Set(neck(1))), shown = [...E.newIsles(pecks, neck(1))];
+  check('...before it (its first pecks), the piece it cuts out at the edge stays standing, an island, and its mark shows which cells stay', E.actOf(pecks) === 2 && !stays.length && same(shown, cornerK), `${JSON.stringify(stays)} ${JSON.stringify(shown)}`);
+  check('...where in the frenzy the mark shows no island', E.newIsles(frenzy, neck(1)).size === 0);
 }
 
 { // Only while: an island already standing (the corner, a gap of LEAP_REACH + 1 all round but for row 1, where one cell of

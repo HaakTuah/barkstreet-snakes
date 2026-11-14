@@ -27,6 +27,7 @@ function drawCut(alpha) {
       ctx.beginPath(); ctx.moveTo(x - CELL * 0.16, y - CELL * 0.16); ctx.lineTo(x + CELL * 0.16, y + CELL * 0.16); ctx.stroke();
     }
   }
+  if (w.target.length && !w.zone) rimIsles(w, alpha); // (3+: a piece the strike leaves standing, an island)
   if (w.zone && w.target.length) {
     const prog = aimed(alpha);
     if (prog < 0) return;
@@ -41,6 +42,31 @@ function drawCut(alpha) {
   }
 }
 
+// 3+, islands that stay: a piece this strike cuts off from the log that
+// will stay standing (it touches the board's edge, a jump from the log: see
+// cutLoose) gets a solid pale rim round it as the mark comes, where the
+// pieces that fall go dark and streaked (render/holes.js): what will fall
+// and what will stay, told apart by more than colour. Worked out by this
+// screen from the mark and the holes it already has (newIsles), once a mark.
+let isleFor = null, isleHoles = -1, isleCells = null;
+function rimIsles(w, alpha) {
+  if (isleFor !== w.target || isleHoles !== game.holes.size) {
+    isleFor = w.target; isleHoles = game.holes.size;
+    isleCells = newIsles(game, w.target);
+  }
+  const prog = aimed(alpha);
+  if (!isleCells.size || prog < 0) return;
+  ctx.strokeStyle = `rgba(254, 243, 199, ${0.55 + 0.35 * prog})`; ctx.lineWidth = CELL * 0.12; ctx.lineCap = 'round';
+  ctx.beginPath();
+  for (const k of isleCells) {
+    const cx = k % GRID, cy = Math.floor(k / GRID), x = cx * CELL, y = cy * CELL;
+    if (cy > 0 && !isleCells.has(k - GRID)) { ctx.moveTo(x, y); ctx.lineTo(x + CELL, y); }
+    if (cy < GRID - 1 && !isleCells.has(k + GRID)) { ctx.moveTo(x, y + CELL); ctx.lineTo(x + CELL, y + CELL); }
+    if (cx > 0 && !isleCells.has(k - 1)) { ctx.moveTo(x, y); ctx.lineTo(x, y + CELL); }
+    if (cx < GRID - 1 && !isleCells.has(k + 1)) { ctx.moveTo(x + CELL, y); ctx.lineTo(x + CELL, y + CELL); }
+  }
+  ctx.stroke();
+}
 // The piece an outline cuts round, washed lightly with a dashed edge: one
 // path for the wash (squares filled one by one show their seams) and one
 // for the edge, each piece-cell side that faces a log cell outside the piece
