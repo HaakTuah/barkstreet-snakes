@@ -78,6 +78,8 @@ declare namespace Engine {
     came: number; fury?: number; gaze: number; lookAt: number; looks: number; lookUntil: number; unit: number;
     /** Entry 6, part 2: its outline (the cut's cells left in peck order, the piece, the tick it began waiting or -1), and a fight's plus. (fury: pieces fallen in the frenzy.) */
     plan?: { cut: number[]; piece: number[]; waitFrom: number }; zone?: number[];
+    /** Entry 6, part 3++: in the frenzy, each snake's length as the floor counts it (its length as the frenzy began), by its index in game.snakes. */
+    held?: number[];
     /** [from, to] cells; to -1: the bird eats it. */
     landings?: [number, number][];
     /** 2s: the cells of the pieces its patch cuts loose (in target too): they fall with the strike. */
