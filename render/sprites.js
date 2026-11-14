@@ -80,7 +80,7 @@ function guideSprite(kind, px) {
   guideSprites.set(key, c);
   return c;
 }
-const GUIDE_TILE = { hole: 1.5, bridge: 1.5, land: 1.25, fire: 0.95, mushroom: 0.95, held: 1.1, rests: 1.05, squash: 1.15, cut: 1.15, failflash: 1.15, lostflag: 1.2, dig: 0.9, knock: 1.35, 'basic-win': 1.1, 'basic-steer': 1.1, 'basic-crash': 1.1 }; // (on a tile of bark this many cells either side of the middle)
+const GUIDE_TILE = { hole: 1.5, island: 1.5, bridge: 1.5, land: 1.25, fire: 0.95, mushroom: 0.95, held: 1.1, rests: 1.05, squash: 1.15, cut: 1.15, failflash: 1.15, lostflag: 1.2, dig: 0.9, knock: 1.35, 'basic-win': 1.1, 'basic-steer': 1.1, 'basic-crash': 1.1 }; // (on a tile of bark this many cells either side of the middle)
 const LEAN_BITE = [[0.3, -0.14, 0.1], [0.37, 0, 0.1], [0.3, 0.14, 0.09]]; // (the bite, three scallops out of the apple's right side: x, y, radius in cells)
 const SQUASH_SPLAT = [[1.25, -0.32, 0.07], [1.35, 0.3, 0.06], [0.1, 0.36, 0.05], [1.6, 0.02, 0.05]]; // (the guide's squash: the splat's drops, x, y, radius in cells)
 const DIG_SPRAY = [[-0.62, -0.42, 0.045], [0.6, -0.5, 0.04], [0.66, 0.36, 0.05], [-0.5, 0.58, 0.04], [0.05, -0.7, 0.035], [-0.72, 0.1, 0.035]];
@@ -103,6 +103,11 @@ const GUIDE = {
   wrap: g => drawPowerGlyph(g, 'wrap'),
   fire: g => { drawFireGlow(g); g.scale(1.3, 1.3); drawFlames(g, '0'); },
   hole: g => { guideCells(GUIDE_HOLE); g.translate(-12 * CELL, -12 * CELL); drawPits(g, guideMask, 0, 0, GRID - 1, GRID - 1); },
+  island: g => { // (3+: a gap of pits, and beyond it an island ringed pale, as a mark shows one that stays)
+    guideCells(GUIDE_GAP); g.save(); g.translate(-12 * CELL, -12 * CELL); drawPits(g, guideMask, 0, 0, GRID - 1, GRID - 1); g.restore();
+    g.strokeStyle = 'rgba(254, 243, 199, 0.9)'; g.lineWidth = CELL * 0.14; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(0, -CELL * 1.6); g.lineTo(0, CELL * 1.6); g.stroke();
+  },
   bridge: g => { // (round six B: the holes, with a green body lying across them, a bridge)
     g.save(); GUIDE.hole(g); g.restore();
     g.beginPath(); g.roundRect(-CELL * 1.6, -CELL * 0.36, CELL * 3.2, CELL * 0.72, CELL * 0.36);
@@ -287,7 +292,7 @@ function drawBasket(g) {
   g.beginPath(); g.roundRect(-c * 0.49, -c * 0.02, c * 0.98, c * 0.1, c * 0.05); g.fill(); g.stroke();
 }
 // The cells of the guide's hole (an L, in the middle of a board) and its land (a staircase across it).
-const GUIDE_HOLE = [[11, 11], [12, 11], [11, 12]], GUIDE_PIT = [[12, 12]], GUIDE_LAND = [];
+const GUIDE_HOLE = [[11, 11], [12, 11], [11, 12]], GUIDE_PIT = [[12, 12]], GUIDE_LAND = [], GUIDE_GAP = [9, 10, 11, 12, 13, 14, 15].map(y => [11, y]);
 for (let y = 9; y < 16; y++) for (let x = 9; x < 16; x++) if (x + y >= 24) GUIDE_LAND.push([x, y]);
 const guideMask = new Uint8Array(GRID * GRID), guideNone = new Uint8Array(GRID * GRID), NO_HOLES = new Set();
 function guideCells(cells) {

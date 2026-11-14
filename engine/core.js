@@ -20,7 +20,7 @@
 //   beetles.js     beetles, their burrows, their crawl and going under
 //   weather.js     the weather, spells, rainbows, lightning, fire and cooking
 //   pits.js        bridges over holes, and falling in
-//   woodpecker.js  the woodpecker's peck: its acts, the strike, a piece cut loose, how deep it digs
+//   woodpecker.js  the woodpecker's peck: its acts, the strike, a piece cut loose and islands that stay, how deep it digs
 //   outline.js     where it cuts: each snake's region, the floor, the outline it plans and its next peck
 //   fight.js       at the floor, its fight: a tile aimed ahead of a snake, and the crash it gives
 //   landings.js    where snakes in a patch land: rooms, knock-aside and the promised landings

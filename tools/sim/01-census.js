@@ -38,7 +38,7 @@ const census = () => ({
   // off (with food on them, a snake on them); and the rounds whose last
   // snakes ended up on islands of their own, of them how often the one on
   // the biggest won (chance: what a blind pick would get).
-  seals: 0, sealedOut: 0, falls: 0, fallCells: 0, fallBig: 0, bigFalls: [], fights: 0, fightHits: 0, floorRounds: 0, cutDeaths: 0, cutVictim: 0, cutChance: 0, fellOut: 0, piecesLeft: 0, isleRounds: 0, split: 0, splitBiggest: 0, splitChance: 0,
+  seals: 0, sealedOut: 0, falls: 0, fallCells: 0, fallBig: 0, bigFalls: [], fights: 0, fightHits: 0, floorRounds: 0, cutDeaths: 0, cutVictim: 0, cutChance: 0, fellOut: 0, piecesLeft: 0, isleRounds: 0, splitEnd: 0, split: 0, splitBiggest: 0, splitChance: 0,
   causesSD: {}, sdTimes: [],
   ...endgameCounts(),
 });
@@ -306,9 +306,11 @@ function woodpeckerCensus(g, c, st, dying, N, T) {
   }
   // The last snakes, each on an island of its own: the first time it's so.
   const alive = g.snakes.filter(s => s.alive);
-  if (!st.split && g.woodpecker && alive.length >= 2) {
+  // (3+: and whether they still are, tick by tick: was the round decided so?)
+  if (g.woodpecker && alive.length >= 2) {
     if (land.holes !== g.holes.size) labelLand(g, N);
     const ids = alive.map(s => land.comp[s.body[0].y * N + s.body[0].x]);
-    if (ids.every(i => i >= 0) && new Set(ids).size === ids.length) st.split = { n: alive.length, size: Object.fromEntries(alive.map((s, i) => [s.id, land.sizes[ids[i]]])) };
+    st.apart = ids.every(i => i >= 0) && new Set(ids).size === ids.length;
+    if (!st.split && st.apart) st.split = { n: alive.length, size: Object.fromEntries(alive.map((s, i) => [s.id, land.sizes[ids[i]]])) };
   }
 }

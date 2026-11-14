@@ -99,7 +99,7 @@ function report({ per, total }, withCensus) {
       + ` · pieces cut loose (2s) ${(c.falls / sd).toFixed(2)} a woodpecker round, ${(c.fallCells / Math.max(1, c.falls)).toFixed(1)} cells each, over CUT_SHARE_MAX of the log ${(c.fallBig / sd).toFixed(2)}, the biggest a round ${(() => { const b = [...c.bigFalls].sort((x, y) => x - y); return b.length ? `median ${b[b.length >> 1]}, most ${b[b.length - 1]}` : '-'; })()}, snakes down with one ${(c.fellOut / sd).toFixed(2)}, strikes leaving the log in pieces ${(c.piecesLeft / sd).toFixed(2)}, in ${of(c.isleRounds)} of rounds`
       + ` · a fight (part 2: at the floor) in ${of(c.floorRounds)} of rounds; ${(c.fights / Math.max(1, c.floorRounds)).toFixed(1)} strikes in each, ${a(c.fightHits)} a round hitting a head`
       + ` · decided by where it cut (part 2): of deaths within 10 s of a piece falling (${a(c.cutDeaths)} a round), the snake whose log it was ${share(c.cutVictim, c.cutDeaths)} (chance ${share(c.cutChance, c.cutDeaths)})`
-      + ` · the last snakes split onto islands of their own in ${of(c.split)} of rounds; the biggest island's won ${share(c.splitBiggest, c.split)} of those (a blind pick: ${share(c.splitChance, c.split)})`);
+      + ` · the last snakes split onto islands of their own in ${of(c.split)} of rounds (still so as it was decided: ${of(c.splitEnd)}); the biggest island's won ${share(c.splitBiggest, c.split)} of those (a blind pick: ${share(c.splitChance, c.split)})`);
     console.log(endgameLine(c, sdDeaths, sd, per));
   }
   console.table(Object.entries(per).map(([name, p]) => ({

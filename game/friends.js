@@ -106,7 +106,8 @@ const GUIDE_ROWS = [
   ]],
   ['The log', [
     ['fire', 'Fire', 'Lightning lights it. Crawl in and it takes 3 bites of tail; rain puts it out.'],
-    ['knock', 'Woodpecker', 'It comes in three acts. From about 1:00 it watches the log, a pale pool where it looks: where it looks last, it starts cutting. Then it cuts a piece out a few cells a peck, along a nicked line. The piece inside is faintly shaded while it cuts and dark once its last peck is aimed; it falls with the strike, so get off it. In its frenzy (sudden death) it cuts faster, down to the room the snakes need, then pecks at you: a head in its red ring at the strike crashes. It won’t shut you in if it can help it. Food in its mark flies to a ring; a beetle still in it gets eaten.'],
+    ['knock', 'Woodpecker', 'It comes in three acts. From about 1:00 it watches the log, a pale pool where it looks: where it looks last, it starts cutting. Then it cuts a piece out a few cells a peck, along a nicked line; the piece inside is faintly shaded while it cuts. In its frenzy (sudden death) it cuts faster, down to the room the snakes need, then pecks at you: a head in its red ring at the strike crashes. It won’t shut you in if it can help it. Food in its mark flies to a ring; a beetle still in it gets eaten.'],
+    ['island', 'Islands', `What a strike cuts off the log stays standing only while it touches the log’s edge and lies a hop (${TUNE.LEAP_REACH} cells or fewer) from the log: an island, ringed pale in its mark. Anything else cut off falls with the strike, dark and streaked in its mark, so get off it. Before the frenzy, the piece the woodpecker cuts out at the edge stays; in the frenzy, its pieces fall, and an island falls once the log is out of a hop’s reach.`],
     ['hole', 'Holes', 'The woodpecker’s, once it starts pecking. Bumping one is a crash, like the edge; a peck right under your head is the end (in its fight, a crash).'],
     ['bridge', 'Bridges', 'A snake lying across a pit is a bridge: crawl onto its back there, or land on it from a jump. Get off onto bark before its tail passes, or you fall in.'],
     ['land', 'Borders', 'Sovereign’s realm and Colonist’s colonies. Cross one and its owner notices, and says so.'],
@@ -119,7 +120,7 @@ const GUIDE_ROWS = [
 ];
 // (Until the renderer can draw a picture, a stand-in: it draws a kind it
 // doesn't know as an apple. Every kind has one, in case its picture fails.)
-const GUIDE_STAND_IN = { capricious: '🎭', copycat: '🐱', 'basic-win': '👑', 'basic-steer': '🐍', 'basic-crash': '💥', 'basic-hunger': '🍽️', apple: '🍎', lean: '🍂', plentiful: '🧺', golden: '🌟', beetle: '🪲', goldbeetle: '🪲', dig: '🪲', pellet: '🟢', squash: '💦', baked: '🍎', roast: '🍖', mushroom: '🍄', goldcap: '🍄', leaf: '🍂', spill: '🪙', jump: '⤴️', flash: '⚡', cut: '✂️', failflash: '💫', wrap: '🔁', held: '✨', rests: '⏳', fire: '🔥', knock: '🍎', hole: '🕳️', bridge: '🌉', land: '🚩', lostflag: '🚩' };
+const GUIDE_STAND_IN = { capricious: '🎭', copycat: '🐱', 'basic-win': '👑', 'basic-steer': '🐍', 'basic-crash': '💥', 'basic-hunger': '🍽️', apple: '🍎', lean: '🍂', plentiful: '🧺', golden: '🌟', beetle: '🪲', goldbeetle: '🪲', dig: '🪲', pellet: '🟢', squash: '💦', baked: '🍎', roast: '🍖', mushroom: '🍄', goldcap: '🍄', leaf: '🍂', spill: '🪙', jump: '⤴️', flash: '⚡', cut: '✂️', failflash: '💫', wrap: '🔁', held: '✨', rests: '⏳', fire: '🔥', knock: '🍎', island: '🏝️', hole: '🕳️', bridge: '🌉', land: '🚩', lostflag: '🚩' };
 const GUIDE_UNDRAWN = new Set();
 function renderGuide() {
   const px = Math.round(36 * (window.devicePixelRatio || 1));

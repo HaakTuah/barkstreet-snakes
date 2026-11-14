@@ -223,6 +223,7 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats, withKey }, save
   total.actReached[E.actOf(g)]++; // (entry 6: the act each round ended in)
   if (E.suddenDeath(g)) { total.sudden++; c.sdTimes.push(g.time - g.acts.frenzy); c.holes += g.holes.size; }
   if (st.bigFall) c.bigFalls.push(st.bigFall); // (part 2: the biggest piece that fell this round)
+  if (st.apart && alive.length === 1 && g.time < MAX_TIME) c.splitEnd++; // (3+: the last two each on a piece of their own as it was decided)
   if (st.split && alive.length === 1 && g.time < MAX_TIME) { // (the last snakes on islands of their own: did the biggest island's win?)
     const sizes = Object.entries(st.split.size), most = Math.max(...sizes.map(([, n]) => n)), top = sizes.filter(([, n]) => n === most).map(([id]) => +id);
     c.split++;
