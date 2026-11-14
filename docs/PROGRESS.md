@@ -146,7 +146,7 @@ three acts" (its draft: `docs/handoff/woodpecker-acts-draft.md`). In six playabl
    stay"): a piece cut off stays standing while it touches the board's edge and lies a hop from the log; before the
    frenzy the piece it cuts out at the edge stays, in the frenzy its pieces fall. 3++. Length costs room in the frenzy (#655, "Make length
    cost more in the endgame, so always eating there loses clearly"): under today's rules no meal weighing beats always
-   eating, so a long snake must pay in room for the weighing to win. **Blocked on a lever** (PR #760): both floor shapes
+   eating, so a long snake must pay in room for the weighing to win. **Blocked on a lever** (PR #760, parked at a gate, see its "Where to pick up"): both floor shapes
    were measured and neither taken, since snakes are longest as the frenzy begins and either shape only raises the floor
    (design 38, "The floor", has the numbers). Built again once #655 names a lever that is not the floor; an
    engine-rules entry, run one at a time, with the design check, the three-way head to head and an A/B for round length
