@@ -8,7 +8,7 @@ PERSONAS.star = {
   w: {
     space: 1, territory: 1.2, // (at 0.6 it won 23%, in every round of 800; at 1.2, 26.5%, and 28.4% once its jumps kept clear of heads and its golden dashes weren't thrown away)
     food: 5, eat: 70, pellet: 1.2, foodRange: 40,
-    margin: 4, headRisk: 700, zoneRisk: 100,
+    margin: 6, headRisk: 700, zoneRisk: 100, // (7d: at 4, it spent its stamina on flashes and had no jump left out of a box: 10.5% of its rounds won with Star in every round, seeds 199 and 223; at 6, with golden.power 3, 17.5%)
     // Its powers are free to it, unless one ends where a rival could
     // strike (half a head's risk: in reach of its powers, or nearer), or
     // it's a golden dash just for speed: it flashes and jumps far more
@@ -21,6 +21,6 @@ PERSONAS.star = {
     // free of it, it spent every flash and died boxed in its own coils,
     // with nothing left to jump or drop its tail: 12% of its rounds won).
     powers: { price: 0, risk: 350, everyWay: true, jumpAny: true, dashSpend: true, keepFlash: 0.01 },
-    golden: { power: 6, apple: 1.5, contested: 0.5 }, // (it eats about twice as much golden power food as anyone)
+    golden: { power: 3, apple: 1.5, contested: 0.5 }, // (it eats more golden power food than anyone; at 6, it went far for it)
   },
 };
