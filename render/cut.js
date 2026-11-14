@@ -4,7 +4,8 @@
 // close round the piece as its pecks take them (the pecked ones are pits,
 // as render/holes.js draws them; the peck that cuts the piece loose shades
 // it, 2s). Until then the piece itself lies under a faint wash with a
-// dashed pale edge, as long as any nick is left, so a person sees the piece
+// dashed pale edge (3+: or, a piece that will stand as an island, inside
+// a solid pale rim), as long as any nick is left, so a person sees the piece
 // the rivals are handed (aiView's piece), not only its nicks; it has none of
 // the streaks the cut-loose shading slides, and holds still with reduced
 // motion. A fight's aim: its plus shaded red cell by cell, a red ring
@@ -16,7 +17,10 @@ function drawCut(alpha) {
   if (!w) return;
   if (w.plan) {
     const aiming = new Set(w.target);
-    if (w.plan.cut.some(k => !game.holes.has(k) && !aiming.has(k))) washPiece(w.plan.piece);
+    if (w.plan.cut.some(k => !game.holes.has(k) && !aiming.has(k))) {
+      if (pieceShowsStaying(w.plan)) rimCells(new Set(w.plan.piece.filter(k => !game.holes.has(k))), 0.45); // (3+: a piece that will stand, an island: its solid pale rim from the first nick)
+      else washPiece(w.plan.piece);
+    }
     ctx.lineCap = 'round';
     for (const k of w.plan.cut) {
       if (game.holes.has(k) || aiming.has(k)) continue;
@@ -44,7 +48,9 @@ function drawCut(alpha) {
 
 // 3+, islands that stay: a piece this strike cuts off from the log that
 // will stay standing (it touches the board's edge, a jump from the log: see
-// cutLoose) gets a solid pale rim round it as the mark comes, where the
+// cutLoose) gets a solid pale rim round it as the mark comes (and a piece
+// the outline is cutting that will stand, from its first nick, in place of
+// the wash: see drawCut), where the
 // pieces that fall go dark and streaked (render/holes.js): what will fall
 // and what will stay, told apart by more than colour. Worked out by this
 // screen from the mark and the holes it already has (newIsles), once a mark.
@@ -56,14 +62,26 @@ function rimIsles(w, alpha) {
   }
   const prog = aimed(alpha);
   if (!isleCells.size || prog < 0) return;
-  ctx.strokeStyle = `rgba(254, 243, 199, ${0.55 + 0.35 * prog})`; ctx.lineWidth = CELL * 0.12; ctx.lineCap = 'round';
+  rimCells(isleCells, 0.55 + 0.35 * prog);
+}
+// Whether the plan's piece will stand (pieceStays), worked out once a plan, holes and act.
+let staysFor = null, staysHoles = -1, staysAct = -1, staysIs = false;
+function pieceShowsStaying(plan) {
+  const act = actOf(game);
+  if (staysFor !== plan || staysHoles !== game.holes.size || staysAct !== act) { staysFor = plan; staysHoles = game.holes.size; staysAct = act; staysIs = pieceStays(game); }
+  return staysIs;
+}
+// A solid pale rim round these cells, each side that faces a cell not among
+// them (none along the board's own rim).
+function rimCells(cells, a) {
+  ctx.strokeStyle = `rgba(254, 243, 199, ${a})`; ctx.lineWidth = CELL * 0.12; ctx.lineCap = 'round';
   ctx.beginPath();
-  for (const k of isleCells) {
+  for (const k of cells) {
     const cx = k % GRID, cy = Math.floor(k / GRID), x = cx * CELL, y = cy * CELL;
-    if (cy > 0 && !isleCells.has(k - GRID)) { ctx.moveTo(x, y); ctx.lineTo(x + CELL, y); }
-    if (cy < GRID - 1 && !isleCells.has(k + GRID)) { ctx.moveTo(x, y + CELL); ctx.lineTo(x + CELL, y + CELL); }
-    if (cx > 0 && !isleCells.has(k - 1)) { ctx.moveTo(x, y); ctx.lineTo(x, y + CELL); }
-    if (cx < GRID - 1 && !isleCells.has(k + 1)) { ctx.moveTo(x + CELL, y); ctx.lineTo(x + CELL, y + CELL); }
+    if (cy > 0 && !cells.has(k - GRID)) { ctx.moveTo(x, y); ctx.lineTo(x + CELL, y); }
+    if (cy < GRID - 1 && !cells.has(k + GRID)) { ctx.moveTo(x, y + CELL); ctx.lineTo(x + CELL, y + CELL); }
+    if (cx > 0 && !cells.has(k - 1)) { ctx.moveTo(x, y); ctx.lineTo(x, y + CELL); }
+    if (cx < GRID - 1 && !cells.has(k + 1)) { ctx.moveTo(x + CELL, y); ctx.lineTo(x + CELL, y + CELL); }
   }
   ctx.stroke();
 }

@@ -46,6 +46,7 @@ const same = (a, b) => a.length === b.length && a.every(k => b.includes(k));
   const stays = E.cutLoose(pecks, new Set(neck(1))), shown = [...E.newIsles(pecks, neck(1))];
   check('...before it (its first pecks), the piece it cuts out at the edge stays standing, an island, and its mark shows which cells stay', E.actOf(pecks) === 2 && !stays.length && same(shown, cornerK), `${JSON.stringify(stays)} ${JSON.stringify(shown)}`);
   check('...where in the frenzy the mark shows no island', E.newIsles(frenzy, neck(1)).size === 0);
+  check('...and it says so from the first nick: before the frenzy the piece will stand (pieceStays), in the frenzy not', E.pieceStays(pecks) && !E.pieceStays(frenzy));
 }
 
 { // Only while: an island already standing (the corner, a gap of LEAP_REACH + 1 all round but for row 1, where one cell of

@@ -69,8 +69,9 @@ it never takes out half the trunk."). It never melts the log: it plans a piece a
   whole aim, and it falls with the strike, food and all; before the frenzy, a piece at the board's edge stays instead, an
   island, ringed pale in its mark (3+, "Islands that stay"). Measured: about ten pieces a woodpecker round, 27 cells each; the
   biggest in a round 51 cells at the median, 60 at most; none ever left the log in pieces. Where it cuts doesn't pick
-  the loser: of deaths within 10 s of a piece falling, the snake whose log it was 42–43% (chance, among those alive, about 41.5%);
-  the last snakes never ended on islands of their own.
+  the loser: of deaths within 10 s of a piece falling, the snake whose log it was 42–43% (chance, among those alive, about
+  41.5%); the last snakes never ended on islands of their own (part 2's numbers, before 3+'s islands: "Islands that
+  stay" has them since).
 - **It may cover food:** food in the mark is knocked aside at the strike (see "It knocks food aside").
 - **The cue:** each cell its cut has still to go is nicked on the bark, a short dark slit with a pale rim
   (`render/cut.js`), so you can watch the line close round the piece; the pecked ones are pits.
@@ -78,7 +79,9 @@ it never takes out half the trunk."). It never melts the log: it plans a piece a
   nick is left, the piece lies under a faint dark wash with a dashed pale edge, exactly `piece`'s cells (crumbs
   that go with it included) and no more. It has none of the cut-loose
   shading's sliding streaks, so the two differ by more than darkness, and it stays still with reduced motion. The last
-  peck aimed, no nick is left and "The log stays one piece" takes over, the shading deeper (below).
+  peck aimed, no nick is left and "The log stays one piece" takes over, the shading deeper (below). A piece that will
+  stand as an island (before the frenzy, at the board's edge: 3+) has no wash: a solid pale rim instead, from the first
+  nick (`pieceStays`), so what will fall and what will stay show the whole cut.
 
 ### The floor
 
@@ -132,8 +135,9 @@ what ends up cut loose falls (a rules test proves it); it plans small (see "It c
   piece. Its fight leaves no island (a tile that would split the log is never its aim). Why the frenzy differs: before
   it, islands give the snakes somewhere to hop to and from; in it, the log must keep shrinking, and an island out of reach
   goes, so the last snakes don't each end on one of their own.
-  - **The cue:** as a mark comes that leaves an island standing, the island is ringed with a solid pale line (each side
-    that faces the gap or the mark; `render/cut.js`, `newIsles`), brightening as the strike nears; a piece that falls is
+  - **The cue:** a piece its outline is cutting that will stand is ringed with a solid pale line from its first nick, in
+    place of the wash (`pieceStays`); as a mark comes that leaves an island standing, the island is ringed so (each
+    side that faces the gap or the mark; `render/cut.js`, `newIsles`), brightening as the strike nears; a piece that falls is
     dark with sliding streaks (below). What stays and what falls differ by line against shading, not by colour alone;
     the rim stays still with reduced motion.
   - **Taught:** a lesson the first time a mark leaves an island ("Ringed pale, it stays: on the edge, a hop from the

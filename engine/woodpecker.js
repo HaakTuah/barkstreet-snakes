@@ -255,3 +255,14 @@ function newIsles(game, mark) {
   if (near.size) for (let k = 0; k < CELLS; k++) if (near.has(pieceOf[k]) && !falls.has(k)) out.add(k);
   return out;
 }
+// Before the frenzy: will the piece its outline is cutting stay standing
+// once the rest of its cut is out (an island: see cutLoose)? So it shows
+// so from the first nick, not only at the last aim (render/cut.js).
+function pieceStays(game) {
+  const p = game.woodpecker?.plan;
+  if (!p || actOf(game) === 3) return false;
+  const left = p.cut.filter(k => !game.holes.has(k));
+  if (!left.length) return false;
+  const isles = newIsles(game, left);
+  return p.piece.some(k => isles.has(k));
+}

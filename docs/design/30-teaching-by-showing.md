@@ -219,7 +219,7 @@ over the row under the board ("The woodpecker's perch" in `31-phones.md`, and "T
    - a real-play run on the three screens against the measured numbers.
 
 **With PR B,** every new move goes through the same coach, voice and query, with its own cue as the picture, and no new banners:
-- *island hops:* the arc stretched to the ring up to 3 cells on, offered the first time you're in a pocket with a jumpable gap ("Tap! I can hop that gap."; 3+: islands stand at the log's edge, a hop from it, before the frenzy);
+- *island hops:* the arc stretched to the ring up to 3 cells on, offered the first time you're in a pocket with a jumpable gap ("Tap! I can hop that gap."; 3+: islands stand at the board's edge, a hop from the log, before the frenzy);
 - *the golden flight:* a gold ring that slides as you steer, with a dotted trail to its limit, turning to an × over a hole or a body ("Hold, and I'll fly! Steer me.");
 - *bridges:* planks on a body over a pit, its last cells sagging and creaking, and a walkway to a ring on the far rim ("Off before its tail goes!"), with lines for rivals both riding and ridden;
 - *cuts:* a snip line across a thin body with the beads-to-be ghosted; the same across your own body for dropping your tail; an × with -5 where a flash would fail, until learned; steam on fire it puts out;
