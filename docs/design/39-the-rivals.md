@@ -323,9 +323,9 @@ are off for everyone else, so rounds without Star play exactly as if it didn't e
 - **Below the band** (7c, 7d): 10.5% of its rounds won with Star in every one (seeds 199 and 223). A `margin` of 6
   for 4, with a golden craving of 3 for 6, lifted it to 17.5%, but it was not taken: the margin also sets what a
   flash keeps for a jump (from half a jump's worth to three quarters), so Star no longer flashed where no one else
-  would, and its flashes fell by two fifths, to about one and a half times the field's. The next try: the wider
+  would, and its flashes fell by two fifths, to about one and a half times the field's. The next try (7e): the wider
   margin for its room, with what its flashes keep held where it was (a weight of its habit, as `keepFlash` is for
-  its jumps).
+  its jumps), and its craving for golden things as it is.
 
 Spending powers on small gains makes a rival weaker, so Star stays a threat in two ways: each power goes by the same
 tests of where it goes as anyone's, and pays the full price where a rival could strike, so it rarely flashes into a
@@ -414,8 +414,8 @@ one whenever it's ready, which jump five times as often, die into themselves twi
 jumps taking the stamina first; and (7d, seeds 181 and 191) 34.5% and 33.0% against 15.4% and 17.0% for rivals that
 flash whenever a flash is ready, their jumps where they fit, which flash nearly four times as often, jump half as
 often and die into themselves nearly twice as often. So both ends hold for both plain powers. Of the rivals
-screened with one in every round (`--with`), Gobbler, Sniper, Colonist, Mute and Mason are in the band, Drab on its
-edge and Star below it (the numbers: entry 5's 7d); rounds run 219–224 s, above the 160–180 s aimed at. The numbers chosen against it are in each move's section
+screened with one in every round (`--with`), Gobbler, Sniper, Colonist, Mute, Mason, Joker and Vulture are in the band,
+Drab on its edge and Star below it (the numbers: entry 5's 7d); rounds run 219–224 s, above the 160–180 s aimed at. The numbers chosen against it are in each move's section
 of `40-powers-and-moves.md`; the text as it was, with the A/B as it stood then, is in
 `docs/archive/design-arc-and-history.md`.
 

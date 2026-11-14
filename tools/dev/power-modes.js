@@ -18,7 +18,8 @@
 //     no rival gets to first) in ai/leaps.js.
 //   always-flash: the same for the plain flash alone, its jumps where they
 //     fit (always jumps first, and so flashes less than where they fit:
-//     7d measures always flashing with this).
+//     7d measures always flashing with this). Neither takes a flash
+//     through its own body unless it's a planned drop (ai/flash.js).
 const fs = require('fs'), path = require('path');
 const [dir, mode] = process.argv.slice(2);
 if (!dir || !['never', 'always', 'always-flash'].includes(mode)) { console.error('usage: power-modes.js DIR never|always|always-flash'); process.exit(1); }
