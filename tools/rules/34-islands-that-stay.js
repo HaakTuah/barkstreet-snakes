@@ -46,7 +46,13 @@ const same = (a, b) => a.length === b.length && a.every(k => b.includes(k));
   const stays = E.cutLoose(pecks, new Set(neck(1))), shown = [...E.newIsles(pecks, neck(1))];
   check('...before it (its first pecks), the piece it cuts out at the edge stays standing, an island, and its mark shows which cells stay', E.actOf(pecks) === 2 && !stays.length && same(shown, cornerK), `${JSON.stringify(stays)} ${JSON.stringify(shown)}`);
   check('...where in the frenzy the mark shows no island', E.newIsles(frenzy, neck(1)).size === 0);
-  check('...and it says so from the first nick: before the frenzy the piece will stand (pieceStays), in the frenzy not', E.pieceStays(pecks) && !E.pieceStays(frenzy));
+  check('...and it says so from the first nick: before the frenzy the piece will stand (pieceStanding), in the frenzy not', same([...E.pieceStanding(pecks)], cornerK) && E.pieceStanding(frenzy).size === 0);
+  // (Codex's case: a piece that takes in a crumb that falls, here a lone cell ringed by holes in the middle: only the
+  // cells that will stand are shown standing.)
+  const mixed = plain((ACTS[1] + ACTS[2]) / 2);
+  for (const [x, y] of [[12, 11], [13, 12], [12, 13], [11, 12]]) mixed.holes.add(K(x, y));
+  mixed.woodpecker.plan.piece = [...cornerK, K(12, 12)];
+  check('...only the cells of it that will stand: a crumb it takes in, which falls, is not among them', same([...E.pieceStanding(mixed)], cornerK), JSON.stringify([...E.pieceStanding(mixed)]));
 }
 
 { // Only while: an island already standing (the corner, a gap of LEAP_REACH + 1 all round but for row 1, where one cell of

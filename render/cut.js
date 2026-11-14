@@ -4,8 +4,8 @@
 // close round the piece as its pecks take them (the pecked ones are pits,
 // as render/holes.js draws them; the peck that cuts the piece loose shades
 // it, 2s). Until then the piece itself lies under a faint wash with a
-// dashed pale edge (3+: or, a piece that will stand as an island, inside
-// a solid pale rim), as long as any nick is left, so a person sees the piece
+// dashed pale edge (3+: but the cells of it that will stand as an island,
+// inside a solid pale rim instead), as long as any nick is left, so a person sees the piece
 // the rivals are handed (aiView's piece), not only its nicks; it has none of
 // the streaks the cut-loose shading slides, and holds still with reduced
 // motion. A fight's aim: its plus shaded red cell by cell, a red ring
@@ -18,8 +18,9 @@ function drawCut(alpha) {
   if (w.plan) {
     const aiming = new Set(w.target);
     if (w.plan.cut.some(k => !game.holes.has(k) && !aiming.has(k))) {
-      if (pieceShowsStaying(w.plan)) rimCells(new Set(w.plan.piece.filter(k => !game.holes.has(k))), 0.65); // (3+: a piece that will stand, an island: its solid pale rim from the first nick)
-      else washPiece(w.plan.piece);
+      const stand = standingOf(w.plan); // (3+: what of the piece will stand, an island: its solid pale rim from the first nick; the rest, washed, falls)
+      if (stand.size) rimCells(new Set([...stand].filter(k => !game.holes.has(k))), 0.65);
+      washPiece(stand.size ? w.plan.piece.filter(k => !stand.has(k)) : w.plan.piece);
     }
     ctx.lineCap = 'round';
     for (const k of w.plan.cut) {
@@ -64,12 +65,12 @@ function rimIsles(w, alpha) {
   if (!isleCells.size || prog < 0) return;
   rimCells(isleCells, 0.7 + 0.3 * prog);
 }
-// Whether the plan's piece will stand (pieceStays), worked out once a plan, holes and act.
-let staysFor = null, staysHoles = -1, staysAct = -1, staysIs = false;
-function pieceShowsStaying(plan) {
+// The cells of the plan's piece that will stand (pieceStanding), worked out once a plan, holes and act.
+let standFor = null, standHoles = -1, standAct = -1, standCells = new Set();
+function standingOf(plan) {
   const act = actOf(game);
-  if (staysFor !== plan || staysHoles !== game.holes.size || staysAct !== act) { staysFor = plan; staysHoles = game.holes.size; staysAct = act; staysIs = pieceStays(game); }
-  return staysIs;
+  if (standFor !== plan || standHoles !== game.holes.size || standAct !== act) { standFor = plan; standHoles = game.holes.size; standAct = act; standCells = pieceStanding(game); }
+  return standCells;
 }
 // A solid pale rim round these cells (see edgePath).
 function rimCells(cells, a) {

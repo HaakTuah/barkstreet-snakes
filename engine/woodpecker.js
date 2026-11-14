@@ -255,14 +255,17 @@ function newIsles(game, mark) {
   if (near.size) for (let k = 0; k < CELLS; k++) if (near.has(pieceOf[k]) && !falls.has(k)) out.add(k);
   return out;
 }
-// Before the frenzy: will the piece its outline is cutting stay standing
-// once the rest of its cut is out (an island: see cutLoose)? So it shows
-// so from the first nick, not only at the last aim (render/cut.js).
-function pieceStays(game) {
-  const p = game.woodpecker?.plan;
-  if (!p || actOf(game) === 3) return false;
+// Before the frenzy: which cells of the piece its outline is cutting will
+// stay standing once the rest of its cut is out (an island: see cutLoose),
+// the rest of it (crumbs, an island out of reach it takes in) falling? A
+// Set, empty in the frenzy; so it shows from the first nick, not only at
+// the last aim (render/cut.js).
+function pieceStanding(game) {
+  const p = game.woodpecker?.plan, out = new Set();
+  if (!p || actOf(game) === 3) return out;
   const left = p.cut.filter(k => !game.holes.has(k));
-  if (!left.length) return false;
+  if (!left.length) return out;
   const isles = newIsles(game, left);
-  return p.piece.some(k => isles.has(k));
+  for (const k of p.piece) if (isles.has(k)) out.add(k);
+  return out;
 }

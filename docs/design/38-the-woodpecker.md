@@ -81,7 +81,8 @@ it never takes out half the trunk."). It never melts the log: it plans a piece a
   shading's sliding streaks, so the two differ by more than darkness, and it stays still with reduced motion. The last
   peck aimed, no nick is left and "The log stays one piece" takes over, the shading deeper (below). A piece that will
   stand as an island (before the frenzy, at the board's edge: 3+) has no wash: a solid pale rim instead, from the first
-  nick (`pieceStays`), so what will fall and what will stay show the whole cut.
+  nick (`pieceStanding`; any crumbs or out-of-reach island it takes in keep the wash, as they fall), so what will fall and
+  what will stay show the whole cut.
 
 ### The floor
 
@@ -136,7 +137,7 @@ what ends up cut loose falls (a rules test proves it); it plans small (see "It c
   it, islands give the snakes somewhere to hop to and from; in it, the log must keep shrinking, and an island out of reach
   goes, so the last snakes don't each end on one of their own.
   - **The cue:** a piece its outline is cutting that will stand is ringed with a solid pale line from its first nick, in
-    place of the wash (`pieceStays`); as a mark comes that leaves an island standing, the island is ringed so (each
+    place of the wash (`pieceStanding`); as a mark comes that leaves an island standing, the island is ringed so (each
     side that faces the gap or the mark; `render/cut.js`, `newIsles`), brightening as the strike nears; a piece that falls is
     dark with sliding streaks (below). What stays and what falls differ by line against shading, not by colour alone;
     the rim stays still with reduced motion.
