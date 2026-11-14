@@ -103,7 +103,8 @@ A balance question ("does this shorten sudden death?", "did my change hurt anyon
 
    For one rival's win rate, `--with KEY` puts it in every round (the simulation's header says how many more rounds that gives).
    For whether a power pays, `tools/dev/power-modes.js` turns a copy into one whose rivals never use a plain jump or
-   flash, or always do, the rules unchanged; `tools/abtest.js . <that copy> --head-to-head` sets them against rivals that
+   flash, or always do (`always`), or always flash with their jumps where they fit (`always-flash`), the rules unchanged;
+   `tools/abtest.js . <that copy> --head-to-head` sets them against rivals that
    use the powers where they fit (against never, it's design 39's seat-split A/B).
 
 Every seeded round is cached by the files that played it, so asking again or for more plays only the new ones: the A side of one experiment is free in the next, and the confirming abtest's rounds are free in its `--census`.
