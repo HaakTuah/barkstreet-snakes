@@ -398,12 +398,14 @@ The measure for the moves and the power styles, as round six B set it (simulatio
 powers off in the seat-split A/B; every persona in the band (above); rounds about 160–180 s; starving at most 15%
 of deaths (8% until entry 6, part 3 made a meal a trade-off in the frenzy, where a long rival now lets itself shrink:
 13.7% on seeds 107 and 109, 4.4% before, the time spent starving before the frenzy 2.9% against 2.2%);
-failed flashes rare enough to be a risk you take on purpose. Where 7c left it (head to head, 600 paired rounds a seed; `tools/dev/power-modes.js`
-makes the copies): powers where they fit win 37.3% and 37.2% against 12.7% for rivals that never use a plain jump or
-flash (seeds 151 and 157), and 40.1% and 41.1% against 9.75% and 8.83% for rivals that always use one when it's
-ready (five times the jumps, and twice the deaths into themselves); of the rivals screened with one in every round (`--with`),
-Gobbler, Sniper and Colonist are in the band, Drab on its edge (35%) and Star below it (12–13%), with Mute, Mason and
-Vulture outside on one census each (entry 5's 7d); rounds run 219–224 s, above the 160–180 s aimed at. The numbers chosen against it are in each move's section
+failed flashes rare enough to be a risk you take on purpose. Where 7c left it (head to head, 600 paired rounds a seed;
+`tools/dev/power-modes.js` makes the copies): powers where they fit win 37.3% and 37.2% against 12.7% for rivals that
+never use a plain jump or flash (seeds 151 and 157), and 40.1% and 41.1% against 9.75% and 8.83% for rivals that use
+one whenever it's ready, which jump five times as often, die into themselves twice or more as often, and flash less, the
+jumps taking the stamina first: so always jumping is measured, always flashing not yet (entry 5's 7d). Of the rivals
+screened with one in every round (`--with`), Gobbler, Sniper and Colonist are in the band, Drab on its edge and Star
+below it, with Mute, Mason and Vulture outside on one census each (the numbers: entry 5's 7d); rounds run 219–224 s,
+above the 160–180 s aimed at. The numbers chosen against it are in each move's section
 of `40-powers-and-moves.md`; the text as it was, with the A/B as it stood then, is in
 `docs/archive/design-arc-and-history.md`.
 
