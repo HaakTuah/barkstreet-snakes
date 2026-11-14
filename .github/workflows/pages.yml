@@ -1,0 +1,94 @@
+# The site on GitHub Pages, served from the gh-pages branch: main at its root, exactly as main has it, and every open
+# pull request playable beside it at pr-<number>/ (https://haaktuah.github.io/barkstreet-snakes/pr-<number>/). Pages
+# must serve the gh-pages branch (Settings, Pages, "Deploy from a branch": gh-pages, / (root)).
+# This workflow only builds, with a read-only token: a push to main publishes the root (the previews stay) with the
+# core's site-publish.sh; a pull request's run uploads its preview, which "preview" (preview.yml), always main's own
+# copy, puts at pr-<number>/ through the core's preview workflow, and takes down when the PR closes.
+# sw.js keeps main's offline copy and each preview's apart.
+name: pages
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One queue for main and one for each pull request, so no pull request's run waits behind, or is dropped for, another's
+# (GitHub keeps only the newest waiting run in a queue); a newer push to the same pull request replaces the older run.
+concurrency:
+  group: gh-pages-${{ github.event.pull_request.number || 'main' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    # (a fork's pull request gets no preview)
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: github.event.action != 'closed'
+        with:
+          persist-credentials: false # nothing after the checkout needs the token
+          # (a pull request's own head, not the merge GitHub makes of it)
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
+      - name: The site
+        if: github.event.action != 'closed'
+        env:
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          mkdir site
+          if [ -n "$PR" ]; then
+            # A preview: the game's own files, without the core, the tools and the notes.
+            git archive HEAD | tar -x -C site --exclude=core --exclude=tools --exclude=docs --exclude=scripts --exclude=.claude --exclude=.github --exclude='*.md'
+          else
+            git archive HEAD | tar -x -C site # main at the root, exactly as main has it
+          fi
+          # (each copy's version.js names its commit, so an open page can tell a newer one is out: see update.js)
+          [ ! -f site/version.js ] || sed -i "s/build: 'dev'/build: '$(git rev-parse --short=7 HEAD)'/" site/version.js
+
+      # What the publisher reads: the PR's number (checked against the PR itself before use) and, unless it closed,
+      # its site.
+      - name: Hand the preview to the publisher
+        if: github.event_name == 'pull_request'
+        env:
+          PR: ${{ github.event.pull_request.number }}
+        run: mkdir -p preview && echo "$PR" > preview/pr-number && { [ ! -d site ] || mv site preview/site; }
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: github.event_name == 'pull_request'
+        with:
+          name: preview
+          path: preview
+          include-hidden-files: true
+          retention-days: 3
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: github.event_name != 'pull_request'
+        with:
+          name: site
+          path: site
+          include-hidden-files: true
+          retention-days: 3
+
+  publish:
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: site
+          path: site
+      - name: Publish to the root of gh-pages
+        run: core/scripts/site-publish.sh root site

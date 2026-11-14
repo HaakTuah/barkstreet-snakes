@@ -1,0 +1,19 @@
+# The copies, pointer and reading-size checks (one fact, one place; read little: the core's modules/how-to-work.md),
+# the core's, with this game's config (tools/copies.json) and marks (tools/sizes.json), on every pull request and push
+# to main, docs-only changes included, since the rule files are what they guard most. Read-only.
+name: copies
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  copies:
+    uses: HaakTuah/agent-core/.github/workflows/copies.yml@ab0851394a5d0fcb7cd36fcbaa48588daa6a0553
+    with:
+      config: tools/copies.json
+      sizes: tools/sizes.json

@@ -1,0 +1,218 @@
+# The game's own checks, on every pull request and every push to main: the rules, online play and the types of its
+# messages, the rivals' chatter, the records and the service worker in Node, the same seeded rounds with and without
+# thinking ahead, and in headless Chrome (the runner has it) the page's shared scope, its content security policy, the
+# renderer's and controls' promises, the page on phones, tablets and desktops, and the owner's playtest. The jobs run
+# side by side. Each runs only where a change can affect it ("The smallest setup that tests the rule" in
+# core/modules/how-to-work.md): nothing for notes alone (docs/, tools/dev/, .claude/, any .md), the Node checks and the
+# headless four for any change to the game or its tools, and the page on every screen and the playtest for a change to
+# what the page shows (index.html, style/, fonts/, render/, game/, chatter/, audio/, online.js, net.js, records.js,
+# lineup.js, scores-screen.js, sw.js, update.js, version.js, the layout and playtest tests and their parts, the parts'
+# loader, the browser driver or this file). "browser", which main requires, gathers the browser jobs' results.
+# The core's copy, which the core tested before a sync brings it, counts only for what the suites take from it: its Node
+# version runs them all, and its scripts run the one Node check that reads them (the versions). The rest of the copy
+# does not count (core.yml checks it against the core), nor does a workflow in which only the pin of a call to a core
+# workflow moved.
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A newer push to the same pull request replaces the older run; runs of main always finish.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Read-only: the jobs only check out and test (floor rule 2, in core/floor/topics.md: the fewest permissions each job needs).
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      code: ${{ steps.what.outputs.code }}
+      copy: ${{ steps.what.outputs.copy }}
+      page: ${{ steps.what.outputs.page }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: What changed
+        id: what
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          set -euo pipefail
+          # (no base to compare with, such as a new branch: run everything)
+          if [ -z "$BASE" ] || [ "$BASE" = 0000000000000000000000000000000000000000 ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            { echo "code=true"; echo "copy=false"; echo "page=true"; } >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          # (--no-renames: a file moved shows as one deleted and one added, so the place it left still counts)
+          files=$(git diff --no-renames --name-only "$BASE" HEAD)
+          echo "$files"
+          norm='s#(haaktuah/agent-core/\.github/workflows/[a-z0-9._-]+\.ya?ml@)[0-9a-f]{40}#\1<pin>#Ig'
+          own=$(echo "$files" | while IFS= read -r f; do
+            case $f in
+              core/.node-version|core/scripts/*) ;;
+              core/*) continue ;;
+              .github/workflows/*)
+                # (a file missing on either side, or sed failing, leaves it counted)
+                if old=$(git show "$BASE:$f" 2>/dev/null | sed -E "$norm") && new=$(git show "HEAD:$f" 2>/dev/null | sed -E "$norm") \
+                  && [ -n "$old" ] && [ "$old" = "$new" ]; then continue; fi ;;
+            esac
+            printf '%s\n' "$f"
+          done)
+          code=$(echo "$own" | grep -v -E '^(docs/|tools/dev/|\.claude/|core/scripts/)|\.md$' | grep -c . || true)
+          copy=$(echo "$own" | grep -c '^core/scripts/' || true)
+          page=$(echo "$files" | grep -E '^(index\.html|style/|fonts/|render/|game/|chatter/|audio/|online\.js|net\.js|records\.js|lineup\.js|scores-screen\.js|sw\.js|update\.js|version\.js|tools/layout-test\.js|tools/layout/|tools/ui-test\.js|tools/ui/|tools/parts\.js|tools/browser\.js|\.github/workflows/tests\.yml)' | grep -c . || true)
+          echo "code=$([ "$code" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "copy=$([ "$code" -eq 0 ] && [ "$copy" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "page=$([ "$page" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+  # (a change to the core's scripts alone, as a sync brings, runs only the step that reads them: the versions)
+  node:
+    needs: changes
+    if: needs.changes.outputs.code == 'true' || needs.changes.outputs.copy == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: core/.node-version # the core's one exact Node ("Node" in core/modules/updates.md)
+      - name: Rules
+        if: needs.changes.outputs.code == 'true'
+        run: node tools/rules-test.js
+      - name: Online
+        if: needs.changes.outputs.code == 'true'
+        run: node tools/online-test.js
+      - name: Connections
+        if: needs.changes.outputs.code == 'true'
+        run: node tools/net-test.js
+      # The online messages' types (net.js and online.js, see jsconfig.json): a
+      # check only, with TypeScript installed for this step at tools/package.json's
+      # version. Nothing is built or shipped.
+      - name: Types
+        if: needs.changes.outputs.code == 'true'
+        run: |
+          npm ci --prefix tools --no-audit --no-fund
+          tools/node_modules/.bin/tsc --noEmit -p jsconfig.json
+      - name: Chatter
+        if: needs.changes.outputs.code == 'true'
+        run: node tools/chatter-test.js
+      - name: Records
+        if: needs.changes.outputs.code == 'true'
+        run: node tools/records-test.js
+      - name: Service worker
+        if: needs.changes.outputs.code == 'true'
+        run: node tools/sw-test.js
+      - name: The versions Dependabot cannot see, each found once
+        run: scripts/test.sh versions
+      # Four of seed 3's rounds, each played on its own seed (round r of a run
+      # with --seed S is round 0 of one with --seed S + 7919 r): 29, 37 and
+      # 38, and 47. Between them they cross every kind of event the engine
+      # has, the rare ones too (a snake alight and singed, a fire put out, a
+      # beetle flown off: each comes up in just one of seed 3's first 60
+      # rounds), for a sixteenth of what those 60 cost.
+      - name: The same rounds with and without thinking ahead
+        if: needs.changes.outputs.code == 'true'
+        run: |
+          set -o pipefail # (a round that stalls fails --check: so does the step)
+          for run in "1 --seed 229654" "2 --seed 293006" "1 --seed 372196"; do
+            a=$(node tools/simulate.js $run --check | grep fingerprint)
+            b=$(node tools/simulate.js $run --check --ahead | grep fingerprint)
+            echo "$run: plain $a, ahead $b"
+            test -n "$a"
+            test "$a" = "$b"
+          done
+
+  headless:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: core/.node-version # the core's one exact Node ("Node" in core/modules/updates.md)
+      - name: The page's shared scope
+        run: node tools/scope-test.js
+      - name: The content security policy
+        run: node tools/csp-test.js
+      - name: Render
+        run: node tools/render-test.js
+      - name: Controls
+        run: node tools/input-test.js
+
+  # The page on every screen has jobs of its own, beside the others: about
+  # thirteen minutes of screens, sizes and states in all, run as five jobs side
+  # by side, each about a fifth of the whole (JOBS in tools/layout-test.js says
+  # which of tools/layout/ each runs, and fails if a part is in none).
+  layout:
+    needs: changes
+    if: needs.changes.outputs.page == 'true'
+    name: layout (${{ matrix.what }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - job: 1
+            what: the first devices, over the board, every 80 px
+          - job: 2
+            what: the other devices, Score and Best growing
+          - job: 3
+            what: one screen on the first screens, the chatter and the header
+          - job: 4
+            what: one screen on the other screens, on its side, cards and the rest
+          - job: 5
+            what: upright heights, every 10 px held upright, the bigger woodpecker
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: core/.node-version # the core's one exact Node ("Node" in core/modules/updates.md)
+      - name: The page on every screen
+        env:
+          LAYOUT_JOB: ${{ matrix.job }}
+        run: node tools/layout-test.js
+
+  # The owner's playtest (tools/ui-test.js): a desktop and two phones with a real mouse, keys and touch, about seven
+  # minutes, beside the others.
+  ui:
+    needs: changes
+    if: needs.changes.outputs.page == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: core/.node-version # the core's one exact Node ("Node" in core/modules/updates.md)
+      - name: The owner's playtest
+        run: node tools/ui-test.js
+
+  # The check main's ruleset requires for the browser: the headless four, the page on every screen and the playtest
+  # passed, or were skipped where a change cannot affect them. A job skipped by its own `if` counts as passed, and so
+  # would a required job whose needs failed, so this one always runs and reads their results.
+  browser:
+    needs: [changes, headless, layout, ui]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Every browser job passed, or was skipped
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          set -- $RESULTS
+          [ $# -eq 4 ] || { echo "expected the results of changes, headless, layout and ui, got: $RESULTS"; exit 1; }
+          for r in "$@"; do
+            case $r in success|skipped) ;; *) echo "a job before this one ended $r"; exit 1 ;; esac
+          done

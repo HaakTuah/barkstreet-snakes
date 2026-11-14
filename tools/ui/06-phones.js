@@ -1,0 +1,99 @@
+// -------------------------------------------------------------- phones
+for (const [w, h] of [[390, 844], [320, 640]]) {
+  await b.viewport(w, h, { scale: 2, mobile: true });
+  await load();
+  const row = await ev(headerRows), named = w >= 371;
+  check(row.rows.join(' / ') === 'title Score Best / pause music mute guide-open records-open fullscreen' && row.guide === named && !row.trophy && !row.sideways,
+    `phone ${w}: the title with Score and Best, then the six buttons on a row of their own, the guide’s door beside the trophy (${named ? 'by its name' : 'its open book'}), the full screen last`, JSON.stringify(row));
+  await ev(grow);
+  const row1000 = await ev(headerRows);
+  check(row1000.rows.join(' / ') === row.rows.join(' / ') && row1000.height === row.height, `phone ${w}: with Score and Best at 1000, the header keeps its rows`, JSON.stringify(row1000));
+  await load();
+  await tap(await at('#guide-open'));
+  p = await P();
+  check(p.book && p.tab === 'guide', `phone ${w}: a tap on the guide’s door opens the guide`, p.tab);
+  await tap(await at('#records-close'));
+  p = await P();
+  check(p.how === 'How to play', `phone ${w}: the start card has How to play`, p.how);
+  // Three picked rivals, each pinned: the pins take next to no room (the card no taller), and a tap beside one still unpins it.
+  const cardFit = () => ev(`(() => { const c = document.querySelector('.overlay .card'); return { h: c.scrollHeight, rows: new Set([...document.querySelectorAll('.opponents .seat')].map(s => Math.round(s.getBoundingClientRect().top))).size }; })()`);
+  const unpinned = await cardFit();
+  await ev(`for (const [i, k] of [[0, 'vulture'], [1, 'joker'], [2, 'mason']]) { document.querySelector('.seat[data-seat="' + i + '"]').click(); document.querySelector('#picker .pick[data-key="' + k + '"]').click(); } 'ok'`);
+  const pinned = await cardFit();
+  check(await ev(`document.querySelectorAll('.opponents .unpin').length`) === 3 && pinned.h === unpinned.h && pinned.rows === unpinned.rows, `phone ${w}: three seats pinned, the card no taller and its seats on as many rows`, JSON.stringify({ unpinned, pinned }));
+  await b.sleep(600); // (the card just rebuilt: a tap only counts once it has settled)
+  const [px, py] = await at('.opponents .unpin[data-seat="1"]');
+  await tap([px + 8, py]);
+  check(await ev(`document.querySelectorAll('.opponents .unpin').length + ':' + sessionStorage.getItem('snake-visit-lineup')`) === '2:["vulture",null,"mason"]', `phone ${w}: a tap just beside a pin unpins its seat`);
+  await ev(`sessionStorage.clear(); 'ok'`);
+  await load();
+  // The longest names, wrapped onto two rows: the start card still fits its board (the tip goes first, then its lines sit closer).
+  await ev(`SnakeDebug.setup(['capricious', 'desperado', 'metagamer']); 'ok'`);
+  await b.sleep(300);
+  const fit = await ev(`(() => { const c = document.querySelector('.overlay .card'); return { over: c.scrollHeight - c.clientHeight, steps: ['snug', 'snugger'].filter(k => c.classList.contains(k)).join() }; })()`);
+  check(fit.over <= 1 && (w === 390 ? fit.steps === '' : fit.steps !== ''), `phone ${w}: the start card with the longest names fits its board${w === 390 ? ', nothing dropped' : ', its tip dropped'}`, JSON.stringify(fit));
+  await load();
+  // The room the host opens (a stand-in for the network): its four seats in a row of names, the card within its board.
+  await ev(`SnakeDebug.setup(['capricious', 'desperado', 'metagamer']); SnakeNet.host = async () => ({ code: 'MOSSY', send() {}, broadcast() {}, admit() {}, quietFor: () => 0, rtt: () => 0, drop() {}, close() {} }); document.getElementById('friends').click(); 'ok'`);
+  await b.sleep(300);
+  await ev(`document.getElementById('start').click(); 'ok'`);
+  await wait(`!document.getElementById('lobby-players').hidden`);
+  const room = await ev(`(() => { const c = document.querySelector('.overlay .card'); return { over: c.scrollHeight - c.clientHeight, seats: document.querySelectorAll('#lobby-players li').length }; })()`);
+  check(room.over <= 1 && room.seats === 4, `phone ${w}: the room's card, four seats, fits its board`, JSON.stringify(room));
+  await load();
+  await tap(await at('#how'));
+  p = await P();
+  check(p.book && p.tab === 'guide' && p.firstHead === 'The basics', `phone ${w}: How to play opens the guide on The basics`, p.firstHead);
+  await tap(await at('#records-close'));
+  await fresh(['ouroboros', 'metagamer', 'gobbler']);
+  await tap(await at('#pause'));
+  await b.sleep(300);
+  const pn = await P();
+  await tap(await tagAt('Ouroboros'));
+  p = await P();
+  check(p.note.startsWith('Ouroboros') && !p.text, `phone ${w}: a tap on a tag puts its note on the napping card`, p.note.slice(0, 30));
+  await b.sleep(4000);
+  p = await P();
+  check(p.note.startsWith('Ouroboros'), `phone ${w}: still there 4 s later`);
+  await tap(await at('#overlay-title'));
+  p = await P();
+  check(!p.note && p.text === pn.text && p.state === 'paused', `phone ${w}: a tap on the card closes it, and doesn’t wake`);
+  await tap(await tagAt('Ouroboros'));
+  await tap(await at('#note-close'));
+  p = await P();
+  check(!p.note && p.state === 'paused', `phone ${w}: its × closes it`);
+  await tap(await tagAt('Ouroboros'));
+  await tap(await at('#start'));
+  p = await P();
+  check(!p.note && p.state !== 'paused', `phone ${w}: Wake up wakes, and the note goes with the card`, p.state);
+  // (a round that ends behind your death's card shows the round's end instead, with no Watch button and no banner: the try is made again)
+  const dead = await onYourDeathCard(['ouroboros', 'metagamer', 'gobbler'], '', async () => {
+    await tap(await tagAt('Gobbler'));
+    const noted = await P();
+    await tap(await at('#watch'));
+    await tap(await tagAt('Metagamer'));
+    return { noted, banner: await P() };
+  });
+  if (dead) {
+    check(dead.noted.note.startsWith('Gobbler'), `phone ${w}: your death’s card takes a note`, dead.noted.note.slice(0, 30));
+    check(dead.banner.kind === 'note' && dead.banner.toast.startsWith('Metagamer'), `phone ${w}: watching, a tap on a tag is a banner`, dead.banner.toast);
+  } else check(false, `phone ${w}: the round ended behind your death’s card in all 3 rounds, so its note and the banner were not checked`, `now ${(await P()).state}: ${(await P()).title}`);
+  await fresh(['ouroboros', 'metagamer', 'gobbler']);
+  await ev(fire);
+  await wait(`cardUp() && !you().alive`);
+  await b.sleep(900);
+  await tap(await at('#how'));
+  p = await P();
+  check(p.book && p.spot === 'fire' && p.spotIn && p.closeOn, `phone ${w}: burned up, the card’s link opens the guide at Fire, lit and in view, its × on the screen`, `${p.spot} / in view: ${p.spotIn} / scrolled ${p.pageTop} / ×: ${p.closeOn}`);
+  await tap(await at('#records-close'));
+  p = await P();
+  check(!p.book, `phone ${w}: a tap on the book’s × closes it`);
+}
+// A small phone on its side (568x320): the friends card's code row, Join and all, within the card.
+await b.viewport(568, 320, { scale: 2, mobile: true });
+await load();
+await ev(`document.getElementById('friends').click(); 'ok'`);
+await b.sleep(300);
+const joinRow = await ev(`(() => { const c = document.querySelector('.overlay .card').getBoundingClientRect(), j = document.querySelector('#lobby-join button').getBoundingClientRect(); return { over: Math.round(j.right - c.right) }; })()`);
+check(joinRow.over < 0, 'phone 568 on its side: the friends card’s Join button sits within the card', JSON.stringify(joinRow));
+await load();

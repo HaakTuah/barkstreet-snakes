@@ -1,0 +1,196 @@
+// ------------------------------------------------------------ desktop
+await b.viewport(1280, 800);
+await load();
+// Choosing your rivals: a seat opens the picker; a rival chosen sits there for this visit, pinned; the pin or "Any" deals again.
+const seated = () => ev(`SnakeDebug.game().snakes.filter(s => s.persona).map(s => s.personaKey).join()`);
+const before = (await seated()).split(',');
+await ev(`document.querySelector('.seat[data-seat="1"]').click(); 'ok'`);
+let pk = await ev(`({ open: !document.getElementById('picker').hidden, n: document.querySelectorAll('#picker .pick').length, any: document.querySelector('#picker .pick').textContent, focus: document.activeElement?.dataset?.key ?? document.activeElement?.id })`);
+check(pk.open && pk.n === 19 && pk.any.startsWith('Any') && pk.focus === '', 'a seat on the start card opens the picker: "Any" and all eighteen, focus on the seat’s choice ("Any")', JSON.stringify(pk));
+await key('Escape');
+pk = await ev(`({ open: !document.getElementById('picker').hidden, focus: document.activeElement?.dataset?.seat })`);
+check(!pk.open && pk.focus === '1' && await seated() === before.join(), '...Esc closes it, nothing changed, focus back on the seat', JSON.stringify(pk));
+const pickKey = ['mason', 'star', 'ghost', 'joker'].find(k => !before.includes(k));
+await ev(`document.querySelector('.seat[data-seat="1"]').click(); document.querySelector('#picker .pick[data-key="${pickKey}"]').click(); 'ok'`);
+let now = (await seated()).split(',');
+pk = await ev(`({ chosen: document.querySelector('.seat[data-seat="1"]').classList.contains('chosen'), open: !document.getElementById('picker').hidden, kept: sessionStorage.getItem('snake-visit-lineup'), game: SnakeDebug.game().chosen })`);
+check(now[1] === pickKey && now[0] === before[0] && now[2] === before[2] && pk.chosen && !pk.open && pk.game, 'picking a rival seats it there (the others stay), marked chosen, and the round counts as chosen', `${now} ${JSON.stringify(pk)}`);
+await ev(`SnakeDebug.game().spent = true; SnakeDebug.setup(); 'ok'`); // (the next round's start card, as after a round)
+now = (await seated()).split(',');
+pk = await ev(`({ pins: [...document.querySelectorAll('.opponents .unpin')].map(b => b.dataset.seat).join(), local: localStorage.getItem('snake-lineup') })`);
+check(now[1] === pickKey && pk.pins === '1' && pk.local === null, '...it lasts round after round, with a pin beside that seat only (kept for this visit, not in localStorage)', `${now} ${JSON.stringify(pk)}`);
+await load();
+now = (await seated()).split(',');
+check(now[1] === pickKey && !now.slice(0, 1).concat(now[2]).includes(pickKey), '...and after a reload in the same visit', now.join());
+await mouse(await at('.opponents .unpin[data-seat="1"]'));
+pk = await ev(`({ kept: sessionStorage.getItem('snake-visit-lineup'), game: SnakeDebug.game().chosen, ring: document.querySelectorAll('.seat.chosen').length, pins: document.querySelectorAll('.opponents .unpin').length, open: !document.getElementById('picker').hidden, focus: document.activeElement?.dataset?.seat })`);
+check(pk.kept === '[null,null,null]' && !pk.game && !pk.ring && !pk.pins && !pk.open && pk.focus === '1', 'a click on the pin sets the seat back to "Any": dealt again, no pin, no picker, focus on the seat', JSON.stringify(pk));
+await ev(`document.querySelector('.seat[data-seat="1"]').click(); document.querySelector('#picker .pick[data-key="${pickKey}"]').click(); 'ok'`);
+await ev(`sessionStorage.clear(); localStorage.setItem('snake-lineup', JSON.stringify(['${pickKey}', null, null])); 'ok'`); // (a new visit; an old lasting choice)
+await load();
+pk = await ev(`({ chosen: SnakeDebug.game().chosen, pins: document.querySelectorAll('.opponents .unpin').length })`);
+check(!pk.chosen && !pk.pins, '...and a new visit has every seat "Any" again (an old lasting choice is not read)', JSON.stringify(pk));
+await ev(`localStorage.removeItem('snake-lineup'); 'ok'`);
+await ev(`document.querySelector('.seat[data-seat="1"]').click(); document.querySelector('#picker .pick[data-key=""]').click(); 'ok'`);
+pk = await ev(`({ kept: sessionStorage.getItem('snake-visit-lineup'), game: SnakeDebug.game().chosen, ring: document.querySelectorAll('.seat.chosen').length })`);
+check(pk.kept === '[null,null,null]' && !pk.game && !pk.ring, '"Any" in the picker does it too: dealt again, not chosen', JSON.stringify(pk));
+// Rivals dealt but never met (the page closed on a start card) go back among the ones not yet dealt, not on top (seeded).
+pk = await ev(`(() => {
+  const R = SnakeRecords, pool = SnakeAI.POOL, deck = localStorage.getItem('snake-deck'), rnd = Math.random;
+  let seed = 7; Math.random = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+  const firsts = [];
+  try {
+    for (let n = 0; n < 12; n++) {
+      localStorage.setItem('snake-deck', JSON.stringify(pool.slice(3)));
+      R.undeal(pool, pool.slice(0, 3), { anywhere: true });
+      const d = JSON.parse(localStorage.getItem('snake-deck'));
+      firsts.push(pool.slice(0, 3).includes(d[0]) && d.length === pool.length && new Set(d).size === pool.length ? 'back' : 'deck');
+    }
+    localStorage.setItem('snake-deck', JSON.stringify(pool.slice(3)));
+    R.undeal(pool, pool.slice(0, 3));
+    const top = JSON.parse(localStorage.getItem('snake-deck')).slice(0, 3).join() === pool.slice(0, 3).join();
+    return { firsts: firsts.join(), back: firsts.filter(f => f === 'back').length, top };
+  } finally { Math.random = rnd; if (deck === null) localStorage.removeItem('snake-deck'); else localStorage.setItem('snake-deck', deck); }
+})()`);
+check(pk.back < 12 && pk.firsts.includes('deck') && pk.top, 'an undealt rival goes back somewhere in the deck, not dealt first every time (within a visit, on top)', JSON.stringify(pk));
+await load();
+// ...and if the back/forward cache brings the start card back, they come out of the deck again (#376).
+pk = await ev(`(() => {
+  const dealt = SnakeDebug.game().dealt, deck = () => JSON.parse(localStorage.getItem('snake-deck')) || [];
+  window.dispatchEvent(new PageTransitionEvent('pagehide', { persisted: true }));
+  const hidden = dealt.filter(k => deck().includes(k)).length;
+  window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+  return { dealt: dealt.length, hidden, shown: dealt.filter(k => deck().includes(k)).length };
+})()`);
+check(pk.dealt === 3 && pk.hidden === 3 && pk.shown === 0, 'a start card the back/forward cache restores deals its rivals out of the deck again', JSON.stringify(pk));
+let p = await P();
+check(p.how === 'How to play', 'the start card has How to play', p.how);
+check(/G opens the Field guide/.test(p.hint), 'the start card’s keys say G opens the Field guide', p.hint);
+const doors = await ev(`[...document.querySelectorAll('header button.trophy')].map(d => ({ id: d.id, named: getComputedStyle(d.querySelector('.trophy-text')).display !== 'none', on: vis(d) }))`);
+check(doors.length === 2 && doors[0].id === 'guide-open' && doors.every(d => d.named && d.on), 'the header has two named doors on a desktop: Field guide, then Hall of Fame', JSON.stringify(doors));
+
+await mouse(await at('#guide-open'));
+p = await P();
+check(p.book && p.tab === 'guide' && p.label === 'Field guide', 'the Field guide’s button opens the book on the guide, and the book is named for it', `${p.tab} / ${p.label}`);
+check(p.pageTop === 0 && p.firstHead === 'The basics', 'it opens at the top, on The basics', `${p.pageTop} / ${p.firstHead}`);
+const pics = await ev(`(() => { const rows = [...document.querySelectorAll('#records .guide li')]; const basics = rows.filter(li => li.dataset.kind.startsWith('basic-')); return { basics: basics.length, drawn: basics.filter(li => li.querySelector('canvas.guide-art')).length, standIns: document.querySelectorAll('#records .stand-in').length }; })()`);
+check(pics.basics === 4 && pics.drawn === 4 && !pics.standIns, 'the basics’ four pictures are the renderer’s (no stand-ins anywhere)', JSON.stringify(pics));
+const ink = await ev(`(() => { const out = {}; for (const k of ['basic-win', 'basic-steer', 'basic-crash', 'basic-hunger']) { const c = SnakeRender.guideSprite(k, 72), d = c.getContext('2d').getImageData(0, 0, 72, 72).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 200) n++; out[k] = n; } return out; })()`);
+check(Object.values(ink).every(n => n > 400), 'each basic’s picture draws', JSON.stringify(ink));
+await key('Escape');
+p = await P();
+check(!p.book && p.focus === 'start', 'Esc closes it, and focus goes back to the card’s Play (as from the trophy)', p.focus);
+
+await key('g');
+p = await P();
+check(p.book && p.tab === 'guide' && p.label === 'Field guide', 'G opens the guide');
+await key('h');
+p = await P();
+check(p.book && p.tab === 'scores' && p.label === 'Hall of Fame', 'in the book, H goes to the Hall of Fame', `${p.tab} / ${p.label}`);
+await key('g');
+p = await P();
+check(p.book && p.tab === 'guide', '...and G back to the guide', p.tab);
+await key('g');
+p = await P();
+check(!p.book, '...and G again closes it');
+await key('h');
+p = await P();
+check(p.book && p.tab === 'scores' && p.label === 'Hall of Fame', 'H opens the Hall of Fame, even after a visit to the guide', `${p.tab} / ${p.label}`);
+await mouse(await at('#records .tab[data-tab="stats"]'));
+await key('Escape');
+await key('h');
+p = await P();
+check(p.tab === 'stats' && p.label === 'Your story', 'H opens Your story if that’s where you were; the book says so', `${p.tab} / ${p.label}`);
+await key('h');
+p = await P();
+check(!p.book, '...and H again closes it');
+// "Clear everything" only when there's something to clear (nothing kept yet, here: no rounds played).
+const keep = await ev(`JSON.stringify(['snake-highscores', 'snake-stats', 'snake-best'].map(k => localStorage.getItem(k)))`);
+await ev(`['snake-highscores', 'snake-stats', 'snake-best'].forEach(k => localStorage.removeItem(k)); 'ok'`);
+await key('h');
+const emptyHall = await ev(`document.getElementById('records-reset').hidden`);
+await key('h');
+await ev(`SnakeRecords.setBest(7); 'ok'`);
+await key('h');
+const bestKept = await ev(`document.getElementById('records-reset').hidden`);
+await key('h');
+await ev(`JSON.parse(${JSON.stringify(keep)}).forEach((v, i) => { const k = ['snake-highscores', 'snake-stats', 'snake-best'][i]; if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); }); 'ok'`);
+check(emptyHall === true && bestKept === false, 'the Hall of Fame offers "Clear everything" only once something is kept (a Best, here)', JSON.stringify({ emptyHall, bestKept }));
+await mouse(await at('#how'));
+p = await P();
+check(p.book && p.tab === 'guide' && p.pageTop === 0, 'How to play opens the guide, at the top', `${p.tab} / ${p.pageTop}`);
+await key('Escape');
+
+// Napping: a rival's note, and the guide's link.
+await fresh(['ouroboros', 'metagamer', 'gobbler']);
+await key('p');
+const nap = await P();
+check(nap.state === 'paused' && nap.how === 'Field guide', 'the napping card has a Field guide link', nap.how);
+await mouse(await at('#how'));
+p = await P();
+check(p.book && p.tab === 'guide' && p.state === 'paused', '...which opens the guide, still napping', p.state);
+await key('Escape');
+p = await P();
+check(!p.book && p.card && p.title === 'Napping', '...and closing it, the napping card is back');
+
+await mouse(await nameAt('Ouroboros'));
+p = await P();
+check(p.note.startsWith('Ouroboros') && p.note.includes('Chases its own tail') && !p.text, 'a click on a rival’s name puts its note on the napping card, in place of the card’s words', p.note);
+check(p.noted === 'Ouroboros' && p.expanded === 'Ouroboros', '...its tag is marked, and its name says its note is open', `${p.noted} / ${p.expanded}`);
+check(p.sr.startsWith('Ouroboros: Chases'), '...and a screen reader hears it', p.sr);
+await b.sleep(5000);
+p = await P();
+check(p.note.startsWith('Ouroboros') && p.state === 'paused', 'it is still there 5 s later (it used to go after 3.2 s)', p.note.slice(0, 30));
+await mouse(await nameAt('Gobbler'));
+p = await P();
+check(p.note.startsWith('Gobbler') && p.noted === 'Gobbler', 'another tag swaps it', p.note.slice(0, 30));
+await mouse(await nameAt('Gobbler'));
+p = await P();
+check(!p.note && p.text === nap.text && !p.noted && !p.expanded, 'its tag again closes it, and the card’s words come back', p.text);
+await mouse(await nameAt('Metagamer'));
+await mouse(await at('#overlay-title'));
+p = await P();
+check(!p.note && p.text === nap.text && p.state === 'paused', 'a click on the card closes it, and doesn’t wake');
+await mouse(await nameAt('Metagamer'));
+await mouse(await at('#note-close'));
+p = await P();
+check(!p.note && p.state === 'paused', 'its × closes it');
+await mouse(await nameAt('Metagamer'));
+await mouse([1100, 760]);
+p = await P();
+check(!p.note && p.state === 'paused', 'a click on the log outside the card closes it');
+await powers('Ouroboros', 3, 3, true);
+await b.sleep(200);
+await mouse(await nameAt('Ouroboros'));
+p = await P();
+check(p.note.includes('Holding 3 golden jumps and 3 golden dashes. The edges wrap for it.'), 'what it holds now is on its note', p.note);
+await powers('Ouroboros', 0, 0, false);
+await mouse(await tagAt('You'));
+p = await P();
+check(p.note.startsWith('You') && p.note.includes('Space or a click jumps'), 'your own tag: your powers, as your note', p.note);
+// Keys: Tab to a name, Enter opens it (focus stays on the name), Enter closes; Esc closes it first.
+await ev(`document.querySelector('#overlay .card').focus(); 'ok'`);
+for (let i = 0; i < 24 && !(await ev(`document.activeElement.textContent === 'Metagamer'`)); i++) await key('Tab');
+await key('Enter');
+p = await P();
+check(p.note.startsWith('Metagamer') && p.focus === 'name', 'keys: Enter on a name Tabbed to opens its note; focus stays on the name', `${p.note.slice(0, 20)} / ${p.focus}`);
+await key('Enter');
+p = await P();
+check(!p.note && p.text === nap.text, '...Enter again closes it');
+await key('Enter');
+await key('Escape');
+p = await P();
+check(!p.note && p.state === 'paused' && p.focus === 'name', '...Esc closes the note first (still napping, focus on the name)', `${p.state} / ${p.focus}`);
+await key('Enter');
+for (let i = 0; i < 30 && !(await ev(`document.activeElement.id === 'note-close'`)); i++) await key('Tab');
+const onClose = await ev('document.activeElement.id');
+await key('Enter');
+p = await P();
+check(onClose === 'note-close' && !p.note && p.state === 'paused' && p.focus === 'name', '...Tab reaches its ×, and Enter there closes it, focus back on the name', `${onClose} / ${p.focus}`);
+await key('Enter');
+p = await P();
+check(p.note.startsWith('Metagamer') && p.title === 'Napping', '...where Enter opens it again (not a start over)', p.title);
+await key('p');
+p = await P();
+check(!p.note && !p.card && p.state !== 'paused', 'P wakes, and the note goes with the card', p.state);
+await wait(`SnakeDebug.state() === 'running' && !cardUp()`);

@@ -1,0 +1,297 @@
+// Squashing your own bead (round six B; it was choking on it, with a cough,
+// in round six A), staged as the engine reports it (the squash event, the
+// bead gone from the food): Joker's own bead lies right in front of it; it
+// goes on over it, and the bead isn't drawn there any more (no spit, no
+// roll: food is no longer pushed aside); a flat splat in its colour lies
+// where it was, wider than the bead, and fades away within 3 s (2o).
+// Counts are of pixels changed against the same board with nothing on it.
+const squash = await ev(`(() => {
+  seeds(40);
+  SnakeDebug.pinQuality(0);
+  const g = stage(['joker', 'gobbler', 'mason']), [you, jo] = g.snakes;
+  show(g); R.setViewer(99); drawN(20, 0.5);
+  const cv = document.getElementById('game'), W = cv.width, kk = W / (TUNING.GRID * ${CELL}), bare = cv.getContext('2d').getImageData(0, 0, W, cv.height).data;
+  const sky = (r, g, b) => b > 200 && g > 150 && r < 120;
+  const count = (x, y, w, h) => { const p = pixels(x, y, w, h), d = p.data, px = Math.round(x * ${CELL} * kk), py = Math.round(y * ${CELL} * kk); let n = 0;
+    for (let i = 0; i < d.length; i += 4) { const col = (i / 4) % p.width, row = Math.floor(i / 4 / p.width), j = ((py + row) * W + px + col) * 4; if (sky(d[i], d[i + 1], d[i + 2]) && Math.abs(d[i] - bare[j]) + Math.abs(d[i + 1] - bare[j + 1]) + Math.abs(d[i + 2] - bare[j + 2]) > 24) n++; }
+    return n; };
+  setBody(you, [[2, 22], [1, 22], [0, 22]], 'right');
+  setBody(jo, Array.from({ length: 6 }, (_, i) => [8 - i, 8]), 'right');
+  const b = { x: 9, y: 8, kind: 'pellet', color: '#38bdf8', owner: jo.id, expires: g.tick + 900 }; // (sky: nothing else here is)
+  g.food.push(b);
+  show(g); R.setViewer(99); drawN(20, 0.5);
+  const out = { before: count(8.5, 6.5, 3, 3) };
+  g.tick++;
+  setBody(jo, Array.from({ length: 6 }, (_, i) => [9 - i, 8]), 'right');
+  g.food.splice(g.food.indexOf(b), 1);
+  R.onTick([{ type: 'squash', snake: jo, x: 9, y: 8 }]);
+  setBody(jo, Array.from({ length: 6 }, (_, i) => [9 - i, 14]), 'right'); // (moved off it, so what it left shows)
+  drawN(4, 0.5, 80);
+  out.mid = count(8.5, 6.5, 3, 3); out.away = count(5.5, 4.5, 8, 8) - out.mid;
+  g.tick++; drawN(36, 0.5, 80);
+  out.after = count(5.5, 4.5, 8, 8);
+  SnakeDebug.pinQuality(2);
+  return out;
+})()`);
+check(squash.before > 20 && squash.mid > squash.before && squash.away === 0 && squash.after === 0, 'a bead squashed under its own snake leaves a splat in its colour, wider than the bead, where it lay (never spat or rolled), gone within 3 s',
+  `the bead's sky pixels before ${squash.before}, the splat's ${squash.mid} (elsewhere ${squash.away}), 3 s on ${squash.after}`);
+
+// The spit's tell (the owner, 2 November 2026): a mushroom in Joker's cheek,
+// its green bulge counting down to the spit: bigger move by move as the
+// second runs out, and on each of the last three moves a throb, big as the
+// move starts and settling through it. (Each count at mid move, the wobble
+// at the same point of its swing.)
+const cheek = await ev(`(() => {
+  seeds(42);
+  SnakeDebug.pinQuality(0);
+  const g = stage(['joker', 'gobbler', 'mason']), [you, jo] = g.snakes;
+  setBody(you, [[2, 22], [1, 22], [0, 22]], 'right');
+  setBody(jo, Array.from({ length: 6 }, (_, i) => [8 - i, 8]), 'right'); jo.stunUntil = 1e9;
+  show(g); R.setViewer(99);
+  const green = () => { const d = pixels(6.5, 6.5, 3, 3).data; let n = 0; for (let i = 0; i < d.length; i += 4) if (Math.abs(d[i] - 132) < 24 && Math.abs(d[i + 1] - 204) < 24 && d[i + 2] < 70) n++; return n; };
+  const at = (n, alpha) => { jo.cheek = { power: TUNING.SHRINK, spitAt: g.tick + n, left: 100 }; __t = Math.ceil(__t / 628.3185) * 628.3185 + 314.159; drawN(1, alpha, 0); return green(); };
+  const out = { counts: [8, 6, 4, 3].map(n => at(n, 0.5)), beat: [at(1, 0), at(1, 0.95)] };
+  jo.cheek = null;
+  SnakeDebug.pinQuality(2);
+  return out;
+})()`);
+check(cheek.counts.every((c, i) => !i || c > cheek.counts[i - 1] + 2) && cheek.beat[0] > cheek.beat[1] + 4, 'a mushroom in a cheek counts down: the bulge grows as the spit nears, and throbs on each of the last three moves',
+  `green pixels mid move with 8, 6, 4 and 3 moves to go: ${cheek.counts.join(', ')}; at the start of one of the last three ${cheek.beat[0]}, at its end ${cheek.beat[1]}`);
+
+// Beetles and the woodpecker's knock (round six A), staged as the engine
+// reports them: two beetles out at once; b.digUntil and the dig and dive
+// events; the woodpecker's mark and the knock events, to where the
+// engine's knocks says (the strike's own list). Two beetles: one walks on, a cell every other
+// tick, and both are drawn every frame; the other, cornered, digs in:
+// smaller as it goes down, a collar of sawdust round it, sawdust spraying
+// off it to the end; gone (its dive), its bore is left a burrow, as the
+// engine leaves it (BURROW_FROM_DIG): freshly bored at first (raw pale
+// wood and sawdust round its hole, far more than an ordinary burrow has),
+// and a few seconds later as an ordinary one, its hole open all along.
+// With reduced motion: no spray, and it's drawn sunk part way, still. A
+// dug dive that leaves no burrow leaves nothing (no heap without a
+// burrow). A burrow closing over: half way, its hole is stopped up with
+// sawdust and moss is over it; a second on, the bark is as it was (with
+// reduced motion, filled and mossed at once). Through the aim, food in the mark trembles
+// and food outside it doesn't, and a ring marks where the rule will knock
+// each piece (one for each); at the strike it flies there, up in an arc, rimmed in ink and
+// parchment over whatever it crosses (a longer throw higher, and longer in the air), and a beetle knocked scurries
+// there. Counts and centres are of pixels changed against the bare
+// board, as the squash's are.
+const dug = await ev(`(() => {
+  seeds(41);
+  SnakeDebug.pinQuality(0);
+  const N = TUNING.GRID;
+  const cv = document.getElementById('game'), W = cv.width, kk = W / (N * ${CELL});
+  let bare = null;
+  const bareNow = () => { bare = cv.getContext('2d').getImageData(0, 0, W, cv.height).data; };
+  const changed = (x, y, w, h, is, each) => {
+    const p = pixels(x, y, w, h), d = p.data, px = Math.round(x * ${CELL} * kk), py = Math.round(y * ${CELL} * kk);
+    for (let i = 0; i < d.length; i += 4) {
+      const col = (i / 4) % p.width, row = Math.floor(i / 4 / p.width), j = ((py + row) * W + px + col) * 4;
+      if (is(d[i], d[i + 1], d[i + 2]) && Math.abs(d[i] - bare[j]) + Math.abs(d[i + 1] - bare[j + 1]) + Math.abs(d[i + 2] - bare[j + 2]) > 24) each(col, row);
+    }
+    return p;
+  };
+  const count = (x, y, w, h, is) => { let n = 0; changed(x, y, w, h, is, () => n++); return n; };
+  const centre = (x, y, w, h, is) => { let n = 0, sx = 0, sy = 0; const p = changed(x, y, w, h, is, (c, r) => { n++; sx += c; sy += r; }); return n ? [+(x + sx / n / p.width * w).toFixed(2), +(y + sy / n / p.height * h).toFixed(2)] : null; };
+  const emerald = (r, g, b) => g > 110 && g > r + 60 && b > 80 && b < g, green = (r, g, b) => g > r + 25 && g > 50 && b < g, tan = (r, g, b) => r > 170 && g > 125 && b > 70 && b < 175 && r > b + 45;
+  const sky = (r, g, b) => b > 200 && g > 150 && r < 120, paler = (r, g, b) => r > 150 && g > 130 && b > 95, parch = (r, g, b) => Math.min(r, g, b) > 228;
+  const raw = (r, g, b) => r > 165 && g > 130 && r > b + 25, dark = (r, g, b) => r + g + b < 90, olive = (r, g, b) => g > r + 12 && g > b + 25 && r < 120, any = () => true;
+  const out = { a: [], b: [], drawn: [], collar: [], parts: [], cellPx: Math.round((W / N) * (W / N)) };
+  // Two beetles, one digging in.
+  const g = stage(['mason', 'ghost', 'drab']);
+  show(g); R.setViewer(99); drawN(20, 0.5); bareNow();
+  const A = { x: 5, y: 6, kind: 'beetle', dir: E.DIRS.right, movedAt: g.tick - 50, expires: g.tick + 900 };
+  const B = { x: 15, y: 6, kind: 'beetle', dir: E.DIRS.up, movedAt: g.tick - 50, expires: g.tick + 900, scared: true, digUntil: g.tick + TUNING.BEETLE_DIG };
+  g.food.push(A, B);
+  g.burrows.push({ x: 20, y: 10, at: g.tick, used: g.time }); // (an ordinary one, to hold the dug one up against)
+  show(g); R.setViewer(99); drawN(8, 0.5, 30);
+  out.full = count(14, 5, 3, 3, emerald);
+  R.onTick([{ type: 'dig', x: 15, y: 6, until: B.digUntil }]);
+  for (let t = 0; t < TUNING.BEETLE_DIG; t++) { // (the whole dig, tick by tick)
+    if (t) { g.tick++; if (t % 2 === 0) { A.px = A.x; A.py = A.y; A.x++; A.movedAt = g.tick - 1; } R.onTick([]); }
+    for (const al of [0.25, 0.5, 0.75, 1]) {
+      __t += 30; R.frame(al, __t);
+      out.a.push(count(A.x - 1.5, 5, 3, 3, emerald)); out.b.push(count(14, 5, 3, 3, emerald)); out.drawn.push(count(14, 5, 3, 3, green)); out.collar.push(count(14, 5, 3, 3, tan)); out.parts.push(R.particles);
+    }
+  }
+  g.tick++; g.food.splice(g.food.indexOf(B), 1);
+  g.burrows.push({ x: 15, y: 6, at: g.tick, used: g.time, dug: 1 }); // (its bore, left a burrow, as the engine does)
+  R.onTick([{ type: 'dive', x: 15, y: 6, dug: 1 }, { type: 'burrow', x: 15, y: 6, dug: 1 }]);
+  drawN(12, 0.5, 40);
+  out.fresh = { raw: count(14.85, 5.85, 1.3, 1.3, raw), hole: count(15.3, 6.3, 0.4, 0.4, dark), plain: count(19.85, 9.85, 1.3, 1.3, raw), bugGone: count(14, 5, 3, 3, emerald) };
+  drawN(60, 0.5, 80); // (4.8 s on)
+  out.settled = { raw: count(14.85, 5.85, 1.3, 1.3, raw), hole: count(15.3, 6.3, 0.4, 0.4, dark), plain: count(19.85, 9.85, 1.3, 1.3, raw) };
+  // With reduced motion: no spray, a still sink.
+  R.setReducedMotion(true);
+  const C = { x: 10, y: 15, kind: 'beetle', dir: E.DIRS.up, movedAt: g.tick - 50, expires: g.tick + 900, scared: true, digUntil: g.tick + TUNING.BEETLE_DIG };
+  g.food.push(C); drawN(10, 0.5, 60); // (the sprays before it, settled)
+  out.calm = { parts: [], bug: [] };
+  R.onTick([{ type: 'dig', x: 10, y: 15, until: C.digUntil }]);
+  for (let t = 0; t < TUNING.BEETLE_DIG - 1; t++) { g.tick++; R.onTick([]); drawN(2, 0.5, 60); out.calm.parts.push(R.particles); out.calm.bug.push(count(9, 14, 3, 3, emerald)); }
+  R.setReducedMotion(false);
+  // The knock: a bead and a beetle in the mark, another bead outside it.
+  const g2 = stage(['mason', 'ghost', 'drab']);
+  show(g2); R.setViewer(99); drawN(20, 0.5); bareNow();
+  const P = [];
+  for (let y = 11; y <= 13; y++) for (let x = 10; x <= 13; x++) P.push(y * N + x);
+  const bead = { x: 11, y: 12, kind: 'pellet', color: '#38bdf8', owner: 1, expires: g2.tick + 900 }, other = { x: 4, y: 4, kind: 'pellet', color: '#38bdf8', owner: 1, expires: g2.tick + 900 };
+  const bug = { x: 13, y: 11, kind: 'beetle', dir: E.DIRS.up, movedAt: g2.tick - 50, expires: g2.tick + 900 };
+  g2.food.push(bead, other, bug);
+  g2.time = 130000;
+  g2.woodpecker = { x: 11.5, y: 12, at: g2.time - 5000, target: P, strikeAt: g2.tick + 4, last: [], struckAt: -1, restUntil: 1e9, pecks: 1 };
+  show(g2); R.setViewer(99); drawN(25, 0.5, 30); // (the food popped in)
+  const spots = [[], []];
+  for (let i = 0; i < 8; i++) { drawN(1, 0.5, 23); spots[0].push(centre(10, 11, 3, 3, sky)); spots[1].push(centre(3, 3, 3, 3, sky)); }
+  const spread = list => list.every(Boolean) ? +(Math.max(...list.map(c => c[0])) - Math.min(...list.map(c => c[0]))).toFixed(3) : -1; // (across: a bead bobs up and down where it lies, in or out of the mark)
+  out.tremble = spread(spots[0]); out.steady = spread(spots[1]);
+  const cell = c => c && (typeof c === 'number' ? [c % N, Math.floor(c / N)] : Array.isArray(c) ? c : [c.x, c.y]);
+  const [tx, ty] = cell(E.knockTo(g2, 11, 12, P));
+  out.to = [tx, ty];
+  out.ring = count(tx - 0.2, ty - 0.2, 1.4, 1.05, paler); out.noRing = count(18, 18, 1.4, 1.05, paler); // (clear of the mark's own rim, a cell below)
+  out.rings = E.knocks(g2, P).filter(({ to }) => to && count(to.x - 0.2, to.y - 0.2, 1.4, 1.05, paler) > 10).length; // (one for each piece in the mark that lands: the beetle's eaten, so none for it)
+  // On the aim's last tick, the engine's promise (w.landings): the bead's ring where it was promised (a free cell
+  // nothing else is drawn on), though the rule as the board stands would put it elsewhere; the beetle's by the rule.
+  const free = ([x, y]) => !g2.snakes.some(s => s.alive && s.body.some(c => c.x === x && c.y === y)) && !g2.food.some(f => f.x === x && f.y === y) && count(x - 0.2, y - 0.2, 1.4, 1.05, paler) === 0;
+  const vow = [[18, 16], [16, 18], [18, 20], [20, 18], [20, 6]].find(free);
+  g2.woodpecker.landings = [[12 * N + 11, vow[1] * N + vow[0]]];
+  g2.tick++; drawN(2, 0.5, 30);
+  out.promised = { at: vow, ring: count(vow[0] - 0.2, vow[1] - 0.2, 1.4, 1.05, paler), rule: count(tx - 0.2, ty - 0.2, 1.4, 1.05, paler),
+    rings: E.knocks(g2, P, g2.woodpecker.landings).filter(({ to }) => to && count(to.x - 0.2, to.y - 0.2, 1.4, 1.05, paler) > 10).length };
+  out.promised.ruleIsBeetles = E.knocks(g2, P, g2.woodpecker.landings).some(({ food, to }) => food === bug && to && to.x === tx && to.y === ty);
+  delete g2.woodpecker.landings;
+  for (const k of P) g2.holes.add(k);
+  g2.woodpecker.target = []; g2.woodpecker.struckAt = g2.tick;
+  bead.x = tx; bead.y = ty;
+  g2.food.splice(g2.food.indexOf(bug), 1); // (round six B, 2m: a beetle still in the mark is the bird's)
+  g2.tick++;
+  R.onTick([{ type: 'knock', kind: 'pellet', x: 11, y: 12, tx, ty }]);
+  const flown = R.particles;
+  R.onTick([{ type: 'knock', kind: 'beetle', x: 13, y: 11, tx: null, ty: null }]);
+  const gulp = R.particles - flown; // (the gulp's own puff)
+  drawN(1, 0.05, 1);
+  drawN(1, 0.5, 225); // (about half way through its flight)
+  const mid = centre(9, 7, 5, 7, sky);
+  out.mid = { bead: mid, beetle: centre(12, 10, 4, 3, emerald), rim: mid ? count(mid[0] - 0.6, mid[1] - 0.6, 1.2, 1.2, parch) : 0 };
+  drawN(4, 0.5, 120); g2.tick++; drawN(2, 0.5, 60);
+  const end = centre(9, 7, 5, 7, sky);
+  out.end = { bead: end, beetle: count(11, 9, 5, 5, emerald), rim: end ? count(end[0] - 0.6, end[1] - 0.6, 1.2, 1.2, parch) : 0, gulp };
+  // A longer throw is in the air longer and flies higher: a bead knocked a cell, then one knocked 4, each
+  // followed through its flight (its centre every 30 ms; up is less y).
+  out.throws = [];
+  for (const D of [1, 4]) {
+    drawN(10, 0.5, 60); bareNow();
+    const f = { x: 3 + D, y: 17, kind: 'pellet', color: '#38bdf8', owner: 1, expires: g2.tick + 900 };
+    g2.food.push(f); g2.tick++;
+    R.onTick([{ type: 'knock', kind: 'pellet', x: 3, y: 17, tx: f.x, ty: f.y }]);
+    const path = [];
+    for (let i = 0; i < 26; i++) { drawN(1, 0.5, 30); path.push(centre(2, 14, 9, 4.5, sky)); }
+    const at = c => !!c && Math.abs(c[0] - (f.x + 0.5)) < 0.15 && Math.abs(c[1] - 17.5) < 0.15;
+    let landed = path.length; while (landed > 0 && at(path[landed - 1])) landed--;
+    out.throws.push({ D, top: Math.min(...path.filter(Boolean).map(c => c[1])), landsBy: 30 * (landed + 1), down: at(path[path.length - 1]) });
+    g2.food.splice(g2.food.indexOf(f), 1); g2.tick++; R.onTick([]);
+  }
+  // No heap without a burrow: a dug dive that leaves none (BURROW_FROM_DIG off) leaves nothing, once the collar's closed.
+  // Then a burrow closing over, and one with reduced motion.
+  const g3 = stage(['mason', 'ghost', 'drab']);
+  show(g3); R.setViewer(99); drawN(20, 0.5); bareNow();
+  R.onTick([{ type: 'dive', x: 10, y: 15, dug: 1 }]);
+  drawN(3, 0.5, 40); out.noHeap = { during: count(9, 14, 3, 3, any) };
+  drawN(15, 0.5, 40); out.noHeap.after = count(9, 14, 3, 3, any);
+  const H = { x: 6, y: 15, at: g3.tick - 400, used: 0 }, H2 = { x: 17, y: 15, at: g3.tick - 400, used: 0 };
+  g3.burrows.push(H, H2); drawN(25, 0.5, 40);
+  const healAt = (x, y) => ({ hole: count(x - 0.2, y - 0.2, 0.4, 0.4, dark), dust: count(x - 0.25, y - 0.2, 0.5, 0.4, (r, g, b) => tan(r, g, b) || olive(r, g, b)), plug: count(x - 0.5, y - 0.5, 1, 1, tan), moss: count(x - 0.5, y - 0.5, 1, 1, olive), all: count(x - 1.5, y - 1.5, 3, 3, any) });
+  out.heal = { before: healAt(6.5, 15.5) };
+  g3.burrows.splice(0, 1); g3.tick++;
+  R.onTick([{ type: 'heal', x: 6, y: 15 }]);
+  drawN(1, 0.5, 33); out.heal.start = healAt(6.5, 15.5);
+  drawN(13, 0.5, 33); out.heal.mid = healAt(6.5, 15.5); // (about 0.46 s)
+  drawN(30, 0.5, 33); out.heal.end = healAt(6.5, 15.5); // (about 1.45 s: its scar)
+  drawN(70, 0.5, 300); out.heal.gone = healAt(6.5, 15.5); // (about 22 s: the scar's gone too)
+  // A burrow growing shut: its opening shrinking as sawdust and moss come in over the 6 to 14 s.
+  const H3 = { x: 12, y: 15, at: g3.tick - 400, used: 0 };
+  g3.burrows.push(H3); g3.tick++; R.onTick([]); drawN(25, 0.5, 40);
+  out.shut = { open: healAt(12.5, 15.5) };
+  for (const [name, done] of [['third', 1 / 3], ['twoThirds', 2 / 3], ['nearly', 0.95]]) {
+    H3.shutFrom = g3.time - 10000 * done; H3.shutAt = H3.shutFrom + 10000; g3.tick++; R.onTick([]);
+    drawN(3, 0.5, 33); out.shut[name] = healAt(12.5, 15.5);
+  }
+  g3.burrows.splice(g3.burrows.indexOf(H3), 1); g3.tick++;
+  R.onTick([{ type: 'heal', x: 12, y: 15 }]);
+  drawN(1, 0.5, 33); out.shut.closing = healAt(12.5, 15.5);
+  R.setReducedMotion(true);
+  g3.burrows.splice(0, 1); g3.tick++;
+  R.onTick([{ type: 'heal', x: 17, y: 15 }]);
+  drawN(1, 0.5, 60); out.heal.calm = healAt(17.5, 15.5);
+  drawN(30, 0.5, 50); out.heal.calmEnd = healAt(17.5, 15.5);
+  R.setReducedMotion(false);
+  SnakeDebug.pinQuality(2);
+  return out;
+})()`);
+{
+  const min = a => Math.min(...a), max = a => Math.max(...a), late = a => a.slice(-4), early = a => a.slice(0, 4); // (the dig's first tick and its last: four frames each)
+  check(min(dug.a) > 40 && min(dug.drawn) > 10, 'two beetles out at once, each drawn every frame (one walking on, one digging in)', `the walker’s emerald pixels ${min(dug.a)} to ${max(dug.a)}, the digger’s green ${min(dug.drawn)} to ${max(dug.drawn)}`);
+  check(max(late(dug.b)) < 0.6 * min(early(dug.b)) && min(late(dug.collar)) > max(early(dug.collar)) + 20 && min(late(dug.parts)) > 0,
+    'a cornered beetle digs in: it sinks into the bark, a collar of sawdust round it, sawdust spraying off it to the end',
+    `its emerald pixels ${early(dug.b).join(', ')} as it starts (${dug.full} before), ${late(dug.b).join(', ')} at the end; sawdust ${early(dug.collar).join(', ')}, then ${late(dug.collar).join(', ')}; particles in the air at the end ${late(dug.parts).join(', ')}`);
+  const fr = dug.fresh, se = dug.settled;
+  check(fr.bugGone === 0 && fr.hole > 10 && se.hole > 10 && fr.raw > 2 * fr.plain + 0.12 * dug.cellPx && se.raw <= se.plain + 0.03 * dug.cellPx,
+    'gone in, its bore is left a burrow: freshly bored (raw wood and sawdust round it), an ordinary burrow a few seconds on',
+    `raw wood and sawdust ${fr.raw} pixels just after, ${se.raw} 4.8 s on (an ordinary burrow ${fr.plain}, ${se.plain}); its hole ${fr.hole}, then ${se.hole} dark pixels; ${fr.bugGone} of the beetle (a cell ${dug.cellPx})`);
+  check(dug.noHeap.during > 20 && dug.noHeap.after === 0, 'no heap without a burrow: a dig that leaves none leaves nothing once its collar has closed', `${dug.noHeap.during} pixels changed as it closes, ${dug.noHeap.after} after`);
+  const hl = dug.heal;
+  check(hl.before.hole > 10 && hl.start.hole > 5 && hl.mid.hole * 4 < hl.before.hole && hl.mid.plug + hl.mid.moss > 0.08 * dug.cellPx && hl.mid.moss > 0.025 * dug.cellPx && hl.end.hole === 0 && hl.end.moss === 0 && hl.end.all > 0 && hl.gone.all === 0,
+    'a burrow closing over fills with sawdust, moss over it, and is gone into the bark in about a second, leaving a faint scar a while',
+    `its hole ${hl.before.hole} dark pixels, ${hl.start.hole} as it starts, ${hl.mid.hole} half way, with ${hl.mid.plug} of sawdust and ${hl.mid.moss} of moss; ${hl.end.all} pixels changed 1.45 s on (its scar), ${hl.gone.all} 22 s on (a cell ${dug.cellPx})`);
+  const sh = dug.shut;
+  const steps = k => [sh.open[k], sh.third[k], sh.twoThirds[k]].map((v, i, a) => i ? v - a[i - 1] : 0).slice(1), even = ([p, q]) => Math.min(p, q) > 0 && Math.max(p, q) < 2 * Math.min(p, q);
+  const holeSteps = steps('hole').map(v => -v), dustSteps = steps('dust');
+  check(sh.open.hole > 10 && even(holeSteps) && even(dustSteps) && sh.nearly.hole < 0.3 * sh.open.hole && sh.nearly.hole > 0
+    && sh.third.moss > 0 && sh.twoThirds.moss > sh.third.moss && sh.nearly.moss > sh.twoThirds.moss && sh.nearly.moss > 0.12 * dug.cellPx && sh.closing.hole <= sh.nearly.hole + 2,
+    'a burrow growing shut, evenly over its time: its opening shrinks and sawdust comes in from the rim by like steps each third, moss grows over it (a good part of a cell by the end), and it closes over from there',
+    `its hole ${sh.open.hole} dark pixels open, ${sh.third.hole} a third of the way, ${sh.twoThirds.hole} two thirds, ${sh.nearly.hole} nearly shut, ${sh.closing.hole} closing over (steps ${holeSteps}); sawdust and moss in its opening ${sh.open.dust}, ${sh.third.dust}, ${sh.twoThirds.dust} (steps ${dustSteps}); moss ${sh.third.moss}, ${sh.twoThirds.moss}, ${sh.nearly.moss} (a cell ${dug.cellPx})`);
+  check(hl.calm.hole * 4 < hl.before.hole && hl.calm.plug + hl.calm.moss > 0.08 * dug.cellPx && hl.calm.moss > 0.025 * dug.cellPx && hl.calmEnd.hole === 0 && hl.calmEnd.moss === 0,
+    'with reduced motion, it’s filled and mossed at once, then fades', `its hole ${hl.calm.hole}, sawdust ${hl.calm.plug}, moss ${hl.calm.moss} at once; ${hl.calmEnd.all} pixels changed after`);
+  check(max(dug.calm.parts) === 0 && max(dug.calm.bug) - min(dug.calm.bug) <= 3 && max(dug.calm.bug) < 0.8 * dug.full && min(dug.calm.bug) > 10,
+    'with reduced motion, it’s drawn sunk part way, still, and no sawdust flies', `its emerald pixels ${dug.calm.bug.join(', ')} (${dug.full} up on the bark); particles ${max(dug.calm.parts)}`);
+  check(dug.tremble > 0.02 && dug.steady < dug.tremble / 4 && dug.ring > 10 && dug.noRing === 0 && dug.rings === 1, 'through the woodpecker’s aim, food in its mark trembles, food outside it is still, and a ring marks where it’ll be knocked to (the engine’s list: one for each piece that lands, none for a beetle, which the bird eats)',
+    `the bead in the mark moves ${dug.tremble} cells across, frame to frame, the one outside ${dug.steady}; ${dug.ring} ring pixels at ${dug.to} (the rule’s cell), ${dug.noRing} at a cell nothing lands on; rings at ${dug.rings} of the 1 landing`);
+  const vow = dug.promised;
+  check(vow.ring > 10 && vow.rings === 1 && (vow.ruleIsBeetles || vow.rule <= 2), 'on the aim’s last tick, the rings show the engine’s promise (where the strike will land each piece while its cell is free)',
+    `${vow.ring} ring pixels at the promised ${vow.at}, rings at ${vow.rings} of the 1 landing; ${vow.rule} at the rule’s ${dug.to}${vow.ruleIsBeetles ? ' (the beetle’s by the rule now)' : ''}`);
+  const [tx, ty] = dug.to, b = dug.mid.bead, e = dug.end.bead;
+  check(!!b && b[1] < ty + 0.5 - 0.3 && Math.abs(b[0] - (tx + 0.5)) < 0.3 && dug.mid.rim > dug.end.rim + 15 && !!e && Math.abs(e[0] - (tx + 0.5)) < 0.15 && Math.abs(e[1] - (ty + 0.5)) < 0.2,
+    'at the strike, the food flies to where the rule said, up in an arc, rimmed so it reads over a body', `the bead half way at ${b} (it lands at ${tx + 0.5},${ty + 0.5}), then at ${e}; parchment round it ${dug.mid.rim} in the air, ${dug.end.rim} landed`);
+  const [near, far] = dug.throws;
+  check(near.down && far.down && far.landsBy >= near.landsBy + 120 && far.top < near.top - 0.3 && near.top < 17.5 - 0.4,
+    'a longer throw is in the air longer and flies higher (the knock’s arc grows with the way it goes)',
+    `knocked 1 cell, up to y ${near.top} (it lies at 17.5), down by ${near.landsBy} ms; knocked 4 cells, up to y ${far.top}, down by ${far.landsBy} ms`);
+  check(dug.end.beetle === 0 && dug.end.gulp > 0, 'a beetle still in the mark at the strike is gone, eaten in a puff (it never flies off it)', `its emerald pixels after ${dug.end.beetle}; particles at the strike ${dug.end.gulp}`);
+}
+
+// The spit flies along the line (3b+): while it's in the cheek, a dotted green line runs SPIT_REACH cells ahead of the
+// head (and no further); and a mushroom in the air is drawn where it flies, over the board.
+const spitLook = await ev(`(() => {
+  seeds(42);
+  const g = stage(['joker', 'gobbler', 'mason']), [you, jo] = g.snakes;
+  setBody(you, [[2, 22], [1, 22], [0, 22]], 'right');
+  setBody(jo, Array.from({ length: 6 }, (_, i) => [8 - i, 8]), 'right'); jo.stunUntil = 1e9;
+  show(g); R.setViewer(99);
+  const lime = x => { const d = pixels(x, 8, 1, 1).data; let n = 0; for (let i = 0; i < d.length; i += 4) if (Math.abs(d[i] - 163) < 24 && Math.abs(d[i + 1] - 230) < 24 && d[i + 2] < 90) n++; return n; };
+  const air = () => { const d = pixels(15.5, 14.5, 2, 2).data; let s = 0; for (let i = 0; i < d.length; i += 4) s += d[i] + d[i + 1] + d[i + 2]; return s; };
+  jo.cheek = { power: TUNING.SHRINK, spitAt: g.tick + 2, left: 100 };
+  drawN(1, 0.5, 0);
+  const dots = [9, 10, 11, 12, 13, 14].map(lime);
+  jo.cheek = null;
+  drawN(1, 1, 0);
+  const bare = air();
+  g.spits.push({ x: 16, y: 15, dir: SnakeEngine.DIRS.down, left: 1, power: 4, wilt: 30, by: jo.id, wrap: false });
+  drawN(1, 1, 0);
+  const flying = air();
+  g.spits.length = 0;
+  return { dots, bare, flying };
+})()`);
+check(spitLook.dots.slice(0, 5).every(n => n > 0) && spitLook.dots[5] === 0, 'a mushroom in a cheek shows its dotted line, five cells ahead and no further',
+  `lime pixels in the cells 1 to 6 ahead: ${spitLook.dots.join(', ')}`);
+check(Math.abs(spitLook.flying - spitLook.bare) > 2000, 'a mushroom in the air is drawn where it flies', `the cell's colour sum without it ${spitLook.bare}, with it ${spitLook.flying}`);

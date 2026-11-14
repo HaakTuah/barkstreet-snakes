@@ -1,0 +1,129 @@
+# The copy of the core ("How a project takes the core" in README.md, points 1 and 5), for every project that takes it:
+# fails a change whose core/ is not this repository, whole and unchanged, at the commit its core-manifest.md pins (a
+# folder, compared as scripts/copy-tree.mjs compares: core archive 201), whose pin, or the pin of a call to one of its
+# workflows, is not a commit of this repository's main (so what a project takes passed the core's reviews; floor rule 8;
+# the call to this workflow itself: scripts/pure-sync.mjs), or whose calls to the core's workflows are pinned to a
+# commit where the called workflow differs from the one at that pin, or whose manifest does not fill the *owner's
+# account* with one GitHub login, or whose default branch is not main, or whose manifest lists a difference
+# ("Differences") from the floor or the review guidelines.
+# A project calls it (workflow_call) on every pull request and push to main, docs-only changes included,
+# pinned to a full commit SHA. Reads only, with no secret: it fetches this public repository at the pin it reads, which
+# must be a full commit SHA before it is used, and runs nothing from either repository. Its own shell is tested in the
+# core before any project runs it: scripts/core-yml-test.mjs runs this job on scratch projects, and
+# scripts/pure-sync-test.mjs on every way a copy can differ.
+name: core
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      # the core's address, written here once (and once for the scripts: scripts/core-address.mjs, whose test holds the
+      # two to each other); never read from the copy this workflow checks
+      CORE: HaakTuah/agent-core
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false # nothing after the checkout needs the token
+      - name: The default branch is main
+        env:
+          DEFAULT: ${{ github.event.repository.default_branch }}
+        run: |
+          # (both hooks read their scripts from main's copy, so where the default branch has another name they stop
+          # nothing, and say nothing: README, "The default branch is main")
+          if [ -n "$DEFAULT" ] && [ "$DEFAULT" != main ]; then
+            echo "The default branch here is $DEFAULT. The core's hooks read their scripts from main, so here they stop nothing: rename the default branch to main."; exit 1
+          fi
+      - name: The manifest's differences name no floor rule and not the review guidelines
+        run: |
+          set -euo pipefail
+          # (README, "How a project takes the core", point 7: a project differs from a module's rule alone. A tripwire
+          # for the plain case: the section runs from a heading whose letters spell "differences", through any deeper
+          # heading, to the next heading of its level or above (a "#" inside a fenced block is none), and a line
+          # counts by its letters alone.)
+          bad=$(awk '
+            function letters(s) { s = tolower(s); gsub(/[^a-z]/, "", s); return s }
+            /^[ \t]*(```|~~~)/ { fenced = !fenced }
+            !fenced && /^[ \t]*#+([ \t]|$)/ {
+              line = $0; sub(/^[ \t]*/, "", line); match(line, /^#+/); level = RLENGTH
+              if (letters($0) == "differences") { if (!depth || level <= depth) depth = level; next }
+              if (depth && level <= depth) depth = 0
+            }
+            depth && letters($0) ~ /floor|reviewguidelines/' core-manifest.md)
+          if [ -n "$bad" ]; then
+            echo "core-manifest.md lists a difference that names the floor or the review guidelines, which no project differs from:"
+            printf '%s\n' "$bad" | sed 's/^/> /'; exit 1
+          fi
+      - name: The core pin
+        id: pin
+        run: |
+          set -euo pipefail
+          core=${CORE//./\\.} # (in a pattern, a dot of the address is a dot)
+          pin=$(sed -n "s|^Core: $core at \([0-9a-f]\{40\}\), copied whole under core/.*|\1|p" core-manifest.md)
+          if [ "$(printf '%s' "$pin" | grep -c .)" -ne 1 ]; then
+            echo "core-manifest.md has no one \"Core: $CORE at <full commit SHA>, copied whole under core/\" line"; exit 1
+          fi
+          # whose word counts (floor rule 4) is never left to a guess: the slot is filled, one GitHub login
+          if [ "$(grep -cE "^\| \*owner's account\* \| \`[A-Za-z0-9-]+\` \|$" core-manifest.md)" -ne 1 ]; then
+            echo "core-manifest.md has no one \"| *owner's account* | \`<GitHub login>\` |\" row"; exit 1
+          fi
+          echo "sha=$pin" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ env.CORE }}
+          ref: ${{ steps.pin.outputs.sha }}
+          path: .core-at-pin
+          fetch-depth: 0 # (the workflow pins are older commits of it)
+          persist-credentials: false
+      - name: core/ is the core at its pin, the pin is on the core's main, and each call to a core workflow is pinned where that workflow is the same
+        env:
+          PIN: ${{ steps.pin.outputs.sha }}
+        run: |
+          set -euo pipefail
+          bad=0 core=${CORE//./\\.} # (in a pattern, a dot of the address is a dot)
+          # (what the core keeps to itself is no part of a copy: its own .gitattributes says which folder)
+          # (core/ a folder, and entry by entry as the core's scripts/copy-tree.mjs compares, which says why; each path
+          # quoted as git quotes it, so none prints raw or passes for two entries)
+          entries() { git -C "$1" -c core.quotePath=true ls-tree -r --full-tree "$2" | sed 's/^100755 blob /100644 blob /'; }
+          # (the pin's tree without its top-level reports entry, built as scripts/copy-tree.mjs builds it, so that no
+          # name inside that folder, however git quotes it, is taken for part of the copy)
+          tree=$PIN
+          if grep -q -s -x '/reports export-ignore' .core-at-pin/.gitattributes; then
+            # (the whole entry matched, its name after the first tab exactly "reports"; grep's "none left" is no fault,
+            # any other failure is)
+            tree=$(git -C .core-at-pin ls-tree -z "$PIN" | { grep -z -v -x -e $'[^\t]*\treports' || [ $? -eq 1 ]; } | git -C .core-at-pin mktree -z)
+          fi
+          want=$(entries .core-at-pin "$tree") id=$(git rev-parse -q --verify HEAD:core || true)
+          if [ -n "$id" ] && [ "$(git ls-tree HEAD -- core)" = "040000 tree $id"$'\t'"core" ]; then have=$(entries . HEAD:core)
+          else echo "core/ is no folder of this commit (a submodule, a file, a link or nothing)"; have=""; bad=1; fi
+          if [ "$want" != "$have" ]; then
+            echo "core/ differs from the core at its pin, by git's object ids (< the core's, > core/'s):"
+            diff <(printf '%s\n' "$want") <(printf '%s\n' "$have") | grep '^[<>]' | head -n 20 || true
+            bad=1
+          fi
+          if ! git -C .core-at-pin fetch -q --no-tags origin refs/heads/main \
+            || ! git -C .core-at-pin merge-base --is-ancestor "$PIN" FETCH_HEAD; then
+            echo "the pin $PIN is not a commit of the core's main"; bad=1
+          fi
+          # (every mention outside a comment, in whatever form the YAML writes the call)
+          calls=$(sed 's/#.*//' .github/workflows/*.yml .github/workflows/*.yaml 2>/dev/null \
+            | grep -o -i -E "$core/[^\"'[:space:]},]*" | sort -u || true)
+          while IFS= read -r call; do
+            [ -n "$call" ] || continue
+            if ! [[ "$call" =~ ^"$CORE"/\.github/workflows/([A-Za-z0-9._-]+\.ya?ml)@([0-9a-f]{40})$ ]]; then
+              echo "a call to the core not written $CORE/.github/workflows/<name>.yml@<full commit SHA>: $call"; bad=1; continue
+            fi
+            name=${BASH_REMATCH[1]} sha=${BASH_REMATCH[2]}
+            if ! git -C .core-at-pin cat-file -e "$sha^{commit}" 2>/dev/null \
+              || ! git -C .core-at-pin merge-base --is-ancestor "$sha" FETCH_HEAD; then echo "$name: $sha is not a commit of the core's main"; bad=1
+            elif ! git -C .core-at-pin diff --quiet "$sha" HEAD -- ".github/workflows/$name"; then
+              echo "$name at $sha differs from the core's at its pin: the sync PR moves this pin"; bad=1
+            fi
+          done <<< "$calls"
+          exit "$bad"
