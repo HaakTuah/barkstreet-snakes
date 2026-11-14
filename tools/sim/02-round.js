@@ -3,7 +3,16 @@
 // game time instead and hands back the round as it stands (st, its own
 // numbers so far among it, and where the random numbers had got to).
 // A round's numbers are { per, total }, as merge() adds them up.
-function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
+// --with KEY: the rivals drawn as usual, with KEY among them: in the seat
+// of the round's number (r mod the seats), where it wasn't drawn.
+function withIn(E, key, r) {
+  const keys = E.createGame({ withPlayer: false }).snakes.map(s => s.personaKey);
+  if (!keys.includes(key)) keys[r % keys.length] = key;
+  const g = E.createGame({ withPlayer: false, personas: keys });
+  if (!g.snakes.some(s => s.personaKey === key)) throw new Error(`--with ${key}: no such rival`);
+  return g;
+}
+function playRound(E, T, r, { seed, ahead, signs, saveAt, seats, withKey }, saved) {
   // (Is any living head within the woodpecker's clearance of cell k?)
   const nearHead = (g, k) => g.snakes.some(s => s.alive && Math.abs(s.body[0].x - k % T.GRID) + Math.abs(s.body[0].y - Math.floor(k / T.GRID)) <= T.PECK_CLEARANCE);
   let st;
@@ -12,7 +21,7 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
     rng = seeded(saved.rng);
   } else {
     rng = seed == null ? Math.random : seeded(seed + r * 7919);
-    const g = E.createGame({ withPlayer: false }), per = {}, total = totals();
+    const g = withKey ? withIn(E, withKey, r) : E.createGame({ withPlayer: false }), per = {}, total = totals();
     total.rounds = 1;
     for (const s of g.snakes) {
       per[s.name] ||= {
