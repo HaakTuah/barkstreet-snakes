@@ -18,7 +18,7 @@ function drawCut(alpha) {
   if (w.plan) {
     const aiming = new Set(w.target);
     if (w.plan.cut.some(k => !game.holes.has(k) && !aiming.has(k))) {
-      if (pieceShowsStaying(w.plan)) rimCells(new Set(w.plan.piece.filter(k => !game.holes.has(k))), 0.45); // (3+: a piece that will stand, an island: its solid pale rim from the first nick)
+      if (pieceShowsStaying(w.plan)) rimCells(new Set(w.plan.piece.filter(k => !game.holes.has(k))), 0.65); // (3+: a piece that will stand, an island: its solid pale rim from the first nick)
       else washPiece(w.plan.piece);
     }
     ctx.lineCap = 'round';
@@ -62,7 +62,7 @@ function rimIsles(w, alpha) {
   }
   const prog = aimed(alpha);
   if (!isleCells.size || prog < 0) return;
-  rimCells(isleCells, 0.55 + 0.35 * prog);
+  rimCells(isleCells, 0.7 + 0.3 * prog);
 }
 // Whether the plan's piece will stand (pieceStays), worked out once a plan, holes and act.
 let staysFor = null, staysHoles = -1, staysAct = -1, staysIs = false;
@@ -71,24 +71,15 @@ function pieceShowsStaying(plan) {
   if (staysFor !== plan || staysHoles !== game.holes.size || staysAct !== act) { staysFor = plan; staysHoles = game.holes.size; staysAct = act; staysIs = pieceStays(game); }
   return staysIs;
 }
-// A solid pale rim round these cells, each side that faces a cell not among
-// them (none along the board's own rim).
+// A solid pale rim round these cells (see edgePath).
 function rimCells(cells, a) {
-  ctx.strokeStyle = `rgba(254, 243, 199, ${a})`; ctx.lineWidth = CELL * 0.12; ctx.lineCap = 'round';
-  ctx.beginPath();
-  for (const k of cells) {
-    const cx = k % GRID, cy = Math.floor(k / GRID), x = cx * CELL, y = cy * CELL;
-    if (cy > 0 && !cells.has(k - GRID)) { ctx.moveTo(x, y); ctx.lineTo(x + CELL, y); }
-    if (cy < GRID - 1 && !cells.has(k + GRID)) { ctx.moveTo(x, y + CELL); ctx.lineTo(x + CELL, y + CELL); }
-    if (cx > 0 && !cells.has(k - 1)) { ctx.moveTo(x, y); ctx.lineTo(x, y + CELL); }
-    if (cx < GRID - 1 && !cells.has(k + 1)) { ctx.moveTo(x + CELL, y); ctx.lineTo(x + CELL, y + CELL); }
-  }
+  ctx.strokeStyle = `rgba(254, 243, 199, ${a})`; ctx.lineWidth = CELL * 0.17; ctx.lineCap = 'round';
+  edgePath(cells);
   ctx.stroke();
 }
 // The piece an outline cuts round, washed lightly with a dashed edge: one
 // path for the wash (squares filled one by one show their seams) and one
-// for the edge, each piece-cell side that faces a log cell outside the piece
-// (none along the board's own rim, which needs no marking).
+// for the edge (edgePath).
 function washPiece(piece) {
   const cells = new Set(piece.filter(k => !game.holes.has(k)));
   if (!cells.size) return;
@@ -98,6 +89,13 @@ function washPiece(piece) {
   ctx.fill();
   ctx.strokeStyle = 'rgba(254, 243, 199, 0.5)'; ctx.lineWidth = CELL * 0.08; ctx.lineCap = 'butt';
   ctx.setLineDash([CELL * 0.22, CELL * 0.16]);
+  edgePath(cells);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+// The path along each side of these cells (a Set) that faces a cell not
+// among them, none along the board's own rim (which needs no marking).
+function edgePath(cells) {
   ctx.beginPath();
   for (const k of cells) {
     const cx = k % GRID, cy = Math.floor(k / GRID), x = cx * CELL, y = cy * CELL;
@@ -106,6 +104,4 @@ function washPiece(piece) {
     if (cx > 0 && !cells.has(k - 1)) { ctx.moveTo(x, y); ctx.lineTo(x, y + CELL); }
     if (cx < GRID - 1 && !cells.has(k + 1)) { ctx.moveTo(x + CELL, y); ctx.lineTo(x + CELL, y + CELL); }
   }
-  ctx.stroke();
-  ctx.setLineDash([]);
 }

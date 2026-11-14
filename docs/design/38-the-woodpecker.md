@@ -140,8 +140,8 @@ what ends up cut loose falls (a rules test proves it); it plans small (see "It c
     side that faces the gap or the mark; `render/cut.js`, `newIsles`), brightening as the strike nears; a piece that falls is
     dark with sliding streaks (below). What stays and what falls differ by line against shading, not by colour alone;
     the rim stays still with reduced motion.
-  - **Taught:** a lesson the first time a mark leaves an island ("Ringed pale, it stays: on the edge, a hop from the
-    log."), and the Field guide's Islands row. The rivals read islands as any land: the holes round them, the jump that
+  - **Taught:** a lesson the first time a mark leaves an island ("Pale ring: this piece stays. Dark streaks: it falls."),
+    and the Field guide's Islands row. The rivals read islands as any land: the holes round them, the jump that
     reaches them, and `fall` for an island about to go.
   - **Measured:** jumps between pieces of log, strikes leaving the log in pieces, and the rounds whose last snakes ended
     each on an island of their own (the census; the PR's table).
