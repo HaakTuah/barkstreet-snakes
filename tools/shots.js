@@ -226,6 +226,17 @@ fs.mkdirSync(out, { recursive: true });
       // the frenzy the piece stays, ringed pale (island), in the frenzy it falls, dark and streaked (island-falls).
       island: `isleBoard(false)`,
       'island-falls': `isleBoard(true)`,
+      // 3++, length costs room in the frenzy: your snake 12 long, held at 8 as the frenzy began: the pale band across it.
+      band: `(() => {
+        const g = stage(['gobbler', 'sniper', 'mason']), [you, gob, sn, ma] = g.snakes;
+        setBody(you, [...Array.from({ length: 7 }, (_, i) => [12 - i, 12]), ...Array.from({ length: 5 }, (_, i) => [6, 13 + i])], 'right');
+        setBody(gob, Array.from({ length: 9 }, (_, i) => [18, 18 - i]), 'down');
+        setBody(sn, Array.from({ length: 8 }, (_, i) => [15 - i, 20]), 'right');
+        setBody(ma, Array.from({ length: 6 }, (_, i) => [3 + i, 4]), 'left');
+        g.time = g.acts.frenzy + 8000;
+        g.woodpecker = { x: 11.5, y: 2, at: g.time - 30000, target: [], strikeAt: -1, last: [], struckAt: -1, restUntil: 1e9, pecks: 6, held: [8, 9, 8, 6] };
+        show(g); drawN(16, 0.5);
+      })()`,
       knock: `(() => { show(knockBoard()); drawN(24, 0.6); })()`, // (through the aim: the food in the mark trembling, rings where it'll land)
       'knock-flight': `(() => {
         const g = knockBoard(), P = g.woodpecker.target;

@@ -88,8 +88,18 @@ it never takes out half the trunk."). It never melts the log: it plans a piece a
 
 It cuts only while the log is `CUT_MIN` more than the floor: `FLOOR_PER_LENGTH` (2) times the living snakes' lengths
 together (growth to come too), never under `FLOOR_MIN` (24) cells (`logFloor`). An outline that would go past it is
-given up (its holes stay). The floor falls as snakes starve or go, so it may cut again, a little: a tile here and there
-in the very late game.
+given up (its holes stay). The floor falls as snakes go (and, before the frenzy, as they starve), so it may cut again, a
+little: a tile here and there in the very late game.
+- **Length costs room in the frenzy** (entry 6, part 3++; #655; the owner, 31 October 2026, food a conditional good to
+  the end): from the frenzy on, the floor counts each snake as long as it was when the frenzy began (`w.held`,
+  `holdLengths`), not as long as it is. A meal there buys no room and a shrink gives none back; a snake that goes takes
+  its share with it. So what a snake grows in the frenzy fills room the bird won't leave, and a meal there weighs the
+  life it buys against room it really costs. Of the two shapes measured, this one (the other: each snake at its
+  longest since the frenzy began) reads simply: the bird leaves room for you as long as you were when it started.
+- **The cue:** once you've grown past that length, a pale band across your body marks it (yours alone, `drawHeld` in
+  `render/you.js`; still with reduced motion), and the first time, its lesson: "Past the band: length the bird leaves
+  no room for." The Woodpecker row of the Field guide says it. Online, the host sends the held lengths with the
+  woodpecker (protocol 33).
 
 ### Then it fights
 

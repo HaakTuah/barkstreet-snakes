@@ -99,6 +99,27 @@ const cornerPlan = cx => {
   check('...but not in act 2', !calm.woodpecker.zone && !calm.woodpecker.target.length);
 }
 
+{ // Part 3++ (#655): in the frenzy the floor counts each snake as long as it was when the frenzy began (w.held), so a
+  // meal there buys it no room and a shrink gives none back; a snake that goes takes its share with it. Before the
+  // frenzy it counts them as they are. (A 12x12 log, two snakes of 3 with 29 still to grow each: the floor 128.)
+  const g = cutBoard([[line(4, 4, 3), 'right'], [line(11, 11, 3), 'left']], rect(2, 2, 13, 13));
+  for (const s of g.snakes) s.grow = 29;
+  run(g, 1);
+  const at = E.logFloor(g), [a, b] = g.snakes;
+  a.grow += 20; const grown = E.logFloor(g);
+  a.grow = 0; const shrunk = E.logFloor(g);
+  b.alive = false; const gone = E.logFloor(g);
+  check('part 3++: in the frenzy the floor holds each snake at its length when the frenzy began: a meal buys no room, a shrink gives none back',
+    at === T.FLOOR_PER_LENGTH * 64 && grown === at && shrunk === at, `${at}, grown ${grown}, shrunk ${shrunk}`);
+  check('...and a snake that goes takes its share with it', gone === T.FLOOR_PER_LENGTH * 32, `${gone}`);
+  const calm = cutBoard([[line(4, 4, 3), 'right'], [line(11, 11, 3), 'left']], rect(2, 2, 13, 13));
+  calm.time = ACTS[1] + 1000;
+  for (const s of calm.snakes) s.grow = 29;
+  run(calm, 1);
+  calm.snakes[0].grow += 20;
+  check('...but before the frenzy it counts them as they are', E.logFloor(calm) === T.FLOOR_PER_LENGTH * 84 && !calm.woodpecker.held, `${E.logFloor(calm)}`);
+}
+
 { // The fight's strike: a head in its plus takes a crash (CRASH_LOSS off, stunned), never a fall: the tile under a head
   // stays; at its smallest, out ("Pecked!").
   const strike = len => {

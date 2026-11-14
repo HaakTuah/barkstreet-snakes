@@ -10,6 +10,7 @@
 window.SnakeVersion = {
   build: 'dev',
   news: [
+    { on: '2026-11-14', line: 'Frenzy: growing buys no room. Mind the pale band.' },
     { on: '2026-11-14', line: 'Islands at the edge stay standing: hop across.' },
     { on: '2026-11-13', line: 'Rivals beat the woodpecker and hop out of traps.' },
     { on: '2026-11-13', line: 'Lean and plentiful seasons stay marked all round.' },

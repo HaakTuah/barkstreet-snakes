@@ -134,6 +134,7 @@ const FLAVOR = {
   cutLoose: 'The shaded piece is cut loose and will fall. Get off it!', // (2s: the first mark that cuts a piece loose, or its strike)
   outline: 'It’s cutting along the nicks: shaded falls, ringed stays.', // (part 2: its first peck along an outline, the nicks showing the rest, the piece under a faint wash; 3+: whether it falls or stays, the next lessons)
   isleStays: 'Pale ring: this piece stays. Dark streaks: it falls.', // (3+: the first mark that leaves an island standing, its solid pale rim)
+  heldBand: 'Past the band: length the bird leaves no room for.', // (3++: the first time you grow past your length as the frenzy began, as the band on your body shows it)
   fight: 'Little log left: now it pecks at snakes. Dodge!', // (part 2: its first fight, at the floor: a head in the ring at the strike crashes)
   youSquash: 'Your own beads feed nobody.', // (round six B: your first own bead squashed)
   youWatched: 'The woodpecker’s watching… Mind where it looks.', // (entry 6: as it comes, its gaze a tell: its first cut starts where it looked last)
