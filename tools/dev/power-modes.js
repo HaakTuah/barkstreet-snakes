@@ -9,8 +9,9 @@
 // It changes DIR's ai/powers.js in place (consider, in powerPick):
 //   never: no plain jump or flash; golden ones as ever.
 //   always: whenever a plain one is ready, the best plain jump or flash
-//     it would survive (its line's score above DEAD), whatever it gains,
-//     tried every way a flash could go.
+//     it would survive (its line's score above DEAD / 2, as powerPick
+//     reads trapped: a line that dies within the search scores DEAD and
+//     a little), whatever it gains, tried every way a flash could go.
 const fs = require('fs'), path = require('path');
 const [dir, mode] = process.argv.slice(2);
 if (!dir || !['never', 'always'].includes(mode)) { console.error('usage: power-modes.js DIR never|always'); process.exit(1); }
@@ -21,7 +22,7 @@ const PLAIN = 'const plain = flash ? me.dashes === 0 : me.leaps === 0;';
 const top = '    if (v === null) return;\n';
 if (mode === 'never') swap(top, `${top}    ${PLAIN} if (plain) return; // (power-modes.js: never)\n`);
 else {
-  swap(top, `${top}    ${PLAIN} if (plain) { if (v > DEAD && (!bestPower || !bestPower.plain || v > bestPower.v)) bestPower = { d, flash, v, now: !flash && leapNow, fly: flash ? 0 : leapFly, turn: flash ? null : leapTurn, styled: false, plain: true }; return; } // (power-modes.js: always)\n    if (bestPower && bestPower.plain) return;\n`);
+  swap(top, `${top}    ${PLAIN} if (plain) { if (v > DEAD / 2 && (!bestPower || !bestPower.plain || v > bestPower.v)) bestPower = { d, flash, v, now: !flash && leapNow, fly: flash ? 0 : leapFly, turn: flash ? null : leapTurn, styled: false, plain: true }; return; } // (power-modes.js: always)\n    if (bestPower && bestPower.plain) return;\n`);
   swap('(dropping || d === crawlDir || habit.everyWay ||', '(true || dropping || d === crawlDir || habit.everyWay ||');
 }
 fs.writeFileSync(file, s);
