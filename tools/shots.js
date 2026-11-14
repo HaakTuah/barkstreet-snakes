@@ -102,17 +102,17 @@ fs.mkdirSync(out, { recursive: true });
       };
       window.isleBoard = frenzy => {
         const g = stage(['gobbler', 'sniper', 'mason']), [you, gob, sn, ma] = g.snakes, K = (x, y) => y * 24 + x;
-        setBody(you, [[20, 3], [19, 3], [18, 3], [18, 2]], 'right');
-        setBody(gob, Array.from({ length: 8 }, (_, i) => [10, 17 - i]), 'up');
-        setBody(sn, Array.from({ length: 8 }, (_, i) => [5 + i, 20]), 'left');
+        setBody(you, [[2, 20], [3, 20], [4, 20], [4, 21]], 'left');
+        setBody(gob, Array.from({ length: 8 }, (_, i) => [12, 15 - i]), 'up');
+        setBody(sn, Array.from({ length: 8 }, (_, i) => [12 + i, 20]), 'left');
         setBody(ma, Array.from({ length: 6 }, (_, i) => [3 + i, 4]), 'left');
-        const piece = [], cut = [K(16, 2), K(16, 3)];
-        for (let y = 0; y <= 5; y++) for (let x = 17; x <= 23; x++) piece.push(K(x, y));
-        for (let y = 0; y <= 6; y++) g.holes.add(K(16, y));
-        for (let x = 17; x <= 23; x++) g.holes.add(K(x, 6));
+        const piece = [], cut = [K(3, 17), K(4, 17)];
+        for (let y = 18; y <= 23; y++) for (let x = 0; x <= 6; x++) piece.push(K(x, y));
+        for (let x = 0; x <= 7; x++) g.holes.add(K(x, 17));
+        for (let y = 18; y <= 23; y++) g.holes.add(K(7, y));
         for (const k of cut) g.holes.delete(k);
         g.time = (frenzy ? g.acts.frenzy : g.acts.pecks) + 5000;
-        g.woodpecker = { x: 16, y: 2.5, at: g.time - 30000, came: g.tick - 300, target: cut, strikeAt: g.tick + 5, last: [], struckAt: -1, restUntil: 1e9, pecks: 6, gaze: -1, plan: { cut, piece, waitFrom: -1 } };
+        g.woodpecker = { x: 3.5, y: 17, at: g.time - 30000, came: g.tick - 300, target: cut, strikeAt: g.tick + 5, last: [], struckAt: -1, restUntil: 1e9, pecks: 6, gaze: -1, plan: { cut, piece, waitFrom: -1 } };
         const fall = E.cutLoose ? E.cutLoose(g, new Set(cut)) : piece; // (main before 3+: the piece always fell)
         if (fall.length) g.woodpecker.fall = fall;
         show(g); drawN(24, 0.6);
@@ -222,7 +222,7 @@ fs.mkdirSync(out, { recursive: true });
         R.onTick([{ type: 'heal', x: 17, y: 15 }, { type: 'burrow', x: 7, y: 16, dug: 1 }]);
         drawN(14, 0.5, 33);
       })()`,
-      // 3+, islands that stay: the woodpecker's last peck round the top-right corner aimed, a snake on the piece; before
+      // 3+, islands that stay: the woodpecker's last peck round the bottom-left corner aimed, a snake on the piece; before
       // the frenzy the piece stays, ringed pale (island), in the frenzy it falls, dark and streaked (island-falls).
       island: `isleBoard(false)`,
       'island-falls': `isleBoard(true)`,
