@@ -75,3 +75,145 @@ How they are kept, and where each item lives: `archive/instructions.md`.
      `scripts/nuget.mjs` holds; and behind the NuGet check failing from a project's first day, "advisory" left as a
      setting a project turns on while a fault of the check's own is mended. The second yes was read as a yes to
      the question as put, not to this session's "I would keep the week".
+
+199. **13 November 2026** (the core and both games, in a chat with a session the owner had asked how the work went,
+     whether it had questions and how the stand-in was doing). Told that the stand-in had answered ideas once in each
+     project, on 12 November, eighteen verdicts in all, ten of them sure; that the owner had answered none of them,
+     and nothing recorded whether it was right, its record having gone with the weekly measuring check on 10
+     November; that ideas filed in the week before it was called got no verdict, though its rule asks one on every
+     open idea; that a "later" waiting on a measurement was not looked at again once the measurement came; and that
+     builders seldom said they had asked it, one PR taking on its own a reading against an answer of the owner's of 6
+     November. Asked yes or no to three looks the stand-in was unsure of, and whether to keep that reading:
+
+     > I concur with all, expertly!
+
+     Read as a yes to each look, to keeping the reading, and to closing each gap named. Behind, in `modules/inbox.md`:
+     the stand-in's verdict on every open idea however new, and again on a "later" once its condition is measured, as
+     `scripts/stand-in-record.mjs --open` lists them; a reading departing from an owner's answer given by the stand-in
+     and listed with that answer's date; and "Its record", which the same script counts at each review of the core
+     (`AGENTS.md`, "The core is measured as a feature is").
+
+200. **13 November 2026** (the core, the same chat as item 199). Shown an orchestrator's own account of a lane it
+     called alive at one check, from a status line, while its branch had had no push for two hours, which then sat idle
+     for nine; told that the orchestrator's model, set as "Sonnet is enough", was the one seat nothing reviews, and
+     offered Opus there, a script for the stall check, a wake set once rather than each turn, and an end to a false
+     alarm of unpushed commits, the owner had said that Sonnet, at high, had "stopped fully up at least twice for the
+     couple of days we have given it this position". Then:
+
+     > Agreed, expertly! But would a script spam whenever I run out of usage, or tell my orchestrators to stop up to
+     > save usage, expert? What should our recommendation be? Opus on high? Or should we keep sonnet on high/extra, with
+     > the script to keep it in line, expert?
+
+     Answered: Opus at high, with the script; nothing stops to save usage; and a lane handed over once, then to
+     another provider, or else waiting and tried once a day, named to the owner once, so that no wake repeats it.
+     Behind the orchestrator's row in `modules/claude.md` and its line in `setup/server.md`; and, in
+     `modules/orchestrating.md`, the hourly wake set once as a repeat, its clone on `main`, and "A stalled lane" found by
+     `scripts/stalled.mjs` and handed over once. Read as a yes to Opus at high, the session's recommendation when he
+     asked which.
+
+201. **13 November 2026** (the core, handed to its design session in a message of the owner's: the brief of an outside
+     session that had audited the core at release-2 that day, which the owner had gone through point by point, the
+     owner's word quoted under each section). On section 0, that nothing may lock another owner's project (what the
+     brief said of that project here was not so, and is taken out: core archive 202):
+
+     > Guarantee me nothing of this will stun lock […]
+
+     On section 1, three ideas (an account of the agents' own, GitHub enforcing the owner's yes, only the owner cutting
+     a release):
+
+     > File as 3 ideas in issues. Might do it, but not right now.
+
+     On section 2, that the personal-terms check reads every commit, the owner asking whether a private repository pays
+     for it:
+
+     > Agreed, if the test is quick. Don't want to add too much overhead. […] private repo, so […] spends action points
+     > on such checks, no, expert? If so, make it an opt-in, so […] doesn't go broke over it, when [the] repo is private
+     > anyways.
+
+     Answered that the scan adds seconds inside the job that already runs and no billed minute, so it is on for every
+     project; and on failing where the secret `PERSONAL_TERMS` is missing:
+
+     > No, must be optional.
+
+     On sections 3 to 7 (no "he" or "his" for the owner in new text; the owner's own projects follow the releases; the
+     copy compared by git's object ids; tests for the sync scripts; the workflows' shell in tested scripts), each:
+
+     > Agreed.
+
+     On sections 8, 9, 10, 11 and 12 (the core's own repository; reading and size; .NET; games served by GitHub Pages;
+     extra checks and a stop switch):
+
+     > Agreed to all in 'agent-core itself'.
+
+     > Agreed to all in 'Reading and size'.
+
+     > Agreed to all in '.NET and […] project', but 'Branch protection and secret scanning for […] private repo' I
+     > don't want this to stun lock […] work if this isn't set-up on […] end
+
+     > Agreed on 'Games'.
+
+     > Agreed to all in 'Extra'.
+
+     And, handing it over, on the two the brief had only explained (the security-review check warning where it cannot
+     read Codex's summary; a project that follows the releases taking a commit that is no release only through a
+     review):
+
+     > Yes to A and B.
+
+     With it: section 0 first, every later PR keeping its test green; never a release cut by a session, the owner
+     told when one is ready. Behind, in `AGENTS.md`: "Nothing locks another owner's project", held by
+     `scripts/upgrade-test.mjs`; and each section's own change, in the PR that cites this item.
+
+202. **14 November 2026** (the core, in a chat with the outside session of item 201, which the owner had asked to audit
+     what that item built, at d76174c, and then to fix what it found). Told that every section was built and checked,
+     and of four things left: the personal-terms check failing a commit whose author or committer holds a term, which
+     fails every pull request where the machine that commits writes a listed name into each commit, the sync to the
+     next release among them, while the upgrade test, its projects committing as "t", did not see it; a commit dated
+     before 2 November 2026 read by no per-commit check, though a commit's date is whatever its maker writes;
+     `core.yml` keeping, of the core's reports, one whose name git quotes, which the copy leaves out; and the upgrade
+     test starting from the previous release alone, while a project that missed a release jumps two:
+
+     > Make all of the fixes, big and small, expertly!
+
+     Told that item 201 described the project of another owner, from what the brief had said of it:
+
+     > This is incorrect information, remove it
+
+     The fix first built reported such a name in a private repository and failed it in a public one; Codex's security
+     review and the fallback reviewer each found that it broke floor rule 11 and the threat model ("everything counts as
+     public"). Asked how the check should treat a listed name that a machine's git writes into each commit, the owner
+     first asked:
+
+     > But my account has my name, will this block me too now, expert?
+
+     Told that the agents commit as Claude or under the login, and that GitHub's own merges are excepted, but that an
+     edit or a suggestion committed on github.com carries the profile's name and is not, and that this would be
+     excepted too, the owner chose, of two answers offered, "Block, self-fixing".
+
+     Behind: in `.github/workflows/personal-terms.yml`, such a name failed in every repository, the failure saying how
+     the session mends the pull request itself (git's name in the repository set to the login, its commits rewritten),
+     every commit GitHub itself makes and signs excepted, not only a merge, as floor rule 11 now says, and no commit
+     left out by its date; `AGENTS.md`'s "Nothing locks another owner's project", its one exception that mend; a sync
+     note, and `README.md`, "Setting up (the owner's part)", on git's own name on each machine; in
+     `.github/workflows/core.yml`, the reports left out by the pin's tree's own entry; in `scripts/upgrade-test.mjs`, a
+     start from each of the last two releases, its private project's commits made under a listed name and its sync
+     mended so; and in item 201, that description taken out, the one change to a dated record here, on the owner's
+     word.
+
+204. **14 November 2026** (the core, in the design chat). Told, of a new game being designed that is only ever added
+     to, that it could be played from its first stage on, unlike Amarna, which was built toward its finished form:
+
+     > Yes, unlike amarna, this is a game that you only add to. Amarna still doesn't feel like a game. Something I
+     > should get better at. Mvps and stages that feel playable. With amarna, I am trying to get to the end station,
+     > and that was a mistake. But I still want to see it through. This game is inherently limited by scope at the
+     > core, but can have lots of fun additions around. And is maybe the easiest game to actually get someone else to
+     > play with me and the models.
+
+     Asked whether the core should say that each stage of a build ends in a game someone can play from start to finish
+     and enjoy, a feature that makes sense only once later ones exist waiting for them:
+
+     > Yes. But the bigger problem is the ui in amarna right now. It is a mess. No way you can play a game this
+     > complex when you can't even tell what is going on on the screen.
+
+     Behind "Every stage is a game" in `modules/game-design.md`, and the glance in its "Readable by every player"; a
+     first playable slice of Amarna, and its screen, were taken up in Amarna.
