@@ -42,10 +42,18 @@ const richest = (game, sizes) => sizes.map((n, i) => i).filter(i => sizes[i] > 0
 // The log left (it stays one piece, 2s) and the floor: the room the snakes
 // left need, FLOOR_PER_LENGTH times their lengths (growth to come too),
 // never under FLOOR_MIN. It cuts only while the log is CUT_MIN past it.
+// In the frenzy each snake counts as long as it was when the frenzy began
+// (w.held, see holdLengths), so a meal there buys it no room (entry 6,
+// part 3++, #655).
 const logLeft = game => CELLS - game.holes.size;
+const lengthOf = s => s.body.length + Math.max(0, s.grow);
+function holdLengths(game, w) {
+  if (!w.held) w.held = game.snakes.map(lengthOf);
+}
 function logFloor(game) {
+  const held = actOf(game) === 3 && game.woodpecker?.held;
   let need = 0;
-  for (const s of game.snakes) if (s.alive) need += s.body.length + Math.max(0, s.grow);
+  game.snakes.forEach((s, i) => { if (s.alive) need += held ? held[i] : lengthOf(s); });
   return Math.max(T.FLOOR_MIN, T.FLOOR_PER_LENGTH * need);
 }
 const canCut = game => logLeft(game) - logFloor(game) >= T.CUT_MIN;
