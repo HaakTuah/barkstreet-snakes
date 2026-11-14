@@ -1,7 +1,7 @@
 // The renderer (see render/core.js): what only you are shown at the start of a
 // round (YOU over your snake, the arrow, ring and chevrons; friends' names over
-// theirs), the frenzy's band on your body (drawHeld), and what only your press
-// answers with (the × on a jump or flash that can't go).
+// theirs) and what only your press answers with (the × on a jump or flash that
+// can't go).
 
 // The first seconds of a round: which snake is yours. A bouncing arrow and
 // YOU over your head (under it, heading down or near the top edge), a ring
@@ -58,25 +58,6 @@ function drawYou(now) {
     marker(hx, hy, sgn, col, 'YOU', 1, t);
   }
   ctx.globalAlpha = 1;
-}
-// The frenzy's band (entry 6, part 3++): the woodpecker leaves you room
-// only for your length as the frenzy began (game.woodpecker.held, see
-// engine/outline.js), so once you've grown past it, a pale band across
-// your body marks where: what lies behind it is length the log leaves no
-// room for. Yours alone, as long as you're longer; still, with reduced
-// motion too.
-function drawHeld() {
-  const held = game?.woodpecker?.held;
-  if (!held) return;
-  const i = game.snakes.findIndex(s => s.id === viewerId), s = game.snakes[i], a = s && anim.get(s), at = held[i];
-  if (!s?.alive || !a || !(at >= 1) || at >= a.n) return;
-  const x0 = a.pts[2 * at - 2], y0 = a.pts[2 * at - 1], x1 = a.pts[2 * at], y1 = a.pts[2 * at + 1], d = Math.hypot(x1 - x0, y1 - y0);
-  if (!d || d > CELL * 1.5) return; // (two segments on a wrap or a portal's two sides: nowhere between them to draw it)
-  const r = Math.max(a.rad[at - 1], a.rad[at]) * 1.6, mx = (x0 + x1) / 2, my = (y0 + y1) / 2, px = -(y1 - y0) / d * r, py = (x1 - x0) / d * r;
-  ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.moveTo(mx - px, my - py); ctx.lineTo(mx + px, my + py);
-  ctx.strokeStyle = INK; ctx.lineWidth = CELL * 0.32; ctx.stroke();
-  ctx.strokeStyle = '#fffbea'; ctx.lineWidth = CELL * 0.17; ctx.stroke();
 }
 // Which side of its head a snake's arrow goes (-1 over it, 1 under it):
 // over it, unless its own body's there (heading down, as seat 2 starts

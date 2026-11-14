@@ -88,18 +88,16 @@ it never takes out half the trunk."). It never melts the log: it plans a piece a
 
 It cuts only while the log is `CUT_MIN` more than the floor: `FLOOR_PER_LENGTH` (2) times the living snakes' lengths
 together (growth to come too), never under `FLOOR_MIN` (24) cells (`logFloor`). An outline that would go past it is
-given up (its holes stay). The floor falls as snakes go (and, before the frenzy, as they starve), so it may cut again, a
-little: a tile here and there in the very late game.
-- **Length costs room in the frenzy** (entry 6, part 3++; #655; the owner, 31 October 2026, food a conditional good to
-  the end): from the frenzy on, the floor counts each snake as long as it was when the frenzy began (`w.held`,
-  `holdLengths`), not as long as it is. A meal there buys no room and a shrink gives none back; a snake that goes takes
-  its share with it. So what a snake grows in the frenzy fills room the bird won't leave, and a meal there weighs the
-  life it buys against room it really costs. Of the two shapes measured, this one (the other: each snake at its
-  longest since the frenzy began) reads simply: the bird leaves room for you as long as you were when it started.
-- **The cue:** once you've grown past that length, a pale band across your body marks it (yours alone, `drawHeld` in
-  `render/you.js`; still with reduced motion), and the first time, its lesson: "Past the band: length the bird leaves
-  no room for." The Woodpecker row of the Field guide says it. Online, the host sends the held lengths with the
-  woodpecker (protocol 33).
+given up (its holes stay). The floor falls as snakes starve or go, so it may cut again, a little: a tile here and there
+in the very late game.
+- **Not a lever on length** (entry 6, part 3++, PR #760; #655). Two shapes meant to make length cost room in the
+  frenzy were measured and neither taken: the floor counting each snake as long as it was when the frenzy began, or at
+  its longest since then. Snakes come into the frenzy at their longest (about 47 long) and only shrink in it (a cut
+  takes about 30 segments), so either shape is a higher floor that never falls: on seed 81 the frenzy ran 69 → 76 s,
+  the log kept 37 more cells, and starved deaths rose 14 → 21% of all deaths, past design 39's bound. Head to head, the
+  weighing still only tied always eating (always eating +2.5 [−1.9, +6.9] with the first shape, −0.3 [−4.6, +4.1] with
+  the second). Counting each snake at most 16 long changed nothing either (#655). So length must cost room some other
+  way than by the floor.
 
 ### Then it fights
 

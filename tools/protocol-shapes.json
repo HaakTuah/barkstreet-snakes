@@ -1,6 +1,6 @@
 {
-  "version": 33,
-  "fingerprint": "ef01edd930598404",
+  "version": 32,
+  "fingerprint": "f8a5b4dc80993b38",
   "kinds": {
     "away": "{1} t: string",
     "back": "{1} t: string",
@@ -74,7 +74,7 @@
     "tick sky": "[4] number number number number",
     "tick sp": "[6] number number number number number number",
     "tick un": "[4] number number number number",
-    "tick w": "[21] number number number array<number> number array<number> number number number array<array<number>> number number number number number number number number array<array<number>> array<number> array<number>",
+    "tick w": "[20] number number number array<number> number array<number> number number number array<array<number>> number number number number number number number number array<array<number>> array<number>",
     "turn": "{2} d: string, t: string",
     "welcome": "{2} name: string, t: string"
   }

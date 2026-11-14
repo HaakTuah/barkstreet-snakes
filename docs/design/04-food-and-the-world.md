@@ -30,7 +30,7 @@ was tried and measured, is in `docs/archive/design-food.md`).
   Its length is set by the endgame test, rivals that always eat and rivals that never eat in the woodpecker's frenzy
   against ones that weigh each meal ("The endgame: a meal is worth the life it buys" in `39-the-rivals.md`): at 12 s
   never eating does clearly worse, and always eating comes out even (why: "Hunger read against that length" there;
-  #655 would make length cost room).
+  #655, still open, would make length cost room; the floor was not the lever: "The floor" in `38-the-woodpecker.md`).
   Each snake keeps how long its last meal keeps it (`mealMs`, carried online), and its tag's bar is measured against
   that, so it's full after any meal. Under `HUNGER_WARN_MS` (6 s) left, the tag shows it's starving: the bar in Berry,
   a ring pulsing round the tag, and "starving" for a screen reader.

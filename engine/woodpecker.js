@@ -59,8 +59,7 @@ function beakDepth(target, isHole) {
 //   pecks (strikes so far), fury (pieces fallen in the frenzy), landings (from PECK_PROMISE_TICKS moves before a strike: [[from, to], ...] cells, to -1 for none),
 //   fall (2s: the cells of target on pieces it cuts loose, which fall with the strike, food and all),
 //   plan (part 2: its outline, see engine/outline.js), zone (a fight's plus, see engine/fight.js),
-//   gaze (act 1: the cell it watches; where it looked last, after), lookAt (the tick that look began), looks (looks left after it), lookUntil (ms: when it moves on), unit (ms: a look's length),
-//   held (part 3++: in the frenzy, each snake's length as the floor counts it, see engine/outline.js, holdLengths) }
+//   gaze (act 1: the cell it watches; where it looked last, after), lookAt (the tick that look began), looks (looks left after it), lookUntil (ms: when it moves on), unit (ms: a look's length) }
 function peck(game, dying, drops) {
   const act = actOf(game);
   if (!act) return;
@@ -72,7 +71,6 @@ function peck(game, dying, drops) {
     game.events.push({ type: 'woodpecker' });
     return;
   }
-  if (act === 3) holdLengths(game, w);
   if (act === 1) {
     if (game.time >= w.lookUntil && w.looks > 0) {
       w.looks--;

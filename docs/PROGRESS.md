@@ -8,7 +8,7 @@ to his words in the archive.
 
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
-**The main lane is 6** (round six C: the woodpecker in three acts; parts 1, 2, 3 and 3+ done; 3++ next, then entry 5's 7e and 7f), the first open entry
+**The main lane is 6** (round six C: the woodpecker in three acts; parts 1, 2, 3 and 3+ done; 3++ blocked on a lever, #655; so entry 5's 7e and 7f next), the first open entry
 that waits on nothing (3c waits on 3b's Wildcard part, 3d on 3c, and 4 on 5). Item 5's part 7 (built afresh) goes in
 three playable PRs (7a, 7b, 7c: entry 5 below): 7a, one pricing model, is PR #722; 7b, the power styles, is PR #746; 7c goes in three playable PRs, each merged before the next: (i) the trademark measures, Joker and Star in the band and Metagamer's power style, PR #749 (merged); (ii) a jumpable way out kept and the woodpecker's mark crossed, PR #751 (merged); (iii) the seat-split A/B and the always-against-never runs, PR #755: powers where they fit beat both never and always; then 7d, the band, PR #758 (Star stays below it); then 7e and 7f after entry 6's 3++ (entry 5); 2y++'s last step waits on part 7. The
 entries before these are done (`docs/archive/progress-done/queue-done.md`). The polish lane and the workshop lane run
@@ -146,11 +146,11 @@ three acts" (its draft: `docs/handoff/woodpecker-acts-draft.md`). In six playabl
    stay"): a piece cut off stays standing while it touches the board's edge and lies a hop from the log; before the
    frenzy the piece it cuts out at the edge stays, in the frenzy its pieces fall. 3++. Length costs room in the frenzy (#655, "Make length
    cost more in the endgame, so always eating there loses clearly"): under today's rules no meal weighing beats always
-   eating, so a long snake must pay in room for the weighing to win. An engine-rules entry, run one at a time, with the
-   design check; it touches `logFloor` in `engine/outline.js` and design 38, "The floor". Test both floor shapes (the
-   floor counts each snake at its longest since the frenzy began; the floor frozen at the lengths when the frenzy
-   begins) and prefer the one a player can reason about. It needs an A/B test for round length and deaths, then the
-   three-way head to head again; taught in the woodpecker's Field guide row and lesson. 4. The food A/B (`?food=fall`),
+   eating, so a long snake must pay in room for the weighing to win. **Blocked on a lever** (PR #760): both floor shapes
+   were measured and neither taken, since snakes are longest as the frenzy begins and either shape only raises the floor
+   (design 38, "The floor", has the numbers). Built again once #655 names a lever that is not the floor; an
+   engine-rules entry, run one at a time, with the design check, the three-way head to head and an A/B for round length
+   and deaths, taught by a cue and the woodpecker's Field guide row and lesson. 4. The food A/B (`?food=fall`),
    chips and a bounce if the knock stays (the old study patches, `tools/dev/r6-study-tools/patch-flex*.js`, rebuilt for
    it). 5. Skeletons and trademark memorials. 6. 2h's numbers measured again.
 

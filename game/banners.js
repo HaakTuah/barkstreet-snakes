@@ -95,8 +95,6 @@ function news(dying) {
     if (warned && !theGame.warnedHunger) { theGame.warnedHunger = true; Sound.play('hungerWarn'); return toast(small ? FLAVOR.youStarvingSmall : pick(FLAVOR.youHungry), 2800, 'warn', 'lesson', { still: () => me.alive }); }
     if (!warned) theGame.warnedHunger = false;
     if (small && theGame.time > 1000 && once('atThree')) return toast(pick(FLAVOR.youAtThree), 2600, 'warn', 'lesson', { still: () => me.alive && me.body.length <= TUNE.MIN_LENGTH });
-    const held = theGame.woodpecker?.held?.[theGame.snakes.indexOf(me)]; // (3++: the first time you grow past the frenzy's band, as it shows on you)
-    if (held && me.body.length > held && newsFree() && once('heldBand')) return toast(FLAVOR.heldBand, 2600, 'bird', 'lesson', { still: () => me.alive });
   }
   // A flag or a capital the woodpecker pecked out (see landLost): its rule,
   // the first time each goes in a round, for everyone watching too (the

@@ -17,7 +17,7 @@ A round has a shape. Times are the round's game time (`tuning.js`):
 | 0:45 | Mid-round: winter may come (`SNOW_FROM_MS`); the music picks up (`MUSIC_MID_MS`) |
 | 0:50–1:15 | **The watcher** (`ACT_WATCH_MS`): the woodpecker lands and watches the log; where it looks last, it starts cutting ("Its three acts" in `38-the-woodpecker.md`) |
 | 40–60 s on | **The first pecks** (`ACT_PECKS_MS`): it cuts a piece out of the log, a few cells a peck, while food still grows ("It cuts a shape") |
-| 35–50 s on | **Sudden death,** its frenzy (`ACT_FRENZY_MS`): it cuts faster, down to the floor (each snake counted as long as it was as the frenzy began, so growing buys no room), then fights ("The floor", "Then it fights"); nothing new grows, but the last apples fall one at a time, and beetles still come out; the sky clears and stays clear |
+| 35–50 s on | **Sudden death,** its frenzy (`ACT_FRENZY_MS`): it cuts faster, down to the floor, then fights ("The floor", "Then it fights"); nothing new grows, but the last apples fall one at a time, and beetles still come out; the sky clears and stays clear |
 | 2:00 | The ticks are at their fastest |
 | Last two snakes | Only the music changes (the duel) |
 | One snake left, or none | The round is over |

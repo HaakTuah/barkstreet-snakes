@@ -84,7 +84,6 @@ function frame(alpha, now) {
   drawMotes(dt);
   drawBlasts(now);
   drawParticles(dt);
-  drawHeld(); // (3++: the frenzy's band on your body)
   drawYou(now);
   drawFloaters(dt);
   drawPress(); // (over the Bonk! a crash puts where you'll press)
