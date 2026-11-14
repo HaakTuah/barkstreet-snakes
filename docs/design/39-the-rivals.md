@@ -276,8 +276,11 @@ Measured (part 7c): Mason's walls two thick (`doubled`: cells in a run of three 
 chasers Joker leads into a crash (`lured`), and Mute's kills by boxing (`boxKills`: a rival dead on Mute's own body,
 boxed in, while Mute closed on it). Each leads the field on its own, so none needed more teeth (Mason's and Joker's thin
 leads are checked again on fresh seeds in 7c(iii); seeds 3 and 11 on `main` at 7b's merge: Mason 19.2% and 19.6% against
-16.4% and 16.1%; Joker 16.6 and 13.9 against 13.4 and 12.6; Mute 0.99 and 0.44 against 0.23 and 0.31). Joker sits in the
-band after 7a and 7b; Star, the one persona still below it, is lifted in 7c (below, "Star").
+16.4% and 16.1%; Joker 16.6 and 13.9 against 13.4 and 12.6; Mute 0.99 and 0.44 against 0.23 and 0.31). Joker's lead held on two
+fresh seeds in 7d (13.7 and 14.9 against 12.6 and 12.7, Joker in every round); Vulture's share of the beads leads
+thinly (25.3% and 27.4% against 24.9% and 24.2%, Vulture in every round, seeds 193 and 197), and four rivals take
+more of the beads than it does. Joker sits in the band after 7a and 7b; Star, the one persona still below it, is not
+lifted yet: its 7d variant (below, "Star") won more but gave up its habit.
 
 ### Ouroboros
 
@@ -317,6 +320,12 @@ are off for everyone else, so rounds without Star play exactly as if it didn't e
   it's worth to anyone) is worth six times as much to it, a golden apple one and a half times, and golden power food a
   rival will reach first still counts half.
 - **`territory` 1.2:** of everything tried, the only change that moved its win rate.
+- **Below the band** (7c, 7d): 10.5% of its rounds won with Star in every one (seeds 199 and 223). A `margin` of 6
+  for 4, with a golden craving of 3 for 6, lifted it to 17.5%, but it was not taken: the margin also sets what a
+  flash keeps for a jump (from half a jump's worth to three quarters), so Star no longer flashed where no one else
+  would, and its flashes fell by two fifths, to about one and a half times the field's. The next try (7e): the wider
+  margin for its room, with what its flashes keep held where it was (a weight of its habit, as `keepFlash` is for
+  its jumps), and its craving for golden things as it is.
 
 Spending powers on small gains makes a rival weaker, so Star stays a threat in two ways: each power goes by the same
 tests of where it goes as anyone's, and pays the full price where a rival could strike, so it rarely flashes into a
@@ -402,10 +411,11 @@ failed flashes rare enough to be a risk you take on purpose. Where 7c left it (h
 `tools/dev/power-modes.js` makes the copies): powers where they fit win 37.3% and 37.2% against 12.7% for rivals that
 never use a plain jump or flash (seeds 151 and 157), and 40.1% and 41.1% against 9.75% and 8.83% for rivals that use
 one whenever it's ready, which jump five times as often, die into themselves twice or more as often, and flash less, the
-jumps taking the stamina first: so always jumping is measured, always flashing not yet (entry 5's 7d). Of the rivals
-screened with one in every round (`--with`), Gobbler, Sniper and Colonist are in the band, Drab on its edge and Star
-below it, with Mute, Mason and Vulture outside on one census each (the numbers: entry 5's 7d); rounds run 219–224 s,
-above the 160–180 s aimed at. The numbers chosen against it are in each move's section
+jumps taking the stamina first; and (7d, seeds 181 and 191) 34.5% and 33.0% against 15.4% and 17.0% for rivals that
+flash whenever a flash is ready, their jumps where they fit, which flash nearly four times as often, jump half as
+often and die into themselves nearly twice as often. So both ends hold for both plain powers. Of the rivals
+screened with one in every round (`--with`), Gobbler, Sniper, Colonist, Mute, Mason, Joker and Vulture are in the band,
+Drab on its edge and Star below it (the numbers: entry 5's 7d); rounds run 219–224 s, above the 160–180 s aimed at. The numbers chosen against it are in each move's section
 of `40-powers-and-moves.md`; the text as it was, with the A/B as it stood then, is in
 `docs/archive/design-arc-and-history.md`.
 

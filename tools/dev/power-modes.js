@@ -5,7 +5,7 @@
 // against rivals that use them where they fit (tools/abtest.js
 // --head-to-head: the seat-split A/B, design 39's "Balance targets", is
 // that against never).
-//   git worktree add --detach DIR && node tools/dev/power-modes.js DIR never|always
+//   git worktree add --detach DIR && node tools/dev/power-modes.js DIR never|always|always-flash
 // It changes DIR's AI in place:
 //   never: no plain jump or flash (consider, in ai/powers.js); golden ones
 //     as ever.
@@ -16,9 +16,13 @@
 //     a jump over any hurdle and over open ground (leap now), with only
 //     the checks that keep it legal and safe (somewhere to come down that
 //     no rival gets to first) in ai/leaps.js.
+//   always-flash: the same for the plain flash alone, its jumps where they
+//     fit (always jumps first, and so flashes less than where they fit:
+//     7d measures always flashing with this). Neither takes a flash
+//     through its own body unless it's a planned drop (ai/flash.js).
 const fs = require('fs'), path = require('path');
 const [dir, mode] = process.argv.slice(2);
-if (!dir || !['never', 'always'].includes(mode)) { console.error('usage: power-modes.js DIR never|always'); process.exit(1); }
+if (!dir || !['never', 'always', 'always-flash'].includes(mode)) { console.error('usage: power-modes.js DIR never|always|always-flash'); process.exit(1); }
 const edit = (rel, swaps) => {
   const file = path.join(dir, rel);
   let s = fs.readFileSync(file, 'utf8');
@@ -30,12 +34,16 @@ const edit = (rel, swaps) => {
 };
 const PLAIN = 'const plain = flash ? me.dashes === 0 : me.leaps === 0;';
 const top = '    if (v === null) return;\n';
+// (always: the plain power the rival would survive, the best of them,
+// over anything else; for a flash, every way it could go)
+const always = plain => [
+  [top, `${top}    ${plain} if (plain) { if (v > DEAD / 2 && (!bestPower || !bestPower.plain || v > bestPower.v)) bestPower = { d, flash, v, now: !flash && leapNow, fly: flash ? 0 : leapFly, turn: flash ? null : leapTurn, styled: false, plain: true }; return; } // (power-modes.js: ${mode})\n    if (bestPower && bestPower.plain) return;\n`],
+  ['(dropping || d === crawlDir || habit.everyWay ||', '(true || dropping || d === crawlDir || habit.everyWay ||'],
+];
 if (mode === 'never') edit('ai/powers.js', [[top, `${top}    ${PLAIN} if (plain) return; // (power-modes.js: never)\n`]]);
+else if (mode === 'always-flash') edit('ai/powers.js', always('const plain = flash && me.dashes === 0;'));
 else {
-  edit('ai/powers.js', [
-    [top, `${top}    ${PLAIN} if (plain) { if (v > DEAD / 2 && (!bestPower || !bestPower.plain || v > bestPower.v)) bestPower = { d, flash, v, now: !flash && leapNow, fly: flash ? 0 : leapFly, turn: flash ? null : leapTurn, styled: false, plain: true }; return; } // (power-modes.js: always)\n    if (bestPower && bestPower.plain) return;\n`],
-    ['(dropping || d === crawlDir || habit.everyWay ||', '(true || dropping || d === crawlDir || habit.everyWay ||'],
-  ]);
+  edit('ai/powers.js', always(PLAIN));
   edit('ai/leaps.js', [
     ['if (!golden && !trapped && !ringCover.length) return null;', '/* power-modes.js: always */'],
     ['if (span < 1 || (!golden && !trapped && !coverAt(path[span], span + 1))) return null;', 'if (span < 1) return null; // (power-modes.js: always)'],
