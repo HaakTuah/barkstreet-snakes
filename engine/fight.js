@@ -7,7 +7,8 @@
 // centre it takes (w.target, a single tile: a tile here and there in the
 // very late game). Never within FIGHT_GAP of a head as it aims, never
 // shutting anyone in (it has the whole warning to steer clear), never
-// taking a tile that would cut a piece loose.
+// taking a tile that would cut a piece loose, nor one that leaves an
+// island (3+: see cutLoose).
 function fightAim(game) {
   const { owner, sizes } = regions(game), order = richest(game, sizes);
   if (!order.length) return null;
@@ -27,11 +28,25 @@ function fightAim(game) {
     const cx = c % GRID, cy = (c - cx) / GRID, zone = [c];
     for (const d of CRAWL) { const nx = cx + d.x, ny = cy + d.y; if (inside(nx, ny) && !game.holes.has(key(nx, ny))) zone.push(key(nx, ny)); }
     if (zone.some(k => headGap(game, k % GRID, (k - k % GRID) / GRID) <= T.FIGHT_GAP)) continue;
-    if (cutLoose(game, new Set([c])).length) continue;
+    if (cutLoose(game, new Set([c])).length || fightSplits(c)) continue;
     if (shutsIn(game, zone, room)) continue;
     return { target: [c], zone };
   }
   return null;
+}
+// Does the tile (just taken out, see cutLoose's pieceOf) leave the bark
+// round it in two pieces or more, an island that stays among them?
+function fightSplits(c) {
+  const cx = c % GRID, cy = (c - cx) / GRID;
+  let one = -1;
+  for (const d of CRAWL) {
+    const nx = cx + d.x, ny = cy + d.y;
+    if (!inside(nx, ny)) continue;
+    const p = pieceOf[key(nx, ny)];
+    if (p < 0) continue;
+    if (one < 0) one = p; else if (p !== one) return true;
+  }
+  return false;
 }
 // The fight's strike: a head on the ground in its zone takes a crash (as
 // any crash: CRASH_LOSS off, stunned; at its smallest, out, "Pecked!").

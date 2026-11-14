@@ -41,9 +41,9 @@ print lives in the Field guide, or comes when it happens (*Snip!*).
   you."). The dash's key is taught once a round, from 6 s in, until you've dashed (once a visit); the powers' lesson
   at Go once a visit ("The first seconds", below).
 - **Yours, or everyone's:** most are about your own snake, and only while you're alive. Those about the log (the
-  woodpecker eating a beetle, a piece cut loose, the first neck cut, a dig's burrow and burrows growing shut) are for
+  woodpecker eating a beetle, a piece cut loose, an island that stays, the first neck cut, a dig's burrow and burrows growing shut) are for
   everyone, watchers too.
-- **When the banner is free:** a lesson that's over in a moment (a dig near you, a burrow, a piece cut loose, the
+- **When the banner is free:** a lesson that's over in a moment (a dig near you, a burrow, a piece cut loose, an island that stays, the
   woodpecker eating a beetle, a neck cut), or one looked for on the board (a bridge near you, a tail to drop, a ring in
   reach, a flier to leap at, an island to hop, the dash's key), shows only when the banner is free (`newsFree`: no
   card up, nothing showing, fading, breathing or waiting), and isn't spent otherwise: the next such moment teaches it.
@@ -219,7 +219,7 @@ over the row under the board ("The woodpecker's perch" in `31-phones.md`, and "T
    - a real-play run on the three screens against the measured numbers.
 
 **With PR B,** every new move goes through the same coach, voice and query, with its own cue as the picture, and no new banners:
-- *island hops:* the arc stretched to the ring up to 3 cells on, offered the first time you're in a pocket with a jumpable gap ("Tap! I can hop that gap."; 2s: the log is one piece, so no islands);
+- *island hops:* the arc stretched to the ring up to 3 cells on, offered the first time you're in a pocket with a jumpable gap ("Tap! I can hop that gap."; 3+: islands stand at the board's edge, a hop from the log, before the frenzy);
 - *the golden flight:* a gold ring that slides as you steer, with a dotted trail to its limit, turning to an × over a hole or a body ("Hold, and I'll fly! Steer me.");
 - *bridges:* planks on a body over a pit, its last cells sagging and creaking, and a walkway to a ring on the far rim ("Off before its tail goes!"), with lines for rivals both riding and ridden;
 - *cuts:* a snip line across a thin body with the beads-to-be ghosted; the same across your own body for dropping your tail; an × with -5 where a flash would fail, until learned; steam on fire it puts out;

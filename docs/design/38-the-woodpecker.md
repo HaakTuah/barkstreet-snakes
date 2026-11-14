@@ -58,18 +58,20 @@ it never takes out half the trunk."). It never melts the log: it plans a piece a
   (8) cells and at most `CUT_SHARE_MAX` (1/8) of the log, grown from a seed on the region's edge with the board or an
   old hollow more than `PECK_CLEARANCE` (4) from every head, a cell at a time (the one with most solid sides, then
   nearest the seed): of `CUT_SEEDS` (10) tries, the one whose cut is the least of it, so edges and hollows do the work.
-  Never one with a head on it, and never one that halves the trunk (the rest of the log stays one piece; crumbs of
-  `PECK_NO_ORPHANS` (2) cells or fewer go with the piece). Failing the biggest region: any, then with the cap at a third
+  Never one with a head on it, and never one that halves the trunk (the rest of the log stays one piece, but for
+  islands that stay no bigger than a piece; crumbs of `PECK_NO_ORPHANS` (2) cells or fewer go with the piece). Failing the biggest region: any, then with the cap at a third
   of the log; failing all, it waits (or, in the frenzy at the floor, fights).
 - **How: a few cells a peck, as a perforation.** It pecks the cut in order along it, every other cell first (dots), then
   the rest, so the piece hangs on by the cells between until its last peck; each peck takes the next cells it may: more
   than `PECK_CLEARANCE` from every head, then any off a head, shutting nobody in. A cell it may not take yet waits its
   turn; with none it may take, it waits, and after `CUT_GIVEUP_TICKS` (100) plans elsewhere (its holes stay).
 - **The last peck cuts the piece loose** (2s's rule, "The log stays one piece"): its mark shows the piece, shaded, the
-  whole aim, and it falls with the strike, food and all. Measured: about ten pieces a woodpecker round, 27 cells each; the
+  whole aim, and it falls with the strike, food and all; before the frenzy, a piece at the board's edge stays instead, an
+  island, ringed pale in its mark (3+, "Islands that stay"). Measured: about ten pieces a woodpecker round, 27 cells each; the
   biggest in a round 51 cells at the median, 60 at most; none ever left the log in pieces. Where it cuts doesn't pick
-  the loser: of deaths within 10 s of a piece falling, the snake whose log it was 42–43% (chance, among those alive, about 41.5%);
-  the last snakes never ended on islands of their own.
+  the loser: of deaths within 10 s of a piece falling, the snake whose log it was 42–43% (chance, among those alive, about
+  41.5%); the last snakes never ended on islands of their own (part 2's numbers, before 3+'s islands: "Islands that
+  stay" has them since).
 - **It may cover food:** food in the mark is knocked aside at the strike (see "It knocks food aside").
 - **The cue:** each cell its cut has still to go is nicked on the bark, a short dark slit with a pale rim
   (`render/cut.js`), so you can watch the line close round the piece; the pecked ones are pits.
@@ -77,7 +79,10 @@ it never takes out half the trunk."). It never melts the log: it plans a piece a
   nick is left, the piece lies under a faint dark wash with a dashed pale edge, exactly `piece`'s cells (crumbs
   that go with it included) and no more. It has none of the cut-loose
   shading's sliding streaks, so the two differ by more than darkness, and it stays still with reduced motion. The last
-  peck aimed, no nick is left and "The log stays one piece" takes over, the shading deeper (below).
+  peck aimed, no nick is left and "The log stays one piece" takes over, the shading deeper (below). A piece that will
+  stand as an island (before the frenzy, at the board's edge: 3+) has no wash: a solid pale rim instead, from the first
+  nick (`pieceStanding`; any crumbs or out-of-reach island it takes in keep the wash, as they fall), so what will fall and
+  what will stay show the whole cut.
 
 ### The floor
 
@@ -114,14 +119,33 @@ them (`shutsIn`'s `until`), so it's aimed only if every head on the piece can ge
 ### The log stays one piece
 
 2s. The log is the biggest piece of bark once a peck is out (`cutLoose`); any other piece it cuts loose goes into the mark
-from the aim (`w.fall`) and falls with the strike. No size is banned from falling: what ends up cut loose falls (a rules
-test proves it); it plans small (see "It cuts a shape").
-- **To come: islands that stay** (the owner, 9 November 2026, #611: "maybe not island was a bit harsh. makes jumping
-  between them never happen", then "islands should always be attached to the edges, one must be able to tell clearly
-  what will fall, and what will stay!"): a piece cut off from the rest stays, as an island, only while it is still
-  attached to the board's edge and its gap back to the log is within a jump; a piece attached to nothing falls, and
-  the mark shows it. Measured: jumps between pieces happen, and the last snakes never end each alone on an island of
-  its own. Entry 6, step 3+, in `docs/PROGRESS.md`.
+from the aim (`w.fall`) and falls with the strike, but for an island that stays (below). No size is banned from falling:
+what ends up cut loose falls (a rules test proves it); it plans small (see "It cuts a shape").
+- **Islands that stay** (entry 6, part 3+; the owner, 9 November 2026, #611: "maybe not island was a bit harsh. makes
+  jumping between them never happen, it was just bad before how each always ended up on each their island on each their
+  edge", then, to "a cut may leave an island standing when a jump can reach it", "Yes to all, expertly! and islands
+  should always be attached to the edges, one must be able to tell clearly what will fall, and what will stay!"): a
+  piece cut off from the log stays standing, as an island, only while it touches the board's edge and lies a jump from
+  the log (`LEAP_REACH`, 3 cells of gap or fewer, straight across: `isleHolds`); a piece attached to nothing, or out of a
+  jump's reach, falls, in the mark from the aim. The piece it cuts out: **before the frenzy**, one at the board's edge
+  stays, an island a cell from the log (one round an old hollow, touching no edge, falls); **in the frenzy**, every
+  piece it cuts out falls, as part 2 built it. An island stands only *while*: a later cut that takes the log within its
+  jump drops it with that strike, and the outline it plans then takes it in, washed as its piece (`oneTrunk`); never one
+  with a head on it that couldn't get off (as any fall: "The woodpecker plays fair"). It plans no island bigger than a
+  piece may be (`CUT_SHARE_MAX` of the log; a third in its last try), and crumbs of `PECK_NO_ORPHANS` cells go with the
+  piece. Its fight leaves no island (a tile that would split the log is never its aim). Why the frenzy differs: before
+  it, islands give the snakes somewhere to hop to and from; in it, the log must keep shrinking, and an island out of reach
+  goes, so the last snakes don't each end on one of their own.
+  - **The cue:** a piece its outline is cutting that will stand is ringed with a solid pale line from its first nick, in
+    place of the wash (`pieceStanding`); as a mark comes that leaves an island standing, the island is ringed so (each
+    side that faces the gap or the mark; `render/cut.js`, `newIsles`), brightening as the strike nears; a piece that falls is
+    dark with sliding streaks (below). What stays and what falls differ by line against shading, not by colour alone;
+    the rim stays still with reduced motion.
+  - **Taught:** a lesson the first time a mark leaves an island ("Pale ring: this piece stays. Dark streaks: it falls."),
+    and the Field guide's Islands row. The rivals read islands as any land: the holes round them, the jump that
+    reaches them, and `fall` for an island about to go.
+  - **Measured:** jumps between pieces of log, strikes leaving the log in pieces, and the rounds whose last snakes ended
+    each on an island of their own (the census; the PR's table).
 - **A head on it:** the mark shows it the whole aim; one that gets off in time lives, one still on it at the strike falls
   with it ("Down the hole!"); it's aimed only if every head on it can get off in time ("The woodpecker plays fair"). A body
   lying over it bridges the new hole, as over any peck.
