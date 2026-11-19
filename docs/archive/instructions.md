@@ -1,8 +1,11 @@
 # The owner's instructions, by day
 
-The owner's instructions, decisions and open questions about this project, each quoted word for word with the date and
-time (UTC) it was given, one file per day. A new entry goes at the end of the newest file; the first entry given on a
-new day (UTC) starts that day's file, `instructions/<yyyy-mm-dd>.md`, and its line here.
+The owner's instructions, decisions and open questions about this project, one file per day, each with the date and
+where it was given. Of each, only the decision and the owner's words that carry its reason are kept, spelling and
+grammar corrected and the meaning unchanged: no bare agreement (a yes is written as the decision it made), praise,
+chatter, frustration, or words addressed to a session, and nothing personal (floor rule 11). A new entry goes at the
+end of the newest file; the first entry given on a new day starts that day's file, `instructions/<yyyy-mm-dd>.md`, and
+its line here.
 
 - [11 to 26 October 2026](instructions/2026-10-11-to-26.md): the owner's message log, the polish brief, and the design
   chat of 26 October, when the repositories were set up for building in the cloud
