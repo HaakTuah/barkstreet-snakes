@@ -90,6 +90,15 @@ It cuts only while the log is `CUT_MIN` more than the floor: `FLOOR_PER_LENGTH` 
 together (growth to come too), never under `FLOOR_MIN` (24) cells (`logFloor`). An outline that would go past it is
 given up (its holes stay). The floor falls as snakes starve or go, so it may cut again, a little: a tile here and there
 in the very late game.
+- **Not a lever on length** (entry 6, part 3++, PR #760; #655). Two shapes meant to make length cost room in the
+  frenzy were measured and neither taken: the floor counting each snake at its longest since the frenzy began, or as
+  long as it was when the frenzy began. Snakes come into the frenzy at their longest (about 47 long) and only shrink in
+  it (a cut takes about 30 segments), so either shape holds the floor up instead of letting it fall as snakes shrink:
+  under the second, on seed 81, the frenzy ran 69 → 76 s, the log kept 37 more cells, and starved deaths rose 14 → 21%
+  of all deaths, past design 39's bound. Head to head, the weighing still only tied always eating (always eating
+  +2.5 [−1.9, +6.9] with the first shape, −0.3 [−4.6, +4.1] with the second). Counting each snake at most 16 long
+  changed nothing either (#655). So these three floor shapes are not the lever; #655's comment of 14 November lists
+  others.
 
 ### Then it fights
 
