@@ -47,3 +47,6 @@ the workshop check's 20 KB. New ones are added here.
   dozen the topics lacked (the board's size, golden apple and beetle timings, the stamina's refill, the full-bar fizzle
   and others) were moved to their topics, the lesson and the Field guide teaching each in the game (the
   workshop/readme-front-page PR).
+- *Done:* a check for code nothing uses (the owner, 11 November 2026: "Should we have a rule about removing unused code,
+  expert?", then "Yes, expertly to all, expert!"): `scripts/unused.js`, its exceptions in `tools/unused.json`, in
+  `scripts/test.sh unused` and CI; its one find removed (PR #773).
