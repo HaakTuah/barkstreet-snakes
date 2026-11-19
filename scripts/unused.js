@@ -18,6 +18,7 @@ const listed = JSON.parse(fs.readFileSync(path.join(root, 'tools/unused.json'), 
 const tracked = execFileSync('git', ['ls-files'], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 26 }).split('\n').filter(Boolean)
   .filter(f => !f.startsWith('core/') && fs.existsSync(path.join(root, f)));
 const read = f => fs.readFileSync(path.join(root, f), 'utf8');
+const escape = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // (a name or file name as a pattern that matches only itself)
 
 // Text of a JS file with its comments taken out (strings, template literals and regular expressions kept as they are).
 function stripComments(src) {
@@ -81,7 +82,7 @@ for (const [f, text] of Object.entries(corpus)) {
 // The declaration's own lines count for nothing, and nor do the lines of a declaration found unused: what only
 // dead code names is dead too, so this goes round until no more turn up. A const's own line may name it again in a
 // later declarator (`const A = 1, b = A * 2`), which is a use.
-const nameCount = (f, k, name) => (corpus[f].split('\n')[k].match(new RegExp(`(?<![\\w$])${name.replace(/\$/g, '\\$')}(?![\\w$])`, 'g')) || []).length;
+const nameCount = (f, k, name) => (corpus[f].split('\n')[k].match(new RegExp(`(?<![\\w$])${escape(name)}(?![\\w$])`, 'g')) || []).length;
 let dead = new Set(), more = true;
 const inside = (d, o) => o.file === d.file && o.line >= d.from && o.line <= d.to;
 while (more) {
@@ -106,7 +107,7 @@ for (const f of tracked) {
   if (f.startsWith('tools/dev/') || f.startsWith('docs/') || f.startsWith('.claude/')) continue; // (tools/dev: each its own entry point, run by hand)
   if (/^(tools\/node_modules)/.test(f)) continue;
   const base = path.basename(f);
-  const hit = Object.entries(everything).some(([g, t]) => g !== f && (t.includes(f) || (path.dirname(g) === path.dirname(f) && t.includes(base)) || new RegExp(`['"\`./]${base.replace(/\./g, '\\.')}['"\`]`).test(t)));
+  const hit = Object.entries(everything).some(([g, t]) => g !== f && (t.includes(f) || (path.dirname(g) === path.dirname(f) && t.includes(base)) || new RegExp(`['"\`./]${escape(base)}['"\`]`).test(t)));
   if (!hit) fileUnused.push(f);
 }
 
