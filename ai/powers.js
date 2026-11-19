@@ -61,13 +61,10 @@ function powerPick(crawlIn, crawlDirIn) {
   // power. Star (keepFlash) keeps only a flash's worth for its jumps, for
   // its flashes, its trademark, and minds that wait keepFlash as much as
   // anyone; its flashes mind the jump's worth as anyone's do, 7c: spent
-  // to the last, it had nothing left to get out of a box. What they keep
-  // is keepJump of a jump's worth, set apart from its margin, 7e: a
-  // margin of 6 kept three quarters, and it stopped flashing where no one
-  // else would)
+  // to the last, it had nothing left to get out of a box)
   waitPrice = (cost, flash) => {
     if (trapped) return 0;
-    const reserve = flash ? TUNE.JUMP_STAMINA_MS * (habit.keepJump ?? w.margin / RESERVE_MARGIN) : TUNE.DASH_STAMINA_MS * (habit.keepFlash !== undefined ? 1 : w.margin / RESERVE_MARGIN);
+    const reserve = flash ? TUNE.JUMP_STAMINA_MS * w.margin / RESERVE_MARGIN : TUNE.DASH_STAMINA_MS * (habit.keepFlash !== undefined ? 1 : w.margin / RESERVE_MARGIN);
     return RESERVE_PRICE * (flash ? 1 : habit.keepFlash ?? 1) * (w.style ? w.style.keep : 1) * Math.max(0, reserve - (me.stamina - cost)) / TUNE.STAMINA_MS; // (Ghost's style minds it more: ai/styles.js)
   };
   keep = me.grow > 0 ? me.body.length : me.body.length - 1, stampM = ++markStamp;
