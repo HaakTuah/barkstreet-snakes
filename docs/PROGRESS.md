@@ -10,9 +10,9 @@ The first open entry below is next. The older state notes (27 October 2026) are 
 
 **The main lane is 2y++'s last step** (the flight measured again after part 7), the first open entry that waits on
 nothing: entry 5 ended with part 7's 7f, Vulture's circling (PR #785, not taken: Vulture keeps its driver; design 39,
-"The cast and their trademarks"), so entry 5 and its 2r are done (`docs/archive/progress-done/queue-done.md`), and 3b++,
-Wildcard's part of 3b and entry 4 (the teaching system) wait on nothing either, in the queue's order (3c waits on 3b's
-Wildcard part, 3d on 3c). Entry 6's 3++ is closed as measured (the stand-in's verdict of 19 November on #655: no rule
+"The cast and their trademarks"), so entry 5 and its 2r are done (`docs/archive/progress-done/queue-done.md`); 3b++ and
+Wildcard's part of 3b wait on nothing either, in the queue's order (3c waits on 3b's Wildcard part, 3d on 3c), and entry
+4, the teaching system, can start now as a lane of its own, as its entry says. Entry 6's 3++ is closed as measured (the stand-in's verdict of 19 November on #655: no rule
 keyed on length is the lever). The entries before these are done (`docs/archive/progress-done/queue-done.md`). The polish lane and the workshop lane run
 beside it, each claimed by a draft PR.
 

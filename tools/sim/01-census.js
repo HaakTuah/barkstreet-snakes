@@ -128,8 +128,9 @@ const totals = () => ({ rounds: 0, timeSum: 0, times: [], sudden: 0, draws: 0, s
 //   riding             ticks with the head within 2 of the tail end of a rival 8 or longer (Creeper)
 //   apart              distance from the nearest rival head, summed over ticks (capped at 14: Ghost)
 //   foodShare, beadShare  its share of the round's food eaten, and of the beads (summed over rounds: Gobbler, Vulture)
-//   circling           ticks with the head within CIRCLE of a rival's head in that rival's last CIRCLE_TICKS ticks
-//                        before it died: there when a snake in trouble went (Vulture, the circling before the feast)
+//   lastTicks, circling  a rival's last CIRCLE_TICKS ticks before it died, for each death seen alive, and of them,
+//                        those with the head within CIRCLE of its head: there when a snake in trouble went (Vulture,
+//                        the circling before the feast)
 //   homeTicks, atHome  ticks with a realm, and of those, the head on it (Sovereign)
 //   boxKills           a rival dead on my body, boxed in (no room left after the crash), while my head was within 4 of
 //                        it, closing the box (the rule Mute's mood ring shows): a kill by boxing (Mute, ten minutes alive)
@@ -142,7 +143,7 @@ const CIRCLE = 6, CIRCLE_TICKS = 30; // (near a rival's head, in its last moves:
 const DOUBLED = 3; // (cells beside itself in a row: a stretch of wall two thick)
 const LURE_TICKS = 4; // (a chaser's crash this soon after it was last chasing counts as led into it)
 const CRASHED = ['boxed', 'shorter', 'even', 'tiny', 'boom', 'hole']; // (the deaths that are crashes, as the step's collisions set them: not a cut, hunger, fire or the beak)
-const SIGNS = ['moves', 'runs', 'cells', 'doubled', 'boxKills', 'lured', 'long', 'coiled', 'riding', 'apart', 'foodShare', 'beadShare', 'circling', 'homeTicks', 'atHome', 'skims', 'flashes', 'jumps', 'eats', 'beadsEaten', 'ticks'];
+const SIGNS = ['moves', 'runs', 'cells', 'doubled', 'boxKills', 'lured', 'long', 'coiled', 'riding', 'apart', 'foodShare', 'beadShare', 'lastTicks', 'circling', 'homeTicks', 'atHome', 'skims', 'flashes', 'jumps', 'eats', 'beadsEaten', 'ticks'];
 
 // Capricious in a mood: its signatures count for it, and again under the
 // mood's name ('mason.runs'...), so each impression's trademark can be read
@@ -176,8 +177,10 @@ function signatures(g, T, per, was) {
   for (const e of g.events) {
     if (e.type !== 'death' || !e.snake) continue;
     for (const s of g.snakes) {
+      if (s === e.snake || !s.alive) continue;
+      sigOf(per, s).lastTicks += CIRCLE_TICKS;
       const w = was[s.id], near = w?.near?.[e.snake.id];
-      if (s === e.snake || !near) continue;
+      if (!near) continue;
       const counted = w.circled ||= new Set();
       for (const t of counted) if (t <= g.tick - CIRCLE_TICKS) counted.delete(t);
       for (const [t, sig] of near) if (t > g.tick - CIRCLE_TICKS && !counted.has(t)) { counted.add(t); sig.circling++; }

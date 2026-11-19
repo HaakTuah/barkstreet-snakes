@@ -13,7 +13,8 @@ PERSONAS.vulture = {
   },
 };
 
-// Hover near the snake most likely to die soon (least room for its length).
+// Hover near the snake most likely to die soon (least room for its length: in
+// practice the longest, as room counts no further than ROOM_CAP; 7f, #759).
 DRIVERS.vulture = function () {
   body0ToOwnFree(me.body, me.body.length, 0);
   let best = -1, bestScore = Infinity, currentScore = Infinity;
