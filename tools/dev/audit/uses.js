@@ -7,7 +7,7 @@
 // Two kinds of name are read:
 //   - a shared name: a function, class or const at the start of a line, in a file that adds it to the one shared space;
 //   - a namespace: `window.SnakeX = ...` (the engine's, the AI's, ...), with its members read where another file
-//     takes them by an alias (`const Engine = window.SnakeEngine`, `const { GRID } = Engine`) or by `Engine.member`.
+//     takes them by an alias (`const Engine = window.SnakeEngine`, or `engine = window.SnakeEngine || {}`, `const { GRID } = Engine`) or by `Engine.member`.
 // A use is a mention in code that no scope round it binds (tools/dev/audit/free-names.js): a local or a parameter of the same name
 // as a shared one is not a use, and neither is a word after a dot, an object's key, or what a string or a comment holds; the
 // expressions of a template count. A form of binding that reader does not know is read as a use, so a count may be a little high,
@@ -30,7 +30,7 @@ const PARTS = [...new Set(files.map(partOf))].sort();
 
 const DECL = /^(?:async\s+)?function\s*\*?\s*([A-Za-z_$][\w$]*)|^class\s+([A-Za-z_$][\w$]*)|^(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*[=;,]|^(?:const|let|var)\s+[{[]([^=]*)[}\]]\s*=/;
 const NS = /^window\.([A-Za-z_$][\w$]*)\s*=/;
-const ALIAS = /^(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:window\.)?(Snake[A-Za-z]*)\s*;/;
+const ALIAS = /(?:^|[\s;(,])(?:(?:const|let|var)\s+)?([A-Za-z_$][\w$]*)\s*=\s*(?:window\.)?(Snake[A-Za-z]*)\b(?!\s*[.=(])/; // (`const E = window.SnakeX;`, or `E = window.SnakeX || {};` after a `let E`, at any depth)
 const PICK = /^(?:const|let|var)\s+\{([^}]*)\}\s*=\s*(?:window\.)?([A-Za-z_$][\w$]*)\s*;/;
 
 const info = {};           // file -> { part, lines, bytes, text, tokens, declares: Set, aliases: Map(alias -> namespace), picks: [{ns, member, as}] }
