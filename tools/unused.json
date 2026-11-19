@@ -1,0 +1,12 @@
+{
+  "names": {},
+  "files": {
+    "tools/chatter/": "a part of the chatter suite: tools/chatter-test.js runs the folder's files in name order through tools/parts.js",
+    "tools/input/": "a part of the input suite: tools/input-test.js runs the folder's files in name order through tools/parts.js",
+    "tools/layout/": "a part of the layout suite: tools/layout-test.js runs the folder's files in name order through tools/parts.js",
+    "tools/render/": "a part of the render suite: tools/render-test.js runs the folder's files in name order through tools/parts.js",
+    "tools/rules/": "a part of the rules suite: tools/rules-test.js runs the folder's files in name order through tools/parts.js",
+    "tools/sim/": "a part of the simulation: tools/simulate.js joins the folder's files in name order",
+    "tools/ui/": "a part of the playtest: tools/ui-test.js runs the folder's files in name order through tools/parts.js"
+  }
+}
