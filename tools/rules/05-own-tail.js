@@ -123,7 +123,7 @@ const freeHere = g => (x, y) => passHere(g)(x, y) && !g.food.some(f => f.x === x
   check('a meal lasts HUNGER_MS all round: in the opening, mid-round, once the woodpecker\'s here', times.every(([left, at]) => left === T.HUNGER_MS && at === T.HUNGER_MS), JSON.stringify(times));
 }
 
-{ // Sudden death: the last apples fall one at a time, each wait longer than the last; the first is announced; nothing else grows (beetles still come out).
+{ // Sudden death: the last apples fall at a steady pace, SD_APPLES at a time; the first is announced; nothing else grows (beetles still come out).
   const g = board([[line(3, 2, 3), 'right'], [line(3, 21, 3), 'right']], { time: FRENZY });
   for (const o of g.snakes) o.stunUntil = 1e9;
   g.food = [];
@@ -133,9 +133,11 @@ const freeHere = g => (x, y) => passHere(g)(x, y) && !g.food.some(f => f.x === x
     feed(g); E.step(g);
     told += g.events.filter(e => e.type === 'lastApples').length;
     other += g.food.filter(f => f.kind !== 'food' && f.kind !== 'beetle').length;
-    if (g.food.some(f => f.kind === 'food')) { falls.push(g.tick - gone); g.food = g.food.filter(f => f.kind === 'beetle'); gone = g.tick; }
+    const apples = g.food.filter(f => f.kind === 'food').length;
+    if (apples > T.SD_APPLES) falls.push(-1);
+    if (apples) { falls.push(g.tick - gone); g.food = g.food.filter(f => f.kind === 'beetle'); gone = g.tick; }
   }
-  check('sudden death: the last apples fall one at a time, each later than the last', falls.length === 3 && falls.every((n, i) => Math.abs(n - T.SD_APPLE_GAP * (i + 1)) <= 2), JSON.stringify(falls));
+  check('sudden death: the last apples fall at a steady pace, never more than SD_APPLES on the log', falls.length === 3 && falls.every(n => Math.abs(n - T.SD_APPLE_GAP) <= 2), JSON.stringify(falls));
   check('...the first is announced, once', told === 1, told);
   check('...and nothing else grows (beetles still come out)', other === 0, other);
 }
