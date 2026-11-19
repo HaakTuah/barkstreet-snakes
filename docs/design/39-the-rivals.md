@@ -321,18 +321,18 @@ are off for everyone else, so rounds without Star play exactly as if it didn't e
   it's worth to anyone) is worth six times as much to it, a golden apple one and a half times, and golden power food a
   rival will reach first still counts half.
 - **`territory` 1.2:** of everything tried, the only change that moved its win rate.
-- **Below the band** (7c, 7d, 7e): 10.5% of its rounds won with Star in every one (seeds 199 and 223), 14% on seeds
-  233 and 239. A `margin` of 6 for 4, with a golden craving of 3 for 6, lifted it to 17.5% (7d), but it was not
+- **Below the band** (7c, 7d, 7e): 10.5% of its rounds won with Star in every one (seeds 199 and 223). A `margin` of 6 for 4, with a golden craving of 3 for 6, lifted it to 17.5% (7d), but it was not
   taken: the margin also sets what a flash keeps for a jump (from half a jump's worth to three quarters), so Star no
   longer flashed where no one else would, and its flashes fell by two fifths, to about one and a half times the
   field's. The margin of 6 alone, with what its flashes keep held at half a jump's worth and its craving at 6 (7e),
-  kept the habit (4.3 flashes a minute against the median rival's 1.8) but won 14.5% against 14.0% (seeds 233 and
-  239, ±5): no gain, so it keeps its weights ("The band"). The wider room was not what lifted it; the lower craving
-  and the fewer flashes were.
+  kept the habit (4.3 flashes a minute against the median rival's 1.8) but won about 14.5% against 14% (seeds 233 and
+  239, ±5): no gain, so it keeps its weights ("The band"). So the wider room alone did not lift it; 7d's lift came
+  from the lower craving, the fewer flashes or both, not tried apart. (In the frenzy, where every rival's margin
+  rises by 2, the trial still kept half a jump's worth, where `main`'s Star keeps three quarters.)
 
 Spending powers on small gains makes a rival weaker, so Star stays a threat in two ways: each power goes by the same
 tests of where it goes as anyone's, and pays the full price where a rival could strike, so it rarely flashes into a
-crash; and its craving keeps it stocked with golden jumps. It's tuned into the same band as everyone; its habitual
+crash; and its craving keeps it stocked with golden jumps. It's tuned toward the same band as everyone (still below it: above); its habitual
 jumps neither help nor hurt measurably, and stay because they're the character.
 
 ### Every rival has a power style
@@ -418,7 +418,7 @@ jumps taking the stamina first; and (7d, seeds 181 and 191) 34.5% and 33.0% agai
 flash whenever a flash is ready, their jumps where they fit, which flash nearly four times as often, jump half as
 often and die into themselves nearly twice as often. So both ends hold for both plain powers. Of the rivals
 screened with one in every round (`--with`), Gobbler, Sniper, Colonist, Mute, Mason, Joker and Vulture are in the band,
-Drab on its edge and Star below it (the numbers: entry 5's 7d and 7e); rounds run 219–224 s, above the 160–180 s aimed at. The numbers chosen against it are in each move's section
+Drab on its edge and Star below it (the numbers: entry 5's 7d; Star's, "Star" above); rounds run 219–224 s, above the 160–180 s aimed at. The numbers chosen against it are in each move's section
 of `40-powers-and-moves.md`; the text as it was, with the A/B as it stood then, is in
 `docs/archive/design-arc-and-history.md`.
 
