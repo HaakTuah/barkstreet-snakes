@@ -203,7 +203,7 @@ perched under the board, flying and drumming on it.
 
 ## From one screen (`33-one-screen.md`)
 
-The owner: "I notice that you have to scroll to see all the ui elements outside of the gameplay screen. Is it possible to make it all fit on screen so you don't have to scroll?" (on a 1920×1080 desktop's Chrome with its bookmarks bar, a 1920×945 page, and on a phone). It is: the page is one screen tall now, on every screen, in every state. Every number is CSS px, measured in headless Chrome.
+The owner: "I notice that you have to scroll to see all the ui elements outside of the gameplay screen. Is it possible to make it all fit on screen so you don't have to scroll?" (on a desktop and on a phone). It is: the page is one screen tall now, on every screen, in every state. Every number is CSS px, measured in headless Chrome.
 
 **Why it scrolled.** A 1080p desktop's browser (945 or 969 px tall) had the header and the tags over the board, as the column beside it went only up to 900 px tall, and the board took the window's height less 260 px: room for a quiet chatter and the help, not a full one (its five lines, 85 px more) or the speed buttons (38). With the chatter full the page ran 78 px past the screen, 101 to 116 while you watched or after your death, the chatter's last lines and the help with the keys under the fold, where the arrows and Space can't scroll to. A tablet held upright the same (61 to 117 px). A phone held upright kept 300 px for all but the board and its ledge: with its browser's bars showing it scrolled at the start card (19 to 117 px), 159 to 347 while you watched, and mid-round a phone's page can't be scrolled at all.
 
