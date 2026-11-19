@@ -135,7 +135,7 @@ for (const [ns, us] of nsUsers) { const B = part(nsIn.get(ns)); if (DISPLAY.incl
 const rulesOutward = Object.entries(outward).filter(([f]) => ['engine', 'ai'].includes(part(f))).map(([file, w]) => ({ file, ...w }));
 
 const result = {
-  root, files: files.length, parts: PARTS,
+  files: files.length, parts: PARTS,
   perPart: Object.fromEntries(PARTS.map(p => [p, { files: files.filter(f => part(f) === p).length, lines: files.filter(f => part(f) === p).reduce((a, f) => a + info[f].lines, 0), bytes: files.filter(f => part(f) === p).reduce((a, f) => a + info[f].bytes, 0), sharedNames: names.filter(n => part(n.declaredIn[0]) === p).length }])),
   sharedNames: names.length,
   namesDeclaredInMoreThanOneFile: names.filter(n => n.declaredIn.length > 1).map(n => ({ name: n.name, files: n.declaredIn })),

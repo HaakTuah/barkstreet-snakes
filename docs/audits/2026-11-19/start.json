@@ -1,0 +1,77 @@
+{
+ "runs": 5,
+ "at": "2026-11-19",
+ "profiles": {
+  "desktop": {
+   "cpu": 1,
+   "net": null,
+   "firstVisit": {
+    "paint": 144,
+    "dcl": 753,
+    "load": 755
+   },
+   "secondVisit": {
+    "paint": 88,
+    "dcl": 699,
+    "load": 700
+   },
+   "roundShown": 12,
+   "roundTick": 1244,
+   "requests": 145,
+   "gzippedKb": 693,
+   "scriptMs": 254,
+   "taskMs": 878,
+   "consoleErrors": 0
+  },
+  "phone4g": {
+   "cpu": 4,
+   "net": {
+    "latency": 70,
+    "downloadThroughput": 1125000,
+    "uploadThroughput": 500000
+   },
+   "firstVisit": {
+    "paint": 460,
+    "dcl": 11779,
+    "load": 11789
+   },
+   "secondVisit": {
+    "paint": 184,
+    "dcl": 1646,
+    "load": 1652
+   },
+   "roundShown": 54,
+   "roundTick": 1414,
+   "requests": 145,
+   "gzippedKb": 693,
+   "scriptMs": 932,
+   "taskMs": 4006,
+   "consoleErrors": 0
+  },
+  "phone": {
+   "cpu": 4,
+   "net": {
+    "latency": 150,
+    "downloadThroughput": 200000,
+    "uploadThroughput": 93750
+   },
+   "firstVisit": {
+    "paint": 764,
+    "dcl": 25119,
+    "load": 25132
+   },
+   "secondVisit": {
+    "paint": 168,
+    "dcl": 1539,
+    "load": 1543
+   },
+   "roundShown": 56,
+   "roundTick": 1357,
+   "requests": 145,
+   "gzippedKb": 693,
+   "scriptMs": 803,
+   "taskMs": 3825,
+   "consoleErrors": 0
+  }
+ }
+}

@@ -27,8 +27,7 @@ for (const s of suites) {
   const read = fs.existsSync(reads) ? [...new Set(fs.readFileSync(reads, 'utf8').split('\n').filter(Boolean))] : [];
   const loaded = read.filter(f => gameFiles.has(f)), parts = {};
   for (const f of loaded) parts[part(f)] = (parts[part(f)] || 0) + 1;
-  const log = (r.stdout.match(/logs: (\S+)/) || [])[1] || null;
-  const row = { suite: s, passed: r.status === 0, seconds: Math.round(seconds * 10) / 10, gameFilesLoaded: loaded.length, parts, otherFilesRead: read.filter(f => !gameFiles.has(f)).length, log };
+  const row = { suite: s, passed: r.status === 0, seconds: Math.round(seconds * 10) / 10, gameFilesLoaded: loaded.length, parts, otherFilesRead: read.filter(f => !gameFiles.has(f)).length };
   out.push(row);
   console.log(`${row.passed ? 'PASS' : 'FAIL'} ${s.padEnd(9)} ${String(row.seconds).padStart(7)} s  game files loaded ${String(row.gameFilesLoaded).padStart(3)}/${gameFiles.size}  ${Object.entries(parts).map(([p, n]) => `${p} ${n}`).join(', ')}`);
 }

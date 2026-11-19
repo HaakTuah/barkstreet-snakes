@@ -1,25 +1,25 @@
 {
   "files": {
-    "code": 163,
+    "code": 168,
     "other": {}
   },
   "imports": {
-    "total": 217,
-    "crossingAFolder": 9,
-    "intoTheRepository": 42,
+    "total": 233,
+    "crossingAFolder": 10,
+    "intoTheRepository": 43,
     "external": {
-      "path": 64,
-      "fs": 52,
+      "path": 69,
+      "fs": 57,
       "vm": 20,
-      "child_process": 8,
+      "child_process": 10,
+      "os": 7,
       "crypto": 6,
-      "os": 6,
-      "http": 2,
+      "http": 3,
+      "zlib": 2,
       "worker_threads": 2,
       "internal": 2,
       "v8": 1,
       "util": 1,
-      "zlib": 1,
       "module": 1
     },
     "unresolved": [
@@ -48,7 +48,7 @@
     },
     {
       "file": "tools/browser.js",
-      "importedBy": 10,
+      "importedBy": 11,
       "names": []
     },
     {
@@ -192,10 +192,10 @@
     ]
   },
   "functions": {
-    "count": 725,
+    "count": 741,
     "lines": {
       "median": 4,
-      "p90": 22,
+      "p90": 21,
       "max": 376
     },
     "over50Lines": 20,
@@ -694,10 +694,6 @@
     "commits": 1,
     "pairs": [],
     "mostChanged": [
-      {
-        "file": "tools/dev/audit/free-names.js",
-        "changes": 1
-      },
       {
         "file": "tools/dev/audit/uses.js",
         "changes": 1

@@ -1,0 +1,122 @@
+long scene: draw() script {
+  frames: 300,
+  median: 6.6,
+  p95: 103.6,
+  p99: 109.3,
+  worst: 132.5,
+  'over 6.94 ms': 89,
+  'over 16.7 ms': 30
+} full cost per frame 21.49 ms
+long-star scene: draw() script {
+  frames: 300,
+  median: 6.5,
+  p95: 98.8,
+  p99: 106.7,
+  worst: 112.9,
+  'over 6.94 ms': 55,
+  'over 16.7 ms': 30
+} full cost per frame 20.77 ms
+fields scene: draw() script {
+  frames: 300,
+  median: 29.3,
+  p95: 39.8,
+  p99: 65.6,
+  worst: 70.9,
+  'over 6.94 ms': 300,
+  'over 16.7 ms': 150
+} full cost per frame 21.56 ms
+nofields scene: draw() script {
+  frames: 300,
+  median: 4.5,
+  p95: 66.6,
+  p99: 67.5,
+  worst: 69.1,
+  'over 6.94 ms': 30,
+  'over 16.7 ms': 30
+} full cost per frame 13.98 ms
+intruders scene: draw() script {
+  frames: 300,
+  median: 35.9,
+  p95: 43.4,
+  p99: 57.4,
+  worst: 62.7,
+  'over 6.94 ms': 300,
+  'over 16.7 ms': 150
+} full cost per frame 26.19 ms
+intruders-bare scene: draw() script {
+  frames: 300,
+  median: 4.6,
+  p95: 68.1,
+  p99: 79.4,
+  worst: 90.1,
+  'over 6.94 ms': 30,
+  'over 16.7 ms': 30
+} full cost per frame 13.99 ms
+holes scene: draw() script {
+  frames: 300,
+  median: 4,
+  p95: 63.8,
+  p99: 85.6,
+  worst: 92,
+  'over 6.94 ms': 32,
+  'over 16.7 ms': 30
+} full cost per frame 13.07 ms
+woodpecker scene: draw() script {
+  frames: 300,
+  median: 4,
+  p95: 64.5,
+  p99: 67.9,
+  worst: 73.9,
+  'over 6.94 ms': 30,
+  'over 16.7 ms': 30
+} full cost per frame 14.33 ms
+the land, alternated with its twin 6 times: +7.28 ms a frame, 1.52x (21.30 against 13.98 ms; each pair 1.69 1.53 1.64 1.51 1.51 1.46)
+a rival on it, alternated with its twin 6 times: +11.31 ms a frame, 1.81x (25.38 against 14.00 ms; each pair 1.84 1.83 1.88 1.78 1.63 1.74)
+the land's colour round its rivals, fields scene: +6.47 ms a frame (quartiles 6.05 to 6.72)
+the land's colour round its rivals, intruders scene: +6.29 ms a frame (quartiles 5.75 to 6.58)
+the woodpecker's strike, holes scene (full cost of a frame, ms) {
+  steady: { median: 9, p90: 9.3, worst: 10 },
+  strike: { median: 10.8, p90: 11.1, worst: 12.7 }
+}
+the woodpecker's strike cutting Sovereign's and Colonist's land, and the aim's frames before it (full cost of a frame, ms) {
+  aim: { median: 21.2, p90: 24.5, worst: 41.9 },
+  steady: { median: 20.7, p90: 20.9, worst: 21.2 },
+  strike: { median: 24, p90: 24.7, worst: 26.2 }
+}
+the woodpecker drumming, and its strike, woodpecker scene (full cost of a frame, ms, its own layer too) {
+  drum: { median: 14.1, p90: 19.3, worst: 21.7 },
+  strike: { median: 14.2, p90: 19.2, worst: 21.1 }
+}
+fire burning out in three cells, their soot painted in, holes scene (full cost of a frame, ms) {
+  steady: { median: 10.4, p90: 14.8, worst: 15.2 },
+  burnout: { median: 11.8, p90: 16.2, worst: 18.2 }
+}
+step(), every AI decision included {
+  frames: 8916,
+  median: 1.2,
+  p95: 2,
+  p99: 2.7,
+  worst: 15.1,
+  'over 6.94 ms': 3,
+  'over 16.7 ms': 0
+}
+frames watching at 1x {
+  frames: 1159,
+  median: 1.5,
+  p95: 2.2,
+  p99: 3.5,
+  worst: 8.9,
+  'over 6.94 ms': 3,
+  'over 16.7 ms': 0,
+  fps: 58
+}
+frames watching at 4x {
+  frames: 1010,
+  median: 2.5,
+  p95: 4.9,
+  p99: 6.9,
+  worst: 14.5,
+  'over 6.94 ms': 10,
+  'over 16.7 ms': 0,
+  fps: 50
+}

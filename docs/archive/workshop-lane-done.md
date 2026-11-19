@@ -3,6 +3,7 @@
 The done lines of `docs/PROGRESS.md`'s workshop lane, moved word for word on 3 November 2026 to keep that file under
 the workshop check's 20 KB. New ones are added here.
 
+- *Done:* the audit of how the code is put together (#764, PR #780): its measures in `tools/dev/audit/` (one run, `run.sh`), the report and its baseline numbers in `docs/audits/` (19 November 2026), the eight questions answered by a fresh reader; the cleaning lane it proposes is #783.
 - *Done:* `coughs` removed from `ai/` (nobody coughs: `ai/evaluate.js`, `ai/room.js`, `ai/buffers.js`, `ai/food.js`),
   fingerprint-identical (the workshop/remove-coughs PR).
 - *Done:* the woodpecker's two unplayed cues removed (`audio/cues.js`, `audio/sound.js`; PR #434).

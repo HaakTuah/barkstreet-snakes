@@ -92,7 +92,7 @@ async function once(profile, base) {
 
 (async () => {
   const base = await serve();
-  const result = { root, runs, at: new Date().toISOString().slice(0, 10), profiles: {} };
+  const result = { runs, at: new Date().toISOString().slice(0, 10), profiles: {} };
   for (const profile of Object.keys(PROFILES)) {
     if (only && only !== profile) continue;
     const rs = [];

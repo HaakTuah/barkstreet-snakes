@@ -1,5 +1,4 @@
 {
- "root": "/home/user/barkstreet-snakes",
  "files": 130,
  "parts": [
   "ai",
@@ -33,7 +32,7 @@
    "files": 16,
    "lines": 2998,
    "bytes": 177495,
-   "sharedNames": 186
+   "sharedNames": 185
   },
   "game": {
    "files": 9,
@@ -54,7 +53,7 @@
    "sharedNames": 0
   }
  },
- "sharedNames": 1730,
+ "sharedNames": 1729,
  "namesDeclaredInMoreThanOneFile": [],
  "namespaces": [
   {
@@ -72,8 +71,8 @@
   {
    "namespace": "SnakeEngine",
    "file": "engine/step.js",
-   "members": 21,
-   "files": 18
+   "members": 22,
+   "files": 21
   },
   {
    "namespace": "SnakeRecords",
@@ -149,16 +148,16 @@
   }
  ],
  "namesUsedByOtherFiles": {
-  "used": 838,
+  "used": 837,
   "unusedOutside": 892,
   "byFiles": {
-   "n": 838,
+   "n": 837,
    "median": 1,
    "p90": 4,
    "max": 37
   },
   "byParts": {
-   "n": 838,
+   "n": 837,
    "median": 1,
    "p90": 1,
    "max": 3
@@ -508,8 +507,8 @@
     "files": 1
    },
    "SnakeEngine": {
-    "members": 0,
-    "files": 1
+    "members": 1,
+    "files": 2
    }
   },
   "audio": {},
@@ -615,7 +614,7 @@
   "max": 27
  },
  "mentionsWithinAPartAndAcross": {
-  "within": 1679,
+  "within": 1677,
   "across": 75
  },
  "perPartFileReach": {
@@ -685,7 +684,7 @@
   {
    "file": "engine/step.js",
    "filesReached": 16,
-   "namesOfOthers": 82,
+   "namesOfOthers": 81,
    "partsReached": 1
   },
   {
