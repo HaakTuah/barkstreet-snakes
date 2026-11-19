@@ -2,10 +2,14 @@
 
 History, kept for the record. Sessions read it only when a task points here.
 
+Since 19 November 2026 (#792), these records leave out personal details, real people named as the models for looks,
+and the owner's jokes and political asides; where a record says it was moved word for word, that holds save for those
+cuts.
+
 | File | What it holds |
 | --- | --- |
 | `AUDIT.md` | The third polish pass's audit (from the project's root, moved by the file-by-file review, 2 November 2026): its baseline branch and PRs are long merged. |
-| `instructions.md` | the owner's instructions and decisions given in chat that no other doc recorded, word for word with their dates (UTC). Add new standing ones here. |
+| `instructions.md` | the owner's instructions and decisions given in chat that no other doc recorded, each kept as its decision and the words that carry its reason (#792), with their dates (UTC). Add new standing ones here. |
 | `plan-history.md` | The plan as it grew from round six on (PRs A to D, where each session stopped, the measured numbers), moved word for word from the assistant's project memory. Paths into `.git/[…]-tools` there now mean `tools/dev/` or `docs/handoff/`. |
 | `design-food.md` | The food topic's sections as the round files had them (the round's arc's "Starving is decided after eating"; crashes, not deaths' "Food in the fire cooks" and "Apples rot"; round four's "Food" and its weather and golden food bullets of "Events and timings"; round six A's "Rivals see food as it is" and "Less fruit, more beetles"; the owner's playtest's "Burrows grow shut" and "Beetles and the woodpecker"), word for word with what was tried and measured, moved by "The design by topic, not by round" (#336, 2 November 2026); the current rules are in `docs/design/04-food-and-the-world.md` |
 | `design-woodpecker.md` | The woodpecker's sections as the round files had them (the round's arc's "The woodpecker comes at 2:00, not 3:00" and "The woodpecker, rebuilt"; crashes, not deaths' "The woodpecker, gentler and stranger"; round four's "The woodpecker: holes under you, and holes that look like holes" and its patch-size call; round six A's "The woodpecker plays fair", "A strike that doesn't stutter" and "A woodpecker you can believe"; the owner's playtest's "The woodpecker, 1.3 times", "The woodpecker, as big as it gets" and "The woodpecker pecks beside a snake"), word for word with what was tried and measured, moved by "The design by topic, not by round" (#336, 2 November 2026); the current rules are in `docs/design/38-the-woodpecker.md` |
