@@ -20,39 +20,41 @@ const tracked = execFileSync('git', ['ls-files'], { cwd: root, encoding: 'utf8',
 const read = f => fs.readFileSync(path.join(root, f), 'utf8');
 const escape = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // (a name or file name as a pattern that matches only itself)
 
-// Text of a JS file with its comments taken out (strings, template literals and regular expressions kept as they are).
+// A JS file's text with its comments taken out (strings, template literals and regular expressions kept as they are), and the same
+// text with the insides of those blanked, which is what brackets are counted in.
 function stripComments(src) {
-  let out = '', i = 0, prev = '';
+  let out = '', shape = '', i = 0, prev = '';
+  const blank = t => t.replace(/[^\n]/g, ' ');
   const n = src.length;
   while (i < n) {
     const c = src[i], d = src[i + 1];
     if (c === '/' && d === '/') { while (i < n && src[i] !== '\n') i++; continue; }
-    if (c === '/' && d === '*') { const e = src.indexOf('*/', i + 2); i = e < 0 ? n : e + 2; out += ' '; continue; }
+    if (c === '/' && d === '*') { const e = src.indexOf('*/', i + 2); i = e < 0 ? n : e + 2; out += ' '; shape += ' '; continue; }
     if (c === '"' || c === "'" || c === '`') {
       let j = i + 1;
       while (j < n && src[j] !== c && !(c !== '`' && src[j] === '\n')) j += src[j] === '\\' ? 2 : 1;
-      out += src.slice(i, j + 1); i = j + 1; prev = c; continue;
+      out += src.slice(i, j + 1); shape += blank(src.slice(i, j + 1)); i = j + 1; prev = c; continue;
     }
     if (c === '/' && (prev === '' || '(,=:[!&|?{};+-*%<>~^'.includes(prev) || /(?:return|typeof|case|in|of)$/.test(out.trimEnd().slice(-6)))) {
       let j = i + 1, cls = false;
       while (j < n && src[j] !== '\n' && (src[j] !== '/' || cls)) { if (src[j] === '\\') j++; else if (src[j] === '[') cls = true; else if (src[j] === ']') cls = false; j++; }
-      out += src.slice(i, j + 1); i = j + 1; prev = '/'; continue;
+      out += src.slice(i, j + 1); shape += blank(src.slice(i, j + 1)); i = j + 1; prev = '/'; continue;
     }
-    out += c; if (!/\s/.test(c)) prev = c; i++;
+    out += c; shape += c; if (!/\s/.test(c)) prev = c; i++;
   }
-  return out;
+  return { code: out, shape };
 }
 
 const CODE = /\.(js|html|json|sh|yml|mjs)$/;
-const corpus = {};
+const corpus = {}, shapes = {};
 for (const f of tracked) {
   if (!CODE.test(f) || f.startsWith('docs/') || f === 'tools/unused.json' || f.endsWith('package-lock.json')) continue;
   const t = read(f);
-  corpus[f] = f.endsWith('.js') || f.endsWith('.mjs') ? stripComments(t) : t;
+  if (/\.m?js$/.test(f)) { const r = stripComments(t); corpus[f] = r.code; shapes[f] = r.shape.split('\n'); } else corpus[f] = t;
 }
 
 // Top-level declarations: a function, class, or const/let/var at the start of a line, destructured ones too.
-const DECL = /^(?:export\s+(?:default\s+)?)?(?:async\s+)?function\s*\*?\s*([A-Za-z_$][\w$]*)|^(?:export\s+)?class\s+([A-Za-z_$][\w$]*)|^(?:export\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*[=;]|^(?:export\s+)?(?:const|let|var)\s+[{[]([^=]*)[}\]]\s*=/;
+const DECL = /^(?:export\s+(?:default\s+)?)?(?:async\s+)?function\s*\*?\s*([A-Za-z_$][\w$]*)|^(?:export\s+(?:default\s+)?)?class\s+([A-Za-z_$][\w$]*)|^(?:export\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*[=;]|^(?:export\s+)?(?:const|let|var)\s+[{[]([^=]*)[}\]]\s*=/;
 const declarations = [];
 for (const f of Object.keys(corpus)) {
   if (!/\.m?js$/.test(f)) continue;
@@ -61,14 +63,17 @@ for (const f of Object.keys(corpus)) {
     const m = DECL.exec(line);
     if (!m) return;
     const names = m[4] != null ? m[4].split(',').map(s => s.replace(/.*:/, '').replace(/=.*/, '').replace(/^\s*\.\.\./, '').trim()).filter(s => /^[A-Za-z_$][\w$]*$/.test(s)) : [m[1] || m[2] || m[3]];
-    // a declaration's own lines (so recursion, and what only it names, is no use): to the line where its brackets close
-    let end = i, depth = 0;
-    const isBlock = /^(?:export\s+(?:default\s+)?)?(?:async\s+)?function|^(?:export\s+)?class/.test(line);
+    // a declaration's own lines (so recursion, and what only it names, is no use): to the line where its brackets close; a function
+    // or class whose brackets never do (a miscount) runs to the first line that starts with a closing brace
+    let end = i, depth = 0, closed = false;
+    const isBlock = /^(?:export\s+(?:default\s+)?)?(?:async\s+)?function|^(?:export\s+(?:default\s+)?)?class/.test(line);
+    const shape = shapes[f];
     for (let k = i; k < lines.length; k++) {
-      depth += (lines[k].match(/[{[(]/g) || []).length - (lines[k].match(/[}\])]/g) || []).length;
-      if (depth <= 0) { end = k; break; }
+      depth += (shape[k].match(/[{[(]/g) || []).length - (shape[k].match(/[}\])]/g) || []).length;
+      if (depth <= 0) { end = k; closed = true; break; }
     }
-    for (const name of names) declarations.push({ name, file: f, line: i + 1, from: i, to: end, block: isBlock, kind: /^(?:export\s+(?:default\s+)?)?(?:async\s+)?function/.test(line) ? 'function' : /^(?:export\s+)?class/.test(line) ? 'class' : 'const' });
+    if (!closed && isBlock) for (let k = i + 1; k < lines.length; k++) if (/^\}/.test(lines[k])) { end = k; break; }
+    for (const name of names) declarations.push({ name, file: f, line: i + 1, from: i, to: end, block: isBlock, kind: /^(?:export\s+(?:default\s+)?)?(?:async\s+)?function/.test(line) ? 'function' : /^(?:export\s+(?:default\s+)?)?class/.test(line) ? 'class' : 'const' });
   });
 }
 

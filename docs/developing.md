@@ -63,10 +63,10 @@ The REST calls from a cloud session: `core/modules/github-calls.md`. Updates, De
   a call from a suite, a script tag, an `sw.js` entry, a name inside a string. What only an unused declaration names is
   unused too. A name or file that is reached some way a search cannot see, such as a suite's folder of parts read whole
   by `tools/parts.js`, is listed with its reason in `tools/unused.json`, and an entry nothing needs any more fails as
-  well. It is a net, not a proof: `docs/` is not read, nor are the files of `tools/dev/` (each its own entry point, run
-  by hand; their names are), a name that is also a word elsewhere (`hr` in some markup, a string that happens to be
-  the same) counts as used, of `const a = 1, b = 2;` on one line only `a` is checked, and a file not yet added to git
-  is not seen.
+  well. It is a net, not a proof: `docs/` is not searched for names, the files of `tools/dev/` are not checked as files (each
+  its own entry point, run by hand) though their names are, a name that is also a word elsewhere (`hr` in some markup, a
+  string that happens to be the same) counts as used, of `const a = 1, b = 2;` on one line only `a` is checked, and a
+  file not yet added to git is not seen.
 
 ## Run locally
 
