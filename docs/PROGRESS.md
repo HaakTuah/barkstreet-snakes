@@ -27,7 +27,7 @@ The game's polish lane (`core/modules/work-flow.md`, point 4; the owner, 31 Octo
 - **First: the slop audit** (the owner, 2 November 2026: "Are these 2 games ai sloppy?", then "Yes, please,
   expertly!"): its bar and method are in `docs/slop-bar.md`; the lines it has fixed so far, in
   `docs/archive/progress-done/polish-lane.md`, "The slop audit, done so far". Done: nothing left (one name for each
-  thing, the last item: PR for `polish/one-name-each`).
+  thing, the last item: PR #776).
 - **What belongs, here:** the same thing drawn, named or worded differently in two places (a rival's colours, a move's
   name in the lesson and the Field guide); the phone held upright and sideways; the wording of banners, chatter, the
   Field guide and menus; sound levels that jar. Never the online messages: they go to their entries.

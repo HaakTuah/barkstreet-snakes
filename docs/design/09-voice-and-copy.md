@@ -31,7 +31,7 @@ older notes keep the word they were written with. The rules and the code say *le
 `flash` (some names and the Field guide's picture keys still say flash): "The words" in `40-powers-and-moves.md`. The
 edge of the log is the *edge*, never a wall. A hole in the log is a *hole*, never a pit or a gap (the code and the rules
 say pit), and a move over it is a *jump*, never a hop or a leap (since 19 November 2026: the slop audit's
-last item; "Mind the gap!" and Ghost's "…hollow." stay, as the voices' own idioms). A *ring* is where something lands
+last item; "Mind the gap!", Ghost's "…hollow." and the gaps between snakes it slips through stay, as the voices' own idioms). A *ring* is where something lands
 (a jump's, a flier's, food the woodpecker knocks); the other rings carry their word: the *stamina ring* round your head,
 the *red strike ring*, the *pale ring* of an island. *Bonk!* is for a knock you survive; a death gets a word that means
 out ("Death titles" above).
