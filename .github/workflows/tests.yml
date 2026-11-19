@@ -113,6 +113,8 @@ jobs:
         run: scripts/test.sh versions
       - name: Code nothing uses
         run: scripts/test.sh unused
+      - name: The parts' crossings
+        run: scripts/test.sh crossings
       # Four of seed 3's rounds, each played on its own seed (round r of a run
       # with --seed S is round 0 of one with --seed S + 7919 r): 29, 37 and
       # 38, and 47. Between them they cross every kind of event the engine

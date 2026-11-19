@@ -69,6 +69,14 @@ The REST calls from a cloud session: `core/modules/github-calls.md`. Updates, De
   which a regular expression can still misread (a misread only ever hides a find), and a file not yet added to git is
   not seen.
 
+- **The part check** (`tools/crossings-test.js` with `tools/crossings.json`, run by `scripts/test.sh crossings` and by CI beside the unused
+  check): the parts (a folder of script files, or `root`) share one global space, so this reads the uses with the audit's `uses.js` and holds
+  them to the config. A bare shared name of one part used in another is a crossing and must be in the config's baseline (today's 19, of 17
+  names); one the baseline lists that no longer happens fails too, so the count only goes down. A namespace is taken only by the parts its
+  `mayUse` names (engine takes only `SnakeAI.decide`); engine and ai never use render, audio, chatter or game; a namespace used with no member
+  readable (an alias the reader cannot follow) fails. The suite also stages each of those failures. Something new goes through the part's
+  namespace, never into the baseline.
+
 ## Run locally
 
 `.claude/launch.json` serves the folder on port 5173. Or serve it with any static server (for example `npx serve` or `python -m http.server`) and open it in a browser. Opening `index.html` directly works too.
