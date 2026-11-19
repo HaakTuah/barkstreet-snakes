@@ -1,0 +1,495 @@
+{
+ "rev": "origin/main",
+ "pullRequests": 133,
+ "files": 243,
+ "mostChanged": [
+  {
+   "file": "tuning.js",
+   "pullRequests": 39
+  },
+  {
+   "file": "index.html",
+   "pullRequests": 38
+  },
+  {
+   "file": "version.js",
+   "pullRequests": 36
+  },
+  {
+   "file": "game/friends.js",
+   "pullRequests": 34
+  },
+  {
+   "file": "online.js",
+   "pullRequests": 33
+  },
+  {
+   "file": "game/core.js",
+   "pullRequests": 31
+  },
+  {
+   "file": "tools/online-test.js",
+   "pullRequests": 27
+  },
+  {
+   "file": "game/banners.js",
+   "pullRequests": 25
+  },
+  {
+   "file": "tools/sim/03-report.js",
+   "pullRequests": 20
+  },
+  {
+   "file": "tools/rules-test.js",
+   "pullRequests": 20
+  },
+  {
+   "file": "tools/sim/02-round.js",
+   "pullRequests": 19
+  },
+  {
+   "file": "types/globals.d.ts",
+   "pullRequests": 19
+  }
+ ],
+ "thresholds": {
+  "together": 8,
+  "share": 0.5
+ },
+ "pairsAtThresholds": {
+  "all": 90,
+  "apartNotTests": 51,
+  "withinOnePart": 15,
+  "withATest": 24
+ },
+ "apart": [
+  {
+   "a": "game/friends.js",
+   "b": "version.js",
+   "partA": "game",
+   "partB": "root",
+   "together": 19,
+   "share": 0.56
+  },
+  {
+   "a": "game/core.js",
+   "b": "version.js",
+   "partA": "game",
+   "partB": "root",
+   "together": 19,
+   "share": 0.61
+  },
+  {
+   "a": "game/friends.js",
+   "b": "online.js",
+   "partA": "game",
+   "partB": "root",
+   "together": 19,
+   "share": 0.58
+  },
+  {
+   "a": "game/banners.js",
+   "b": "online.js",
+   "partA": "game",
+   "partB": "root",
+   "together": 17,
+   "share": 0.68
+  },
+  {
+   "a": "game/core.js",
+   "b": "tuning.js",
+   "partA": "game",
+   "partB": "root",
+   "together": 17,
+   "share": 0.55
+  },
+  {
+   "a": "game/friends.js",
+   "b": "tuning.js",
+   "partA": "game",
+   "partB": "root",
+   "together": 17,
+   "share": 0.5
+  },
+  {
+   "a": "online.js",
+   "b": "types/globals.d.ts",
+   "partA": "root",
+   "partB": "types",
+   "together": 17,
+   "share": 0.89
+  },
+  {
+   "a": "game/friends.js",
+   "b": "tools/sim/03-report.js",
+   "partA": "game",
+   "partB": "tools",
+   "together": 15,
+   "share": 0.75
+  },
+  {
+   "a": "game/friends.js",
+   "b": "types/globals.d.ts",
+   "partA": "game",
+   "partB": "types",
+   "together": 15,
+   "share": 0.79
+  },
+  {
+   "a": "game/core.js",
+   "b": "tools/sim/02-round.js",
+   "partA": "game",
+   "partB": "tools",
+   "together": 14,
+   "share": 0.74
+  },
+  {
+   "a": "game/core.js",
+   "b": "tools/sim/03-report.js",
+   "partA": "game",
+   "partB": "tools",
+   "together": 14,
+   "share": 0.7
+  },
+  {
+   "a": "game/friends.js",
+   "b": "tools/sim/01-census.js",
+   "partA": "game",
+   "partB": "tools",
+   "together": 14,
+   "share": 0.78
+  },
+  {
+   "a": "game/friends.js",
+   "b": "tools/sim/02-round.js",
+   "partA": "game",
+   "partB": "tools",
+   "together": 14,
+   "share": 0.74
+  },
+  {
+   "a": "online.js",
+   "b": "tools/sim/03-report.js",
+   "partA": "root",
+   "partB": "tools",
+   "together": 14,
+   "share": 0.7
+  },
+  {
+   "a": "tuning.js",
+   "b": "types/globals.d.ts",
+   "partA": "root",
+   "partB": "types",
+   "together": 14,
+   "share": 0.74
+  },
+  {
+   "a": "game/banners.js",
+   "b": "types/globals.d.ts",
+   "partA": "game",
+   "partB": "types",
+   "together": 14,
+   "share": 0.74
+  },
+  {
+   "a": "game/banners.js",
+   "b": "tools/sim/02-round.js",
+   "partA": "game",
+   "partB": "tools",
+   "together": 13,
+   "share": 0.68
+  },
+  {
+   "a": "game/banners.js",
+   "b": "version.js",
+   "partA": "game",
+   "partB": "root",
+   "together": 13,
+   "share": 0.52
+  },
+  {
+   "a": "game/core.js",
+   "b": "tools/sim/01-census.js",
+   "partA": "game",
+   "partB": "tools",
+   "together": 13,
+   "share": 0.72
+  },
+  {
+   "a": "online.js",
+   "b": "tools/sim/01-census.js",
+   "partA": "root",
+   "partB": "tools",
+   "together": 13,
+   "share": 0.72
+  },
+  {
+   "a": "game/banners.js",
+   "b": "tuning.js",
+   "partA": "game",
+   "partB": "root",
+   "together": 13,
+   "share": 0.52
+  },
+  {
+   "a": "game/core.js",
+   "b": "types/globals.d.ts",
+   "partA": "game",
+   "partB": "types",
+   "together": 13,
+   "share": 0.68
+  },
+  {
+   "a": "game/banners.js",
+   "b": "tools/sim/03-report.js",
+   "partA": "game",
+   "partB": "tools",
+   "together": 12,
+   "share": 0.6
+  },
+  {
+   "a": "online.js",
+   "b": "tools/sim/02-round.js",
+   "partA": "root",
+   "partB": "tools",
+   "together": 12,
+   "share": 0.63
+  },
+  {
+   "a": "tools/sim/02-round.js",
+   "b": "version.js",
+   "partA": "tools",
+   "partB": "root",
+   "together": 12,
+   "share": 0.63
+  },
+  {
+   "a": "tools/sim/03-report.js",
+   "b": "version.js",
+   "partA": "tools",
+   "partB": "root",
+   "together": 12,
+   "share": 0.6
+  },
+  {
+   "a": "tools/sim/03-report.js",
+   "b": "tuning.js",
+   "partA": "tools",
+   "partB": "root",
+   "together": 12,
+   "share": 0.6
+  },
+  {
+   "a": "game/banners.js",
+   "b": "tools/sim/01-census.js",
+   "partA": "game",
+   "partB": "tools",
+   "together": 11,
+   "share": 0.61
+  },
+  {
+   "a": "tools/sim/01-census.js",
+   "b": "tuning.js",
+   "partA": "tools",
+   "partB": "root",
+   "together": 11,
+   "share": 0.61
+  },
+  {
+   "a": "tools/sim/03-report.js",
+   "b": "types/globals.d.ts",
+   "partA": "tools",
+   "partB": "types",
+   "together": 11,
+   "share": 0.58
+  }
+ ],
+ "within": [
+  {
+   "a": "game/core.js",
+   "b": "game/friends.js",
+   "partA": "game",
+   "partB": "game",
+   "together": 28,
+   "share": 0.9
+  },
+  {
+   "a": "online.js",
+   "b": "tuning.js",
+   "partA": "root",
+   "partB": "root",
+   "together": 25,
+   "share": 0.76
+  },
+  {
+   "a": "game/banners.js",
+   "b": "game/friends.js",
+   "partA": "game",
+   "partB": "game",
+   "together": 20,
+   "share": 0.8
+  },
+  {
+   "a": "game/banners.js",
+   "b": "game/core.js",
+   "partA": "game",
+   "partB": "game",
+   "together": 18,
+   "share": 0.72
+  },
+  {
+   "a": "tools/sim/01-census.js",
+   "b": "tools/sim/03-report.js",
+   "partA": "tools",
+   "partB": "tools",
+   "together": 18,
+   "share": 1
+  },
+  {
+   "a": "tools/sim/02-round.js",
+   "b": "tools/sim/03-report.js",
+   "partA": "tools",
+   "partB": "tools",
+   "together": 17,
+   "share": 0.89
+  },
+  {
+   "a": "tools/sim/01-census.js",
+   "b": "tools/sim/02-round.js",
+   "partA": "tools",
+   "partB": "tools",
+   "together": 15,
+   "share": 0.83
+  },
+  {
+   "a": "index.html",
+   "b": "sw.js",
+   "partA": "root-other",
+   "partB": "root-other",
+   "together": 15,
+   "share": 0.94
+  },
+  {
+   "a": "game/friends.js",
+   "b": "game/round.js",
+   "partA": "game",
+   "partB": "game",
+   "together": 12,
+   "share": 0.8
+  },
+  {
+   "a": "game/core.js",
+   "b": "game/round.js",
+   "partA": "game",
+   "partB": "game",
+   "together": 11,
+   "share": 0.73
+  },
+  {
+   "a": "game/banners.js",
+   "b": "game/round.js",
+   "partA": "game",
+   "partB": "game",
+   "together": 11,
+   "share": 0.73
+  },
+  {
+   "a": "game/friends.js",
+   "b": "game/hud.js",
+   "partA": "game",
+   "partB": "game",
+   "together": 10,
+   "share": 0.63
+  },
+  {
+   "a": "game/core.js",
+   "b": "game/input.js",
+   "partA": "game",
+   "partB": "game",
+   "together": 9,
+   "share": 0.82
+  },
+  {
+   "a": "game/core.js",
+   "b": "game/hud.js",
+   "partA": "game",
+   "partB": "game",
+   "together": 8,
+   "share": 0.5
+  },
+  {
+   "a": "engine/core.js",
+   "b": "engine/view.js",
+   "partA": "engine",
+   "partB": "engine",
+   "together": 8,
+   "share": 0.89
+  }
+ ],
+ "testsMostOften": [
+  {
+   "a": "online.js",
+   "b": "tools/online-test.js",
+   "partA": "root",
+   "partB": "tests",
+   "together": 25,
+   "share": 0.93
+  },
+  {
+   "a": "tools/online-test.js",
+   "b": "tuning.js",
+   "partA": "tests",
+   "partB": "root",
+   "together": 22,
+   "share": 0.81
+  },
+  {
+   "a": "game/core.js",
+   "b": "tools/input/07-cards-setup-and-lessons.js",
+   "partA": "game",
+   "partB": "tests",
+   "together": 14,
+   "share": 0.88
+  },
+  {
+   "a": "game/friends.js",
+   "b": "tools/input/07-cards-setup-and-lessons.js",
+   "partA": "game",
+   "partB": "tests",
+   "together": 14,
+   "share": 0.88
+  },
+  {
+   "a": "tools/online-test.js",
+   "b": "types/globals.d.ts",
+   "partA": "tests",
+   "partB": "types",
+   "together": 14,
+   "share": 0.74
+  },
+  {
+   "a": "game/friends.js",
+   "b": "tools/online-test.js",
+   "partA": "game",
+   "partB": "tests",
+   "together": 14,
+   "share": 0.52
+  },
+  {
+   "a": "game/banners.js",
+   "b": "tools/online-test.js",
+   "partA": "game",
+   "partB": "tests",
+   "together": 14,
+   "share": 0.56
+  },
+  {
+   "a": "tools/rules-test.js",
+   "b": "tuning.js",
+   "partA": "tests",
+   "partB": "root",
+   "together": 13,
+   "share": 0.65
+  }
+ ]
+}

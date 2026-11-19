@@ -52,8 +52,9 @@ the owner's notes of 2 November, the portals blue and orange and the woodpecker'
   threshold for "by more than chance" listed as a first guess; points (2) to (4) are done (`docs/archive/workshop-lane-done.md`).
   What changes the AI, the engine's rules or the online messages goes to the main lane as an entry of its own.
 - **The owner's audit, prune and trials** (agreed in chat, 14 and 15 November 2026; the stand-in's yes, 19 November):
-  #764, the audit of how the code is put together, first (#771's view on the stack waits on its baseline); #765, the
-  prune of the records of the owner's words, a routine lane; and the trials, nothing merged, each reporting to the core:
+  #764, the audit of how the code is put together, done (PR #780: `docs/audits/`, its baseline for #771's view on the stack; its
+  cleaning lane is #783 and its two small drifts #784, waiting for the stand-in's verdicts); #765, the
+  prune of the records of the owner's words, a routine lane, next; and the trials, nothing merged, each reporting to the core:
   #766 (a first-time player), #769 (the change probe), #767 (a public rule set) and #768 (two rival entries measured
   side by side: the next two in the main lane on different files).
 - **The file-by-file review** (the owner, 2 November 2026; part 1, the docs every session reads, done in PR #334;
