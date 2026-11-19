@@ -281,12 +281,14 @@ leads are checked again on fresh seeds in 7c(iii); seeds 3 and 11 on `main` at 7
 16.4% and 16.1%; Joker 16.6 and 13.9 against 13.4 and 12.6; Mute 0.99 and 0.44 against 0.23 and 0.31). Joker's lead held on two
 fresh seeds in 7d (13.7 and 14.9 against 12.6 and 12.7, Joker in every round); Vulture's share of the beads leads
 thinly (25.3% and 27.4% against 24.9% and 24.2%, Vulture in every round, seeds 193 and 197), and four rivals take
-more of the beads than it does. 7f (PR #785) added a measure of the circling a player would see (`circling`: ticks with
-the head within 6 of a rival's head in that rival's last 30 ticks) and tried three drivers for more teeth: closing in
-on the mark as its room per length runs out, a snake really boxed in (room under the 120 cells the AI counts) first,
-and that with a pull three times as strong. None moved the beads past noise (seed 211, 200 rounds, Vulture in every
-round: 28.4%, 28.6% and 28.4% against 27.5% on `main`, the field about 24%) or the circling (0.7%, as the field's),
-and the win rate stayed in the band (28%, 24%, 21%; 23% on `main`). A boxed-in snake is its mark in about one decision
+more of the beads than it does. 7f (PR #785) added a measure of the circling a player would see (`circling`: of a rival's last
+30 ticks before it died, for each death seen alive, those with the head within 6 of its head; 26.3% and 26.9% against
+the field's 26.4% and 25.9% on `main`, seeds 211 and 223, level at 9 cells too) and tried three drivers for more
+teeth: closing in on the mark as its room per length runs out, a snake really boxed in (room under the 120 cells the
+AI counts) first, and that with a pull three times as strong. None moved the beads past noise (seed 211, 200 rounds,
+Vulture in every round: 28.4%, 28.6% and 28.4% against 27.5% on `main`, the field about 24%) or the circling (level
+with the field's in every run, as the measure first stood: a share of all ticks), and the win rate stayed in the band
+(28%, 24%, 21%; 23% on `main`). A boxed-in snake is its mark in about one decision
 in ten, and its end comes before Vulture, most often 12 cells or more away, gets there. So Vulture keeps its driver:
 its bead lead holds on fresh seeds (+3.3 and +6.0 points, seeds 211 and 223), and its circling stays level with the
 field. Joker sits in the band after 7a and 7b; Star, the one persona still below it, is not
