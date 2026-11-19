@@ -67,7 +67,7 @@ choice: a crash stops you dead and stuns you; fire lets you keep going.
 - *The cue:* flames run along your back, with embers and smoke; catching, a burst of flame and a whoosh; each piece
   lost, a hiss and a pop.
 - *The lesson:* "On fire: 3 bites of tail, and at 3 it ends you. Rain helps."
-- *The Field guide's Fire row:* "Lightning lights it. Crawl in and it takes 3 bites of tail; rain puts it out."
+- *The Field guide's Fire row:* "Lightning lights it, and rain or snow puts it out. Crawl in and it takes 3 bites of tail."
 - *The rivals* plan round fire like a wall, but when every other move is a crash or worse, they go through the fire
   rather than crash; never as a shortcut.
 

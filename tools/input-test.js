@@ -221,11 +221,9 @@ const KEYS = {
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: PRE });
 
     await runParts.inside(path.join(__dirname, 'input'), { launch, serve, P, results, check, stats, PRE, INSTRUMENT, VCLOCK, KEYS, site, b, ev, down, up, key, powers, state, startRound, freshRound, toTick });
-    if (b.errors.length) { console.log('page errors:', b.errors); report.failed++; }
   } finally {
     await b.close();
     site.close();
   }
-  if (report.failed) { console.error(`\n${report.failed} failed`); process.exit(1); }
-  console.log(`\nall passed (${results.length} checks)`);
+  report.end(b, { printed: true }); // (the last part printed its lines)
 })().catch(e => { console.error(e); process.exit(1); });

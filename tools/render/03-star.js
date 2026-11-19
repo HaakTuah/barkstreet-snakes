@@ -292,7 +292,6 @@ const copyHues = bows.copy.map(hueOf), starHues = bows.star.map(hueOf), paler = 
 check(new Set(copyHues).size === 4 && copyHues.every((h, i) => dh(h, starHues[i]) < 14) && paler && bows.tint !== '#f3d577',
   'Copycat copying Star wears a pale copy of its rainbow, flowing with Star’s, not a pale gold',
   `hues of segments 2, 3, 4, 7: ${copyHues.join(', ')} (Star’s ${starHues.join(', ')}); ${JSON.stringify(bows.copy)} against ${JSON.stringify(bows.star)}; its colour ${bows.tint}`);
-const [hr, hg, hb] = bows.head;
 const far = (c, w) => Math.hypot(c[0] - w[0], c[1] - w[1], c[2] - w[2]);
 const FLAG = [222, 41, 16], hex = h => [1, 3, 5].map(k => parseInt(h.slice(k, k + 2), 16));
 const halfModel = hex(bows.model).map((v, k) => Math.round((v + FLAG[k]) / 2));

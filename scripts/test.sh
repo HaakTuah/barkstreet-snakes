@@ -5,7 +5,7 @@
 #   scripts/test.sh rules render
 cd "$(dirname "$0")/.." || exit 2
 [ "$(id -u)" = 0 ] && export CI="${CI:-1}"   # Chrome refuses to run as root with its sandbox
-suites=("$@"); [ ${#suites[@]} -eq 0 ] && suites=(types rules online net chatter records sw licences versions scope csp copies render input layout ui)
+suites=("$@"); [ ${#suites[@]} -eq 0 ] && suites=(types rules online net chatter records sw licences versions unused scope csp copies render input layout ui)
 # one folder per run, so runs at once never share logs; those of runs no longer running go
 for d in "${TMPDIR:-/tmp}"/barkbite-tests-*; do [ -d "$d" ] && ! kill -0 "${d##*-}" 2>/dev/null && rm -rf "$d"; done
 dir="${TMPDIR:-/tmp}/barkbite-tests-$$"; mkdir -p "$dir"; fail=0
@@ -28,6 +28,8 @@ for s in "${suites[@]}"; do
       const found = current(JSON.parse(fs.readFileSync("tools/versions.json", "utf8")).entries, ".");
       if (!found.length) throw new Error("tools/versions.json lists no versions");
       for (const e of found) console.log(`ok   ${e.name} ${e.version} in ${e.file}`);' >"$log" 2>&1; rc=$?
+  elif [ "$s" = unused ]; then # (code nothing names: scripts/unused.js, its exceptions in tools/unused.json)
+    node scripts/unused.js >"$log" 2>&1; rc=$?
   else node "tools/$s-test.js" >"$log" 2>&1; rc=$?; fi
   t=$(( $(date +%s) - start ))
   if [ $rc -eq 0 ]; then echo "PASS $s (${t}s)"; else

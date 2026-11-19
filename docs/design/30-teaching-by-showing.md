@@ -51,9 +51,9 @@ print lives in the Field guide, or comes when it happens (*Snip!*).
   (4.5 s, the fade and the breather), so it can wait out one but not two. Up to three lessons wait. One that no longer
   holds (`opts.still`, as yours once you're out) is let go while it waits, and fades early while it shows. The
   woodpecker's rule waits from when its news comes up (`opts.follows`), since its moment is the news's.
-- **Rules with only one of the two** (audit of 13 November 2026, "No rule untaught"): the weather and the rainbow, a
-  friend going quiet (an AI steering) and the Jump row's silence on a press made too early have a cue and a banner or
-  lesson but no Field guide row or clause; the idea is #739.
+- **Rules that had only part of the three** (audit of 13 November 2026, "No rule untaught"): the weather and the rainbow,
+  a friend going quiet (an AI steering) and the Jump row's press made too early have their Field guide rows and clause
+  now (#739).
 
 ### The banner
 
@@ -98,8 +98,9 @@ lessons too, keeps these rules.
 
 ### The Field guide
 
-Every food, power and danger, in six parts (`GUIDE_ROWS` in `game/friends.js`): **The basics** (Winning, Steering,
-Crashes, Hunger), **Food**, **Golden things**, **Your powers**, **The log** and **Rivals who change**; its doors are
+Every food, power and danger, in seven parts (`GUIDE_ROWS` in `game/friends.js`): **The basics** (Winning, Steering,
+Crashes, Hunger), **Food**, **Golden things**, **Your powers**, **The log** (with Weather, its sun, wind, rain, storm,
+snow and rainbow), **Rivals who change** and **Online** (Gone quiet: an AI steering for a quiet friend); its doors are
 below.
 - **A row** is its picture, drawn by the renderer as it is on the log (a stand-in if it can't be drawn), its name and
   its rule in a line or two, with the numbers from `tuning.js` and the keys for a keyboard or for touch. A screen
