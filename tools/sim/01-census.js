@@ -171,13 +171,16 @@ function signatures(g, T, per, was) {
   for (const s of alive) for (const c of s.body) mark[c.y * N + c.x] = all;
   const bodyAt = (x, y) => x >= 0 && y >= 0 && x < N && y < N && mark[y * N + x] === all;
   // Kills by boxing and chasers led into a crash, by what the tick before saw (was: each one's targets and chasers then).
-  // Circling: the ticks each one was near a snake that died now, in its last CIRCLE_TICKS (was: when it was near each).
+  // Circling: the ticks each one was near a snake that died now, in its last CIRCLE_TICKS (was: when it was near each,
+  // and its sums then, so Capricious's count under the mood it was in; a tick near two that died counts once).
   for (const e of g.events) {
     if (e.type !== 'death' || !e.snake) continue;
     for (const s of g.snakes) {
-      const near = was[s.id]?.near?.[e.snake.id];
+      const w = was[s.id], near = w?.near?.[e.snake.id];
       if (s === e.snake || !near) continue;
-      for (const t of near) if (t > g.tick - CIRCLE_TICKS) sigOf(per, s).circling++;
+      const counted = w.circled ||= new Set();
+      for (const t of counted) if (t <= g.tick - CIRCLE_TICKS) counted.delete(t);
+      for (const [t, sig] of near) if (t > g.tick - CIRCLE_TICKS && !counted.has(t)) { counted.add(t); sig.circling++; }
       near.length = 0;
     }
   }
@@ -220,7 +223,7 @@ function signatures(g, T, per, was) {
       if (o === s) continue;
       const oh = o.body[0], d = Math.abs(oh.x - h.x) + Math.abs(oh.y - h.y), t = o.body[o.body.length - 1];
       nearest = Math.min(nearest, d);
-      if (d <= CIRCLE) { const ts = nearBy[o.id] ||= []; ts.push(g.tick); if (ts.length > CIRCLE_TICKS) ts.shift(); }
+      if (d <= CIRCLE) { const ts = nearBy[o.id] ||= []; ts.push([g.tick, p]); if (ts.length > CIRCLE_TICKS) ts.shift(); }
       if (d <= 4 && o.dir.x * (h.x - oh.x) + o.dir.y * (h.y - oh.y) > 0) chasers[o.id] = g.tick; // (its head near and heading at mine: chasing me)
       if (o.body.length >= 8 && Math.abs(t.x - h.x) + Math.abs(t.y - h.y) <= 2) ride = true;
     }
