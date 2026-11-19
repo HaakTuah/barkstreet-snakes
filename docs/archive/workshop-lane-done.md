@@ -59,3 +59,6 @@ the workshop check's 20 KB. New ones are added here.
   rivals' thinking, and which rivals thought ahead, change the host's game, #729, fixed in PR #741: each decision draws
   from a stream of its own). The updating rule needs nothing: `docs/design/36-updating.md` takes a new version between
   rounds, as the core's "Players always play the newest version" now says.
+- *Done:* a check for code nothing uses (the owner, 11 November 2026: "Should we have a rule about removing unused code,
+  expert?", then "Yes, expertly to all, expert!"): `scripts/unused.js`, its exceptions in `tools/unused.json`, in
+  `scripts/test.sh unused` and CI; its two finds removed (PR #773).
