@@ -121,10 +121,10 @@ hop rarely reaches the next island across a hollow.
 - *The lessons:* the first plain jump or dash that leaves you tired, "One stamina: jump or dash, your choice."; the first time you're boxed in
   with a jumpable gap, "Space hops up to three cells. Hop the gap!" ("Tap to hop up to three cells. Hop the gap!" on a
   phone).
-- *The Field guide's Jump row:* "Space or a click on the log: hop snakes, holes or fire, up to 3 cells, to the first
-  free cell: across a gap too. Press twice to leap now, open ground too. A ring shows where you’ll land. It takes half
-  of your stamina. Bump into a flier in the air and you drop: onto a body or into a hole, you’re out. Lie on a
-  flier’s ring before it lands and it’s out: rivals will try it on you." (On a phone: "A tap", "Tap twice".)
+- *The Field guide's Jump row:* "Space or a click on the log: jump over snakes, holes or fire, up to 3 cells, and
+  land on the first free cell beyond. Press twice to jump now, open ground too. A ring shows where you’ll land. A jump
+  takes half of your stamina. Bump a flier in the air and you drop: onto a body or into a hole, you’re out. Lie on a
+  flier’s ring before it lands and it’s out. Rivals will try that on you." (On a phone: "A tap", "Tap twice".)
 - *The sound:* a springy boing up and a whoosh of air.
 - *The rivals* ask for it through the same call (`memory.power` from `decide()`: `leap()` in `engine/powers.js`), with
   the same rules and the same waiting: out of a crash or a box, to another island, or to come down on food. They don't
@@ -158,8 +158,8 @@ who never double-presses.
 - *The cue:* a gold ring marks where you'll land, from the moment you commit, and moves only as you steer. A golden
   leap rises higher than a plain one, with a puff of gold.
 - *The lesson:* on your first golden jump, "Hold the jump to fly 5 cells. Steer to land!"
-- *The Field guide's Golden beetle row:* "2 golden jumps: free, no stamina. Tap for the plain hop; hold the jump and you
-  fly 5 cells, always, steering in the air to land where it's safe. Hold up to 3."
+- *The Field guide's Golden beetle row:* "2 golden jumps, free of stamina. A tap is a plain jump. Hold it and you fly the
+  full 5 cells, steering in the air to land where it’s safe. You can hold up to 3."
 - *The rivals* plan a flight as they take off, straight or with one turn (left or right, after any number of cells):
   the plain hop, or the full 5. The engine flies it by the same rule as a person's turn (`airTurn`, from the rival's
   `flyTurn`), and the rival plans its turn again every move it's up. A leap now, a held flight and a turned one take
@@ -257,9 +257,9 @@ starved snakes, in simulation.
 - *The cue:* the cut is a snip of light across the body and the beads spill, with a "Snip!".
 - *The lessons:* your first cut, "A dash cuts through a thin body."; "Snip! You cut Name in two."; cut yourself,
   "Snip. Name dashed right through you."
-- *The Field guide's Cuts row:* "A dash cuts through a body one thick with free log beyond: the part behind falls to
-  beads. Leave fewer than 3 in front and that snake is out. Your own body too: drop your tail to fit a pocket. Along the
-  edge, or against a hole or another body, nothing can be cut from that side."
+- *The Field guide's Cuts row:* "A dash cuts through a body one thick if free log lies beyond it, and the part behind
+  falls to beads. Leave fewer than 3 in front and that snake is out. You can cut your own body, to drop your tail and
+  fit a pocket. Along the edge, or against a hole or another body, you can’t cut from that side."
 - *The rivals:* a cut rival's tail is worth to them 0.1 apple a segment, up to 12, times (0.5 + aggression), their
   target's twice; only the hunters and the aggressive weigh a cut off to the side.
 

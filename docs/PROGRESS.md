@@ -26,9 +26,9 @@ the owner, answered".
 The game's polish lane (`core/modules/work-flow.md`, point 4; the owner, 31 October 2026).
 - **First: the slop audit** (the owner, 2 November 2026: "Are these 2 games ai sloppy?", then "Yes, please,
   expertly!"): its bar and method are in `docs/slop-bar.md`; the lines it has fixed so far, in
-  `docs/archive/progress-done/polish-lane.md`, "The slop audit, done so far". *Left:* the guide's Burrows, Jump, Cuts
-  and Golden beetle rows, and one name for each thing (hole, pit or gap; jump, hop or leap; the rings). Wildcard's and
-  Mason's protected lines stay as they are; the Chinese is rewritten with each changed line.
+  `docs/archive/progress-done/polish-lane.md`, "The slop audit, done so far". *Left:* one name for each thing (hole, pit
+  or gap; jump, hop or leap; the rings) everywhere but the four guide rows done. Wildcard's and Mason's protected lines
+  stay as they are; the Chinese is rewritten with each changed line.
 - **What belongs, here:** the same thing drawn, named or worded differently in two places (a rival's colours, a move's
   name in the lesson and the Field guide); the phone held upright and sideways; the wording of banners, chatter, the
   Field guide and menus; sound levels that jar. Never the online messages: they go to their entries.
