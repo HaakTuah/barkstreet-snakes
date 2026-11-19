@@ -62,7 +62,9 @@ function shadowAt(x, y, scale) {
 // tired snake and an awake one, wearing your ring: see guideStamina), squash (your own bead
 // squashed flat behind you), cut (a body cut through), failflash (a
 // failed flash's burst and stars),
-// lostflag (a colony's flag falling into its pit), dig (a beetle half
+// lostflag (a colony's flag falling into its pit), weather (sun, cloud and
+// rain), rainbow (an arch rising out of a golden apple), away (a snake with a
+// "…" bubble: an AI steering for a quiet friend), dig (a beetle half
 // sunk in sawdust, digging in), knock (an apple flying out of the
 // woodpecker's mark to the ring where it lands), and the basics (How to
 // play's first rows): basic-win, basic-steer, basic-crash, basic-hunger.
@@ -170,6 +172,43 @@ const GUIDE = {
     g.beginPath(); g.moveTo(px + pw / 2, py + ph / 2); g.quadraticCurveTo(0, -1.25 * c, lx, ly - c * 0.1); g.stroke();
     g.setLineDash(NO_DASH);
     g.save(); g.translate(0.08 * c, -0.48 * c); g.rotate(0.35); g.scale(0.9, 0.9); drawApple(g, 'fresh'); g.restore();
+  },
+  weather: g => { // (the spells in one: the sun half behind a cloud, rain falling from it)
+    const c = CELL;
+    g.lineJoin = g.lineCap = 'round';
+    g.strokeStyle = '#facc15'; g.lineWidth = c * 0.06;
+    g.beginPath();
+    for (let k = 0; k < 8; k++) { const t = k * TAU / 8; g.moveTo(-c * 0.22 + Math.cos(t) * c * 0.27, -c * 0.2 + Math.sin(t) * c * 0.27); g.lineTo(-c * 0.22 + Math.cos(t) * c * 0.38, -c * 0.2 + Math.sin(t) * c * 0.38); }
+    g.stroke();
+    g.fillStyle = '#fde047'; g.strokeStyle = INK; g.lineWidth = c * 0.05;
+    g.beginPath(); g.arc(-c * 0.22, -c * 0.2, c * 0.2, 0, TAU); g.fill(); g.stroke();
+    for (const [col, grow] of [[INK, 0.045], ['#e5e7eb', 0]]) { // (the cloud: its puffs and base, inked round all of them, then filled)
+      g.fillStyle = col;
+      for (const [x, y, r] of [[-0.02, 0.1, 0.15], [0.14, 0.01, 0.2], [0.33, 0.1, 0.14]]) { g.beginPath(); g.arc(c * x, c * y, c * (r + grow), 0, TAU); g.fill(); }
+      g.beginPath(); g.roundRect(-c * (0.02 + grow), c * (0.1 - grow), c * (0.35 + 2 * grow), c * (0.14 + 2 * grow), c * 0.07); g.fill();
+    }
+    g.strokeStyle = '#38bdf8'; g.lineWidth = c * 0.05;
+    g.beginPath();
+    for (const x of [0.02, 0.18, 0.34]) { g.moveTo(c * x, c * 0.4); g.lineTo(c * (x - 0.05), c * 0.52); }
+    g.stroke();
+  },
+  rainbow: g => { // (the rainbow's own colours, red outermost, rising out of a golden apple)
+    const c = CELL;
+    g.lineCap = 'butt'; g.lineWidth = c * 0.052;
+    RAINBOW.forEach((col, i) => { g.strokeStyle = col; g.beginPath(); g.arc(0, c * 0.3, c * (0.28 + (RAINBOW.length - 1 - i) * 0.05), Math.PI, TAU); g.stroke(); });
+    g.save(); g.translate(-c * 0.41, c * 0.2); g.scale(0.62, 0.62); drawGolden(g); g.restore();
+  },
+  away: g => { // (a snake, and over its head a bubble of dots: its player has gone quiet)
+    const c = CELL;
+    g.translate(c * 0.1, c * 0.2); g.scale(0.7, 0.7);
+    guideSnake(g, '#4ade80', true, (x, y) => {
+      const w = c * 0.9, h = c * 0.44, bx = x + c * 0.1 - w / 2, by = y - c * 0.82 - h / 2;
+      g.beginPath(); g.roundRect(bx, by, w, h, h / 2);
+      g.fillStyle = '#f6ecd2'; g.fill();
+      g.strokeStyle = INK; g.lineWidth = c * 0.06; g.stroke();
+      g.fillStyle = INK;
+      for (const dx of [-0.25, 0, 0.25]) { g.beginPath(); g.arc(x + c * (0.1 + dx), by + h / 2, c * 0.055, 0, TAU); g.fill(); }
+    });
   },
   lostflag: g => { // (a colony lost to the woodpecker: its flag tipping into the pit pecked out under it)
     guideCells(GUIDE_PIT); g.save(); g.translate(-12.5 * CELL, -12.5 * CELL); drawPits(g, guideMask, 0, 0, GRID - 1, GRID - 1); g.restore();

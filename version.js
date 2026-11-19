@@ -10,6 +10,7 @@
 window.SnakeVersion = {
   build: 'dev',
   news: [
+    { on: '2026-11-19', line: 'Field guide rows: weather, and friends gone quiet.' },
     { on: '2026-11-14', line: 'Islands at the edge stay standing: jump across.' },
     { on: '2026-11-13', line: 'Rivals beat the woodpecker and jump out of traps.' },
     { on: '2026-11-13', line: 'Lean and plentiful seasons stay marked all round.' },

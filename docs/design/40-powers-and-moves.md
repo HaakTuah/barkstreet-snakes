@@ -122,7 +122,7 @@ hop rarely reaches the next island across a hollow.
   with a jumpable hole, "Space jumps up to three cells: enough to clear that hole." ("Tap to jump up to three cells: enough
   to clear that hole." on a phone).
 - *The Field guide's Jump row:* "Space or a click on the log: jump over snakes, holes or fire, up to 3 cells, and
-  land on the first free cell beyond. Press twice to jump now, even over open ground. A ring shows where you’ll land. Each jump
+  land on the first free cell beyond. Press twice to jump now, even over open ground. A press made too early waits five moves for something to jump, then gives up. A ring shows where you’ll land. Each jump
   takes half of your stamina. Bump a flier in the air and you drop: onto a body or into a hole, you’re out. Lie on a
   flier’s ring before it lands and it’s out. Rivals will try that on you." (On a phone: "A tap", "Tap twice".)
 - *The sound:* a springy boing up and a whoosh of air.
