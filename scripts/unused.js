@@ -110,7 +110,6 @@ for (const f of tracked) {
   if (!hit) fileUnused.push(f);
 }
 
-const explained = new Set(Object.keys(listed.names || {}).concat(Object.keys(listed.files || {})));
 const coversFile = f => Object.keys(listed.files || {}).find(k => f === k || (k.endsWith('/') && f.startsWith(k)));
 const out = [];
 const notExplained = [];
