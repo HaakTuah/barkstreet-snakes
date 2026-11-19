@@ -1,0 +1,25 @@
+{
+  "about": "The part check's config (tools/crossings-test.js). A part is a folder of script files, or `root` for the files beside index.html. mayUse: for each namespace (window.SnakeX, or TUNING), the other parts that may take from it; \"*\" is every part. only: of a namespace, the members a part may take (engine takes only SnakeAI.decide). baseline: the bare shared names a part uses of another's, as {using part: {declaring part: [names]}}: today's crossings, which only ever shrink. Never add an entry: go through the namespace; delete one when its last use goes.",
+  "mayUse": {
+    "TUNING": "*",
+    "SnakeEngine": ["ai", "chatter", "game", "render"],
+    "SnakeAI": ["chatter", "engine", "game", "root"],
+    "SnakeRender": ["chatter", "game"],
+    "SnakeAudio": ["game", "render"],
+    "SnakeChatter": ["game"],
+    "SnakeRecords": ["game"],
+    "SnakeOnline": ["game"],
+    "SnakeNet": ["game"],
+    "SnakeUpdate": ["game"]
+  },
+  "only": {
+    "engine": { "SnakeAI": ["decide"] }
+  },
+  "baseline": {
+    "chatter": { "engine": ["key"] },
+    "engine": { "ai": ["DIRS", "PERSONAS", "POOL"] },
+    "game": { "ai": ["DIRS", "TUNE"], "engine": ["PLAYER_COLOR"], "render": ["inRingReach"] },
+    "render": { "ai": ["PERSONAS"], "engine": ["GRID", "T", "actOf", "newIsles", "pieceStanding"] },
+    "root": { "game": ["hostRoom", "online", "openFriends", "pickerEl", "recordsEl"] }
+  }
+}

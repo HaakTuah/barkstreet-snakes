@@ -3,7 +3,7 @@
 # thinking ahead, and in headless Chrome (the runner has it) the page's shared scope, its content security policy, the
 # renderer's and controls' promises, the page on phones, tablets and desktops, and the owner's playtest. The jobs run
 # side by side. Each runs only where a change can affect it ("The smallest setup that tests the rule" in
-# core/modules/how-to-work.md): nothing for notes alone (docs/, tools/dev/, .claude/, any .md), the Node checks and the
+# core/modules/how-to-work.md): nothing for notes alone (docs/, tools/dev/ but the two files the part check reads, .claude/, any .md), the Node checks and the
 # headless four for any change to the game or its tools, and the page on every screen and the playtest for a change to
 # what the page shows (index.html, style/, fonts/, render/, game/, chatter/, audio/, online.js, net.js, records.js,
 # lineup.js, scores-screen.js, sw.js, update.js, version.js, the layout and playtest tests and their parts, the parts'
@@ -65,7 +65,7 @@ jobs:
             esac
             printf '%s\n' "$f"
           done)
-          code=$(echo "$own" | grep -v -E '^(docs/|tools/dev/|\.claude/|core/scripts/)|\.md$' | grep -c . || true)
+          code=$(echo "$own" | grep -v -P '^(docs/|tools/dev/(?!audit/(uses|free-names)\.js$)|\.claude/|core/scripts/)|\.md$' | grep -c . || true) # (the part check reads those two)
           copy=$(echo "$own" | grep -c '^core/scripts/' || true)
           page=$(echo "$files" | grep -E '^(index\.html|style/|fonts/|render/|game/|chatter/|audio/|online\.js|net\.js|records\.js|lineup\.js|scores-screen\.js|sw\.js|update\.js|version\.js|tools/layout-test\.js|tools/layout/|tools/ui-test\.js|tools/ui/|tools/parts\.js|tools/browser\.js|\.github/workflows/tests\.yml)' | grep -c . || true)
           echo "code=$([ "$code" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
@@ -113,6 +113,8 @@ jobs:
         run: scripts/test.sh versions
       - name: Code nothing uses
         run: scripts/test.sh unused
+      - name: The parts' crossings
+        run: scripts/test.sh crossings
       # Four of seed 3's rounds, each played on its own seed (round r of a run
       # with --seed S is round 0 of one with --seed S + 7919 r): 29, 37 and
       # 38, and 47. Between them they cross every kind of event the engine

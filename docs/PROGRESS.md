@@ -8,10 +8,12 @@ to his words in the archive.
 
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
-**The main lane is 5's 7f** (#759; entry 6's 3++ is closed as measured, on the stand-in's verdict of 19 November on #655: no rule keyed on length is the lever), the first open entry
-that waits on nothing (3c waits on 3b's Wildcard part, 3d on 3c, and 4 on 5). Item 5's part 7 (built afresh) goes in
-three playable PRs (7a, 7b, 7c: entry 5 below): 7a, one pricing model, is PR #722; 7b, the power styles, is PR #746; 7c goes in three playable PRs, each merged before the next: (i) the trademark measures, Joker and Star in the band and Metagamer's power style, PR #749 (merged); (ii) a jumpable way out kept and the woodpecker's mark crossed, PR #751 (merged); (iii) the seat-split A/B and the always-against-never runs, PR #755: powers where they fit beat both never and always; then 7d, the band, PR #758 (Star stays below it); then 7e, Star's band again, PR #774 (not taken: Star keeps its weights), entry 6's 3++ (closed as measured, PRs #760 and #777), and 7f; 2y++'s last step waits on part 7. The
-entries before these are done (`docs/archive/progress-done/queue-done.md`). The polish lane and the workshop lane run
+**The main lane is 2y++'s last step** (the flight measured again after part 7), the first open entry that waits on
+nothing: entry 5 ended with part 7's 7f, Vulture's circling (PR #785, not taken: Vulture keeps its driver; design 39,
+"The cast and their trademarks"), so entry 5 and its 2r are done (`docs/archive/progress-done/queue-done.md`); 3b++ and
+Wildcard's part of 3b wait on nothing either, in the queue's order (3c waits on 3b's Wildcard part, 3d on 3c), and entry
+4, the teaching system, can start now as a lane of its own, as its entry says. Entry 6's 3++ is closed as measured (the stand-in's verdict of 19 November on #655: no rule
+keyed on length is the lever). The entries before these are done (`docs/archive/progress-done/queue-done.md`). The polish lane and the workshop lane run
 beside it, each claimed by a draft PR.
 
 ## For the owner
@@ -61,7 +63,7 @@ the owner's notes of 2 November, the portals blue and orange and the woodpecker'
 - **The cleaning lane from the code audit** (#783; the stand-in's yes, sure, 19 November, on the owner's words of 14
   November quoted in #764: "They are not allowed to get worse, and audits should run, and major refactoring runs
   scheduled"), each step its own small PR with behaviour proven unchanged, in order: (1) the part check, a suite with
-  today's crossings as its baseline; (2) `game/friends.js` split as a pure move; (3) one teaching file for each rule's
+  today's crossings as its baseline (done, PR #788: `tools/crossings-test.js`, `docs/developing.md`); (2) `game/friends.js` split as a pure move; (3) one teaching file for each rule's
   lesson words, guide row and trigger, checked that each lesson has its row; (4) the controller's round flags into
   their own per-round object, and the event switches into tables. Steps 1 to 3 go before item 4, the teaching system,
   starts. Step 5, in the engine and the AI, is entry 8c.
@@ -94,20 +96,12 @@ landing is almost never contestable. The flight stays as built for now, and no r
 4. **Measured again after 2u and part 7,** whose stamina and pricing change what a flight costs. Only if it is still
    even then does a bigger change go to the design session: a longer flight, or the ring shown before take-off.
 
-### 5. Round six B: the new moves (DESIGN "Round six B")
-
-The golden jump that flies, leap now, gold portals, dropped charges, the spit along the line and one pricing model for every power, each its own playable PR that the rivals use well. *Done:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195). **Next, in order:** part 4 (draft PR #198, 2r folded in; the owner answered on 1 November 2026 that the moves stay as designed and the rivals are improved until their users come out ahead: the row is in `docs/archive/progress-done/owner-answered.md`, "For the owner, answered"), then 2x (done, PR #456), then 2q (done, PR #576, part 4's both-ways test run again on its log), part 3b+ (done, PR #580: the spit flies along the line; its finding, that the spitters come out even, is #583), part 5 (done, PR #202: gold portals; its finding, that following feeds but wins no places, is #447), part 6 (done, PR #584: dropped charges; a grab's charges are worth what a leaf's are, and how far one is worth going is for part 7) and part 7 (built afresh from `main`, the parked `round6b/pricing` read as notes only; in three playable PRs, each merged before the next: **7a** one pricing model for the plain and golden powers, with how far a spill of dropped charges is worth going (PR #722: stamina two and a half times dearer, sure gains earning the price back down to the old one, a race for a golden free; a spill as far as any food of its worth); **7b** each rival's power style, with 7a's open measurement: how much of its gain is the meal's stamina, worth more with the powers' price (the food lift alone, head to head) (PR #746: a style is a share of the plain flash's price for what each rival spends one on readily, `ai/styles.js`); **7c** the trademark measures and Joker lifted into the band (and Star, below it on `main` too: 16% and 8% on seeds 3 and 11, PR #746), Metagamer's power style (it reads its rivals; 7b gave it none), (these first three are 7c(i), PR #749: three new trademark measures, each leading the field on `main` already, so none needed more teeth; Joker in the band already; Star's flashes mind a jump's worth), then 7c(ii), PR #751: the two parts of the power styles that are everyone's and 7b left (a jumpable way out kept; the woodpecker's mark crossed when they'll be out of it before the strike: design 39, "Every rival has a power style"), and 7c(iii), PR #755, at the end of part 7 (checking on fresh seeds what 7c(i) left open: Gobbler's win rate against the band's 35%, 46% and 41% in its census, and Sniper's and Colonist's, 41% and 40% on seed 11, by a screen with each in every round; and Mason's and Joker's trademark leads, under the margin on one seed each): the spec's seat-split A/B (powers on against off: "Balance targets") and the always-against-never runs for the plain powers, on fresh seeds; see the spec; done: powers where they fit beat both never and always, head to head (the numbers: design 39, "Balance targets"), and the screens put Gobbler, Sniper and Colonist in the band (33%, 24%, 29%, 200 rounds each, seed 163)), then **7d, the band** (PR #758, done; its table has the numbers): always flashing loses to powers where they fit (seeds 181 and 191), so both ends hold for both plain powers; Mute, Mason, Joker and Vulture screened into the band, Drab left on its edge (#755); Joker's trademark lead holds, Vulture's is thin; Star's one variant (`margin` 6, golden craving 3) lifted it from 10.5% to 17.5% but cost its flash habit, so it was not taken (design 39, "Star"); then **7e, Star's band again** (PR #774, done, not taken: Star keeps its weights; design 39, "Star"); and **7f, Vulture's circling with more teeth** (#759; part 7's "more teeth in play where they stay flat"; entry 6's 3++, before it, closed as measured: PRs #760 and #777); then the teaching system (item 4). Spec: `docs/handoff/queue-specs.md`, "5. Round six B: the new moves". **When part 4 merges:** run the census on seeds 3 and 11 again (`scripts/sim.sh 200 --seed 3 --census --check`): chased beetles must still get away a third to 45% of the time (2w measured it before the flight was in; `--check` fails a census outside that band).
-
 ### 3b++. The spit lands more, and stays a shot you can dodge (the owner, 9 November 2026; #583; after part 7)
 
 Between rivals 2% of spits hit a head. Make it land more as a skill shot fired in front of a snake, which the target sees
 coming and can step out of (longer reach, the spitter choosing its moment, a lead), never by a shorter warning or a
 flight too quick for 2q's reaction time. Done when spitters come out ahead both ways. Design 40, "The spit flies along
 the line".
-
-### 2r. No hop onto a doomed island (30 October 2026; part of item 5's part 4)
-
-Before a hop or a flight a rival weighs where it lands, above all whether it can jump off again; built into part 4 (#198). Spec: `docs/handoff/queue-specs.md`, "2r. No hop onto a doomed island".
 
 ### 3b. The rivals who change: Capricious, Copycat and Wildcard (Wildcard's part after 5)
 

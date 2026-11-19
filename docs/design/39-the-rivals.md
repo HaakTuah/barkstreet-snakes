@@ -260,7 +260,7 @@ driver are in `ai/rivals/`, over the shared template in `ai/rivals.js` (`DRAB`, 
 | Creeper | "Sneaks up and rides right behind other snakes’ tails." | Tail-riding | `tail` 45 |
 | Ghost | "Keeps its distance from everyone, and slips through the gaps." | Distance (cells from the nearest head) | `distance` 5, `space` 2 |
 | Gobbler | "Eats everything, even a rival’s apple. Hates mushrooms." | Food share | `food` 10, `eat` 300, `contested` 1, `hurry` 1.5, `headRisk` 2200, `nerve` |
-| Vulture | "Circles snakes in trouble and feasts on what they leave behind." | Beads (its share of them) | its driver (the snake with least room for its length), `lure`, `pellet` 3 |
+| Vulture | "Circles snakes in trouble and feasts on what they leave behind." | Beads (its share of them); circling (near a snake in its last moves) | its driver (the snake with least room for its length: in practice the longest, as room counts to 120 cells), `lure`, `pellet` 3 |
 | Sovereign | "Rules its own patch of bark and attacks anyone who trespasses." | Time home | its driver, `home` |
 | Mute | "A mime. Picks someone and closes an invisible box round them." | Its target boxed in on its body (ten minutes alive) | Sniper's driver, `hunt` (`squeeze` 4), `aggression` 0.8 |
 | Joker | "Lures chasers into dead ends and swerves away at the last moment." | Chasers led into a crash (ten minutes alive) | its driver, `lure` (6, 3 cells) |
@@ -281,7 +281,17 @@ leads are checked again on fresh seeds in 7c(iii); seeds 3 and 11 on `main` at 7
 16.4% and 16.1%; Joker 16.6 and 13.9 against 13.4 and 12.6; Mute 0.99 and 0.44 against 0.23 and 0.31). Joker's lead held on two
 fresh seeds in 7d (13.7 and 14.9 against 12.6 and 12.7, Joker in every round); Vulture's share of the beads leads
 thinly (25.3% and 27.4% against 24.9% and 24.2%, Vulture in every round, seeds 193 and 197), and four rivals take
-more of the beads than it does. Joker sits in the band after 7a and 7b; Star, the one persona still below it, is not
+more of the beads than it does. 7f (PR #785) added a measure of the circling a player would see (`circling`: of a rival's last
+30 ticks before it died, for each death seen alive, those with the head within 6 of its head; 27.3% and 27.9% against
+the field's 27.4% and 26.9% on `main`, seeds 211 and 223, level at 9 cells too) and tried three drivers for more
+teeth: closing in on the mark as its room per length runs out, a snake really boxed in (room under the 120 cells the
+AI counts) first, and that with a pull three times as strong. None moved the beads past noise (seed 211, 200 rounds,
+Vulture in every round: 28.4%, 28.6% and 28.4% against 27.5% on `main`, the field about 24%) or the circling (level
+with the field's in every run, as the measure first stood: a share of all ticks), and the win rate stayed in the band
+(28%, 24%, 21%; 23% on `main`). A boxed-in snake is its mark in about one decision
+in ten, and its end comes before Vulture, most often 12 cells or more away, gets there. So Vulture keeps its driver:
+its bead lead holds on fresh seeds (+3.3 and +6.0 points, seeds 211 and 223), and its circling stays level with the
+field. Joker sits in the band after 7a and 7b; Star, the one persona still below it, is not
 lifted: its 7d variant (below, "Star") won more but gave up its habit, and 7e's kept the habit and won no more.
 
 ### Ouroboros
