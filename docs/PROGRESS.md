@@ -62,8 +62,6 @@ the owner's notes of 2 November, the portals blue and orange and the woodpecker'
 - **The shared core** (archive, 5 November 2026): the rules common to every project live in one repository, each
   project carrying a checked copy (here `core/`); its spec is in `docs/handoff/queue-specs.md` under the same title.
   Step 3 is done (#636, #637).
-- **The browser suites' one ending** (#526): `tools/render-test.js` and `tools/input-test.js` end with `report.end(b)`
-  like the others.
 
 ## The queue, in order
 
