@@ -1,0 +1,242 @@
+{
+ "at": "2026-11-19",
+ "cpus": 4,
+ "suites": [
+  {
+   "suite": "types",
+   "passed": true,
+   "seconds": 0.2,
+   "gameFilesLoaded": 0,
+   "parts": {},
+   "otherFilesRead": 0
+  },
+  {
+   "suite": "rules",
+   "passed": true,
+   "seconds": 14.5,
+   "gameFilesLoaded": 57,
+   "parts": {
+    "root": 3,
+    "ai": 36,
+    "engine": 16,
+    "game": 2
+   },
+   "otherFilesRead": 1
+  },
+  {
+   "suite": "online",
+   "passed": true,
+   "seconds": 10.9,
+   "gameFilesLoaded": 65,
+   "parts": {
+    "engine": 16,
+    "root": 4,
+    "ai": 36,
+    "game": 9
+   },
+   "otherFilesRead": 1
+  },
+  {
+   "suite": "net",
+   "passed": true,
+   "seconds": 66.3,
+   "gameFilesLoaded": 130,
+   "parts": {
+    "root": 9,
+    "ai": 36,
+    "engine": 16,
+    "chatter": 22,
+    "audio": 4,
+    "render": 34,
+    "game": 9
+   },
+   "otherFilesRead": 13
+  },
+  {
+   "suite": "chatter",
+   "passed": true,
+   "seconds": 0.5,
+   "gameFilesLoaded": 80,
+   "parts": {
+    "chatter": 22,
+    "engine": 16,
+    "root": 2,
+    "ai": 36,
+    "audio": 4
+   },
+   "otherFilesRead": 1
+  },
+  {
+   "suite": "records",
+   "passed": true,
+   "seconds": 0.5,
+   "gameFilesLoaded": 3,
+   "parts": {
+    "root": 3
+   },
+   "otherFilesRead": 0
+  },
+  {
+   "suite": "sw",
+   "passed": true,
+   "seconds": 0.1,
+   "gameFilesLoaded": 0,
+   "parts": {},
+   "otherFilesRead": 2
+  },
+  {
+   "suite": "licences",
+   "passed": true,
+   "seconds": 2.6,
+   "gameFilesLoaded": 130,
+   "parts": {
+    "ai": 36,
+    "audio": 4,
+    "chatter": 22,
+    "engine": 16,
+    "game": 9,
+    "root": 9,
+    "render": 34
+   },
+   "otherFilesRead": 27
+  },
+  {
+   "suite": "versions",
+   "passed": true,
+   "seconds": 0,
+   "gameFilesLoaded": 1,
+   "parts": {
+    "root": 1
+   },
+   "otherFilesRead": 0
+  },
+  {
+   "suite": "unused",
+   "passed": true,
+   "seconds": 0.9,
+   "gameFilesLoaded": 130,
+   "parts": {
+    "ai": 36,
+    "audio": 4,
+    "chatter": 22,
+    "engine": 16,
+    "game": 9,
+    "root": 9,
+    "render": 34
+   },
+   "otherFilesRead": 26
+  },
+  {
+   "suite": "scope",
+   "passed": true,
+   "seconds": 6.3,
+   "gameFilesLoaded": 130,
+   "parts": {
+    "root": 9,
+    "ai": 36,
+    "engine": 16,
+    "chatter": 22,
+    "audio": 4,
+    "render": 34,
+    "game": 9
+   },
+   "otherFilesRead": 1
+  },
+  {
+   "suite": "csp",
+   "passed": true,
+   "seconds": 10.6,
+   "gameFilesLoaded": 130,
+   "parts": {
+    "root": 9,
+    "ai": 36,
+    "engine": 16,
+    "chatter": 22,
+    "audio": 4,
+    "render": 34,
+    "game": 9
+   },
+   "otherFilesRead": 13
+  },
+  {
+   "suite": "copies",
+   "passed": true,
+   "seconds": 0.6,
+   "gameFilesLoaded": 130,
+   "parts": {
+    "ai": 36,
+    "audio": 4,
+    "chatter": 22,
+    "engine": 16,
+    "game": 9,
+    "root": 9,
+    "render": 34
+   },
+   "otherFilesRead": 7
+  },
+  {
+   "suite": "render",
+   "passed": true,
+   "seconds": 54.6,
+   "gameFilesLoaded": 130,
+   "parts": {
+    "root": 9,
+    "ai": 36,
+    "engine": 16,
+    "chatter": 22,
+    "audio": 4,
+    "render": 34,
+    "game": 9
+   },
+   "otherFilesRead": 13
+  },
+  {
+   "suite": "input",
+   "passed": true,
+   "seconds": 112.8,
+   "gameFilesLoaded": 130,
+   "parts": {
+    "root": 9,
+    "ai": 36,
+    "engine": 16,
+    "chatter": 22,
+    "audio": 4,
+    "render": 34,
+    "game": 9
+   },
+   "otherFilesRead": 13
+  },
+  {
+   "suite": "layout",
+   "passed": true,
+   "seconds": 489.7,
+   "gameFilesLoaded": 130,
+   "parts": {
+    "root": 9,
+    "ai": 36,
+    "engine": 16,
+    "chatter": 22,
+    "audio": 4,
+    "render": 34,
+    "game": 9
+   },
+   "otherFilesRead": 13
+  },
+  {
+   "suite": "ui",
+   "passed": true,
+   "seconds": 386.2,
+   "gameFilesLoaded": 130,
+   "parts": {
+    "root": 9,
+    "ai": 36,
+    "engine": 16,
+    "chatter": 22,
+    "audio": 4,
+    "render": 34,
+    "game": 9
+   },
+   "otherFilesRead": 13
+  }
+ ]
+}
