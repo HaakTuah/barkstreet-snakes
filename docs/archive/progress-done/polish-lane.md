@@ -84,6 +84,10 @@ owner's three notes of 2 November merged as PRs #322 (the remains), #320 (the fl
 - The news lines: the repeated "no longer", semicolon lists, "islands" and a stray "Leap now!" gone, the top line left to the milestone (PR #561).
 - The README's player text: run-ons with piled brackets, "So …" summaries and one phrase four times, facts unchanged (PR #562).
 - The Field guide's Burrows, Jump, Cuts and Golden beetle rows: run-ons and colon chains broken into sentences, "hop", "leap" and "gap" in them become the jump, and the rule's numbers unchanged (this PR; the rows have no Chinese).
+- One name for each thing (19 November 2026, the audit's last item): the hole (no more "pit" or "gap" in what a player
+  reads), the jump (no more "hop" or "leap": the island lesson, the Islands row, Star's and Metagamer's lines, two news
+  lines) and the rings (the stamina ring, the red strike ring, the pale ring; a bare ring is where something lands);
+  "Mind the gap!" and Ghost's "…hollow." stay as the voices' idioms; words only, the fingerprints unchanged (seeds 3, 11).
 - **Done: the woodpecker's piece washed while its nicks close** (PR #725, issue #612; the stand-in's verdict: yes, sure it is wanted): the piece its outline cuts round, exactly `aiView`'s `piece`, lies under a faint dark wash with a dashed pale edge until the last peck is aimed, then the cut-loose shading with its sliding streaks takes over (`render/cut.js`, design 38 "It cuts a shape"); the lesson, the Field guide row and the news line say it; looks only, the fingerprints unchanged (seeds 3 and 11).
 - **The food season's mark, done** (PR #754, issue #603; the owner, 13 November 2026: "I concur with all, expertly!"): a
   lean or plentiful round keeps its mark in the row under the board from Go on (the log's apple with a bite out of it,

@@ -137,7 +137,7 @@ const FLAVOR = {
   fight: 'Little log left: now it pecks at snakes. Dodge!', // (part 2: its first fight, at the floor: a head in the ring at the strike crashes)
   youSquash: 'Your own beads feed nobody.', // (round six B: your first own bead squashed)
   youWatched: 'The woodpecker’s watching… Mind where it looks.', // (entry 6: as it comes, its gaze a tell: its first cut starts where it looked last)
-  youWoodpecker: 'Food in the woodpecker’s mark flies to its ring.', // (once a round, as it starts pecking, once its own banner has had its time: the one idea you can act on, in one line on a phone; that it won't shut you in if it can help it is the Field guide's)
+  youWoodpecker: 'Food in the woodpecker’s mark flies to the ring it shows.', // (once a round, as it starts pecking, once its own banner has had its time: the one idea you can act on, in one line on a phone; that it won't shut you in if it can help it is the Field guide's)
   birdBeetle: 'The woodpecker eats beetles too.', // (round six B, 2m: the first beetle you see the bird eat, one that didn't get off its mark in time)
   spillFirst: 'A snake knocked out drops its powers. Grab them!', // (round six B, part 6: the first spill anyone sees)
   youSpill: s => `Spilled powers: now ${[s.leaps ? `${s.leaps} golden jump${s.leaps === 1 ? '' : 's'}` : '', s.dashes ? `${s.dashes} golden dash${s.dashes === 1 ? '' : 'es'}` : ''].filter(Boolean).join(' and ')}.`, // (what you hold after the grab, not what it gave: full already, it gives nothing)
@@ -156,7 +156,7 @@ const FLAVOR = {
   steerHint: touchFirst ? 'Swipe to steer' : 'Arrow keys to steer (or WASD)',
   leapNothing: 'Nothing to jump. Jumps clear a snake, a hole or fire.',
   leapEarly: `Too early: a jump waits ${TUNE.LEAP_WINDOW} moves, then gives up.`,
-  islandHop: touchFirst ? 'Tap to hop up to three cells. Hop the gap!' : 'Space hops up to three cells. Hop the gap!', // (the first time you're boxed in with a jumpable gap: round six B's island hop)
+  islandHop: touchFirst ? 'Tap to jump up to three cells: enough to clear that hole.' : 'Space jumps up to three cells: enough to clear that hole.', // (the first time you're boxed in with a jumpable hole: round six B's island jump)
   powersFirst: 'Tap jumps. Swipe ahead dashes.', // (a short phone's first Go: steering is beside YOU. One line on a 320 px phone, so it fits between the heads)
   bothOut: ['Nobody slithered away from that one.', 'A draw, of sorts.', 'Both of you. At once.'],
   wakeBeat: 'Ready…',
@@ -166,7 +166,7 @@ const FLAVOR = {
   goldBeetle: ['A golden beetle! Catch it for golden jumps.', 'A golden beetle: catch it, and jump far for free.'],
   goldBeetleWatch: ['A golden beetle! Whoever catches it jumps far.', 'A golden beetle is scuttling about.'],
   youGoldBeetle: n => `Golden: ${n} long jump${n === 1 ? '' : 's'}, free. ${touchFirst ? 'Tap' : 'Space or a click'} to jump.`,
-  bridgeFirst: 'A snake across a pit is a bridge, until its tail passes.', // (the first time a snake lies across a pit near you: round six B's bridges)
+  bridgeFirst: 'A snake across a hole is a bridge, until its tail passes.', // (the first time a snake lies across a hole near you: round six B's bridges)
   youStamina: 'One stamina: jump or dash, your choice.', // (2u: the first plain jump or dash that leaves you tired, the spec's words; the ring round your head is the bar, and the looks are on every snake: see render/stamina.js)
   youShield: 'Golden apple: full stamina and a shield for one bump.', // (2u+: your first golden apple; the bubble round your head is the shield: see render/shield.js)
   youCharged: 'Meals top up stamina. Past full, it banks: you glow.', // (2u+: the first meal that banks some above the full bar, the glow on your snake while you read: see render/stamina.js)
