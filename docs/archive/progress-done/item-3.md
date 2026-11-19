@@ -96,7 +96,7 @@ From "3. Fixes and polish (the owner's playtest of 2026-10-20)".
   - *Done on 28 October 2026 (PR #92):* `nerve` (Desperado 0.7; Gobbler 0.3 + 0.7 of its hunger; at most 0.85), over
     both the head-on and the zone fear where they are read for a food cell; see "Nerve at a contested apple" in
     `docs/design/15-the-rivals-look-further-ahead.md`.
-- **Wildcard's hair.** Not a comb-over: his real swoop, a big fluffy golden-blond pompadour swept back, then forward and to one side. It must read at phone size.
+- **Wildcard's hair.** Not a comb-over: a big fluffy golden-blond pompadour swept back, then forward and to one side. It must read at phone size.
   - *Done on 27 October 2026 (PR #74)*: see "Wildcard's hair" in `docs/design/32-the-owners-playtest.md`.
 - **Copycat's face.**
   - While copying, the head mixes the copied colour about half and half with its red.
@@ -127,7 +127,7 @@ From "3. Fixes and polish (the owner's playtest of 2026-10-20)".
     opportunity), as "whopper" into "opportunity".
 - **Mason's Caesar, the punchline and "Et tu" for everything.** The owner (27 October 2026), on Claude's suggestion: "Yes,
   that would be quiet cool! Then it would show if they died from the edge, falling, or a mushroom also. Or lightning."
-  - *The joke as his kill line.* Mason's kill line becomes "Vidi, vici, veni." (he saw, he conquered, then he came), and
+  - *The reversed motto as his kill line.* Mason's kill line becomes "Vidi, vici, veni.", and
     "Veni, vidi, vici." leaves his lines, so the proper version never spoils the punchline. "Veni, vidi, aedificavi."
     and "Veni, vidi, edi." stay.
   - *Last words that know what killed him.* Today a snake's last words know only a killer that is a snake ("Et tu,

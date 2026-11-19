@@ -28,7 +28,7 @@ History, kept for the record. Sessions read it only when a task points here.
 | `pictures/`, later | More of the same, moved from `tools/dev/` by the unused-code check (PR #331, 2 November 2026), nothing live pointing to them: `bridges` (#174), `island-hop` (#158), `wildcard-hair` (#74) and `fall` (the woodpecker's falling piece, 2s). |
 | `studies/` | Measuring and proving tools whose work is done, moved from `tools/dev/` by the unused-code check (PR #331), pointed to only from this archive: `same-sound.js` (#225) and `same-zh.js` (#226), proving a split left the sound or the chatter the same, still runnable as they are; `bird-pixels.js` (the woodpecker drawn pixel for pixel the same); `rotten-apples.js` (#142); `sound-levels.js` (#248); `burrow-cluster/` (`plan-history.md`'s burrows clustering). |
 
-## What came from the owner's computer (PR #37, then #38, 26 October 2026)
+## What came from outside git (PR #37, then #38, 26 October 2026)
 
 Before the work moved to cloud sessions, everything the game kept outside git was copied into `docs/from-local/`,
 with a note in `docs/HANDOFF.md`. On 26 October both were folded into the repository and removed; the copies are in
@@ -42,6 +42,6 @@ git history at commit `cb28c7d`. Where each part went:
 | Memory notes: the polish pass, round four, round five | History: their outcomes are in `docs/design/` (their rounds) and in their PRs. |
 | Memory note: where the tools lived (`.git/[…]-tools`, kept from scratchpad clean-ups) | Retired: the tools are in `tools/dev/`. |
 | The plan and history (`next-round-ideas.md`) | `plan-history.md`. |
-| The reusable tools (`.git/[…]-tools`) | `tools/dev/`, pointed at the repository instead of the old computer's folders. |
-| The repo's `.claude/launch.json` | `.claude/launch.json`. Its `settings.local.json` (one Windows permission) is retired. |
+| The reusable tools (`.git/[…]-tools`) | `tools/dev/`, pointed at the repository instead of the old local folders. |
+| The repo's `.claude/launch.json` | `.claude/launch.json`. Its `settings.local.json` (one local permission) is retired. |
 | The owner's message log | Not copied (it has personal remarks); what no doc recorded is in `instructions.md`. |
