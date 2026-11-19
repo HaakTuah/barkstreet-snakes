@@ -39,7 +39,7 @@ const nsIn = new Map();       // namespace -> file
 for (const f of files) {
   const src = read(f), text = stripComments(src).code, lines = text.split('\n');
   const fn = freeNames(src);
-  const rec = info[f] = { part: partOf(f), lines: src.split('\n').length, bytes: Buffer.byteLength(src), free: fn.free, text: fn.text, declares: new Set(), aliases: new Map(), picks: [], ns: [] };
+  const rec = info[f] = { part: partOf(f), lines: src.split('\n').length, bytes: Buffer.byteLength(src), free: fn.free, any: fn.any, text: fn.text, declares: new Set(), aliases: new Map(), picks: [], ns: [] };
   for (const line of lines) {
     let m = NS.exec(line);
     if (m) { rec.ns.push(m[1]); nsIn.set(m[1], f); continue; }
@@ -80,7 +80,7 @@ const add = (m, k, f) => { if (!m.has(k)) m.set(k, new Set()); m.get(k).add(f); 
 const take = (ns, member, f) => { if (nsIn.get(ns) === f) return; add(nsUsers, ns, f); if (member) { if (!members.has(ns)) members.set(ns, new Map()); add(members.get(ns), member, f); } };
 for (const f of files) {
   const free = info[f].free;
-  for (const [alias, ns] of aliasOf) for (const o of free.get(alias) || []) take(ns, o.member, f);
+  for (const [alias, ns] of aliasOf) for (const o of (info[f].aliases.has(alias) ? info[f].any : free).get(alias) || []) take(ns, o.member, f); // (an alias this file declares: by every mention, a local one too)
   for (const ns of nsIn.keys()) for (const o of free.get(ns) || []) take(ns, o.member, f);        // SnakeX.member
   for (const o of free.get('window') || []) if (nsIn.has(o.member)) take(o.member, null, f);       // window.SnakeX
   for (const [name, { ns, member }] of pickOf) if (free.has(name)) take(ns, member, f);

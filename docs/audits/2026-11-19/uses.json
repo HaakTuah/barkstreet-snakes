@@ -71,19 +71,19 @@
   {
    "namespace": "SnakeEngine",
    "file": "engine/step.js",
-   "members": 22,
+   "members": 26,
    "files": 21
   },
   {
    "namespace": "SnakeRecords",
    "file": "records.js",
-   "members": 26,
+   "members": 27,
    "files": 9
   },
   {
    "namespace": "SnakeChatter",
    "file": "chatter/moments.js",
-   "members": 9,
+   "members": 12,
    "files": 5
   },
   {
@@ -107,19 +107,19 @@
   {
    "namespace": "SnakeAudio",
    "file": "audio/sound.js",
-   "members": 10,
+   "members": 11,
    "files": 8
   },
   {
    "namespace": "SnakeRender",
    "file": "render/world.js",
-   "members": 21,
+   "members": 25,
    "files": 8
   },
   {
    "namespace": "SnakeOnline",
    "file": "online.js",
-   "members": 13,
+   "members": 14,
    "files": 2
   },
   {
@@ -137,7 +137,7 @@
   {
    "namespace": "SnakeVersion",
    "file": "version.js",
-   "members": 0,
+   "members": 2,
    "files": 1
   },
   {
@@ -165,7 +165,7 @@
   "in5OrMoreFiles": 64,
   "in10OrMore": 19,
   "in25OrMore": 5,
-  "inMoreThanOneOtherPart": 13
+  "inMoreThanOneOtherPart": 14
  },
  "hubs": [
   {
@@ -264,8 +264,9 @@
   {
    "name": "key",
    "declaredAt": "engine/core.js:51",
-   "usedByFiles": 13,
+   "usedByFiles": 14,
    "usedByParts": [
+    "chatter",
     "engine"
    ]
   },
@@ -417,7 +418,11 @@
  "matrixNames": {
   "ai": {},
   "audio": {},
-  "chatter": {},
+  "chatter": {
+   "engine": [
+    "key"
+   ]
+  },
   "engine": {
    "ai": [
     "DIRS",
@@ -462,7 +467,12 @@
  "matrix": {
   "ai": {},
   "audio": {},
-  "chatter": {},
+  "chatter": {
+   "engine": {
+    "names": 1,
+    "files": 1
+   }
+  },
   "engine": {
    "ai": {
     "names": 3,
@@ -507,7 +517,7 @@
     "files": 1
    },
    "SnakeEngine": {
-    "members": 1,
+    "members": 3,
     "files": 2
    }
   },
@@ -542,7 +552,7 @@
   },
   "game": {
    "SnakeEngine": {
-    "members": 18,
+    "members": 21,
     "files": 9
    },
    "SnakeAI": {
@@ -550,23 +560,23 @@
     "files": 4
    },
    "SnakeRecords": {
-    "members": 26,
+    "members": 27,
     "files": 6
    },
    "SnakeRender": {
-    "members": 21,
+    "members": 25,
     "files": 7
    },
    "SnakeAudio": {
-    "members": 10,
+    "members": 11,
     "files": 7
    },
    "SnakeChatter": {
-    "members": 9,
+    "members": 12,
     "files": 5
    },
    "SnakeOnline": {
-    "members": 13,
+    "members": 14,
     "files": 2
    },
    "SnakeNet": {
@@ -615,7 +625,7 @@
  },
  "mentionsWithinAPartAndAcross": {
   "within": 1677,
-  "across": 75
+  "across": 76
  },
  "perPartFileReach": {
   "ai": {
@@ -633,7 +643,7 @@
   "chatter": {
    "n": 22,
    "median": 1,
-   "p90": 2,
+   "p90": 3,
    "max": 4
   },
   "engine": {
@@ -749,7 +759,7 @@
   },
   {
    "file": "engine/core.js",
-   "mentionsByOthers": 149,
+   "mentionsByOthers": 150,
    "declares": 29
   },
   {

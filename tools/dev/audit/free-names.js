@@ -5,7 +5,7 @@
 // often, never missed. Comments, strings and regular expressions are left out by scripts/js-text.js; a template's `${...}`
 // expressions are read where they stand.
 //
-//   freeNames(src) -> { free: Map(name -> [{ line, member }]), text }   member: the name after a dot that follows it, if any
+//   freeNames(src) -> { free: Map(name -> [{ line, member }]), any: the same for every mention, a local's too, text }   member: the name after a dot that follows it, if any
 const { litEnd, stripComments } = require('../../../scripts/js-text.js');
 
 const KEYWORDS = new Set('break case catch class const continue debugger default delete do else export extends finally for function if import in instanceof let new of return static super switch this throw try typeof var void while with yield await async get set true false null undefined NaN Infinity arguments'.split(' '));
@@ -122,7 +122,7 @@ function freeNames(src) {
       }
       const sub = toks.slice(i + 1, end);
       const names = bindings(sub, 0, () => false, at, i + 1);
-      for (const n of names) cur.bound.add(n);
+      if (cur !== root) for (const n of names) cur.bound.add(n); // (a top-level name is the shared space's, not a local)
       continue;
     }
     if ((k === 'function' || k === 'class') && toks[i + 1] && toks[i + 1].id && !KEYWORDS.has(toks[i + 1].t) && cur !== root) cur.bound.add(toks[i + 1].t);
@@ -130,7 +130,7 @@ function freeNames(src) {
     if (k === 'function' && toks[i + 1] && toks[i + 1].t === '*') continue;
   }
 
-  const free = new Map();
+  const free = new Map(), any = new Map(); // (any: every mention of a name, a local's too, for the alias a file declares itself)
   for (let i = 0; i < toks.length; i++) {
     const x = toks[i];
     if (!x.id || KEYWORDS.has(x.t) || at.has(i)) continue;
@@ -139,6 +139,9 @@ function freeNames(src) {
     if (next === ':' && (prev === '{' || prev === ',') ) continue; // an object's key
     if ((prev === 'function' || prev === 'class')) continue;
     // a method's or getter's own name in a class or object: a name, a (, a {  with the head's `)` `{` after
+    const mem = toks[i + 1] && toks[i + 1].t === '.' && toks[i + 2] && toks[i + 2].id ? toks[i + 2].t : null;
+    if (!any.has(x.t)) any.set(x.t, []);
+    any.get(x.t).push({ line: x.line, member: mem });
     let sc = scopeOf[i], local = false;
     for (; sc; sc = sc.parent) if (sc.bound.has(x.t)) { local = true; break; }
     if (local || heads.some(([a, b, ns]) => i > a && i < b && ns.has(x.t))) continue;
@@ -146,7 +149,7 @@ function freeNames(src) {
     if (!free.has(x.t)) free.set(x.t, []);
     free.get(x.t).push({ line: x.line, member });
   }
-  return { free, text };
+  return { free, any, text };
 }
 
 module.exports = freeNames;

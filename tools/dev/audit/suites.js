@@ -12,7 +12,7 @@ const { spawnSync } = require('child_process');
 const root = path.join(__dirname, '../../..');
 const argv = process.argv.slice(2);
 const jf = argv.indexOf('--json'), jsonOut = jf < 0 ? null : argv[jf + 1];
-const named = argv.filter((a, i) => !a.startsWith('--') && i !== jf + 1);
+const named = argv.filter((a, i) => !a.startsWith('--') && (jf < 0 || i !== jf + 1));
 const all = fs.readFileSync(path.join(root, 'scripts/test.sh'), 'utf8').match(/&& suites=\(([^)]*)\)/)[1].trim().split(/\s+/);
 const suites = named.length ? named : all;
 const gameFiles = new Set([...fs.readFileSync(path.join(root, 'index.html'), 'utf8').matchAll(/<script src="([^"]+)"/g)].map(m => m[1]));
