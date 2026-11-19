@@ -9,8 +9,8 @@ keys, the mouse and touch (`42-controls.md`); a rival's note on a card ("A rival
 place and the Field guide's doors ("The banner" and "The Field guide's own door" in `30-teaching-by-showing.md`).
 
 The owner asked for it: "I notice that you have to scroll to see all the ui elements outside of the gameplay screen. Is
-it possible to make it all fit on screen so you don't have to scroll?" (on a 1920×1080 desktop's Chrome with its
-bookmarks bar, a 1920×945 page, and on a phone).
+it possible to make it all fit on screen so you don't have to scroll?" (on a desktop, a 1920×945 page, and on a
+phone).
 
 ### The page is the screen's height
 

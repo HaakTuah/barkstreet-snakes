@@ -110,7 +110,7 @@ Everything that comes out is drawn with a dark outline or a bright colour so it 
   cream strap zig-zagging down its body.
 - **Vulture:** black, with a bald pink head and a white neck ruff. It glares from under slanting brows over a big hooked
   beak, pale horn with a dark tip, outlined so it reads at phone size, that gapes at a meal.
-- **Mason is Caesar in marble:** a warm white body with grey veins wandering across every segment (every fourth
+- **Mason is a Roman bust in marble:** a warm white body with grey veins wandering across every segment (every fourth
   segment's vein is rose: gold is for powers alone, #431), so with his laurel wreath his head reads as a marble bust.
 - **Metagamer:** red-and-cyan 3D glasses in a card frame, outlined so it reads on its cyan head.
 - **Wildcard** wears the Stars and Stripes behind an orange tan and a white collar: two segments of navy with white
@@ -169,8 +169,8 @@ The colour changes over 0.4 s (`MUTE_FADE`) in a few steps, each a cached colour
 
 ### Wildcard's hair
 
-The owner: "Not a comb-over: his real swoop, a big fluffy golden-blond pompadour swept back, then forward and to one side.
-It must read at phone size."
+The owner asked for a big fluffy golden-blond pompadour, not a comb-over, swept back, then forward and to one side, that
+reads at phone size.
 
 `render/faces.js`, `hairBack()`, `pompadour()` and `wildHair()`: a big fluffy golden pompadour, swept back, with a dark
 amber outline. Its lick, the curl at the near end of the roll, curls up and back over the hair behind it, its two combed
