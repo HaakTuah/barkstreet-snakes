@@ -51,13 +51,14 @@ was tried and measured, is in `docs/archive/design-food.md`).
   other news: it waits its turn, and gets through a card; "The narrator speaks less, and better" in
   `30-teaching-by-showing.md`.)
   - **Not a lever on length** (entry 6, part 3++, PR #777; #655). The last apples at a steady pace, a new one 2 s after
-    the log has none, one or two at a time, were measured to make always eating grow into the shrinking log while the
-    weighing ate only what stops its hunger, and not taken. Head to head on seed 81 (600 paired rounds), the weighing
-    still only tied always eating: always eating −0.5 [−5.1, +4.0] with one at a time, −1.8 [−6.1, +2.6] with two,
-    always eating's extra food staying +7 to +8 a snake as on `main`. Why (census, seed 81, 200 rounds): the frenzy's
-    meals are mostly beads (cut tails and crashes) and beetles, about 103 a round, and the steady apples added only 7
-    or 10; a snake averaged 33 or 34 long in the frenzy against 32; starving fell from 14% of all deaths to 10 or 7%,
-    and boxed-in deaths rose from 71% of sudden death's to 74 or 77%. So more apples make the frenzy less hungry, not length dearer.
+    the log has fewer than one (or two, the second shape), were built so that always eating would grow into the
+    shrinking log while the weighing ate only what stops its hunger; measured, and not taken. Head to head on seed 81
+    (600 paired rounds), the weighing still only tied always eating: always eating −0.5 [−5.1, +4.0] with one at a
+    time, −1.8 [−6.1, +2.6] with two, its extra food staying +7 to +8 a snake, as under #760's floor shapes. Why
+    (census, seed 81, 200 rounds): the frenzy's meals are mostly beads (cut tails and crashes) and beetles, about 103 a
+    round, and the steady apples added only 7 or 10; a snake averaged 33 or 34 long in the frenzy against 32; starving
+    fell from 14% of all deaths to 10 or 7%, and boxed-in deaths rose from 71% of sudden death's to 74 or 77%. So more
+    apples make the frenzy less hungry, not length dearer.
 - **More golden power food,** since golden powers stack and the rivals use them: a gust of wind may blow in a golden
   leaf (`LEAF_CHANCE`, 0.25 a gust, one at a time), a rain spell may bring up a golden mushroom (`GOLDCAP_CHANCE`, 0.55,
   one a spell at most), and one beetle in six is golden (`GOLD_BEETLE_CHANCE`; see "Less fruit, more beetles"). A
