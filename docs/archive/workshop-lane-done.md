@@ -47,3 +47,15 @@ the workshop check's 20 KB. New ones are added here.
   dozen the topics lacked (the board's size, golden apple and beetle timings, the stamina's refill, the full-bar fizzle
   and others) were moved to their topics, the lesson and the Field guide teaching each in the game (the
   workshop/readme-front-page PR).
+- *Done:* of "The core's game rules this game does not meet yet" (the design session, 11 November 2026), moved word for
+  word on 19 November 2026: (2) a check that nothing in `aiView()` says which snake is a person and that no rival's
+  timing gives one away ("The computer players never know who is a person") (done: PR #728,
+  `tools/rules/31-never-know-a-person.js`; it found a dropped tail's colour in the food a rival is shown, taken out);
+  (3) whatever the game shows from the past showing its age ("No rule untaught") (done: PR #740; the Field guide, the
+  lessons, the hints and the Hall hold no stale past; it fixed the dash chip's tooltip, which still said "flash", the
+  sudden-death banner's "Nothing grows now", and stale quotes in design 09, 40 and 42; three rules lack a Field guide
+  row: #739); (4) online rounds replaying from the log of every input ("Same seed, same game") (done: PR #730,
+  `tools/rules/32-online-replay.js`; it found that the inputs alone don't replay a round: where a press lands among the
+  rivals' thinking, and which rivals thought ahead, change the host's game, #729, fixed in PR #741: each decision draws
+  from a stream of its own). The updating rule needs nothing: `docs/design/36-updating.md` takes a new version between
+  rounds, as the core's "Players always play the newest version" now says.
