@@ -189,7 +189,7 @@ const FLAVOR = {
   youGoldFly: touchFirst ? 'Hold your finger down to fly 5 cells. Steer to land!' : 'Hold the jump to fly 5 cells. Steer to land!', // (your first golden jump)
   ringRace: 'A flier lands on its ring. Get there first and it’s out!', // (2y: the first time a flier's ring is in your reach before it comes down)
   youRingRaced: 'A rival could get to your ring first. Steer away!', // (2y: the first time a rival could reach your ring before you're down)
-  leapNow: 'Press twice to leap now, anywhere!', // (the first time a flier comes down just ahead of you: you could have cut it off)
+  leapNow: 'Press twice to jump now, anywhere.', // (the first time a flier comes down just ahead of you: you could have cut it off)
   youMushroomSpit: 'Bleh! Steer to aim it: it flies straight ahead.', // (round six B: your first mushroom, which comes back up)
   youSpitWet: 'Still wet: you slide over your own.', // (2x: the first time you spit one, as it lies)
   youSpatOn: name => `Ptoo! ${name} got you. Steer to spit it back.`, // (the first time one hits your head)
