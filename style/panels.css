@@ -537,7 +537,7 @@ body:has(#overlay:not(.hidden)) .bird-layer { z-index: 2; }
 /* ------------------------------------------------- the rival picker */
 
 /* Over the page like the Hall of Fame (.records), every rival and "Any". */
-.picker { align-items: center; } /* (one page, so it stays in the middle of the screen, unlike the Hall of Fame's) */
+.records.picker { align-items: center; } /* (one page, so it stays in the middle of the screen, unlike the Hall of Fame's) */
 .picker-card { max-width: 620px; }
 .picker-card h2 { margin: 0; font-size: 1.15rem; color: var(--heartwood); }
 .picker-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px; }
