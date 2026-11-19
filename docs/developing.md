@@ -56,6 +56,15 @@ The REST calls from a cloud session: `core/modules/github-calls.md`. Updates, De
   entry's, each Google Fonts family a font of its own, and `sw.js` keeps the notices. `tools/licences-test.js` stages
   each form of those that must fail; the core's tests cover the rest. `scripts/test.sh licences` runs both. Something
   new goes into the audit with its licence, checked from its own published licence file.
+- **Code nothing uses** (`scripts/unused.js`, run by `scripts/test.sh unused` and by CI beside the versions check): it
+  lists every top-level function, constant and class that no line outside its own declaration names, and every file of
+  the game and the tools that no other file names, so a leftover fails ("Keep it lean", `core/modules/how-to-work.md`).
+  A use is any name outside comments in the project's JS, HTML, JSON, shell and workflow files: a call from a suite, a
+  script tag, an `sw.js` entry, a name inside a string. What only an unused thing names is unused too; a name or file
+  that is reached some way a search cannot see, such as a suite's folder of parts read whole by `tools/parts.js`, is
+  listed with its reason in `tools/unused.json`, and an entry nothing needs any more fails as well. `tools/dev/` and
+  `docs/` are not checked, only the first name of `const a = 1, b = 2;` on one line is checked, and a name that is also a word
+  elsewhere (`hr` in some markup) counts as used: the check is a net, not a proof.
 
 ## Run locally
 
