@@ -1,7 +1,6 @@
 // ---------------------------------------------------------------- round six A: the rivals
 // What an AI sees of a hand-built game, as it stands.
 const lookNow = g => look(g);
-const ownBead = (x, y, owner = 0) => ({ x, y, kind: 'pellet', owner, color: '#000', expires: 999 });
 const dirOf = d => Object.keys(D).find(k => D[k] === d);
 
 { // A beetle runs for its burrow: one bound to get there first isn't worth the chase. Heading right, a beetle 3 on (scared,

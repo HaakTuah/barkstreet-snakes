@@ -52,7 +52,7 @@ for (const f of tracked) {
 }
 
 // Top-level declarations: a function, class, or const/let/var at the start of a line, destructured ones too.
-const DECL = /^(?:async\s+)?function\s*\*?\s*([A-Za-z_$][\w$]*)|^class\s+([A-Za-z_$][\w$]*)|^(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*[=;]|^(?:const|let|var)\s+[{[]([^=]*)[}\]]\s*=/;
+const DECL = /^(?:export\s+(?:default\s+)?)?(?:async\s+)?function\s*\*?\s*([A-Za-z_$][\w$]*)|^(?:export\s+)?class\s+([A-Za-z_$][\w$]*)|^(?:export\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*[=;]|^(?:export\s+)?(?:const|let|var)\s+[{[]([^=]*)[}\]]\s*=/;
 const declarations = [];
 for (const f of Object.keys(corpus)) {
   if (!/\.m?js$/.test(f)) continue;
@@ -61,14 +61,14 @@ for (const f of Object.keys(corpus)) {
     const m = DECL.exec(line);
     if (!m) return;
     const names = m[4] != null ? m[4].split(',').map(s => s.replace(/.*:/, '').replace(/=.*/, '').replace(/^\s*\.\.\./, '').trim()).filter(s => /^[A-Za-z_$][\w$]*$/.test(s)) : [m[1] || m[2] || m[3]];
-    // a function's or class's own lines (so recursion is no use): this line if its braces close here, else to the first line that closes one at the start of a line
-    let end = i;
-    const isBlock = /^(?:async\s+)?function|^class/.test(line);
-    if (isBlock && (line.match(/\{/g) || []).length !== (line.match(/\}/g) || []).length) {
-      end = lines.length - 1;
-      for (let k = i + 1; k < lines.length; k++) if (/^\}/.test(lines[k])) { end = k; break; }
+    // a declaration's own lines (so recursion, and what only it names, is no use): to the line where its brackets close
+    let end = i, depth = 0;
+    const isBlock = /^(?:export\s+(?:default\s+)?)?(?:async\s+)?function|^(?:export\s+)?class/.test(line);
+    for (let k = i; k < lines.length; k++) {
+      depth += (lines[k].match(/[{[(]/g) || []).length - (lines[k].match(/[}\])]/g) || []).length;
+      if (depth <= 0) { end = k; break; }
     }
-    for (const name of names) declarations.push({ name, file: f, line: i + 1, from: i, to: end, block: isBlock, kind: /^(?:async\s+)?function/.test(line) ? 'function' : /^class/.test(line) ? 'class' : 'const' });
+    for (const name of names) declarations.push({ name, file: f, line: i + 1, from: i, to: end, block: isBlock, kind: /^(?:export\s+(?:default\s+)?)?(?:async\s+)?function/.test(line) ? 'function' : /^(?:export\s+)?class/.test(line) ? 'class' : 'const' });
   });
 }
 
