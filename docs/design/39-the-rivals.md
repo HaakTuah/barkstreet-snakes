@@ -153,7 +153,8 @@ room a snake needs to turn in.
   Head to head it beats rivals that never eat, who starve, but only comes out even with rivals that always eat: in the
   frenzy a cut takes about 30 segments, more than meals give, and a cut tail feeds the cutter, so which meals a rival
   takes hardly moves its length; fewer self-bites and more starving after a cut cancel, and rounds end in crashes (the
-  rework: #655, a rule that makes length cost room).
+  rework, #655, a rule that makes length cost room, is still open: the floor was not the lever, see "The floor" in
+  `38-the-woodpecker.md`).
 - **The tail drop planned ahead:** a drop needs the flash rested, a body one thick and a free cell beyond, and a boxed
   snake rarely has all three. So in the endgame a rival weighs dropping its tail as soon as the search sees it boxed in
   (every crawl ends in less room than it needs, or only through a gap a rival could shut), not only once every crawl
