@@ -537,6 +537,7 @@ body:has(#overlay:not(.hidden)) .bird-layer { z-index: 2; }
 /* ------------------------------------------------- the rival picker */
 
 /* Over the page like the Hall of Fame (.records), every rival and "Any". */
+.records.picker { align-items: center; } /* (one page, so it stays in the middle of the screen, unlike the Hall of Fame's) */
 .picker-card { max-width: 620px; }
 .picker-card h2 { margin: 0; font-size: 1.15rem; color: var(--heartwood); }
 .picker-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px; }
@@ -555,7 +556,7 @@ body:has(#overlay:not(.hidden)) .bird-layer { z-index: 2; }
   inset: 0;
   z-index: 10;
   display: flex;
-  align-items: center;
+  align-items: flex-start; /* (the book's top stays put: centred, its tabs jumped 30 to 250 px as its pages differed in height) */
   justify-content: center;
   padding: 16px;
   background: rgba(0, 0, 0, 0.6);

@@ -59,6 +59,9 @@ the keys" in `42-controls.md`).
 
 - **Kept in this browser only** (`records.js`; `snake-highscores`), every access wrapped and everything read back
   checked; a browser that won't keep anything keeps the session's rounds and says so.
+- **Its tabs stay put:** the book (Hall of Fame, Your story, Field guide) sits at the top of the screen, not in the
+  middle, so its tab strip is in the same place on every page (centred, the pages' different heights moved it 30 to
+  250 px as a finger changed tabs); the rival picker, one page, stays centred.
 - **Two lists:** everyone's top 10 (`MAX_SCORES`), the rivals' rows among them, and **Only you**, your own top 10. The
   stored list is both, so the rivals can't push all of your rounds out.
 - **Who gets a row:** you, every round; the rivals, when the round finishes (a round you abandon leaves no trace of
