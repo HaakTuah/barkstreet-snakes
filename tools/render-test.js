@@ -102,7 +102,7 @@ const { launch, serve, reporter } = require('./browser');
 
 const SEED = process.argv.includes('--seed') ? Number(process.argv[process.argv.indexOf('--seed') + 1]) : 1;
 const CELL = 32; // (the board's units a cell, as render/ draws them)
-const report = reporter(), { results, check } = report;
+const report = reporter(), { check } = report;
 
 // Before the page's own scripts: a switch for its animation loop; a wait for
 // the page to settle (the board laid out, at its size, after a load or a
@@ -156,13 +156,9 @@ const STAGE = `(() => {
     await b.viewport(800, 800);
 
     await runParts.inside(path.join(__dirname, 'render'), { SEED, CELL, check, STAGE, site, b, ev });
-
-    console.log(results.join('\n'));
-    if (b.errors.length) { console.log('page errors:', b.errors); report.failed++; }
   } finally {
     await b.close();
     site.close();
   }
-  if (report.failed) { console.error(`\n${report.failed} failed`); process.exit(1); }
-  console.log(`\nall passed (${results.length} checks)`);
+  report.end(b);
 })().catch(e => { console.error(e); process.exit(1); });
