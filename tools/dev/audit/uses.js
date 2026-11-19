@@ -22,6 +22,7 @@ const opt = k => { const i = args.indexOf(k); return i < 0 ? null : args[i + 1];
 const root = path.resolve(opt('--root') || path.join(__dirname, '../../..'));
 const jsonOut = opt('--json');
 const read = f => fs.readFileSync(path.join(root, f), 'utf8');
+const escape = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // (a name as a pattern that matches only itself)
 
 const files = [...read('index.html').matchAll(/<script src="([^"]+)"/g)].map(m => m[1]).filter(f => !/^https?:/.test(f));
 const partOf = f => (f.includes('/') ? f.split('/')[0] : 'root');
@@ -109,7 +110,7 @@ for (const [ns, ms] of members) for (const [mem, fs_] of ms) for (const f of fs_
 
 const usedBy = n => new Set(n.users.map(part)).size;
 const rank = names.filter(n => n.users.length).sort((a, b) => b.users.length - a.users.length || a.name.localeCompare(b.name));
-const declLine = n => { const f = n.declaredIn[0], i = read(f).split('\n').findIndex(l => new RegExp(`^(?:async\\s+)?(?:function\\s*\\*?\\s*|class\\s+|(?:const|let|var)\\s+)[{\\[]?[^=]*?(?<![\\w$])${n.name.replace(/[$]/g, '\\$')}(?![\\w$])`).test(l)); return `${f}:${i + 1}`; };
+const declLine = n => { const f = n.declaredIn[0], i = read(f).split('\n').findIndex(l => new RegExp(`^(?:async\\s+)?(?:function\\s*\\*?\\s*|class\\s+|(?:const|let|var)\\s+)[{\\[]?[^=]*?(?<![\\w$])${escape(n.name)}(?![\\w$])`).test(l)); return `${f}:${i + 1}`; };
 const dist = arr => { const s = [...arr].sort((a, b) => a - b), q = p => s[Math.min(s.length - 1, Math.floor(p * s.length))]; return { n: s.length, median: q(0.5), p90: q(0.9), max: s[s.length - 1] }; };
 
 const perFile = files.map(f => {
