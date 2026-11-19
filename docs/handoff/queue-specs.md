@@ -1,9 +1,13 @@
-# The queue's specs, word for word
+# The queue's specs
 
-The full text of each open entry in `docs/PROGRESS.md`, moved here on 31 October 2026 so the progress file stays under the
-workshop check's 20 KB (the owner: "Yes, to all, expertly!"). Each entry in the queue keeps its title, a line of what it is
-and a pointer here; this text is its spec, as the entry's own words were. When an entry is done, its section moves to
+The full text of each open entry in `docs/PROGRESS.md`, moved here on 31 October 2026, by the owner's word, so the
+progress file stays under the workshop check's 20 KB. Each entry in the queue keeps its title, a line of what it is and a
+pointer here; this text is its spec, as the entry's own words were. When an entry is done, its section moves to
 `docs/archive/progress-done/done-specs.md` with it.
+
+The owner's words quoted here keep, of each, only the decision and the words that carry its reason, spelling and grammar
+corrected and the meaning unchanged: no bare agreement, praise, chatter or words addressed to a session (the owner, 19
+November 2026, #792).
 
 ### The shared core (the owner, 5 November 2026; first among the side lanes, before the rule-file audit)
 
@@ -15,7 +19,7 @@ own; this game takes them all. What moves: the security baseline, the four
 pillars, the one inbox, keeping the owner's words, the roles and reviews, helpers, models and effort, the Git flow,
 usage, updates and "No description left untrue". What stays in each project: what it is, its rules that stand, its
 commands, its queue and whatever only it has, each rule file cut to that, with pointers into `core/`. The steps: (1) the
-owner creates the repository and adds it to Claude's and Codex's GitHub access, which only he can do; (2) a fresh
+owner creates the repository and adds it to Claude's and Codex's GitHub access, which only the owner can do; (2) a fresh
 session the owner starts in the core repository at high effort writes the core from both games' rule files (it reads
 them, as they are public, and writes only to the core), from this brief: (a) read both games' rule files whole on `main`
 (`AGENTS.md`, `CLAUDE.md`, `SECURITY.md`, `docs/threat-model.md`, `docs/claude-and-codex.md`, `docs/orchestrating.md`,
@@ -46,10 +50,10 @@ preview or, while previews are down, a round played on a local copy in two brows
 
 ### 2b. Hunger's worth at a contested apple, for every rival (the owner, 29 October 2026; an AI entry)
 
-The owner (29 October 2026), on the "For the owner" question whether a fed Gobbler should gamble too: "Agreed to all,
-expertly! Shouldn't the others contest apples more if they're hungry? They're worth more than, because usually apples
-just gove you plus 1, but if you are starving, they give you 1 and save you 1, so become plus 2? But yes, gobbler should
-contest it regardless. And Desperados being an adrenalin junkie, should generally be less risk averse?"
+The owner (29 October 2026), on the "For the owner" question whether a fed Gobbler should gamble too: "Shouldn't the
+others contest apples more if they're hungry? They're worth more then, because usually an apple just gives you plus 1,
+but if you are starving, it gives you 1 and saves you 1, so it becomes plus 2. But Gobbler should contest it regardless.
+And Desperado, being an adrenaline junkie, should generally be less risk-averse."
 
 Today hunger already makes every rival look for food harder (`foodW0`, `eatW0` in `decide()`), but only Gobbler and
 Desperado set aside any of a rival's threat at a contested apple (`w.nerve`), so a starving rival still backs off an
@@ -70,10 +74,10 @@ apple it needs. Build it from the cause, in the one template every rival shares:
 
 ### 2h. The endgame: eat what keeps you alive, not what boxes you in (the owner, 29 October 2026; an AI entry, after 2b)
 
-The owner (29 October 2026): "snakes should maybe avoid food more with the woodpecker about? I see snakes gorging on the
-remains of other snakes, when they have only a few tiles left to move on. They are not doing a context relevant tradeoff
-calculation there, clearly." And: "But sometimes starving still lasts you longer than increased length will, with so
-little room also."
+The owner (29 October 2026): "Snakes should maybe avoid food more with the woodpecker about. I see snakes gorging on the
+remains of other snakes when they have only a few tiles left to move on. They are clearly not doing a context-relevant
+trade-off calculation there." And: "Sometimes starving still lasts you longer than increased length will, with so little
+room."
 
 Today `decide()` sets `lean` once sudden death begins ("nobody can afford to be picky"), so food counts in full however
 little room is left, and rivals grow into the space they need to turn in. The trade-off, for every rival through the
@@ -84,8 +88,8 @@ shared template:
   room to spare, food counts as today.
 - **Personality still shapes it:** Gobbler stays the greediest (its food share is its trademark), the careful ones
   the most sparing.
-- **Grown, 31 October 2026** (the owner, watching Creeper drop his tail in a pocket: "Most box themselves in so the don't have the oppertunity to amputate like that. Would be better if they could anticipate it earlier, so they amputate while they still have the chance." Then: "I notice also that they eat insatiably others beads, when the map gets really small. i might eat one to stop hunger, but i would not eat it all at once. it only pays to be bigger than your opponent that late in game, if you are afraid you might have to run out the clock, but i have yet to see that happen. which is a shame. but woodpecker is getting a makeover right, so i don't want to focus to much on the current timing dynamic of the game. but yes. from my point of view, even if it was a time game, it would only  make sense to eat it, cut yourself so you are just longer than your opponent, then squash the beads. what's your expert take?" Then, to
-  the design session's take, folding all four into this entry: "Sounds good!"):
+- **Grown, 31 October 2026** (the owner, watching Creeper drop his tail in a pocket: "Most box themselves in so they don't have the opportunity to amputate like that. It would be better if they could anticipate it earlier, so they amputate while they still have the chance." Then: "I also notice that they insatiably eat others' beads when the map gets really small. I might eat one to stop hunger, but I would not eat it all at once. It only pays to be bigger than your opponent that late in the game if you are afraid you might have to run out the clock, but I have yet to see that happen. The woodpecker is getting a makeover, so I don't want to focus too much on the current timing dynamic of the game. From my point of view, even if it was a time game, it would only make sense to eat it, cut yourself so you are just longer than your opponent, then squash the beads." The owner then
+  agreed to the design session's take, which folds all four into this entry):
   - **The tail drop planned ahead.** A drop needs the flash rested, a body one thick and a free cell beyond, and a boxed
     snake rarely has all three. So the rivals plan it: when the search sees the room round them falling below their
     length within the next few moves, they weigh cutting now, while they can, against going on and being sealed in.
@@ -108,9 +112,9 @@ shared template:
 
 ### 2i. Food seasons: lean, normal and plentiful rounds (the owner, 29 October 2026; an engine-rules entry, after 2h)
 
-The owner (29 October 2026): "I think it should be a but more agressive. Someone should at least die from it once in a
-blue moon. Now games maybe feel a bit too samey? It's pretty predictable. But if food levels varied more, that would
-change things up."
+The owner (29 October 2026): "I think it should be a bit more aggressive. Someone should at least die from it once in a
+blue moon. Games maybe feel a bit too samey now: it's pretty predictable. If food levels varied more, that would change
+things up."
 
 Starving is 1 to 3% of deaths (round four's measure, `docs/design/25-round-four-measured.md`), so a snake almost never
 starves, and rounds feel alike. Each round draws its **food season**, as it draws its weather:
@@ -143,7 +147,7 @@ Copycat's rotten apples by the edge: checked and eased in PR #142; the general e
 
 ### 3c. A new rival: the Charmer (the owner, 29 October 2026; an AI entry, after 2b and 3b)
 
-The owner (29 October 2026): "add Charmer to the queue, exactly as I have prescribed, with his clingy unique playstyle."
+The owner (29 October 2026): "Add Charmer to the queue, exactly as I have prescribed, with his clingy, unique playstyle."
 A vain show-off, named **Charmer**. His look, and the mark he leaves on the map when he dies, are the owner's to give: this
 entry doesn't specify them, and the art waits for his description. Everything else:
 - **The trademark: courting.** He picks the biggest snake on the board, whoever it is (by length, never by who plays
@@ -167,15 +171,14 @@ entry doesn't specify them, and the art waits for his description. Everything el
 
 ### 3d. A new rival: Barkis & Boot-Snake, one snake with two sides (the owner, 2 November 2026; an AI entry, after 3c)
 
-The owner (2 November 2026), asking for them: "What do you think of Barkis & Boot-Snake, should that be added as a rival
-also. maybe a conjoined snake somehow?"; on their source: "[…] inspired, but snakes on a bark, or "hard wood"."; on
-the reference: "Yes, but make it very very clear where they are inspired on. Push that line to the max, so people
-actually fully get the reference and think it is funny!"; and on their body: "Oh, they must be cojoined. they can flip
-around so they change between the 2 from time to time, and maybe it triggers if they hit something or something. that
-way It works that they are cojoined, don't have to make different rules for them. they are just a very visually unique
-snake, with 2 unique ai personalities and lines."; then, to the design session's take on a head at each end against
-one head and a body that rolls over (the roll keeps one head at the end that moves, as on every snake, so a tail never
-looks like a head, and shows who steers from any part of the body): "Yes, please! Expertly!"
+The owner (2 November 2026), asking for them: "Should Barkis & Boot-Snake be added as a rival too, maybe as a conjoined
+snake somehow?"; on the reference: "Make it very clear what inspired them. Push that line to the max, so people fully
+get the reference and think it is funny!"; and on their body: "They must be conjoined. They can flip around so they
+change between the two from time to time, and maybe it triggers if they hit something. That way it works that they are
+conjoined, and we don't have to make different rules for them: they are just a very visually unique snake, with two
+unique AI personalities and lines." The owner then chose the design session's take of one head and a body that rolls
+over, over a head at each end (the roll keeps one head at the end that moves, as on every snake, so a tail never looks
+like a head, and shows who steers from any part of the body).
 **One snake in one seat, with two sides:** it moves, eats, grows and dies by exactly the rules every snake does, with
 one head at the end that moves, like every snake ("Every new rule needs a visible cue": nothing on the board lies about
 where its head is). Its two sides are the two of them: Barkis's side, pale bark, and his face on the head, lanky with
@@ -216,8 +219,8 @@ public: no look, line, laugh or catchphrase of its characters. Their looks and e
 
 ### 4. The teaching system, steps 2–6 (DESIGN "Teaching by showing") — after 5, whose new moves it must teach
 
-**Right after the new moves** (the owner, 29 October 2026: "And is this before the lessons rework? Because this will
-definetly be part of it. I think all this should come right after the new powers."). It starts as soon as item 5's last
+**Right after the new moves** (the owner, 29 October 2026, of the lessons rework: "This will definitely be part of
+it. I think all this should come right after the new powers."). It starts as soon as item 5's last
 part merges, ahead of every other entry but the art and sound lanes, as a lane of its own (it touches the lessons, the
 pictures and the Field guide, not the AI, so the AI entries 2b, 2h, 2i, 3b and 3c may run beside it). It teaches every
 move and change of item 5 by showing, each with its picture or cue, its lesson and its Field guide row: the island hop
@@ -244,13 +247,11 @@ in `docs/design/40-powers-and-moves.md` and `docs/design/30-teaching-by-showing.
 
 ### 6. Round six C: the woodpecker in three acts
 
-Moved from `docs/PROGRESS.md` word for word (2 November 2026, the file-by-file review). The draft is in
+Moved from `docs/PROGRESS.md` (2 November 2026, the file-by-file review). The draft is in
 `docs/handoff/woodpecker-acts-draft.md`.
 
-The draft is in `docs/handoff/woodpecker-acts-draft.md`.
-
-- **Its pace and fairness, and hunger in the endgame** (the owner, 31 October 2026: "Sounds good! though I think it should take fewer chunks at once as a rule, because the map shrinks really quickly now! and i also think when there is just a little bit of space, it should slow down again, so it isn't and rng competition where it is who's island it pecks at next that decides it, capiche? Whats your take?" Then, to the design session's take: "Yes, to everything, expertly! and i also want hunger to be a factor! right now, food and beads jjust become a negative at the end. if we manage to balance this right, we can make it a trade-off, just like we tried with everything else, like mushrooms. that's a sign of good game design, conditional goods. thomas sowell in game mechanics."). These come before the draft's numbers and win where they differ:
-  - **Like the final Bowser, as a woodpecker** (the owner, 31 October 2026: "Bowser 2 in Super Mario 64 is what I always compare my imagined woodpecker to, and it doesn't break down the map until there is no space.", then "sorry! final bowser!"; to the design session's take: "Yes, though I don't know about in a few big moments, I think perhaps I like what we've planned already better. Fits a woodpecker. but what if it takes few chunks at once, but it is cutting out a shape, and when that shape is no longer attached to anyhting, it falls? I really like your idea about a floor, and how it continues to peck which you must avoid, without taking out much anymore. maybe just a tile here and there in the late late game. what do you think, expert?"; then "Yes, I think that's it. can still be jumpable gaps, but we want to avoid the islands stuff. it becomes too much rng, and isn't very exciting."). It cuts shapes, never melts the log:
+- **Its pace and fairness, and hunger in the endgame** (the owner, 31 October 2026: "I think it should take fewer chunks at once as a rule, because the map shrinks really quickly now! And I also think that when there is just a little bit of space, it should slow down again, so it isn't an RNG competition where whose island it pecks at next decides it." Then, agreeing to the design session's take: "I also want hunger to be a factor! Right now, food and beads just become a negative at the end. If we manage to balance this right, we can make it a trade-off, just like we tried with everything else, like mushrooms. That's a sign of good game design: conditional goods."). These come before the draft's numbers and win where they differ:
+  - **Like the final Bowser, as a woodpecker** (the owner, 31 October 2026: "The final Bowser in Super Mario 64 is what I always compare my imagined woodpecker to, and it doesn't break down the map until there is no space."; to the design session's take: "I don't know about doing it in a few big moments; I think perhaps I like what we've planned already better. It fits a woodpecker. But what if it takes few chunks at once, but it is cutting out a shape, and when that shape is no longer attached to anything, it falls? I really like the idea of a floor, and how it continues to peck, which you must avoid, without taking out much any more: maybe just a tile here and there in the very late game."; then "There can still be jumpable gaps, but we want to avoid the islands stuff. It becomes too much RNG, and isn't very exciting."). It cuts shapes, never melts the log:
     - **A few cells a peck, along an outline.** Its pecks trace a dotted cut across the log, so everyone can watch the outline close round a piece; when the last peck cuts it loose, the piece falls away (2s's rule). The gaze in act 1 says where it will start cutting. The last peck is warned like any strike, and a snake still on the piece falls with it ("Down the hole!"), unless it crawled or jumped off in time; it never cuts loose a piece a snake couldn't leave in the warning's time ("The woodpecker plays fair"). The draft's combos give way to the outline. **It aims small, nothing is banned** (the owner, 31 October 2026: "No outline should be banned from falling, but ideally, it never takes out half the trunk."): it plans its outlines round edges and corners, pieces small next to the log (about a sixth at most, a first guess), and never plans a cut that halves the trunk; but no size is banned from falling, so a piece that ends up cut loose falls, whatever its size, by 2s's rule. Measured: the biggest piece that fell in a round.
     - **A floor.** It cuts shapes only while the log is bigger than the room the snakes left need to play (about twice their length together, a first guess, set by simulation). At the floor it stops cutting.
     - **Then it fights.** At the floor it keeps pecking at the snakes, aimed and warned (its rings), so they must dodge; a peck that catches a snake is a crash, never instant death, and never unavoidable ("No refuges" both ways). It takes only a tile here and there in the very late game.
@@ -265,10 +266,10 @@ The draft is in `docs/handoff/woodpecker-acts-draft.md`.
 
 ### 8. Near the end: beetles who meet, fight (the owner, 29 October 2026; an engine-rules entry, last but the writing pass)
 
-The owner (29 October 2026), watching two beetles walk about an island the woodpecker made, away from the snakes: "Looked
-a bit boring that they just walked around like that, I wanted something to happen. Therefore, given how rare it is, i
-thought it should feel special." Then, to the design session's take: "Love how you described it! And it should come
-late, it is probably the most uneasecary feature we have discussed here, so leave it last or close to last".
+The owner (29 October 2026), watching two beetles walk about an island the woodpecker made, away from the snakes: "It looked
+a bit boring that they just walked around like that; I wanted something to happen. Given how rare it is, I thought it
+should feel special." Then, agreeing to the design session's take: "It should come late: it is probably the most
+unnecessary feature we have discussed here, so leave it last or close to last."
 - **They notice each other:** two beetles within about 4 cells, with no head near enough to scare them, stop wandering
   and walk towards each other, sizing each other up, so you can see it coming.
 - **A shoving match:** head to head, wing cases up, a buzzing clack, a second or two of pushing.
@@ -286,8 +287,8 @@ late, it is probably the most uneasecary feature we have discussed here, so leav
 
 ### 9. At the very end: the writing pass (the owner, 31 October 2026; Fable, its newest version, after everything else, entry 8 included)
 
-The owner (31 October 2026): "Also, many of the Snakes dialogue lines are really really bad and corny. some of it are fun pop cultural stuff or wordplays I came up with, but most of it is corny writing by Opus 5.5. I think it would be nice to have a Fable 5.1 run on it at the end, to really piff up the writing. make it more clever and culturally engrossing. Though Trump actually got some good lines! So i don't want it to remove across the lines. remove the funny gags like Mason talking bad latin, or saying vidi vici veni which is a sex joke. but i want it to look at all, and give it a make over. the chinese lines are not as important. if it can, do them too, but most can't read them regardless. concur?" Then, to the design session's take (his gags kept, at the end of the queue, a page
-to choose from): "yes, and let it be creative! i don't want it to strictly look and improve whats there. that contrains it. let it go a bit wild and add stuff to, or make it over. it needs creative control outside of what i protect."
+The owner (31 October 2026): "Many of the snakes' dialogue lines are really bad and corny. Some of it is fun pop-cultural stuff or wordplay I came up with, but most of it is corny writing by Opus. I think it would be nice to have a Fable run on it at the end, to really pep up the writing: make it more clever and culturally engrossing. I want it to look at all of it and give it a makeover. The Chinese lines are not as important: if it can, do them too, but most can't read them regardless." The owner kept some lines and gags out of the pass (listed under "Protected" below). Then, agreeing to the design session's take (the owner's gags kept, at the end of the queue, a page
+to choose from): "Let it be creative! I don't want it to strictly look at and improve what's there: that constrains it. Let it go a bit wild and add stuff too, or make it over. It needs creative control outside of what I protect."
 - **Who and when:** after entry 8, so it covers every line the queue adds (the Charmer, the new moves, the woodpecker's
   acts). Fable holds the creative control but not the volume, since its usage drains far faster, and it gets only
   the parts that need its judgement (archive, 5 November 2026, and "A helper above you gets only what needs it" in
@@ -305,22 +306,22 @@ to choose from): "yes, and let it be creative! i don't want it to strictly look 
   culturally engrossing over corny: wordplay, references that land in a moment, each rival's own humour. Each rival
   stays who it is, its name, look and play ("Every rival keeps its trademark").
 - **Protected, word for word:** the owner's own lines, found from `docs/archive/instructions.md`, `docs/handoff/` and the
-  git history (lines he wrote or asked for word for word); Wildcard's lines, which he likes (Trump's, by his hair), kept
-  as they are, though Fable may add to them and offer replacements beside them for him to pick; and the gags:
-  Mason's bad Latin and "vidi vici veni". The session lists what it protected, and why, at the top of its PR.
+  git history (lines the owner wrote or asked for word for word); Wildcard's lines, which the owner likes, kept as they
+  are, though Fable may add to them and offer replacements beside them for the owner to pick; and the gags: Mason's bad
+  Latin, a scrambled Latin motto among them. The session lists what it protected, and why, at the top of its PR.
 - **Bounds:** every line fits its bubble on a phone (the layout suite) and fires on its moment; no song lyrics and no
   long quotes, since those belong to their owners (a short reference is fine); nothing hateful.
-- **The owner chooses:** the PR has a page with each rival's lines old and new side by side, new ones marked, so he can
-  keep or reject them one by one; a rejected line goes back to the old one.
+- **The owner chooses:** the PR has a page with each rival's lines old and new side by side, new ones marked, so the owner
+  can keep or reject them one by one; a rejected line goes back to the old one.
 - **The Chinese lines last,** if usage allows: the same make-over, written as Chinese, not translated word for word;
   otherwise left as they are.
 - **Meanwhile:** new lines follow "New lines, until the writing pass" in `docs/design/09-voice-and-copy.md`.
 
 ### The file-by-file review (the owner, 2 November 2026; the workshop lane, after the chatter split)
 
-The owner: "Need a full review and clean up where we look at every file, especially the documents, and ask what does this
-state that it does, and does it do it? If something in it doesn't then it needs to be somewhere else, if anywhere at
-all." Every file, docs first: what does it say it is for, and does it do that? What doesn't belong moves to where it
+The owner: "[We] need a full review and cleanup where we look at every file, especially the documents, and ask: what does
+this state that it does, and does it do it? If something in it doesn't, then it needs to be somewhere else, if anywhere
+at all." Every file, docs first: what does it say it is for, and does it do that? What doesn't belong moves to where it
 does, or goes; code is checked against "Split by meaning" and "Keep it lean" in `core/modules/how-to-work.md`. The files every session
 reads first, then `docs/`, then the code, in a few PRs, each with a table of every file it covered and what happened to
 it, behaviour proven unchanged (suites, fingerprints). Helpers by
