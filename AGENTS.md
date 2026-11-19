@@ -30,10 +30,10 @@ over rules" (`core/modules/how-to-work.md`) never reaches: the storage keys (`SE
 | Security: what this game adds to the floor; who might attack it | `SECURITY.md`, `docs/threat-model.md` |
 | Running and checking it: every tool, its updates; each file and where each folder lists its parts ("How it's put together") | `docs/developing.md`; PR pictures: `docs/pr-pictures.md` |
 | The design, one file per topic | `docs/design/` (index: `DESIGN.md` at the root) |
-| Materials the queue points to, with the specs word for word of the entries that name one (`queue-specs.md`) | `docs/handoff/` |
+| Materials the queue points to, with the specs of the entries that name one (`queue-specs.md`), the owner's words in them cut to the decision and its reason | `docs/handoff/` |
 | Study and measuring tools from earlier rounds (censuses, audits, PR pictures) | `tools/dev/` (done ones: `docs/archive/`) |
 | Audits of how the code is put together: the reports and their numbers, one per day | `docs/audits/`; the measures: `tools/dev/audit/` |
-| History: the old polish audit, the plan as it grew, the owner's instructions word for word | `docs/archive/` |
+| History: the old polish audit, the plan as it grew, the owner's instructions (cut to the decision and its reason: `docs/archive/instructions.md`) | `docs/archive/` |
 
 ## Starting a task
 
