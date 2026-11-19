@@ -15,9 +15,9 @@ for (const [w, h] of [[390, 844], [320, 640]]) {
   await tap(await at('#records-close'));
   p = await P();
   check(p.how === 'How to play', `phone ${w}: the start card has How to play`, p.how);
-  // A finger finds them: a seat's tap reaches 6 px above it, a tag's 2 px into the gap below it (nothing moved).
-  const reach = await ev(`(() => { const s = document.querySelector('.opponents .seat'), t = document.querySelector('.scoreboard li'), rs = s.getBoundingClientRect(), rt = t.getBoundingClientRect(); return { seat: document.elementFromPoint(rs.left + rs.width / 2, rs.top - 6)?.closest('.seat') === s, tag: document.elementFromPoint(rt.left + rt.width / 2, rt.bottom + 2)?.closest('li') === t }; })()`);
-  check(reach.seat && reach.tag, `phone ${w}: a seat is tapped 6 px above it, a tag 2 px under it`, JSON.stringify(reach));
+  // A finger finds them: a seat's tap reaches 6 px above it, a tag's 1 px into the gap below it (nothing moved).
+  const reach = await ev(`(() => { const s = document.querySelector('.opponents .seat'), t = document.querySelector('.scoreboard li'), rs = s.getBoundingClientRect(), rt = t.getBoundingClientRect(); return { seat: document.elementFromPoint(rs.left + rs.width / 2, rs.top - 6)?.closest('.seat') === s, tag: document.elementFromPoint(rt.left + rt.width / 2, rt.bottom + 1)?.closest('li') === t }; })()`);
+  check(reach.seat && reach.tag, `phone ${w}: a seat is tapped 6 px above it, a tag 1 px under it`, JSON.stringify(reach));
   // Three picked rivals, each pinned: the pins take next to no room (the card no taller), and a tap beside one still unpins it.
   const cardFit = () => ev(`(() => { const c = document.querySelector('.overlay .card'); return { h: c.scrollHeight, rows: new Set([...document.querySelectorAll('.opponents .seat')].map(s => Math.round(s.getBoundingClientRect().top))).size }; })()`);
   const unpinned = await cardFit();

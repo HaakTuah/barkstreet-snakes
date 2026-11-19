@@ -9,8 +9,8 @@
   .note-close { top: 0; right: 0; width: 36px; height: 36px; } /* (a fingertip's room, in the note's corner) */
   .opponents .seat, .lobby-players .seat { position: relative; min-height: 30px; }
   .opponents .seat::before, .lobby-players .seat::before { content: ''; position: absolute; inset: -7px 0; } /* (a fingertip's 44 px, seat and room above and below; nothing moves: a row's neighbours are words) */
-  .scoreboard li { overflow: clip; overflow-clip-margin: 3px; }
-  .scoreboard li::before { content: ''; position: absolute; inset: -3px; } /* (a tag's tap reaches half the gap to its neighbours, so the row of tags has no dead strip: two rows can't both be 44 px high) */
+  .scoreboard li { overflow: clip; overflow-clip-margin: 2px; }
+  .scoreboard li::before { content: ''; position: absolute; inset: -2px; } /* (a tag's tap reaches half the 4 px gap to its neighbours, so the tags have no dead strip between them: two rows can't both be 44 px high) */
   .opponents .unpin { min-height: 0; } /* (a seat's pin: as tall as its seat, by its padding, not a 44 px button's) */
   .lobby-players .seat { margin: -4px 0; } /* (the lobby's: as tall, the row no taller than a friend's) */ /* (the start card's seats: a fingertip's room, without the card outgrowing a phone's board) */
 }
