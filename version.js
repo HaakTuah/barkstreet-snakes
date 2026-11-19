@@ -10,6 +10,7 @@
 window.SnakeVersion = {
   build: 'dev',
   news: [
+    { on: '2026-11-19', line: 'Rivals’ names are easier to tap on a phone.' },
     { on: '2026-11-19', line: 'Hall of Fame tabs stay put as you switch pages.' },
     { on: '2026-11-19', line: 'Field guide now covers weather and going quiet.' },
     { on: '2026-11-14', line: 'Islands at the edge stay standing: jump across.' },
