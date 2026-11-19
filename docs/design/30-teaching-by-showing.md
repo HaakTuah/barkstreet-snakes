@@ -164,7 +164,7 @@ snake: they didn't know which one was theirs, and at length 3 the first bump was
 ### Steps 2–6, to build
 
 The owner found the banners too quick to read in a fast game, and in the way on a phone, and asked whether the game
-could show rather than tell: your own snake speaking in a bubble, and pictures in play of what you can do (his words,
+could show rather than tell: your own snake speaking in a bubble, and pictures in play of what you can do (the owner's words,
 and what was measured first, are in `docs/archive/design-teaching.md`). Three prototypes (your snake talks; pictures
 drawn on the log; a first round that teaches) were scored by three judges, and all three chose one system made of the
 best of each. Step 1, the banner above, is built; steps 2–6 are queue entry 4 (`docs/handoff/queue-specs.md`, "4. The

@@ -149,7 +149,7 @@ Copycat's rotten apples by the edge: checked and eased in PR #142; the general e
 
 The owner (29 October 2026): "Add Charmer to the queue, exactly as I have prescribed, with his clingy, unique playstyle."
 A vain show-off, named **Charmer**. His look, and the mark he leaves on the map when he dies, are the owner's to give: this
-entry doesn't specify them, and the art waits for his description. Everything else:
+entry doesn't specify them, and the art waits for the owner's description. Everything else:
 - **The trademark: courting.** He picks the biggest snake on the board, whoever it is (by length, never by who plays
   it: "The rivals never treat a person differently"), sidles up and slithers alongside it, two or three cells off its
   flank, matching its turns. Nobody else in the cast runs beside a rival: Creeper rides tails, Sniper cuts snakes off.

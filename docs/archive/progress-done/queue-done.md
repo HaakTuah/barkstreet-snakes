@@ -106,7 +106,7 @@ entry's, not the drawing's. What it should be, seen from above (the head points 
 The owner (28 October 2026), on PR #107's pictures: "Also, looks like it is messing up wildcards hair again. But now by just
 making it look like 2 weird yellow blobs instead. You can take a look and see how it is making it now. Hope that isn't
 what it ends up going with." Then: "Can't you just describe who's hair it is making? Is it that difficult to make [the reference]
-hair?" And, to sending it back with three versions for him to pick from: "Yes please, expertly!"
+hair?" And, to sending it back with three versions for the owner to pick from: "Yes please, expertly!"
 
 [PR #107's after](https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/32e97b81e878686f4951b3b21f27a411b3bc18e7/pr107-desk-clear.jpg)
 draws a roll and a back mass as two shapes with a dark seam between them: two yellow halves, not a head of hair, and
@@ -126,7 +126,7 @@ stars-and-stripes body and the red tie): draw that, as seen from straight above 
   zoomed crop.
 - **Three versions for the owner to pick:** A, B and C, differing in the size of the front wave and how far the swirl goes
   to the side. The PR shows them side by side, all four headings, on the clear and storm boards, at phone size (true
-  size and 3x) and desktop 2x, and asks the owner in "Questions for the owner" which one; it stays a draft until he answers,
+  size and 3x) and desktop 2x, and asks the owner in "Questions for the owner" which one; it stays a draft until the owner answers,
   and the lane goes on with other work meanwhile. Only the chosen one ships: no option in the game, the others deleted.
 - Art only, no rule changes: the render suite and its looks checks pass; reduced motion unchanged; no reviewer needed
   beyond the pictures and the owner's pick.
@@ -286,7 +286,7 @@ solid, never stringy. Seen from above (the head points +x):
   only versions that pass.
 - **Up to three versions that pass, side by side with C and the current hair,** at true phone size (390 px), phone 3x
   and desktop 2x, all four headings, clear and storm boards. **The PR stays a draft and does not merge until the owner
-  picks one** (#110 merged before his verdict; this one waits). Only his pick ships.
+  picks one** (#110 merged before the owner's verdict; this one waits). Only the owner's pick ships.
 - Art only: the render suite and looks checks pass; reduced motion unchanged.
 
 ### 2f+. Wildcard's hair: F, a size smaller (the owner, 29 October 2026; small, an art lane beside the new moves): done, PR #156
@@ -331,7 +331,7 @@ arent distracting! That would be a real turn off!"
 - **Never distracting, first of all:** well under the eating sound, at most about half a second whatever the line's
   length, never two at once, at most one every few seconds, never over your own sounds (eating, warnings, crashes), and
   quieter still in tight moments. Its own switch in the sound settings ("Voices").
-- **The owner judges it:** the PR stays a draft until he has played its preview and says it isn't distracting; if he
+- **The owner judges it:** the PR stays a draft until the owner has played its preview and says it isn't distracting; if the owner
   isn't sure, it ships switched off by default.
 - Rivals only for now (your own snake's lines, from the teaching system, stay silent). Online, each player hears it on
   their own machine: no protocol change.

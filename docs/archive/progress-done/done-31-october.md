@@ -4,7 +4,7 @@
 
 ### 2u. Picked rivals for this visit; unmet rivals back into the deck (30 October 2026; small, a UI lane) — done, PR #221
 
-The owner asked why the same cast showed up each time he started the game, then: "I might've picked them yes. Didn't
+The owner asked why the same cast showed up each time the owner started the game, then: "I might've picked them yes. Didn't
 expect them to stay permanently", and to the design session's takes: "Agreed to all!". In `records.js` and the start
 card (`game/round.js`, `game/hud.js`):
 - **A picked seat lasts this visit,** round after round, and the next time the game is opened every seat is "Any"
@@ -22,7 +22,7 @@ clears; an undealt rival is not dealt first every time (a seeded test).
 The original pompadour (PR #74, at a79946b) as it was, with only its lick reversed: the curl at the near end of the roll
 now curls up and back over the hair behind it instead of forward over the brow. Two tries that reworked more were
 turned down (the owner: "it looks horrible. I want the original hair, but I want the lick reversed. That's all. Keep it
-that simple."); the third had his yes ("The hair looks 'okay' now."; "The hair's third try is approved: merge #208.").
+that simple."); the third had the owner's yes ("The hair looks 'okay' now."; "The hair's third try is approved: merge #208.").
 See "Wildcard's hair" in `docs/design/32-the-owners-playtest.md`.
 
 ### 2v. The newest version, by itself between rounds (30 October 2026; small, a UI lane): done, PR #223

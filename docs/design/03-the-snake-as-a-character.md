@@ -138,7 +138,7 @@ Everything that comes out is drawn with a dark outline or a bright colour so it 
 ### A costume change (2t)
 
 Capricious is always pink, so it needs no ring round its head to be found while its mood changes: its pink coat does
-that. Instead, one animation shows every change of costume (the owner's call, 30 October 2026; his words in
+that. Instead, one animation shows every change of costume (the owner's call, 30 October 2026; the owner's words in
 `docs/archive/design-rivals.md`).
 - *How* (`costumeChange` and `drawChange` in `render/looks.js`): over `COSTUME_MS` (500 ms), in the face's frame.
   Capricious taking up a mood, putting one down (undecided again), or changing one for another; Copycat taking on a new
