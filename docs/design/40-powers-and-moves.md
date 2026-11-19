@@ -358,7 +358,7 @@ Built in part 5 of round six B (PR #202):
   too.
   Per use (`tools/dev/fork-moves.js --move portal --rest`, seeds 902–904, 232 follows): a follower is 3.1 ± 0.8 cells
   longer 10 s later, but places no better (−0.10 ± 0.10 a follow). The move doesn't matter to places, which is a design
-  finding for the owner (#447); it is kept as built until he answers. Every trademark is within noise.
+  finding for the owner (#447); it is kept as built until the owner answers. Every trademark is within noise.
 - **A follower that cuts its owner, measured and dropped** (2y++, PR #591; the owner's call is #592): a follower coming
   out of the exit snipped the owner's body still lying straight in line beyond it, up to 8 cells (a dash's cut; the
   head reached, the owner out). The rivals were not taught it. It bit in a third of follows (60 of 181 on seeds
@@ -468,7 +468,7 @@ air, as over its own lying wet.
   keep their heads apart, so a head is seldom five in line from a spitter when the second runs out. Neither a hedged lead
   nor closing in three times as hard raised it. Per use (`tools/dev/fork-moves.js --move spit`, seeds 1301–1303, 384
   spits, each against that mushroom gone unspat): place −0.035 ± 0.123, −0.021 ± 0.115 and +0.054 ± 0.103 a spit, about
-  nothing (a spit against none, so aiming it can add no more). The spitters come out even, a design finding for the owner (#583); kept as built until he answers.
+  nothing (a spit against none, so aiming it can add no more). The spitters come out even, a design finding for the owner (#583); kept as built until the owner answers.
 
 ### Where it rolls is a rule, never chance
 

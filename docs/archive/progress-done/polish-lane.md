@@ -44,7 +44,7 @@ owner's three notes of 2 November merged as PRs #322 (the remains), #320 (the fl
 - **First, the housekeeping:** done (PR #222, and the design session's move of the open entries' specs to
   `docs/handoff/queue-specs.md`, 31 October 2026); merged branches now go by GitHub's "Automatically delete head
   branches", and the older ones went by the "Delete merged branches" button in Actions (31 October 2026). Then archive leftovers nobody uses.
-- **Next, from the owner's notes of 2 November** (his words: `docs/archive/instructions.md`), one PR each: **every
+- **Next, from the owner's notes of 2 November** (the owner's words: `docs/archive/instructions.md`), one PR each: **every
   snake's remains match the body they came from** ("Remains" in `docs/design/04-food-and-the-world.md`): The owner saw it
   on Star, but `beadOf` in `render/food.js` has three faults. A dead snake's beads take their pattern by bead count, not
   by the segment they came from, so every patterned rival's comes out squeezed (Wildcard, Joker, Sniper, Vulture,

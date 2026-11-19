@@ -1,8 +1,8 @@
 # Progress
 
 What is done and what comes next, in order (how to work through it: `AGENTS.md`). When an entry merges into `main`, move it to
-`docs/archive/progress-done/queue-done.md` with its PR; add the owner's new tasks where he places them, with a pointer
-to his words in the archive.
+`docs/archive/progress-done/queue-done.md` with its PR; add the owner's new tasks where the owner places them, with a pointer
+to the owner's words in the archive.
 
 ## State
 
@@ -172,7 +172,7 @@ bump. Spec: #783 and the audit's "Findings and proposals" it names.
 
 ### 9. At the very end: the writing pass (the owner, 31 October 2026; Fable, after everything else, entry 8 included)
 
-Every rival's lines given a make-over, Fable holding the creative control (voice guides, samples, spot-checks) and Opus writing the bulk, outside what the owner protects: his own lines, the lines he likes, and the gags (Mason's bad Latin, "vidi vici veni"). After everything else, so it covers every line the queue adds. Spec: `docs/handoff/queue-specs.md`, "9. At the very end: the writing pass".
+Every rival's lines given a make-over, Fable holding the creative control (voice guides, samples, spot-checks) and Opus writing the bulk, outside what the owner protects: the owner's own lines, the lines the owner likes, and the gags (Mason's bad Latin, "vidi vici veni"). After everything else, so it covers every line the queue adds. Spec: `docs/handoff/queue-specs.md`, "9. At the very end: the writing pass".
 
 ## Noted, not yet queued
 

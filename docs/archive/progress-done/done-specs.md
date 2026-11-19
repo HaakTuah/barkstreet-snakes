@@ -55,7 +55,7 @@ are trapped on each, so the one on the bigger one wins". The first answer kept e
 The owner (31 October 2026): "Do beetles ever manage to espace?" Told that about 33% of chased beetles got away when last measured (round six A,
 inside its 20–35% band): "Yeah, I feel it should be at least a third of the time."
 - **The band** (in `docs/design/27-round-six-a-fairness-and-fixes.md`, "A cornered beetle digs in") moves from 20–35% to
-  **33–45%** of chases: at least a third, as he said; the ceiling of 45% is the design session's reading, so beetles
+  **33–45%** of chases: at least a third, as the owner said; the ceiling of 45% is the design session's reading, so beetles
   stay worth hunting.
 - **Measure first,** on `develop` once part 4 has merged, since the golden flight changes how snakes hunt: escapes from a
   chase (down a burrow, dug in), beetles caught a round, the ticks of chase per catch, on fresh seeds.
@@ -185,7 +185,7 @@ design's words for each are in `docs/design/40-powers-and-moves.md` (as first de
    their shots and step out of lines; the A/B should now show the spitters ahead, no refuge; lesson, cue, protocol
    bump. **The spitter slides over its own mushroom** (moved to the front as its own entry, 2x, on 2 November 2026) for a few moves (`OWN_SPIT_TICKS`, a first guess of 6), as a full
    mouth slides over food, so it can't swallow it again: today the spit lands 3 straight ahead and a snake that keeps
-   going eats it 3 moves later, shrinks again and has a full mouth again, a loop that cost the owner several apples (his playtest, 30 October 2026); everyone else is hit by it as before. It runs after part 4, 2q and 2s, before part 5 (rule and AI
+   going eats it 3 moves later, shrinks again and has a full mouth again, a loop that cost the owner several apples (the owner's playtest, 30 October 2026); everyone else is hit by it as before. It runs after part 4, 2q and 2s, before part 5 (rule and AI
    changes run one at a time; 2q first, so 3b+'s A/B measures dodging with human reactions).
 4. **The golden jump flies:** hold to fly up to 5 cells, steer in the air, the gold ring where you'd come down; with
    **leap now** (a second press while a jump waits sends it at once, open ground included: "Leap now" in the design); with
