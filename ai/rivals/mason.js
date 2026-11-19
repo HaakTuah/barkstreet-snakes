@@ -1,7 +1,7 @@
 // Mason: its look, its words and its weights (the template every rival shares: ai/rivals.js).
 
 PERSONAS.mason = {
-  name: 'Mason', color: '#ebe5d9', ink: '#8a8170', look: 'mason', // Caesar in marble (ink: his name, outline and tag, in stone)
+  name: 'Mason', color: '#ebe5d9', ink: '#8a8170', look: 'mason', // a Roman bust in marble (ink: his name, outline and tag, in stone)
   blurb: 'Walls off the board, then keeps the biggest piece.',
   kill: ['Mason had a spot picked out for you.', 'You were on the wrong side of the wall.', 'All roads led to Mason.'],
   win: ['Veni, vidi, Mason.', 'Winnus maximus.', 'Rome took longer.'],

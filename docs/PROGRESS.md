@@ -57,7 +57,8 @@ the owner's notes of 2 November, the portals blue and orange and the woodpecker'
 - **The owner's audit, prune and trials** (agreed in chat, 14 and 15 November 2026; the stand-in's yes, 19 November):
   #764, the audit of how the code is put together, done (PR #780: `docs/audits/`, its baseline for #771's view on the stack; its
   cleaning lane is #783 and its two small drifts #784, waiting for the stand-in's verdicts); #765, the
-  prune of the records of the owner's words, a routine lane, next; and the trials, nothing merged, each reporting to the core:
+  prune of the records of the owner's words, closed as superseded by #792 (the owner's words that stand cleaned,
+  under way); and the trials, nothing merged, each reporting to the core:
   #766 (a first-time player), #769 (the change probe), #767 (a public rule set) and #768 (two rival entries measured
   side by side: the next two in the main lane on different files).
 - **The cleaning lane from the code audit** (#783; the stand-in's yes, sure, 19 November, on the owner's words of 14

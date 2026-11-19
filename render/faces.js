@@ -635,7 +635,7 @@ function lens3d(sg, tint) {
   ctx.fillStyle = tint;
   ctx.fill();
 }
-// Wildcard's hair (Trump's), seen from above: the head points +x, and -y is
+// Wildcard's hair, seen from above: the head points +x, and -y is
 // the far side. The original big fluffy golden pompadour (PR #74), drawn as
 // it was, its lick reversed (2n): the curl at the near end of the roll turns
 // up and back, over the hair behind it, instead of forward over the brow.
