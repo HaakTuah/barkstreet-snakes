@@ -21,7 +21,7 @@ From "3. Fixes and polish (the owner's playtest of 2026-10-20)".
 - **Rainbows upside down.** `drawRainbow` deliberately hangs the arch downward from an apple in the log's upper half.
   - Fix: always upright. For an apple in the upper half, use a great circle centred below the log (cy about 1.15 × the board, its top about 0.06 × the board from the top edge). It rises out of the apple, over, and down off the far side, with red outermost.
   - *Done on 27 October 2026 (PR #57; its top on the board from every apple, over and down to the far side, in the PR after it)*: see "Rainbows upright" in `docs/design/32-the-owners-playtest.md`.
-- **Rainbows, the follow-ups** (left open by PR #61). The owner (27 October 2026), on Claude's three recommendations: "And I agree, queue!" One PR, render only:
+- **Rainbows, the follow-ups** (left open by PR #61). The owner (27 October 2026) agreed to Claude's three recommendations and to queueing them. One PR, render only:
   - *Rounder over the middle.* From an apple near the middle the arch rises only about a cell, which barely reads as a rainbow. Move the circle's centre higher (today 1.15 boards below the top edge) so the arch from a mid-board apple rises clearly before it comes down; keep its top on the board and red outermost. This changes the numbers of "Rainbows upright": record the new ones there, with before/after pictures.
   - *The lower half, mirrored.* An apple low on the board near the middle can still show only the rising side. Give the lower half the same rule as the top: up out of the apple, over, and down toward the far side, with the render check's 12 apples extended to cover it.
   - *A render check that doesn't depend on order.* The choking check in `tools/render-test.js` passes or fails by how many boards earlier checks set up, since each moves the random seed along. Give each check its own seed so adding one can't break another.
@@ -38,7 +38,7 @@ From "3. Fixes and polish (the owner's playtest of 2026-10-20)".
   - *Done on 27 October 2026 (PR #70)*: see "The phone gap" in `docs/design/32-the-owners-playtest.md`.
 - **Desktop chatter.** Fill the column down to the board's bottom edge with as many whole lines as fit (today it stops at about 5). Older lines fade at the top, and you can scroll back.
   - *Done on 27 October 2026 (PR #72)*: see "Desktop chatter" in `docs/design/33-one-screen.md`.
-- **A head-to-head mode in `tools/abtest.js`.** The owner (27 October 2026): "Yes to all, expertly!" Old and new AI mixed in
+- **A head-to-head mode in `tools/abtest.js`.** The owner agreed to all (27 October 2026). Old and new AI mixed in
   the same rounds on paired seats, which the optimization bar in `CLAUDE.md` calls for (the assistant's note of
   2026-10-18), and which the standing instruction "every new move is tested both ways" uses: rivals with a move and
   rivals without it on the same board. Before item 5, whose new moves need it.
@@ -59,7 +59,7 @@ From "3. Fixes and polish (the owner's playtest of 2026-10-20)".
     entry: fear read off the board as it is now, not off the line played.
 - **Rivals too shy of heads.** The owner (27 October 2026): "it seems to me the rival snakes might be a bit too adverse to
   have their heads next to each other, even if the other snake can't cut you off, or if the would see and have time to
-  react ahead of time. Can this be investigated, expertly?"
+  react ahead of time. Can this be investigated?"
   Then (27 October 2026): "the snake game bug should be addressed, as it makes it so they seemingly always chicken out
   when competiting with you for resources. And also is just needlessly sub-optimal play, regardless of playstyle". So
   it comes first in the queue, with "Hunters miss easy pins" and, before both, the head-to-head mode their tests need.
@@ -143,7 +143,7 @@ From "3. Fixes and polish (the owner's playtest of 2026-10-20)".
     the edge, a hole, the woodpecker, hunger, fire and a snake's own body, for all eighteen, with their Chinese.
     Mushrooms only shrink, so none dies of one; every fire is lightning's, so Mason's fire lines are "Et tu, ignis?"
     and "Et tu, Iuppiter?". Design in `docs/design/09-voice-and-copy.md`, "Last words know what killed them".
-- **Last words on phones.** The owner (27 October 2026): "Yes to all, expertly!" On phones with no chatter panel, the
+- **Last words on phones.** The owner agreed to all (27 October 2026). On phones with no chatter panel, the
   round-ending snake's last words are lost, and at 390x664 the strip's line is cut with an ellipsis (from #34;
   `docs/archive/plan-history.md`). Show the last words whole where a phone player sees them, without crowding the board.
   - *Done on 28 October 2026 (PR #124):* where the log can't show them whole (no panel, or a folded strip), the round-ending
@@ -222,7 +222,7 @@ owners already bent their own (now tested). See "Flags in depth, hit head-on (2p
 
 The owner: "i think now that capricious is always pink, it doesnt need that weird border effect around its head anymore.
 Agreed? Though it maybe should be more apparent when it transforms, like an coded animation that works for all of
-them, or something?", and to the design session's take: "Agreed to both, expertly!". In `render/bodies.js`:
+them, or something?", and, to the design session's take, agreed to both. In `render/bodies.js`:
 - **The ring goes:** the breathing pink ring with pale dashes round Capricious's head (it kept Capricious findable
   while its body changed with its mood; the pink coat does that now), and the ring that flashes out on a mood change.
 - **A costume change instead,** one animation for every mood: a quick pink puff round the head, the old costume popping

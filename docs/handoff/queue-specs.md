@@ -1,7 +1,7 @@
 # The queue's specs, word for word
 
 The full text of each open entry in `docs/PROGRESS.md`, moved here on 31 October 2026 so the progress file stays under the
-workshop check's 20 KB (the owner: "Yes, to all, expertly!"). Each entry in the queue keeps its title, a line of what it is
+workshop check's 20 KB (the owner agreed to all). Each entry in the queue keeps its title, a line of what it is
 and a pointer here; this text is its spec, as the entry's own words were. When an entry is done, its section moves to
 `docs/archive/progress-done/done-specs.md` with it.
 
@@ -71,10 +71,9 @@ part of "Round six B": "Yes, they are all part of the power update! What i have 
 is its own playable PR, tested both ways (`tools/abtest.js`) with every trademark measured, as the island hop was; the
 design's words for each are in `docs/design/40-powers-and-moves.md` (as first decided, in `docs/archive/design-powers.md`):
 1. **The island hop and no auto-jump** (done, PR #158).
-2. **Bridges** (done, PR #174). Rare by design, about one ride in twenty rounds (the owner, 29 October 2026: "Agreed with
-   you expert take!"): part 4 and item 6 each report bridge rides again, adding no rule to make them commoner.
+2. **Bridges** (done, PR #174). Rare by design, about one ride in twenty rounds (the owner agreed, 29 October 2026): part 4 and item 6 each report bridge rides again, adding no rule to make them commoner.
 3. **The flashes cut** and **mushrooms come back up** (done, PRs #183 and #195).
-   **3b+. The spit flies along the line** (the owner, 30 October 2026: "3. Agreed, do it expertly!"; the design's
+   **3b+. The spit flies along the line** (the owner agreed, 30 October 2026; the design's
    "The spit flies along the line"): straight ahead up to 5 cells, two a tick, stopping at the first head (poisoned) or
    body (bounced by the roll rule), gone over the edge or a hole; a dotted line in place of the ring; the rivals lead
    their shots and step out of lines; the A/B should now show the spitters ahead, no refuge; lesson, cue, protocol
@@ -85,14 +84,14 @@ design's words for each are in `docs/design/40-powers-and-moves.md` (as first de
 4. **The golden jump flies:** hold to fly up to 5 cells, steer in the air, the gold ring where you'd come down; with
    **leap now** (a second press while a jump waits sends it at once, open ground included: "Leap now" in the design); with
    **bumps in the air** (a crash's cost, and you drop where you are: over fire you catch alight too, over a hole you
-   fall in, onto a snake you're out, trapped). Its A/B came out even with leap now and the flight measured together, so (the owner, 31 October 2026: "Yes, please, expertly!", to splitting it): the flight and leap now are measured apart; the rivals learn the flight's uses (out of a box, across to food, cutting off, steering planned in the air) until fliers come out ahead; the golden flash is measured on its own in the same pass and its use taught where it falls short; if the flight pays and leap now doesn't, the flight merges without leap now, and leap now comes back to the owner. "The rivals fly it as a person would" and "The golden flash cuts deeper" in `docs/design/29-round-six-b-the-new-moves.md`.
+   fall in, onto a snake you're out, trapped). Its A/B came out even with leap now and the flight measured together, so (the owner, 31 October 2026, agreeing to splitting it): the flight and leap now are measured apart; the rivals learn the flight's uses (out of a box, across to food, cutting off, steering planned in the air) until fliers come out ahead; the golden flash is measured on its own in the same pass and its use taught where it falls short; if the flight pays and leap now doesn't, the flight merges without leap now, and leap now comes back to the owner. "The rivals fly it as a person would" and "The golden flash cuts deeper" in `docs/design/29-round-six-b-the-new-moves.md`.
 5. **Gold portals for the wrap:** anyone may follow through for about a second after your body passes. In six test rounds nobody followed, so the time it stays open is lengthened step by step until following makes a gameplay difference from time to time (the owner, 31 October 2026: "Then we can increase the time it is open, until it actually makes a gameplay difference from time to time."), after checking that the rivals see the chance at all: "Open long enough to matter" in `docs/design/29-round-six-b-the-new-moves.md`.
 6. **Dropped charges** on a knockout, as above (done, PR #584: "Dropped charges" in `docs/design/40-powers-and-moves.md`).
 7. **One pricing model for every power,** as above, last, and built afresh on top of 2u's one stamina, not resumed from the parked pass (the owner, 2 November 2026); the parked pass on `round6b/pricing` is a reference for its findings only (*a first pass is parked* on `round6b/pricing`: the tail tip at length's worth now, rests cheaper while idle with a floor, risk by `headRisk`; on seeds 51/53 the seat-split already shows powers on beating off, 33.6% to 16.4%, with the island hop alone, and this pass did no better, 33.3% to 16.7%, flashing more; a direct head-to-head against today's AI was stopped at look 4, its rounds cached), so it prices every move together, with **each rival's power
    style** ("Every rival has a power style"); the design's "Balance targets" are its measure.
    Part 7 also prices how far a rival goes for spilled charges (part 6, PR #584: four in five of the spills it misses
    lie about 12 cells off; a grab's charges are worth what a leaf's are).
-   Part 7 also takes two of the improvement audit's finds (31 October 2026; the owner: "Agreed to all, expertly!"): **the trademarks
+   Part 7 also takes two of the improvement audit's finds (31 October 2026; the owner agreed to all): **the trademarks
    that never show** (Mute's boxing and Joker's lures level with the field, Mason's body beside itself below it) get
    measures that catch the behaviour first (Mute's boxing counting the kills it gets by boxing; it leads the kills at
    0.52 a round), then more teeth in play where they stay flat; and **character never costs wins**: Joker (14% and 18%
@@ -120,8 +119,7 @@ A/B reports hops onto islands too small to live on, before and after.
 
 ### 2b. Hunger's worth at a contested apple, for every rival (the owner, 29 October 2026; an AI entry)
 
-The owner (29 October 2026), on the "For the owner" question whether a fed Gobbler should gamble too: "Agreed to all,
-expertly! Shouldn't the others contest apples more if they're hungry? They're worth more than, because usually apples
+The owner (29 October 2026), on the "For the owner" question whether a fed Gobbler should gamble too, agreed to all and went on: "Shouldn't the others contest apples more if they're hungry? They're worth more than, because usually apples
 just gove you plus 1, but if you are starving, they give you 1 and save you 1, so become plus 2? But yes, gobbler should
 contest it regardless. And Desperados being an adrenalin junkie, should generally be less risk averse?"
 
@@ -158,8 +156,8 @@ shared template:
   room to spare, food counts as today.
 - **Personality still shapes it:** Gobbler stays the greediest (its food share is its trademark), the careful ones
   the most sparing.
-- **Grown, 31 October 2026** (the owner, watching Creeper drop his tail in a pocket: "Most box themselves in so the don't have the oppertunity to amputate like that. Would be better if they could anticipate it earlier, so they amputate while they still have the chance." Then: "I notice also that they eat insatiably others beads, when the map gets really small. i might eat one to stop hunger, but i would not eat it all at once. it only pays to be bigger than your opponent that late in game, if you are afraid you might have to run out the clock, but i have yet to see that happen. which is a shame. but woodpecker is getting a makeover right, so i don't want to focus to much on the current timing dynamic of the game. but yes. from my point of view, even if it was a time game, it would only  make sense to eat it, cut yourself so you are just longer than your opponent, then squash the beads. what's your expert take?" Then, to
-  the design session's take, folding all four into this entry: "Sounds good!"):
+- **Grown, 31 October 2026** (the owner, watching Creeper drop his tail in a pocket: "Most box themselves in so the don't have the oppertunity to amputate like that. Would be better if they could anticipate it earlier, so they amputate while they still have the chance." Then: "I notice also that they eat insatiably others beads, when the map gets really small. i might eat one to stop hunger, but i would not eat it all at once. it only pays to be bigger than your opponent that late in game, if you are afraid you might have to run out the clock, but i have yet to see that happen. which is a shame. but woodpecker is getting a makeover right, so i don't want to focus to much on the current timing dynamic of the game. but yes. from my point of view, even if it was a time game, it would only  make sense to eat it, cut yourself so you are just longer than your opponent, then squash the beads. what's your take?" Then, to
+  the design session's take, folding all four into this entry, he agreed):
   - **The tail drop planned ahead.** A drop needs the flash rested, a body one thick and a free cell beyond, and a boxed
     snake rarely has all three. So the rivals plan it: when the search sees the room round them falling below their
     length within the next few moves, they weigh cutting now, while they can, against going on and being sealed in.
@@ -249,7 +247,7 @@ around so they change between the 2 from time to time, and maybe it triggers if 
 way It works that they are cojoined, don't have to make different rules for them. they are just a very visually unique
 snake, with 2 unique ai personalities and lines."; then, to the design session's take on a head at each end against
 one head and a body that rolls over (the roll keeps one head at the end that moves, as on every snake, so a tail never
-looks like a head, and shows who steers from any part of the body): "Yes, please! Expertly!"
+looks like a head, and shows who steers from any part of the body), he agreed
 **One snake in one seat, with two sides:** it moves, eats, grows and dies by exactly the rules every snake does, with
 one head at the end that moves, like every snake ("Every new rule needs a visible cue": nothing on the board lies about
 where its head is). Its two sides are the two of them: Barkis's side, pale bark, and his face on the head, lanky with
@@ -323,8 +321,8 @@ Moved from `docs/PROGRESS.md` word for word (2 November 2026, the file-by-file r
 
 The draft is in `docs/handoff/woodpecker-acts-draft.md`.
 
-- **Its pace and fairness, and hunger in the endgame** (the owner, 31 October 2026: "Sounds good! though I think it should take fewer chunks at once as a rule, because the map shrinks really quickly now! and i also think when there is just a little bit of space, it should slow down again, so it isn't and rng competition where it is who's island it pecks at next that decides it, capiche? Whats your take?" Then, to the design session's take: "Yes, to everything, expertly! and i also want hunger to be a factor! right now, food and beads jjust become a negative at the end. if we manage to balance this right, we can make it a trade-off, just like we tried with everything else, like mushrooms. that's a sign of good game design, conditional goods. thomas sowell in game mechanics."). These come before the draft's numbers and win where they differ:
-  - **Like the final Bowser, as a woodpecker** (the owner, 31 October 2026: "Bowser 2 in Super Mario 64 is what I always compare my imagined woodpecker to, and it doesn't break down the map until there is no space.", then "sorry! final bowser!"; to the design session's take: "Yes, though I don't know about in a few big moments, I think perhaps I like what we've planned already better. Fits a woodpecker. but what if it takes few chunks at once, but it is cutting out a shape, and when that shape is no longer attached to anyhting, it falls? I really like your idea about a floor, and how it continues to peck which you must avoid, without taking out much anymore. maybe just a tile here and there in the late late game. what do you think, expert?"; then "Yes, I think that's it. can still be jumpable gaps, but we want to avoid the islands stuff. it becomes too much rng, and isn't very exciting."). It cuts shapes, never melts the log:
+- **Its pace and fairness, and hunger in the endgame** (the owner, 31 October 2026: "Sounds good! though I think it should take fewer chunks at once as a rule, because the map shrinks really quickly now! and i also think when there is just a little bit of space, it should slow down again, so it isn't and rng competition where it is who's island it pecks at next that decides it, capiche? Whats your take?" Then, to the design session's take, he agreed to everything and added: "and i also want hunger to be a factor! right now, food and beads jjust become a negative at the end. if we manage to balance this right, we can make it a trade-off, just like we tried with everything else, like mushrooms. that's a sign of good game design, conditional goods. thomas sowell in game mechanics."). These come before the draft's numbers and win where they differ:
+  - **Like the final Bowser, as a woodpecker** (the owner, 31 October 2026: "Bowser 2 in Super Mario 64 is what I always compare my imagined woodpecker to, and it doesn't break down the map until there is no space.", then "sorry! final bowser!"; to the design session's take: "Yes, though I don't know about in a few big moments, I think perhaps I like what we've planned already better. Fits a woodpecker. but what if it takes few chunks at once, but it is cutting out a shape, and when that shape is no longer attached to anyhting, it falls? I really like your idea about a floor, and how it continues to peck which you must avoid, without taking out much anymore. maybe just a tile here and there in the late late game. what do you think?"; then "Yes, I think that's it. can still be jumpable gaps, but we want to avoid the islands stuff. it becomes too much rng, and isn't very exciting."). It cuts shapes, never melts the log:
     - **A few cells a peck, along an outline.** Its pecks trace a dotted cut across the log, so everyone can watch the outline close round a piece; when the last peck cuts it loose, the piece falls away (2s's rule). The gaze in act 1 says where it will start cutting. The last peck is warned like any strike, and a snake still on the piece falls with it ("Down the hole!"), unless it crawled or jumped off in time; it never cuts loose a piece a snake couldn't leave in the warning's time ("The woodpecker plays fair"). The draft's combos give way to the outline. **It aims small, nothing is banned** (the owner, 31 October 2026: "No outline should be banned from falling, but ideally, it never takes out half the trunk."): it plans its outlines round edges and corners, pieces small next to the log (about a sixth at most, a first guess), and never plans a cut that halves the trunk; but no size is banned from falling, so a piece that ends up cut loose falls, whatever its size, by 2s's rule. Measured: the biggest piece that fell in a round.
     - **A floor.** It cuts shapes only while the log is bigger than the room the snakes left need to play (about twice their length together, a first guess, set by simulation). At the floor it stops cutting.
     - **Then it fights.** At the floor it keeps pecking at the snakes, aimed and warned (its rings), so they must dodge; a peck that catches a snake is a crash, never instant death, and never unavoidable ("No refuges" both ways). It takes only a tile here and there in the very late game.

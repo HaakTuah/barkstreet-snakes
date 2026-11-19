@@ -385,7 +385,7 @@ with a protocol bump).
 
 The owner (30 October 2026): "i think now that capricious is always pink, it doesnt need that weird border effect around
 its head anymore. Agreed? Though it maybe should be more apparent when it transforms, like an coded animation that works
-for all of them, or something?", and to the design session's take: "Agreed to both, expertly!".
+for all of them, or something?", and, to the design session's take, agreed to both.
 - *Before:* a breathing pink ring with pale dashes round Capricious's head, kept so it could be found while its body
   changed with its mood, and a ring that flashed out when its mood changed (`MOOD_RING_MS`). Its pink coat does the
   first job now.

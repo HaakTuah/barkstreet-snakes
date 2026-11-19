@@ -5,7 +5,7 @@
 ### 2u. Picked rivals for this visit; unmet rivals back into the deck (30 October 2026; small, a UI lane) — done, PR #221
 
 The owner asked why the same cast showed up each time he started the game, then: "I might've picked them yes. Didn't
-expect them to stay permanently", and to the design session's takes: "Agreed to all!". In `records.js` and the start
+expect them to stay permanently", and, to the design session's takes, agreed to all. In `records.js` and the start
 card (`game/round.js`, `game/hud.js`):
 - **A picked seat lasts this visit,** round after round, and the next time the game is opened every seat is "Any"
   again (kept in `sessionStorage`, not `localStorage`; the storage key `LINEUP_KEY` keeps its name and is simply no longer
@@ -27,7 +27,7 @@ See "Wildcard's hair" in `docs/design/32-the-owners-playtest.md`.
 
 ### 2v. The newest version, by itself between rounds (30 October 2026; small, a UI lane): done, PR #223
 
-The owner: "Should barkstreet snakes also have a "updated game" thingy that pops up?", "Yes to both, do it expertly!", and
+The owner: "Should barkstreet snakes also have a "updated game" thingy that pops up?", and agreed to the design session's take on both, and
 then, of Amarna Letters' note: "It should update when you start game. [...] Like why would I not want the latest
 version?" Today a fresh load always gets the newest version (`sw.js` asks the network first), but a page left open or
 resumed on a phone keeps the version it loaded and is never told, and online the first sign is a refused join ("That

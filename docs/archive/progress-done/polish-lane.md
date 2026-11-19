@@ -4,10 +4,10 @@
 
 Word for word from "The polish lane" in `docs/PROGRESS.md`.
 
-- **The README, done** (PR #241; the owner, 31 October 2026: "Yes, expertly to both!"): `README.md` is for players, up to
+- **The README, done** (PR #241; the owner agreed to both, 31 October 2026): `README.md` is for players, up to
   the game as it plays now; the developer part is in `docs/developing.md`. From here every entry keeps it current ("A
   change a player sees updates the README" in `CLAUDE.md`); 2v adds the update between rounds when it merges.
-- **Next, any key wakes from a nap** (the owner, 31 October 2026: "Space should also pause and unpause on Barkstreet Snakes." Told that Space is the jump: "Ahh, true! yeah, really any button should unpause, no?" Then, to the design session's shape of it: "Yes, please! Expertly!"): as the Pause row of "Voice and copy" (`docs/design/09-voice-and-copy.md`) now says. Any playing key, or a tap on the board on touch, wakes; the waking press never fires a power (a steering key wakes and steers, as it always has: "A power only when you ask"); G, H, M, N, V and the speed keys keep their jobs; the card says "Any key to wake up" / "Tap to wake up"; the help line, the Field guide and the README to match. Online: a nap is local only as now. A rules or input test both ways: Space wakes without a jump, G opens the Field guide and the game stays napping.
+- **Next, any key wakes from a nap** (the owner, 31 October 2026: "Space should also pause and unpause on Barkstreet Snakes." Told that Space is the jump: "Ahh, true! yeah, really any button should unpause, no?" Then, to the design session's shape of it, he agreed): as the Pause row of "Voice and copy" (`docs/design/09-voice-and-copy.md`) now says. Any playing key, or a tap on the board on touch, wakes; the waking press never fires a power (a steering key wakes and steers, as it always has: "A power only when you ask"); G, H, M, N, V and the speed keys keep their jobs; the card says "Any key to wake up" / "Tap to wake up"; the help line, the Field guide and the README to match. Online: a nap is local only as now. A rules or input test both ways: Space wakes without a jump, G opens the Field guide and the game stays napping.
 
 - The housekeeping (PR #222): done entries and done parts' detail moved to `docs/archive/progress-done/`; this file
   is now about 33 KB, all of it open entries, kept word for word.
@@ -90,7 +90,7 @@ owner's three notes of 2 November merged as PRs #322 (the remains), #320 (the fl
   "Mind the gap!", Ghost's "…hollow." and its blurb's "gaps" between snakes stay as the voices' idioms; words only, the fingerprints unchanged (seeds 3, 11).
 - The Field guide's Weather row (with a sun-and-cloud and a rainbow picture), its Gone quiet row (an AI steering for a quiet friend, under a new Online part) and the Jump row's early press, "No rule untaught" (PR #778, issue #739, 19 November 2026; no Chinese needed: only the rivals' chatter has it; Fire's row now says rain or snow puts it out).
 - **Done: the woodpecker's piece washed while its nicks close** (PR #725, issue #612; the stand-in's verdict: yes, sure it is wanted): the piece its outline cuts round, exactly `aiView`'s `piece`, lies under a faint dark wash with a dashed pale edge until the last peck is aimed, then the cut-loose shading with its sliding streaks takes over (`render/cut.js`, design 38 "It cuts a shape"); the lesson, the Field guide row and the news line say it; looks only, the fingerprints unchanged (seeds 3 and 11).
-- **The food season's mark, done** (PR #754, issue #603; the owner, 13 November 2026: "I concur with all, expertly!"): a
+- **The food season's mark, done** (PR #754, issue #603; the owner agreed to all, 13 November 2026): a
   lean or plentiful round keeps its mark in the row under the board from Go on (the log's apple with a bite out of it,
   or a basket heaped with apples; none in a normal round), the picture of its Field guide row, named "A lean season" or
   "A season of plenty" in its tooltip; design 04, "Food seasons".

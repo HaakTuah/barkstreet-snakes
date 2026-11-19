@@ -12,7 +12,7 @@ better than what he has right now". Draw Wildcard's head as each version has had
 heading. The design session made [the picture](https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/2b0f035452522c107030f31987ee78fdb7eaf97e/design-wildcard-hair-versions.jpg) from the PRs' own pictures (30 October 2026): 1 the
 original, 2 PR #107's two blobs, 3 and 4 PR #110's B and C (never shipped), 5 PR #110 as shipped (the "mop"), 6 PR #144's
 F, 7 PR #156's F at 85% (now). **The owner's pick: the original, its swirl turned up** (30 October 2026: "What if we took
-the original, but have the swirl point upwards instead of downwards?", then "Yes, please, expertly please!"). **Then, simply** (the owner, 30 October 2026, on the second try: "it looks horrible. I want the original hair, but I
+the original, but have the swirl point upwards instead of downwards?", then agreeing). **Then, simply** (the owner, 30 October 2026, on the second try: "it looks horrible. I want the original hair, but I
 want the lick reversed. That's all. Keep it that simple."): bring back the original exactly as it was at a79946b (PR
 #107's "before": the fluffy pompadour, its strands, colours and outline), and reverse its lick, the one curl at the front
 that comes down over the brow, so it curls the other way, up and back; nothing else changes (no new shape, no flick, no
@@ -38,7 +38,7 @@ are trapped on each, so the one on the bigger one wins". The first answer kept e
   to three cells. Find an island!", `docs/design/29-round-six-b-the-new-moves.md`) and the island hop's picture line
   ("Tap! I can hop to that island.", `docs/design/30-teaching-by-showing.md`), with their Field guide rows; the
   writing pass (entry 9) may reword them again.
-- **The flight measured again** (the owner, 31 October 2026: "yes.", to running part 4's both-ways test again once the
+- **The flight measured again** (the owner agreed, 31 October 2026, to running part 4's both-ways test again once the
   islands are gone): part 4's A/B of the golden flight (and of leap now and the golden flash, as part 4 measures them)
   runs again on 2s's log, and the rivals' use of the flight is patched if its users no longer come out ahead.
 - **The rivals** see a piece that a mark would cut loose as gone at the strike, and get off it in time; a rules test
@@ -135,8 +135,8 @@ Done (PR #560): every meal tops up stamina (300 ms a segment) and banks past the
 ### 2q. Rivals notice like people (30 October 2026; an AI entry, after 2s)
 
 The owner: "do the snakes have a bit too good reaction time? [...] Just seems they play a bit too well in that regard
-perhaps", and to the take that what is superhuman is not the 240 ms but seeing the whole board at once: "Agreed to
-all!". Every rival's view of another snake is as old as a person's notice of it would be: `REACTION_MS` (240) near its
+perhaps", and to the take that what is superhuman is not the 240 ms but seeing the whole board at once, he agreed to
+all. Every rival's view of another snake is as old as a person's notice of it would be: `REACTION_MS` (240) near its
 own head, growing with distance to about 400 ms across the board (`REACTION_FAR_MS`, first guesses), with a little
 variation from moment to moment, so near things are seen at once and far ones a beat late, as a person sees them
 ("Clever rivals, human reactions"; the AI still plans as far ahead as before). Online the same. Measured before and

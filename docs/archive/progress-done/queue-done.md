@@ -2,7 +2,7 @@
 
 ## The queue, done
 
-### 2z. Online play that hangs on no single free service (the owner, 11 November 2026, on the design session's list of what would break: "fix all of it, expertly!"; a side lane now)
+### 2z. Online play that hangs on no single free service (the owner, 11 November 2026, on the design session's list of what would break: "fix all of it"; a side lane now)
 
 Friends find each other only through PeerJS's free public broker, and connect only where Google's free STUN servers
 find a route (design 22, "Connecting"): if the broker goes down or turns us away, nobody can start or join a game, and
@@ -48,7 +48,7 @@ Taken out of 3b+ and moved to the front, since it still bites (the owner: "Still
 
 The golden mushroom's wrap has no cost while the edges open for its holder alone, a small refuge from the edge; part 5's
 gold portals are its counterweight (anyone may follow through for about a second), so #202 comes off the shelf right
-after 2y (the owner: "Yes, expertly to all 3!"). Its spec and A/B are as entry 5 says.
+after 2y (the owner agreed to all 3). Its spec and A/B are as entry 5 says.
 
 *Done* (PR #202): portals open 2 s after the body passes (`PORTAL_MS` 2000). The rivals see the way through from afar (their room fill, territory split and power paths). Someone follows in 21% of rounds. Per use, a follower ends up longer but places no better, a design finding for the owner (#447). Every trademark is kept. The rule and its numbers are in `docs/design/40-powers-and-moves.md`, "Gold portals for the wrap".
 
@@ -106,7 +106,7 @@ entry's, not the drawing's. What it should be, seen from above (the head points 
 The owner (28 October 2026), on PR #107's pictures: "Also, looks like it is messing up wildcards hair again. But now by just
 making it look like 2 weird yellow blobs instead. You can take a look and see how it is making it now. Hope that isn't
 what it ends up going with." Then: "Can't you just describe who's hair it is making? Is it that difficult to make trump's
-hair?" And, to sending it back with three versions for him to pick from: "Yes please, expertly!"
+hair?" And, to sending it back with three versions for him to pick from, he agreed.
 
 [PR #107's after](https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/32e97b81e878686f4951b3b21f27a411b3bc18e7/pr107-desk-clear.jpg)
 draws a roll and a back mass as two shapes with a dark seam between them: two yellow halves, not a head of hair, and
@@ -130,7 +130,7 @@ stars-and-stripes body and the red tie): draw that, as seen from straight above 
   and the lane goes on with other work meanwhile. Only the chosen one ships: no option in the game, the others deleted.
 - Art only, no rule changes: the render suite and its looks checks pass; reduced motion unchanged; no reviewer needed
   beyond the pictures and the owner's pick.
-- **The owner's pick, and one more pass** (28 October 2026, on PR #110): "Agree to all, expertly. Though a bit hard to
+- **The owner's pick, and one more pass** (28 October 2026, on PR #110): the owner agreed to all, and added: "Though a bit hard to
   decide on b or c. I feel maybe the bottom bit of b being smaller looks better, while the overall shape of c is better.
   So maybe we'll go for c, but it is hard to pick. Not the biggest fan of any of them, to be honest. Doesn't scream trump
   hair." So: **C's overall shape, with B's smaller back** (the part behind the head no bigger than B's). Then one more
@@ -178,7 +178,7 @@ it it purches on and interact with us elements down there, then that just looks 
 
 ### 1c. The big test files, split (the owner, 28 October 2026, the workshop check: next, before item 3's remaining entries)
 
-The owner (28 October 2026): "Yes please, sound good! Do it expertly for both!", to Claude's proposal that included moving
+The owner (28 October 2026) agreed, for both games, to Claude's proposal that included moving
 the big-file split up the queue. The suites have grown past the 50 KB mark many times over: `tools/rules-test.js`
 (199 KB), `render-test.js` (139 KB), `layout-test.js` (120 KB), `input-test.js` (90 KB), `chatter-test.js` (81 KB),
 `simulate.js` (59 KB) and `ui-test.js` (52 KB), so every task that adds a test reads and searches far more than it
@@ -219,7 +219,7 @@ Also in `next-tasks-verbatim.md`:
 
 ### 2c. The woodpecker, 1.3 times (the owner, 29 October 2026; a layout lane)
 
-The owner (29 October 2026), "Agreed to all, expertly!", to the "For the owner" question on its size and the design session's
+The owner (29 October 2026) agreed to all, in answer to the "For the owner" question on its size and the design session's
 take: **1.3 times its size, on the board and under it alike** (one size). Under the board it still clings to and pecks
 the buttons. Since it covers more of the board as it drums, check with the simulation that round length, deaths by
 cause and per-rival wins stay within noise; pictures at a 390-pixel phone and desktop, as for PR #112.
@@ -246,7 +246,7 @@ Done in PR #150: a rival's meal plays its kind's own cue, as a rival's (dulled, 
 
 The owner (29 October 2026): "Looks a bit weird when the woodpecker pecks a tile with a snake tail on, and the snake isn't
 hurt. Is it possible to make it so visually, it doesn't peck exactly on the snake? So it looks natural that the tiles
-go, but that the snake is left unhurt? Just a visual issue, nothing gameplaywise." And: "Yes please, expertly!"
+go, but that the snake is left unhurt? Just a visual issue, nothing gameplaywise." He agreed.
 - **Drawing only** (`render/bird.js`, `render/bird-draw.js`): the tiles go at exactly the same moment as today; no rule,
   timing, simulation fingerprint or online message changes.
 - **On a tile with a snake on it, the beak aims at the free corner or edge farthest from the body** (the body is drawn
@@ -263,8 +263,8 @@ nearest the bird), the dent beside it with its splits running inward and stoppin
 
 ### 2f. Wildcard's hair: lacquered, not a mop (the owner, 29 October 2026; small, an art lane): done, PR #144, version F
 
-The owner (29 October 2026), on PR #110's hair as it plays: "Trump's hair looks like a mop now…" Then, to one more pass:
-"Yes, and make it do it expertly! I want trump's hair for Pete's sake!"
+The owner (29 October 2026), on PR #110's hair as it plays: "Trump's hair looks like a mop now…" Then, to one more pass, he agreed and added:
+"I want trump's hair for Pete's sake!"
 
 Three passes so far: two blobs (#107), a golden bun (#110's C), and now twenty fine strands with no outline, which read
 as straw or a mop. His hair is none of those: **one smooth, lacquered mass, combed and sprayed into place**, glossy and
@@ -291,8 +291,8 @@ solid, never stringy. Seen from above (the head points +x):
 
 ### 2f+. Wildcard's hair: F, a size smaller (the owner, 29 October 2026; small, an art lane beside the new moves): done, PR #156
 
-The owner (29 October 2026), playing with F: "Dont trumps hair look a bit too big now?" And, to keeping F's shape at about
-85% of its size: "Yes, let's try that!" Keep F's shape as it is, the wave, the sweep to the far side, the grooves and
+The owner (29 October 2026), playing with F: "Dont trumps hair look a bit too big now?" And he agreed to keeping F's shape at about
+85% of its size. Keep F's shape as it is, the wave, the sweep to the far side, the grooves and
 the gloss, and scale the whole mass to about 85%, so it sits on the head instead of towering over it, puffing past the
 head less over the ears and behind; the face, the set-back front edge and both eyes as they are. Drawing only. The PR
 shows F now beside F at 85% at a 390-pixel phone (true size and 3x) and desktop 2x, all four headings, and merges once
@@ -303,7 +303,7 @@ Done: the whole mass, grooves, gloss and shadow with it, scaled by `WILD_SIZE` (
 ### 2g. The meal goes down: a hungry snake fills out from the head (the owner, 29 October 2026; small, an art lane): done, PR #146
 
 The owner (29 October 2026): "I notice snakes imidately become plump again when after eating while starving. I feel it
-should be an animation where you see it transform to getting plump and its color back." And: "Yes, expertly!"
+should be an animation where you see it transform to getting plump and its color back." He agreed.
 
 Today `hungerLook()` (`render/looks.js`) works out `slim` and `pale` afresh every frame from the hunger clock, so when a
 hungry snake eats, the clock resets and it snaps back to plump and its own colour at once.
@@ -411,7 +411,7 @@ useful in about half the moments (design 37): the extra dashes are poor picks. E
 does not pay, in its own style, the rules unchanged; done when that gap closes within noise, trademarks kept. Before
 part 7, whose pricing needs rivals that judge a dash well.
 
-**Stopped** (the owner, 9 November 2026, #574: "Yes to all, expertly!", to stopping it): no AI change; only the `pdash` fork mode of draft PR #572 merges, for part 7. On fresh seeds (631, 632; 1200 pairs) the gap is −1.3 s [−3.5, +1.0], under
+**Stopped** (the owner, 9 November 2026, #574, agreeing to all, to stopping it): no AI change; only the `pdash` fork mode of draft PR #572 merges, for part 7. On fresh seeds (631, 632; 1200 pairs) the gap is −1.3 s [−3.5, +1.0], under
 half of #560's. Two fixes did not move it: no plain dash when boxed (−1.1 s, and 0.4 fewer flashes a minute) and three
 times the reserve when boxed (−1.7 s). Neither price change alone differs from develop (cheaper dash −0.2 s, dearer jump
 +0.3 s), and no rival stands out. The brief and the `pdash` fork mode are on draft PR #572.

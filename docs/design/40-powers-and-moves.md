@@ -438,7 +438,7 @@ A mushroom is a weapon you aim:
 
 ### The spit flies along the line
 
-The shot of "Mushrooms come back up" (3b+ of round six B; the owner, 30 October 2026: "3. Agreed, do it expertly!"):
+The shot of "Mushrooms come back up" (3b+ of round six B; the owner agreed, 30 October 2026):
 the mushroom flies straight ahead of the spitter, the way it faced when the second was up, `SPIT_SPEED` (2) cells a
 tick, up to `SPIT_REACH` (5), and stops at the first thing in its way (above, "Where it stops"). Each tick it flies on
 at the start, before anyone moves (the ones already in the air first, then any spat that tick, in seat order); a head

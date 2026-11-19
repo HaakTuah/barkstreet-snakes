@@ -132,7 +132,7 @@ from the aim (`w.fall`) and falls with the strike, but for an island that stays 
 what ends up cut loose falls (a rules test proves it); it plans small (see "It cuts a shape").
 - **Islands that stay** (entry 6, part 3+; the owner, 9 November 2026, #611: "maybe not island was a bit harsh. makes
   jumping between them never happen, it was just bad before how each always ended up on each their island on each their
-  edge", then, to "a cut may leave an island standing when a jump can reach it", "Yes to all, expertly! and islands
+  edge", then, to "a cut may leave an island standing when a jump can reach it", agreeing to all and adding: "and islands
   should always be attached to the edges, one must be able to tell clearly what will fall, and what will stay!"): a
   piece cut off from the log stays standing, as an island, only while it touches the board's edge and lies a jump from
   the log (`LEAP_REACH`, 3 cells of gap or fewer, straight across: `isleHolds`); a piece attached to nothing, or out of a

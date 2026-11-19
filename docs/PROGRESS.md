@@ -24,8 +24,8 @@ the owner, answered".
 ## The polish lane
 
 The game's polish lane (`core/modules/work-flow.md`, point 4; the owner, 31 October 2026).
-- **First: the slop audit** (the owner, 2 November 2026: "Are these 2 games ai sloppy?", then "Yes, please,
-  expertly!"): its bar and method are in `docs/slop-bar.md`; the lines it has fixed so far, in
+- **First: the slop audit** (the owner, 2 November 2026: "Are these 2 games ai sloppy?", then agreeing to the audit):
+  its bar and method are in `docs/slop-bar.md`; the lines it has fixed so far, in
   `docs/archive/progress-done/polish-lane.md`, "The slop audit, done so far". Done: nothing left (one name for each
   thing, the last item: PR #776).
 - **What belongs, here:** the same thing drawn, named or worded differently in two places (a rival's colours, a move's
@@ -54,7 +54,9 @@ the owner's notes of 2 November, the portals blue and orange and the woodpecker'
 - **The owner's audit, prune and trials** (agreed in chat, 14 and 15 November 2026; the stand-in's yes, 19 November):
   #764, the audit of how the code is put together, done (PR #780: `docs/audits/`, its baseline for #771's view on the stack; its
   cleaning lane is #783 and its two small drifts #784, waiting for the stand-in's verdicts); #765, the
-  prune of the records of the owner's words, a routine lane, next; and the trials, nothing merged, each reporting to the core:
+  prune of the records of the owner's words, the files done (`docs/archive/workshop-lane-done.md`), the old comments
+  (about 1,900) still to go, a script proposing and a reader deciding, a dry run first, as the issue's note of 14
+  November says; and the trials, nothing merged, each reporting to the core:
   #766 (a first-time player), #769 (the change probe), #767 (a public rule set) and #768 (two rival entries measured
   side by side: the next two in the main lane on different files).
 - **The cleaning lane from the code audit** (#783; the stand-in's yes, sure, 19 November, on the owner's words of 14
