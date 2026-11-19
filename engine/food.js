@@ -17,13 +17,12 @@ function fillFood(game) {
     game.food = game.food.filter(f => f.expires == null || f.expires > game.tick);
   }
   // Once the woodpecker is here, nothing new grows, but the last apples
-  // fall at a steady pace: with fewer than SD_APPLES on the board, another
-  // drops SD_APPLE_GAP ticks later (entry 6, 3++: so eating has a cost in
-  // room the weighing can weigh, #655). The first is announced. Beetles
-  // still come out.
+  // fall one at a time: with none on the board, another drops, each wait
+  // longer than the last (SD_APPLE_GAP ticks, then twice that, and so on).
+  // The first is announced. Beetles still come out.
   if (suddenDeath(game)) {
-    if (game.food.filter(f => f.kind === 'food').length >= T.SD_APPLES) game.sdAppleAt = null;
-    else if (game.sdAppleAt == null) game.sdAppleAt = game.tick + T.SD_APPLE_GAP;
+    if (game.food.some(f => f.kind === 'food')) game.sdAppleAt = null;
+    else if (game.sdAppleAt == null) game.sdAppleAt = game.tick + T.SD_APPLE_GAP * (game.sdApples + 1);
     else if (game.tick >= game.sdAppleAt) {
       const at = foodPlacer(game)(apple(game));
       game.sdAppleAt = null;

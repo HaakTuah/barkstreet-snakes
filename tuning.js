@@ -171,8 +171,7 @@ window.TUNING = Object.freeze({
   PECK_REST_MIN: 8,
   PECK_CLEARANCE: 4,        // it pecks more than this far from every head (nobody can be in a fresh mark before they can see it), and never shuts anyone in, while it can; food in the mark is knocked aside at the strike
   PECK_NO_ORPHANS: 2,       // a crumb this small its outline would leave goes with its piece
-  SD_APPLE_GAP: 20,         // sudden death: with fewer than SD_APPLES on the board, the next falls this many ticks later (about 2 s), a steady pace (entry 6, 3++, #655)
-  SD_APPLES: 1,             // sudden death: how many of the last apples lie on the log at once
+  SD_APPLE_GAP: 20,         // sudden death: with no apple on the board, the next falls this many ticks after the last went, times its number (about 2 s, 4 s, 6 s...)
 
   // --------------------------------------------------------------- burrows
   BURROW_MAX: 3,            // beetle burrows that crack open in the bark over a round (harmless to cross)

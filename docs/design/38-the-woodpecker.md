@@ -97,8 +97,8 @@ in the very late game.
   under the second, on seed 81, the frenzy ran 69 → 76 s, the log kept 37 more cells, and starved deaths rose 14 → 21%
   of all deaths, past design 39's bound. Head to head, the weighing still only tied always eating (always eating
   +2.5 [−1.9, +6.9] with the first shape, −0.3 [−4.6, +4.1] with the second). Counting each snake at most 16 long
-  changed nothing either (#655). So these three floor shapes are not the lever; #655's comment of 14 November lists
-  others.
+  changed nothing either (#655). So these three floor shapes are not the lever; more of the last apples was not
+  either (PR #777; "Food on the log" in `04-food-and-the-world.md`).
 
 ### Then it fights
 
