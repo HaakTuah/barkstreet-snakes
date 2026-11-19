@@ -121,6 +121,17 @@ A balance question ("does this shorten sudden death?", "did my change hurt anyon
 
 Every seeded round is cached by the files that played it, so asking again or for more plays only the new ones: the A side of one experiment is free in the next, and the confirming abtest's rounds are free in its `--census`.
 
+## The code audit
+
+How the code is put together is measured, not judged by feel (issue #764): `tools/dev/audit/run.sh [folder]` writes every number as JSON,
+`node tools/dev/audit/tables.js <folder> [<older folder>]` prints them as the report's tables (an older folder's value beside each),
+and `docs/audits/` keeps each audit's report and numbers, named by its day: the first, 19 November 2026, is the baseline later ones are
+read against. `run.sh --timed` adds the ones that need a quiet machine and take about 40 minutes (start-up, a frame, every suite's
+time). The measures: `uses.js` (which part uses which shared names and namespaces of the others, read by scope with `free-names.js`),
+`cochange.js` (which files change together per merged pull request), `start.js` (start-up as a desktop and as two phones), `suites.js`
+(each suite's time and the game files it loads, noted by `reads.js`), and the core's `code-shape.mjs` (function lengths, nesting, branching,
+the shared space) from `core/scripts/` where this copy of the core has it, else a clone of `HaakTuah/agent-core` named by `AGENT_CORE`.
+
 ## How it's put together
 
 | File | What it does |

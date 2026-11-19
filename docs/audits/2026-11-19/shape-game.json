@@ -1,0 +1,1012 @@
+{
+  "files": {
+    "code": 130,
+    "other": {}
+  },
+  "imports": {
+    "total": 0,
+    "crossingAFolder": 0,
+    "intoTheRepository": 0,
+    "external": {},
+    "unresolved": [],
+    "foldersBothWays": []
+  },
+  "cycles": {
+    "files": [],
+    "folders": [],
+    "filesWithTypes": []
+  },
+  "hubs": [],
+  "globals": {
+    "scripts": 129,
+    "names": 1734,
+    "inMoreThanOne": []
+  },
+  "functions": {
+    "count": 1432,
+    "lines": {
+      "median": 8,
+      "p90": 30,
+      "max": 614
+    },
+    "over50Lines": 70,
+    "over100Lines": 25,
+    "depth4OrMore": 36,
+    "over15Branches": 149,
+    "over30Branches": 53,
+    "mostBranching": [
+      {
+        "file": "game/banners.js",
+        "name": "news",
+        "line": 48,
+        "lines": 127,
+        "depth": 2,
+        "branches": 268
+      },
+      {
+        "file": "chatter/moments.js",
+        "name": "update",
+        "line": 91,
+        "lines": 290,
+        "depth": 4,
+        "branches": 261
+      },
+      {
+        "file": "engine/step.js",
+        "name": "step",
+        "line": 25,
+        "lines": 368,
+        "depth": 6,
+        "branches": 192
+      },
+      {
+        "file": "render/events.js",
+        "name": "onTick",
+        "line": 6,
+        "lines": 213,
+        "depth": 4,
+        "branches": 175
+      },
+      {
+        "file": "online.js",
+        "name": "(anonymous)",
+        "line": 422,
+        "lines": 48,
+        "depth": 1,
+        "branches": 131
+      },
+      {
+        "file": "render/looks.js",
+        "name": "prepare",
+        "line": 401,
+        "lines": 132,
+        "depth": 2,
+        "branches": 110
+      },
+      {
+        "file": "game/round.js",
+        "name": "sounds",
+        "line": 379,
+        "lines": 84,
+        "depth": 3,
+        "branches": 102
+      },
+      {
+        "file": "online.js",
+        "name": "apply",
+        "line": 313,
+        "lines": 159,
+        "depth": 1,
+        "branches": 81
+      },
+      {
+        "file": "engine/beetles.js",
+        "name": "crawl",
+        "line": 90,
+        "lines": 112,
+        "depth": 4,
+        "branches": 79
+      },
+      {
+        "file": "game/input.js",
+        "name": "(anonymous)",
+        "line": 178,
+        "lines": 64,
+        "depth": 2,
+        "branches": 78
+      },
+      {
+        "file": "ai/evaluate.js",
+        "name": "evaluate",
+        "line": 98,
+        "lines": 222,
+        "depth": 3,
+        "branches": 77
+      },
+      {
+        "file": "render/faces.js",
+        "name": "drawFace",
+        "line": 134,
+        "lines": 485,
+        "depth": 4,
+        "branches": 77
+      },
+      {
+        "file": "game/hud.js",
+        "name": "updateHud",
+        "line": 148,
+        "lines": 78,
+        "depth": 2,
+        "branches": 75
+      },
+      {
+        "file": "render/bird-perch.js",
+        "name": "perchFor",
+        "line": 104,
+        "lines": 109,
+        "depth": 2,
+        "branches": 74
+      },
+      {
+        "file": "render/food.js",
+        "name": "drawFood",
+        "line": 440,
+        "lines": 113,
+        "depth": 4,
+        "branches": 74
+      },
+      {
+        "file": "ai/room.js",
+        "name": "fillRoom",
+        "line": 74,
+        "lines": 58,
+        "depth": 4,
+        "branches": 69
+      },
+      {
+        "file": "ai/room.js",
+        "name": "spreadTerritory",
+        "line": 139,
+        "lines": 55,
+        "depth": 5,
+        "branches": 69
+      },
+      {
+        "file": "ai/food.js",
+        "name": "readFood",
+        "line": 97,
+        "lines": 131,
+        "depth": 3,
+        "branches": 65
+      },
+      {
+        "file": "render/bodies.js",
+        "name": "drawBody",
+        "line": 122,
+        "lines": 165,
+        "depth": 4,
+        "branches": 64
+      },
+      {
+        "file": "ai/flash.js",
+        "name": "flashOpt",
+        "line": 39,
+        "lines": 45,
+        "depth": 5,
+        "branches": 62
+      }
+    ],
+    "longest": [
+      {
+        "file": "audio/cues.js",
+        "name": "SnakeAudioCues",
+        "line": 18,
+        "lines": 614,
+        "depth": 0,
+        "branches": 2
+      },
+      {
+        "file": "audio/sound.js",
+        "name": "(anonymous)",
+        "line": 29,
+        "lines": 552,
+        "depth": 1,
+        "branches": 6
+      },
+      {
+        "file": "render/faces.js",
+        "name": "drawFace",
+        "line": 134,
+        "lines": 485,
+        "depth": 4,
+        "branches": 77
+      },
+      {
+        "file": "net-relays.js",
+        "name": "(anonymous)",
+        "line": 14,
+        "lines": 414,
+        "depth": 0,
+        "branches": 6
+      },
+      {
+        "file": "online.js",
+        "name": "(anonymous)",
+        "line": 98,
+        "lines": 377,
+        "depth": 0,
+        "branches": 2
+      },
+      {
+        "file": "engine/step.js",
+        "name": "step",
+        "line": 25,
+        "lines": 368,
+        "depth": 6,
+        "branches": 192
+      },
+      {
+        "file": "net.js",
+        "name": "(anonymous)",
+        "line": 18,
+        "lines": 309,
+        "depth": 0,
+        "branches": 2
+      },
+      {
+        "file": "chatter/moments.js",
+        "name": "update",
+        "line": 91,
+        "lines": 290,
+        "depth": 4,
+        "branches": 261
+      },
+      {
+        "file": "audio/music.js",
+        "name": "SnakeAudioMusic",
+        "line": 8,
+        "lines": 285,
+        "depth": 0,
+        "branches": 1
+      },
+      {
+        "file": "records.js",
+        "name": "(anonymous)",
+        "line": 6,
+        "lines": 235,
+        "depth": 1,
+        "branches": 18
+      },
+      {
+        "file": "ai/evaluate.js",
+        "name": "evaluate",
+        "line": 98,
+        "lines": 222,
+        "depth": 3,
+        "branches": 77
+      },
+      {
+        "file": "render/events.js",
+        "name": "onTick",
+        "line": 6,
+        "lines": 213,
+        "depth": 4,
+        "branches": 175
+      },
+      {
+        "file": "render/bodies.js",
+        "name": "drawBody",
+        "line": 122,
+        "lines": 165,
+        "depth": 4,
+        "branches": 64
+      },
+      {
+        "file": "online.js",
+        "name": "apply",
+        "line": 313,
+        "lines": 159,
+        "depth": 1,
+        "branches": 81
+      },
+      {
+        "file": "render/core.js",
+        "name": "buildBark",
+        "line": 146,
+        "lines": 139,
+        "depth": 3,
+        "branches": 23
+      },
+      {
+        "file": "render/looks.js",
+        "name": "prepare",
+        "line": 401,
+        "lines": 132,
+        "depth": 2,
+        "branches": 110
+      },
+      {
+        "file": "ai/food.js",
+        "name": "readFood",
+        "line": 97,
+        "lines": 131,
+        "depth": 3,
+        "branches": 65
+      },
+      {
+        "file": "scores-screen.js",
+        "name": "(anonymous)",
+        "line": 4,
+        "lines": 131,
+        "depth": 0,
+        "branches": 3
+      },
+      {
+        "file": "game/banners.js",
+        "name": "news",
+        "line": 48,
+        "lines": 127,
+        "depth": 2,
+        "branches": 268
+      },
+      {
+        "file": "update.js",
+        "name": "(anonymous)",
+        "line": 11,
+        "lines": 114,
+        "depth": 2,
+        "branches": 7
+      }
+    ],
+    "deepest": [
+      {
+        "file": "engine/step.js",
+        "name": "step",
+        "line": 25,
+        "lines": 368,
+        "depth": 6,
+        "branches": 192
+      },
+      {
+        "file": "render/holes.js",
+        "name": "drawPatch",
+        "line": 48,
+        "lines": 72,
+        "depth": 6,
+        "branches": 14
+      },
+      {
+        "file": "ai/leaps.js",
+        "name": "leapOpt",
+        "line": 9,
+        "lines": 81,
+        "depth": 5,
+        "branches": 61
+      },
+      {
+        "file": "ai/room.js",
+        "name": "spreadTerritory",
+        "line": 139,
+        "lines": 55,
+        "depth": 5,
+        "branches": 69
+      },
+      {
+        "file": "ai/rivals/sovereign.js",
+        "name": "sovereign",
+        "line": 22,
+        "lines": 48,
+        "depth": 5,
+        "branches": 25
+      },
+      {
+        "file": "ai/flash.js",
+        "name": "flashOpt",
+        "line": 39,
+        "lines": 45,
+        "depth": 5,
+        "branches": 62
+      },
+      {
+        "file": "render/marks.js",
+        "name": "drawPasses",
+        "line": 696,
+        "lines": 21,
+        "depth": 5,
+        "branches": 17
+      },
+      {
+        "file": "render/faces.js",
+        "name": "drawFace",
+        "line": 134,
+        "lines": 485,
+        "depth": 4,
+        "branches": 77
+      },
+      {
+        "file": "chatter/moments.js",
+        "name": "update",
+        "line": 91,
+        "lines": 290,
+        "depth": 4,
+        "branches": 261
+      },
+      {
+        "file": "render/events.js",
+        "name": "onTick",
+        "line": 6,
+        "lines": 213,
+        "depth": 4,
+        "branches": 175
+      },
+      {
+        "file": "render/bodies.js",
+        "name": "drawBody",
+        "line": 122,
+        "lines": 165,
+        "depth": 4,
+        "branches": 64
+      },
+      {
+        "file": "render/food.js",
+        "name": "drawFood",
+        "line": 440,
+        "lines": 113,
+        "depth": 4,
+        "branches": 74
+      },
+      {
+        "file": "engine/beetles.js",
+        "name": "crawl",
+        "line": 90,
+        "lines": 112,
+        "depth": 4,
+        "branches": 79
+      },
+      {
+        "file": "engine/woodpecker.js",
+        "name": "peck",
+        "line": 63,
+        "lines": 92,
+        "depth": 4,
+        "branches": 62
+      },
+      {
+        "file": "render/land.js",
+        "name": "drawFields",
+        "line": 512,
+        "lines": 79,
+        "depth": 4,
+        "branches": 52
+      },
+      {
+        "file": "audio/sound.js",
+        "name": "start",
+        "line": 462,
+        "lines": 78,
+        "depth": 4,
+        "branches": 58
+      },
+      {
+        "file": "ai/room.js",
+        "name": "fillRoom",
+        "line": 74,
+        "lines": 58,
+        "depth": 4,
+        "branches": 69
+      },
+      {
+        "file": "render/marks.js",
+        "name": "mustache",
+        "line": 552,
+        "lines": 53,
+        "depth": 4,
+        "branches": 6
+      },
+      {
+        "file": "render/land.js",
+        "name": "paintLandStep",
+        "line": 423,
+        "lines": 50,
+        "depth": 4,
+        "branches": 15
+      },
+      {
+        "file": "render/food.js",
+        "name": "drawMotes",
+        "line": 335,
+        "lines": 43,
+        "depth": 4,
+        "branches": 18
+      }
+    ]
+  },
+  "changedTogether": {
+    "commits": 490,
+    "pairs": [
+      {
+        "files": [
+          "game/core.js",
+          "game/friends.js"
+        ],
+        "together": 42,
+        "share": 0.57
+      },
+      {
+        "files": [
+          "game/banners.js",
+          "game/core.js"
+        ],
+        "together": 29,
+        "share": 0.67
+      },
+      {
+        "files": [
+          "game/banners.js",
+          "game/friends.js"
+        ],
+        "together": 25,
+        "share": 0.58
+      },
+      {
+        "files": [
+          "game/friends.js",
+          "online.js"
+        ],
+        "together": 23,
+        "share": 0.36
+      },
+      {
+        "files": [
+          "online.js",
+          "tuning.js"
+        ],
+        "together": 23,
+        "share": 0.36
+      },
+      {
+        "files": [
+          "game/core.js",
+          "online.js"
+        ],
+        "together": 19,
+        "share": 0.3
+      },
+      {
+        "files": [
+          "game/banners.js",
+          "online.js"
+        ],
+        "together": 18,
+        "share": 0.42
+      },
+      {
+        "files": [
+          "game/friends.js",
+          "tuning.js"
+        ],
+        "together": 17,
+        "share": 0.23
+      },
+      {
+        "files": [
+          "game/core.js",
+          "game/round.js"
+        ],
+        "together": 15,
+        "share": 0.65
+      },
+      {
+        "files": [
+          "game/friends.js",
+          "game/round.js"
+        ],
+        "together": 15,
+        "share": 0.65
+      },
+      {
+        "files": [
+          "engine/view.js",
+          "tuning.js"
+        ],
+        "together": 15,
+        "share": 0.58
+      },
+      {
+        "files": [
+          "game/core.js",
+          "render/world.js"
+        ],
+        "together": 14,
+        "share": 0.39
+      },
+      {
+        "files": [
+          "engine/core.js",
+          "engine/view.js"
+        ],
+        "together": 13,
+        "share": 0.76
+      },
+      {
+        "files": [
+          "engine/core.js",
+          "tuning.js"
+        ],
+        "together": 13,
+        "share": 0.76
+      },
+      {
+        "files": [
+          "game/banners.js",
+          "game/round.js"
+        ],
+        "together": 13,
+        "share": 0.57
+      },
+      {
+        "files": [
+          "game/core.js",
+          "tuning.js"
+        ],
+        "together": 13,
+        "share": 0.18
+      },
+      {
+        "files": [
+          "game/friends.js",
+          "render/sprites.js"
+        ],
+        "together": 12,
+        "share": 0.75
+      },
+      {
+        "files": [
+          "game/friends.js",
+          "game/hud.js"
+        ],
+        "together": 12,
+        "share": 0.5
+      },
+      {
+        "files": [
+          "game/banners.js",
+          "render/world.js"
+        ],
+        "together": 12,
+        "share": 0.33
+      },
+      {
+        "files": [
+          "engine/food.js",
+          "tuning.js"
+        ],
+        "together": 11,
+        "share": 0.61
+      },
+      {
+        "files": [
+          "game/core.js",
+          "render/marks.js"
+        ],
+        "together": 11,
+        "share": 0.48
+      },
+      {
+        "files": [
+          "render/looks.js",
+          "render/marks.js"
+        ],
+        "together": 11,
+        "share": 0.48
+      },
+      {
+        "files": [
+          "render/marks.js",
+          "render/world.js"
+        ],
+        "together": 11,
+        "share": 0.48
+      },
+      {
+        "files": [
+          "engine/step.js",
+          "tuning.js"
+        ],
+        "together": 11,
+        "share": 0.46
+      },
+      {
+        "files": [
+          "game/friends.js",
+          "render/world.js"
+        ],
+        "together": 11,
+        "share": 0.31
+      },
+      {
+        "files": [
+          "game/friends.js",
+          "render/marks.js"
+        ],
+        "together": 10,
+        "share": 0.43
+      },
+      {
+        "files": [
+          "game/round.js",
+          "online.js"
+        ],
+        "together": 10,
+        "share": 0.43
+      },
+      {
+        "files": [
+          "engine/step.js",
+          "engine/view.js"
+        ],
+        "together": 10,
+        "share": 0.42
+      },
+      {
+        "files": [
+          "game/friends.js",
+          "version.js"
+        ],
+        "together": 10,
+        "share": 0.18
+      },
+      {
+        "files": [
+          "engine/step.js",
+          "engine/woodpecker.js"
+        ],
+        "together": 9,
+        "share": 0.69
+      },
+      {
+        "files": [
+          "game/core.js",
+          "render/sprites.js"
+        ],
+        "together": 9,
+        "share": 0.56
+      },
+      {
+        "files": [
+          "game/banners.js",
+          "render/marks.js"
+        ],
+        "together": 9,
+        "share": 0.39
+      },
+      {
+        "files": [
+          "engine/step.js",
+          "game/friends.js"
+        ],
+        "together": 9,
+        "share": 0.38
+      },
+      {
+        "files": [
+          "game/banners.js",
+          "game/hud.js"
+        ],
+        "together": 9,
+        "share": 0.38
+      },
+      {
+        "files": [
+          "online.js",
+          "render/world.js"
+        ],
+        "together": 9,
+        "share": 0.25
+      },
+      {
+        "files": [
+          "game/banners.js",
+          "tuning.js"
+        ],
+        "together": 9,
+        "share": 0.21
+      },
+      {
+        "files": [
+          "ai/leaps.js",
+          "ai/powers.js"
+        ],
+        "together": 8,
+        "share": 1
+      },
+      {
+        "files": [
+          "render/bodies.js",
+          "render/looks.js"
+        ],
+        "together": 8,
+        "share": 0.67
+      },
+      {
+        "files": [
+          "online.js",
+          "render/sprites.js"
+        ],
+        "together": 8,
+        "share": 0.5
+      },
+      {
+        "files": [
+          "render/marks.js",
+          "render/sprites.js"
+        ],
+        "together": 8,
+        "share": 0.5
+      },
+      {
+        "files": [
+          "engine/core.js",
+          "engine/food.js"
+        ],
+        "together": 8,
+        "share": 0.47
+      },
+      {
+        "files": [
+          "engine/core.js",
+          "engine/step.js"
+        ],
+        "together": 8,
+        "share": 0.47
+      },
+      {
+        "files": [
+          "engine/food.js",
+          "engine/view.js"
+        ],
+        "together": 8,
+        "share": 0.44
+      },
+      {
+        "files": [
+          "game/core.js",
+          "render/core.js"
+        ],
+        "together": 8,
+        "share": 0.44
+      },
+      {
+        "files": [
+          "game/core.js",
+          "game/input.js"
+        ],
+        "together": 8,
+        "share": 0.44
+      },
+      {
+        "files": [
+          "render/core.js",
+          "render/world.js"
+        ],
+        "together": 8,
+        "share": 0.44
+      },
+      {
+        "files": [
+          "online.js",
+          "render/food.js"
+        ],
+        "together": 8,
+        "share": 0.38
+      },
+      {
+        "files": [
+          "game/friends.js",
+          "render/looks.js"
+        ],
+        "together": 8,
+        "share": 0.35
+      },
+      {
+        "files": [
+          "game/core.js",
+          "game/hud.js"
+        ],
+        "together": 8,
+        "share": 0.33
+      },
+      {
+        "files": [
+          "render/world.js",
+          "tuning.js"
+        ],
+        "together": 8,
+        "share": 0.22
+      }
+    ],
+    "mostChanged": [
+      {
+        "file": "tuning.js",
+        "changes": 101
+      },
+      {
+        "file": "game/friends.js",
+        "changes": 75
+      },
+      {
+        "file": "game/core.js",
+        "changes": 74
+      },
+      {
+        "file": "online.js",
+        "changes": 64
+      },
+      {
+        "file": "version.js",
+        "changes": 57
+      },
+      {
+        "file": "game/banners.js",
+        "changes": 43
+      },
+      {
+        "file": "render/world.js",
+        "changes": 36
+      },
+      {
+        "file": "render/bird.js",
+        "changes": 29
+      },
+      {
+        "file": "engine/view.js",
+        "changes": 26
+      },
+      {
+        "file": "engine/step.js",
+        "changes": 24
+      },
+      {
+        "file": "game/hud.js",
+        "changes": 24
+      },
+      {
+        "file": "records.js",
+        "changes": 24
+      },
+      {
+        "file": "game/round.js",
+        "changes": 23
+      },
+      {
+        "file": "render/looks.js",
+        "changes": 23
+      },
+      {
+        "file": "render/marks.js",
+        "changes": 23
+      },
+      {
+        "file": "render/food.js",
+        "changes": 21
+      },
+      {
+        "file": "ai/powers.js",
+        "changes": 19
+      },
+      {
+        "file": "ai/food.js",
+        "changes": 18
+      },
+      {
+        "file": "engine/food.js",
+        "changes": 18
+      },
+      {
+        "file": "game/input.js",
+        "changes": 18
+      }
+    ]
+  },
+  "suites": []
+}
