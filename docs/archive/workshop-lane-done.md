@@ -62,3 +62,6 @@ the workshop check's 20 KB. New ones are added here.
 - *Done:* a check for code nothing uses (the owner, 11 November 2026: "Should we have a rule about removing unused code,
   expert?", then "Yes, expertly to all, expert!"): `scripts/unused.js`, its exceptions in `tools/unused.json`, in
   `scripts/test.sh unused` and CI; its two finds removed (PR #773).
+- *Done:* the browser suites' one ending (#526): `tools/render-test.js` and `tools/input-test.js` end with
+  `report.end(b)` like the others (input passes `printed: true`, its last part printing the lines); a failure still
+  fails, as the run showed (the workshop/suites-end-526 PR).

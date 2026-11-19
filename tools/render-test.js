@@ -156,13 +156,9 @@ const STAGE = `(() => {
     await b.viewport(800, 800);
 
     await runParts.inside(path.join(__dirname, 'render'), { SEED, CELL, check, STAGE, site, b, ev });
-
-    console.log(results.join('\n'));
-    if (b.errors.length) { console.log('page errors:', b.errors); report.failed++; }
   } finally {
     await b.close();
     site.close();
   }
-  if (report.failed) { console.error(`\n${report.failed} failed`); process.exit(1); }
-  console.log(`\nall passed (${results.length} checks)`);
+  report.end(b);
 })().catch(e => { console.error(e); process.exit(1); });
