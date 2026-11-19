@@ -128,6 +128,8 @@ const totals = () => ({ rounds: 0, timeSum: 0, times: [], sudden: 0, draws: 0, s
 //   riding             ticks with the head within 2 of the tail end of a rival 8 or longer (Creeper)
 //   apart              distance from the nearest rival head, summed over ticks (capped at 14: Ghost)
 //   foodShare, beadShare  its share of the round's food eaten, and of the beads (summed over rounds: Gobbler, Vulture)
+//   circling           ticks with the head within CIRCLE of a rival's head in that rival's last CIRCLE_TICKS ticks
+//                        before it died: there when a snake in trouble went (Vulture, the circling before the feast)
 //   homeTicks, atHome  ticks with a realm, and of those, the head on it (Sovereign)
 //   boxKills           a rival dead on my body, boxed in (no room left after the crash), while my head was within 4 of
 //                        it, closing the box (the rule Mute's mood ring shows): a kill by boxing (Mute, ten minutes alive)
@@ -136,10 +138,11 @@ const totals = () => ({ rounds: 0, timeSum: 0, times: [], sudden: 0, draws: 0, s
 //   skims              ticks with the head beside the edge, a hole or a body (not its own neck), or a rival head within 2 (Desperado)
 //   flashes, jumps     plain and golden flashes, and jumps of both kinds (Star: a minute alive)
 //   eats, beadsEaten   food eaten, and of it beads (Gobbler and Vulture by the minute, for Capricious's impressions of them)
+const CIRCLE = 6, CIRCLE_TICKS = 30; // (near a rival's head, in its last moves: circling it)
 const DOUBLED = 3; // (cells beside itself in a row: a stretch of wall two thick)
 const LURE_TICKS = 4; // (a chaser's crash this soon after it was last chasing counts as led into it)
 const CRASHED = ['boxed', 'shorter', 'even', 'tiny', 'boom', 'hole']; // (the deaths that are crashes, as the step's collisions set them: not a cut, hunger, fire or the beak)
-const SIGNS = ['moves', 'runs', 'cells', 'doubled', 'boxKills', 'lured', 'long', 'coiled', 'riding', 'apart', 'foodShare', 'beadShare', 'homeTicks', 'atHome', 'skims', 'flashes', 'jumps', 'eats', 'beadsEaten', 'ticks'];
+const SIGNS = ['moves', 'runs', 'cells', 'doubled', 'boxKills', 'lured', 'long', 'coiled', 'riding', 'apart', 'foodShare', 'beadShare', 'circling', 'homeTicks', 'atHome', 'skims', 'flashes', 'jumps', 'eats', 'beadsEaten', 'ticks'];
 
 // Capricious in a mood: its signatures count for it, and again under the
 // mood's name ('mason.runs'...), so each impression's trademark can be read
@@ -168,6 +171,16 @@ function signatures(g, T, per, was) {
   for (const s of alive) for (const c of s.body) mark[c.y * N + c.x] = all;
   const bodyAt = (x, y) => x >= 0 && y >= 0 && x < N && y < N && mark[y * N + x] === all;
   // Kills by boxing and chasers led into a crash, by what the tick before saw (was: each one's targets and chasers then).
+  // Circling: the ticks each one was near a snake that died now, in its last CIRCLE_TICKS (was: when it was near each).
+  for (const e of g.events) {
+    if (e.type !== 'death' || !e.snake) continue;
+    for (const s of g.snakes) {
+      const near = was[s.id]?.near?.[e.snake.id];
+      if (s === e.snake || !near) continue;
+      for (const t of near) if (t > g.tick - CIRCLE_TICKS) sigOf(per, s).circling++;
+      near.length = 0;
+    }
+  }
   const crashed = new Set();
   for (const e of g.events) {
     const o = e.snake;
@@ -202,11 +215,12 @@ function signatures(g, T, per, was) {
     for (const c of s.body) mark[c.y * N + c.x] = all; // (back to everyone's)
     if (L >= 10) { p.long++; if (Math.abs(h.x - s.body[L - 1].x) + Math.abs(h.y - s.body[L - 1].y) <= 3) p.coiled++; }
     let nearest = 14, ride = false;
-    const chasers = w.chasers ||= {};
+    const chasers = w.chasers ||= {}, nearBy = w.near ||= {};
     for (const o of alive) {
       if (o === s) continue;
       const oh = o.body[0], d = Math.abs(oh.x - h.x) + Math.abs(oh.y - h.y), t = o.body[o.body.length - 1];
       nearest = Math.min(nearest, d);
+      if (d <= CIRCLE) { const ts = nearBy[o.id] ||= []; ts.push(g.tick); if (ts.length > CIRCLE_TICKS) ts.shift(); }
       if (d <= 4 && o.dir.x * (h.x - oh.x) + o.dir.y * (h.y - oh.y) > 0) chasers[o.id] = g.tick; // (its head near and heading at mine: chasing me)
       if (o.body.length >= 8 && Math.abs(t.x - h.x) + Math.abs(t.y - h.y) <= 2) ride = true;
     }
