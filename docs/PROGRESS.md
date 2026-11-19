@@ -142,11 +142,11 @@ three acts" (its draft: `docs/handoff/woodpecker-acts-draft.md`). In six playabl
 3. **Done** (PR #615): hunger a conditional good to the end, by one hunger clock for the whole round (#616; design 04),
    and the opening it made too hungry eased: a lean round keeps both apples until the first beetles, and the rivals turn
    desperate with 6 s of life left, not 11 (#673; design 04 and 39). Its weighing beats never eating but only ties
-   always eating, and is finished by 3++. 3+. **Done** (PR #756): islands that stay (#611; design 38, "Islands that
+   always eating; 3++ was to finish it. 3+. **Done** (PR #756): islands that stay (#611; design 38, "Islands that
    stay"): a piece cut off stays standing while it touches the board's edge and lies a hop from the log; before the
    frenzy the piece it cuts out at the edge stays, in the frenzy its pieces fall. 3++. Length costs room in the frenzy (#655, "Make length
    cost more in the endgame, so always eating there loses clearly"): under today's rules no meal weighing beats always
-   eating, so a long snake must pay in room for the weighing to win. **Blocked on a lever** (PR #760, parked at a gate, see its "Where to pick up"): both floor shapes
+   eating, so a long snake must pay in room for the weighing to win. **Blocked on a lever** (PR #760, whose description lists every run and the commit that holds the rule built and taken out): both floor shapes
    were measured and neither taken, since snakes are longest as the frenzy begins and either shape only raises the floor
    (design 38, "The floor", has the numbers). Built again once #655 names a lever that is not the floor; an
    engine-rules entry, run one at a time, with the design check, the three-way head to head and an A/B for round length
