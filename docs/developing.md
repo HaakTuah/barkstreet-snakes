@@ -65,8 +65,9 @@ The REST calls from a cloud session: `core/modules/github-calls.md`. Updates, De
   by `tools/parts.js`, is listed with its reason in `tools/unused.json`, and an entry nothing needs any more fails as
   well. It is a net, not a proof: `docs/` is not searched for names, the files of `tools/dev/` are not checked as files (each
   its own entry point, run by hand) though their names are, a name that is also a word elsewhere (`hr` in some markup, a
-  string that happens to be the same) counts as used, of `const a = 1, b = 2;` on one line only `a` is checked, and a
-  file not yet added to git is not seen.
+  string that happens to be the same) counts as used, of `const a = 1, b = 2;` on one line only `a` is checked, a declaration's extent is found by counting its brackets,
+  which a regular expression can still misread (a misread only ever hides a find), and a file not yet added to git is
+  not seen.
 
 ## Run locally
 
