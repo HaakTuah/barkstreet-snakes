@@ -1,0 +1,26 @@
+{
+  "lockfiles": [
+    "tools/package-lock.json"
+  ],
+  "ships": [],
+  "ignoreScriptsIn": [
+    "tools/.npmrc"
+  ],
+  "audit": "tools/licences.json",
+  "notices": "THIRD-PARTY-NOTICES.txt",
+  "scan": {
+    "served": [
+      ""
+    ],
+    "tools": [
+      "tools/",
+      "scripts/",
+      ".github/",
+      ".claude/",
+      "types/"
+    ],
+    "skip": [
+      "docs/"
+    ]
+  }
+}

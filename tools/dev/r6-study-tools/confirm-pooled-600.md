@@ -1,0 +1,4 @@
+| build | fingerprint s3 | fingerprint s11 | win spread s3 / s11 | pooled | per persona, s3/s11 |
+|---|---|---|---|---|---|
+| base | 324380661 | 626189426 | 18.8-34 / 16.5-32.6 | 20-31.6 | Capricious 20.8/25.2, Colonist 24.3/26, Copycat 29.5/31.4, Creeper 22.9/26.8, Desperado 21.4/24.8, Drab 18.8/32.1, Ghost 34/21.3, Gobbler 21.1/24.4, Joker 22.9/18.3, Mason 22.4/27.4, Metagamer 24.8/30.4, Mute 31.8/28.3, Ouroboros 25.9/17.1, Sniper 25.3/16.5, Sovereign 29.2/26.1, Star 30.5/32.6, Vulture 21.3/18.4, Wildcard 20.2/21.9 |
+| Pfull2 | 371867 | 483811135 | 17-35 / 14.3-33.3 | 15.8-30.8 | Capricious 25.8/27.6, Colonist 24.3/23.6, Copycat 31.1/27, Creeper 19.7/25.4, Desperado 24.8/25.6, Drab 17.9/25.2, Ghost 30/28.4, Gobbler 17/14.3, Joker 20/18.3, Mason 24/26.7, Metagamer 27.2/27.5, Mute 22.1/24.6, Ouroboros 29.3/24.7, Sniper 28.8/24.8, Sovereign 35/26.1, Star 27.5/26.5, Vulture 28.7/33.3, Wildcard 19.4/21.3 |

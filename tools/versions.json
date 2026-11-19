@@ -1,0 +1,12 @@
+{
+  "about": "What Dependabot cannot see (.github/dependabot.yml covers the actions and tools/package.json; Node's pin is the core's, core/.node-version), each read from its file by its pattern (never written here), for the core's monthly versions check (its format and workings: core/scripts/versions.mjs). How this game takes them: docs/developing.md.",
+  "entries": [
+    {
+      "name": "peerjs",
+      "file": "net.js",
+      "pattern": "/ajax/libs/peerjs/(\\d+\\.\\d+\\.\\d+)/",
+      "days": 14,
+      "how": "PeerJS loads from cdnjs in every player's browser, so it is what ships to players: take it as docs/developing.md says under \"PeerJS, what ships to players\". Update the address and PEERJS_SRI in net.js, the address in index.html's content security policy, its entry and its bundled packages' in tools/licences.json, and THIRD-PARTY-NOTICES.txt; then run the online and csp suites."
+    }
+  ]
+}

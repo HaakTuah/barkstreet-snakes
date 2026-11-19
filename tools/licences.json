@@ -1,0 +1,22 @@
+{
+  "about": "The licence audit (SECURITY.md, rule 10): everything the game and its tools use that no lockfile holds, with its licence (SPDX) and where it comes in. The core's check (core/scripts/licences.mjs, with tools/licence-check.json) holds each entry to its list: 'ships' (it reaches a player's browser, so its notice is in THIRD-PARTY-NOTICES.txt) to floor rule 10's list for what ships, the rest, tools that only run, to the tools' list (GitHub's own services under GitHub's terms). 'loads': the addresses the game fetches it from. Checked 2 November 2026, from each package's own published licence.",
+  "entries": [
+    { "name": "peerjs", "kind": "npm", "version": "1.5.5", "licence": "MIT", "used": "online play, loaded by net.js", "ships": true, "loads": ["https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/"] },
+    { "name": "eventemitter3", "kind": "npm", "version": "4.x", "licence": "MIT", "used": "bundled in peerjs.min.js", "ships": true },
+    { "name": "@msgpack/msgpack", "kind": "npm", "version": "2.x", "licence": "ISC", "used": "bundled in peerjs.min.js", "ships": true },
+    { "name": "peerjs-js-binarypack", "kind": "npm", "version": "2.x", "licence": "MIT", "used": "bundled in peerjs.min.js", "ships": true },
+    { "name": "webrtc-adapter", "kind": "npm", "version": "9.x", "licence": "BSD-3-Clause", "used": "bundled in peerjs.min.js", "ships": true },
+    { "name": "sdp", "kind": "npm", "version": "3.x", "licence": "MIT", "used": "bundled in peerjs.min.js, through webrtc-adapter", "ships": true },
+    { "name": "fonts/fredoka-latin.woff2", "kind": "font", "version": "Fredoka, Google Fonts v17", "licence": "OFL-1.1", "used": "the lettering (Latin), served from this site by style/font.css", "ships": true },
+    { "name": "fonts/fredoka-latin-ext.woff2", "kind": "font", "version": "Fredoka, Google Fonts v17", "licence": "OFL-1.1", "used": "the lettering (more Latin letters), served from this site by style/font.css", "ships": true },
+
+    { "name": "Chromium", "kind": "tool", "version": "Playwright's, or the runner's Chrome", "licence": "BSD-3-Clause", "files": ["scripts/cloud-setup.sh"], "used": "the browser suites, headless: the runner's Chrome in CI; on a cloud machine without one, Playwright's, which scripts/cloud-setup.sh installs" },
+    { "name": "Node.js", "kind": "tool", "version": "26", "licence": "MIT", "used": "every suite and tool: the core's exact pin, core/.node-version, which CI reads and core/scripts/node.sh fetches for the cloud as node-linux-<arch>" },
+    { "name": "npm", "kind": "tool", "version": "bundled with Node", "licence": "Artistic-2.0", "used": "npm ci installs tools/package.json's packages" },
+
+    { "name": "actions/checkout", "kind": "action", "licence": "MIT", "used": "pages.yml, tests.yml and licences.yml" },
+    { "name": "actions/download-artifact", "kind": "action", "licence": "MIT", "used": "pages.yml: main's built site, for its publish" },
+    { "name": "actions/setup-node", "kind": "action", "licence": "MIT", "used": "tests.yml and licences.yml" },
+    { "name": "actions/upload-artifact", "kind": "action", "licence": "MIT", "used": "pages.yml: the built site, and a pull request's preview for the core's preview workflow" }
+  ]
+}

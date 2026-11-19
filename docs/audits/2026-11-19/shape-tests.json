@@ -1,0 +1,704 @@
+{
+  "files": {
+    "code": 168,
+    "other": {}
+  },
+  "imports": {
+    "total": 233,
+    "crossingAFolder": 10,
+    "intoTheRepository": 43,
+    "external": {
+      "path": 69,
+      "fs": 57,
+      "vm": 20,
+      "child_process": 10,
+      "os": 7,
+      "crypto": 6,
+      "http": 3,
+      "zlib": 2,
+      "worker_threads": 2,
+      "internal": 2,
+      "v8": 1,
+      "util": 1,
+      "module": 1
+    },
+    "unresolved": [
+      "tools/chatter/01-playing-every-voice.js: ./seeded.js",
+      "tools/dev/audit/free-names.js: ../../../scripts/js-text.js",
+      "tools/dev/audit/uses.js: ../../../scripts/js-text.js",
+      "tools/rules/00-setup.js: ./game-files.js",
+      "tools/rules/00-setup.js: ./seeded.js",
+      "tools/rules/31-never-know-a-person.js: ./game-files.js",
+      "tools/seeded.js: ../engine/luck.js",
+      "tools/sim/00-setup.js: ./game-files.js",
+      "tools/sim/00-setup.js: ./seeded.js"
+    ],
+    "foldersBothWays": []
+  },
+  "cycles": {
+    "files": [],
+    "folders": [],
+    "filesWithTypes": []
+  },
+  "hubs": [
+    {
+      "file": "tools/game-files.js",
+      "importedBy": 12,
+      "names": []
+    },
+    {
+      "file": "tools/browser.js",
+      "importedBy": 11,
+      "names": []
+    },
+    {
+      "file": "tools/ok.js",
+      "importedBy": 6,
+      "names": []
+    },
+    {
+      "file": "tools/parts.js",
+      "importedBy": 6,
+      "names": []
+    },
+    {
+      "file": "tools/seeded.js",
+      "importedBy": 3,
+      "names": []
+    },
+    {
+      "file": "tools/scenes.js",
+      "importedBy": 2,
+      "names": []
+    }
+  ],
+  "globals": {
+    "scripts": 89,
+    "names": 458,
+    "inMoreThanOne": [
+      {
+        "name": "line",
+        "files": [
+          "tools/render/04-scorch-rainbows-jumps-bridges.js",
+          "tools/rules/01-crashes.js",
+          "tools/ui/08-update-between-rounds.js"
+        ]
+      },
+      {
+        "name": "ahead",
+        "files": [
+          "tools/input/03-touch.js",
+          "tools/render/06-flags-strikes-guide.js"
+        ]
+      },
+      {
+        "name": "before",
+        "files": [
+          "tools/input/01-keyboard.js",
+          "tools/ui/01-desktop-picker-cards-and-notes.js"
+        ]
+      },
+      {
+        "name": "calm",
+        "files": [
+          "tools/render/07-woodpecker.js",
+          "tools/rules/19-mushroom-spit.js"
+        ]
+      },
+      {
+        "name": "column",
+        "files": [
+          "tools/rules/19-mushroom-spit.js",
+          "tools/ui/04-column-beside-the-board.js"
+        ]
+      },
+      {
+        "name": "far",
+        "files": [
+          "tools/render/03-star.js",
+          "tools/rules/05-own-tail.js"
+        ]
+      },
+      {
+        "name": "guide",
+        "files": [
+          "tools/input/01-keyboard.js",
+          "tools/render/06-flags-strikes-guide.js"
+        ]
+      },
+      {
+        "name": "joined",
+        "files": [
+          "tools/rules/02-beetles-and-leaps.js",
+          "tools/ui/08-update-between-rounds.js"
+        ]
+      },
+      {
+        "name": "jumps",
+        "files": [
+          "tools/input/03-touch.js",
+          "tools/render/04-scorch-rainbows-jumps-bridges.js"
+        ]
+      },
+      {
+        "name": "kept",
+        "files": [
+          "tools/input/01-keyboard.js",
+          "tools/rules/05-own-tail.js"
+        ]
+      },
+      {
+        "name": "lengths",
+        "files": [
+          "tools/input/07-cards-setup-and-lessons.js",
+          "tools/ui/08-update-between-rounds.js"
+        ]
+      },
+      {
+        "name": "look",
+        "files": [
+          "tools/render/07-woodpecker.js",
+          "tools/rules/02-beetles-and-leaps.js"
+        ]
+      },
+      {
+        "name": "lost",
+        "files": [
+          "tools/input/06-flags-and-banners-in-turn.js",
+          "tools/render/06-flags-strikes-guide.js"
+        ]
+      },
+      {
+        "name": "meal",
+        "files": [
+          "tools/render/08-hunger.js",
+          "tools/rules/25-stamina-economy.js"
+        ]
+      },
+      {
+        "name": "over",
+        "files": [
+          "tools/input/01-keyboard.js",
+          "tools/ui/05-fullest-death-card-on-a-phone.js"
+        ]
+      },
+      {
+        "name": "words",
+        "files": [
+          "tools/dev/teach/audit/texts.js",
+          "tools/ui/05-fullest-death-card-on-a-phone.js"
+        ]
+      }
+    ]
+  },
+  "functions": {
+    "count": 741,
+    "lines": {
+      "median": 4,
+      "p90": 21,
+      "max": 376
+    },
+    "over50Lines": 20,
+    "over100Lines": 7,
+    "depth4OrMore": 11,
+    "over15Branches": 36,
+    "over30Branches": 13,
+    "mostBranching": [
+      {
+        "file": "tools/sim/02-round.js",
+        "name": "playRound",
+        "line": 15,
+        "lines": 222,
+        "depth": 4,
+        "branches": 302
+      },
+      {
+        "file": "tools/dev/r6-study-tools/study.js",
+        "name": "play",
+        "line": 40,
+        "lines": 344,
+        "depth": 5,
+        "branches": 158
+      },
+      {
+        "file": "tools/dev/audit/free-names.js",
+        "name": "freeNames",
+        "line": 74,
+        "lines": 77,
+        "depth": 4,
+        "branches": 89
+      },
+      {
+        "file": "tools/online-test.js",
+        "name": "stage",
+        "line": 209,
+        "lines": 49,
+        "depth": 1,
+        "branches": 81
+      },
+      {
+        "file": "tools/dev/r6-study-tools/study.js",
+        "name": "summarize",
+        "line": 391,
+        "lines": 166,
+        "depth": 3,
+        "branches": 67
+      },
+      {
+        "file": "tools/sim/01-census.js",
+        "name": "signatures",
+        "line": 163,
+        "lines": 71,
+        "depth": 2,
+        "branches": 65
+      },
+      {
+        "file": "tools/layout/02-helpers.js",
+        "name": "chatterFull",
+        "line": 133,
+        "lines": 60,
+        "depth": 2,
+        "branches": 43
+      },
+      {
+        "file": "tools/bench-ai.js",
+        "name": "(anonymous)",
+        "line": 193,
+        "lines": 108,
+        "depth": 4,
+        "branches": 42
+      },
+      {
+        "file": "tools/chatter/04-habit-names-whole-rounds.js",
+        "name": "(anonymous)",
+        "line": 92,
+        "lines": 27,
+        "depth": 2,
+        "branches": 38
+      },
+      {
+        "file": "tools/sim/01-census.js",
+        "name": "woodpeckerCensus",
+        "line": 269,
+        "lines": 48,
+        "depth": 4,
+        "branches": 38
+      },
+      {
+        "file": "tools/rules/32-online-replay.js",
+        "name": "live",
+        "line": 122,
+        "lines": 59,
+        "depth": 3,
+        "branches": 37
+      },
+      {
+        "file": "tools/rules/03-jump-and-flash.js",
+        "name": "(anonymous)",
+        "line": 271,
+        "lines": 47,
+        "depth": 4,
+        "branches": 36
+      },
+      {
+        "file": "tools/sim/01-census.js",
+        "name": "beetleCensus",
+        "line": 237,
+        "lines": 30,
+        "depth": 2,
+        "branches": 35
+      },
+      {
+        "file": "tools/dev/audit/free-names.js",
+        "name": "bindings",
+        "line": 56,
+        "lines": 17,
+        "depth": 3,
+        "branches": 30
+      },
+      {
+        "file": "tools/snapshots/state.js",
+        "name": "walk",
+        "line": 82,
+        "lines": 39,
+        "depth": 1,
+        "branches": 30
+      },
+      {
+        "file": "tools/layout/02-helpers.js",
+        "name": "headerChecks",
+        "line": 43,
+        "lines": 41,
+        "depth": 1,
+        "branches": 29
+      },
+      {
+        "file": "tools/net-test.js",
+        "name": "inNode",
+        "line": 116,
+        "lines": 59,
+        "depth": 0,
+        "branches": 27
+      },
+      {
+        "file": "tools/sim/03-report.js",
+        "name": "merge",
+        "line": 3,
+        "lines": 31,
+        "depth": 3,
+        "branches": 26
+      },
+      {
+        "file": "tools/trace.js",
+        "name": "summarise",
+        "line": 35,
+        "lines": 32,
+        "depth": 2,
+        "branches": 26
+      },
+      {
+        "file": "tools/dev/easy-pins/census.js",
+        "name": "pinOf",
+        "line": 32,
+        "lines": 50,
+        "depth": 1,
+        "branches": 25
+      }
+    ],
+    "longest": [
+      {
+        "file": "tools/shots.js",
+        "name": "(anonymous)",
+        "line": 26,
+        "lines": 376,
+        "depth": 3,
+        "branches": 10
+      },
+      {
+        "file": "tools/dev/r6-study-tools/study.js",
+        "name": "play",
+        "line": 40,
+        "lines": 344,
+        "depth": 5,
+        "branches": 158
+      },
+      {
+        "file": "tools/sim/02-round.js",
+        "name": "playRound",
+        "line": 15,
+        "lines": 222,
+        "depth": 4,
+        "branches": 302
+      },
+      {
+        "file": "tools/shots.js",
+        "name": "stagedShots",
+        "line": 76,
+        "lines": 188,
+        "depth": 1,
+        "branches": 3
+      },
+      {
+        "file": "tools/net-test.js",
+        "name": "inChrome",
+        "line": 197,
+        "lines": 181,
+        "depth": 1,
+        "branches": 13
+      },
+      {
+        "file": "tools/dev/r6-study-tools/study.js",
+        "name": "summarize",
+        "line": 391,
+        "lines": 166,
+        "depth": 3,
+        "branches": 67
+      },
+      {
+        "file": "tools/bench-ai.js",
+        "name": "(anonymous)",
+        "line": 193,
+        "lines": 108,
+        "depth": 4,
+        "branches": 42
+      },
+      {
+        "file": "tools/browser.js",
+        "name": "launch",
+        "line": 45,
+        "lines": 100,
+        "depth": 3,
+        "branches": 15
+      },
+      {
+        "file": "tools/sim/03-report.js",
+        "name": "report",
+        "line": 35,
+        "lines": 84,
+        "depth": 1,
+        "branches": 20
+      },
+      {
+        "file": "tools/ui-test.js",
+        "name": "(anonymous)",
+        "line": 86,
+        "lines": 80,
+        "depth": 1,
+        "branches": 2
+      },
+      {
+        "file": "tools/dev/audit/free-names.js",
+        "name": "freeNames",
+        "line": 74,
+        "lines": 77,
+        "depth": 4,
+        "branches": 89
+      },
+      {
+        "file": "tools/sim/01-census.js",
+        "name": "signatures",
+        "line": 163,
+        "lines": 71,
+        "depth": 2,
+        "branches": 65
+      },
+      {
+        "file": "tools/bench.js",
+        "name": "(anonymous)",
+        "line": 166,
+        "lines": 64,
+        "depth": 2,
+        "branches": 5
+      },
+      {
+        "file": "tools/csp-test.js",
+        "name": "(anonymous)",
+        "line": 57,
+        "lines": 63,
+        "depth": 1,
+        "branches": 1
+      },
+      {
+        "file": "tools/layout/02-helpers.js",
+        "name": "chatterFull",
+        "line": 133,
+        "lines": 60,
+        "depth": 2,
+        "branches": 43
+      },
+      {
+        "file": "tools/net-test.js",
+        "name": "inNode",
+        "line": 116,
+        "lines": 59,
+        "depth": 0,
+        "branches": 27
+      },
+      {
+        "file": "tools/rules/32-online-replay.js",
+        "name": "live",
+        "line": 122,
+        "lines": 59,
+        "depth": 3,
+        "branches": 37
+      },
+      {
+        "file": "tools/snapshots/state.js",
+        "name": "encode",
+        "line": 66,
+        "lines": 57,
+        "depth": 1,
+        "branches": 12
+      },
+      {
+        "file": "tools/dev/teach-build/audit/play.js",
+        "name": "(anonymous)",
+        "line": 117,
+        "lines": 52,
+        "depth": 4,
+        "branches": 15
+      },
+      {
+        "file": "tools/dev/teach/audit/play.js",
+        "name": "(anonymous)",
+        "line": 115,
+        "lines": 51,
+        "depth": 4,
+        "branches": 15
+      }
+    ],
+    "deepest": [
+      {
+        "file": "tools/dev/audit/free-names.js",
+        "name": "readable",
+        "line": 18,
+        "lines": 25,
+        "depth": 6,
+        "branches": 18
+      },
+      {
+        "file": "tools/dev/r6-study-tools/study.js",
+        "name": "play",
+        "line": 40,
+        "lines": 344,
+        "depth": 5,
+        "branches": 158
+      },
+      {
+        "file": "tools/sim/02-round.js",
+        "name": "playRound",
+        "line": 15,
+        "lines": 222,
+        "depth": 4,
+        "branches": 302
+      },
+      {
+        "file": "tools/bench-ai.js",
+        "name": "(anonymous)",
+        "line": 193,
+        "lines": 108,
+        "depth": 4,
+        "branches": 42
+      },
+      {
+        "file": "tools/dev/audit/free-names.js",
+        "name": "freeNames",
+        "line": 74,
+        "lines": 77,
+        "depth": 4,
+        "branches": 89
+      },
+      {
+        "file": "tools/dev/teach-build/audit/play.js",
+        "name": "(anonymous)",
+        "line": 117,
+        "lines": 52,
+        "depth": 4,
+        "branches": 15
+      },
+      {
+        "file": "tools/dev/teach/audit/play.js",
+        "name": "(anonymous)",
+        "line": 115,
+        "lines": 51,
+        "depth": 4,
+        "branches": 15
+      },
+      {
+        "file": "tools/sim/01-census.js",
+        "name": "woodpeckerCensus",
+        "line": 269,
+        "lines": 48,
+        "depth": 4,
+        "branches": 38
+      },
+      {
+        "file": "tools/abtest.js",
+        "name": "measure",
+        "line": 241,
+        "lines": 47,
+        "depth": 4,
+        "branches": 15
+      },
+      {
+        "file": "tools/rules/03-jump-and-flash.js",
+        "name": "(anonymous)",
+        "line": 271,
+        "lines": 47,
+        "depth": 4,
+        "branches": 36
+      },
+      {
+        "file": "tools/dev/teach/audit/bird.js",
+        "name": "(anonymous)",
+        "line": 61,
+        "lines": 33,
+        "depth": 4,
+        "branches": 12
+      },
+      {
+        "file": "tools/shots.js",
+        "name": "(anonymous)",
+        "line": 26,
+        "lines": 376,
+        "depth": 3,
+        "branches": 10
+      },
+      {
+        "file": "tools/dev/r6-study-tools/study.js",
+        "name": "summarize",
+        "line": 391,
+        "lines": 166,
+        "depth": 3,
+        "branches": 67
+      },
+      {
+        "file": "tools/browser.js",
+        "name": "launch",
+        "line": 45,
+        "lines": 100,
+        "depth": 3,
+        "branches": 15
+      },
+      {
+        "file": "tools/rules/32-online-replay.js",
+        "name": "live",
+        "line": 122,
+        "lines": 59,
+        "depth": 3,
+        "branches": 37
+      },
+      {
+        "file": "tools/abtest.js",
+        "name": "rowsFor",
+        "line": 140,
+        "lines": 45,
+        "depth": 3,
+        "branches": 18
+      },
+      {
+        "file": "tools/dev/bubbles-apart.js",
+        "name": "(anonymous)",
+        "line": 10,
+        "lines": 43,
+        "depth": 3,
+        "branches": 2
+      },
+      {
+        "file": "tools/bench.js",
+        "name": "versus",
+        "line": 128,
+        "lines": 37,
+        "depth": 3,
+        "branches": 17
+      },
+      {
+        "file": "tools/bench.js",
+        "name": "landTwins",
+        "line": 46,
+        "lines": 34,
+        "depth": 3,
+        "branches": 5
+      },
+      {
+        "file": "tools/dev/teach/audit/stage.js",
+        "name": "(anonymous)",
+        "line": 24,
+        "lines": 32,
+        "depth": 3,
+        "branches": 8
+      }
+    ]
+  },
+  "changedTogether": {
+    "commits": 1,
+    "pairs": [],
+    "mostChanged": [
+      {
+        "file": "tools/dev/audit/uses.js",
+        "changes": 1
+      }
+    ]
+  },
+  "suites": []
+}

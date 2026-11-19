@@ -1,0 +1,746 @@
+diff --git a/DESIGN.md b/DESIGN.md
+index 9d77a39..d7bbab4 100644
+--- a/DESIGN.md
++++ b/DESIGN.md
+@@ -1229,6 +1229,22 @@ A laptop's window 500 px tall or less (its DevTools docked below, say) is laid o
+ **The screen stays awake** while you play, through the countdown, and while you watch a round, an AI round or the rest of yours after you're out (a screen wake lock). It's let go when you nap, when a card is up (your death's, the round's end) and while the Hall of Fame is open. A hidden tab loses it (the browser lets go); coming back asks again if it's still wanted then. Alone, you'll be napping by then, so waking asks; online, the round goes on, so it's asked at once. A refusal (a battery saver, say) isn't asked again until the next time it's wanted. Where there's no wake lock, nothing changes, and there are no hidden-video tricks.
+ 
+ **Tests.** `tools/layout-test.js` (new) checks all of the above in headless Chrome on 24 screens, upright and on their sides, with and without a notch (the safe area set through the DevTools protocol), with a browser's bars showing, tablets and desktops: the board's size against the numbers above, wholly on the first screen held upright, and the header and tags 12 px from the screen's edge; no sideways scroll, and on its side no scroll at all; the header's buttons, the tags, the chatter's switch, the help and the buttons of the start card, a nap, your death's card and the round's end all on the screen and taking a tap; while you play, the help either wholly on the screen or hidden, and then the powers' lesson at Go; your death's card's two buttons side by side on a small board; on its side, the column off the screen's top and bottom, a full chatter's log, playing and watching, cut inside its box and the page, a row of words at least and none sliced (568×320, and the notched 780×320 and 780×330, watching, too), and the help giving way while you watch only where, made to show, it would leave the log no row (780×340 and a notched 844×340 keep it), no moss or leaf cut by the screen's edge, and the nap button's focus ring whole; with a mouse, the header's spacing as it was; the header's rows (at 320 px the title, Score and Best on one, wider the title and Score, then the buttons and Best), and as Score and Best grow from 0 to 99, 100 and 1000 in a round, the header's rows and the board's size and place unchanged (390×545 to 600, 412×604 and seven more phones); the woodpecker perched for 11 spots, resting and eyeing its chunk, from its own layer's pixels (never over a cell, never over the page's furniture or the moss and leaves hanging into the ledge, never past the screen's edge or into its safe area, on the ledge or beside the board, and how tall), and flying out to 9 spots at the board's edges and corners, from its own perch and from the far corner, drumming them and flying home, drawn every 10 ms of the plan (each 104 ms wingbeat at ten moments), never cut off by the screen's edge or its layer's (since round six A's woodpecker, on every screen, tablets and desktops too, with no list of known cut-offs; before, at eight moments of each wingbeat, and only where the perch decided it; a single moment missed a wing past the edge); on its side under 600 px wide (480×320, 540×320, 600×360), perched under the board or beside it, never over a cell; held upright at every 5 px of height in between (320 px wide from 460 to 540 px tall; 375, 390 and 414 px wide from 545 to 640), and at 414×622, 412×604 and 375×553, the woodpecker perched never over a cell, 24 px tall or more and all on the screen, and the board bigger than before; in a browser without `svh` and `dvh` (the page's stylesheet with them made unknown), the board, its frame and the ledge as they are with them; the full screen button, in and out on a real tap, and none where it isn't allowed; the wake lock, through a stand-in that records every request and release, through the countdown, play, a nap, the Hall of Fame, a hidden tab, a lock the browser let go, your death's card, keeping watching, the round's end, a watched AI round, a refusal, and a browser with none; a real touch swipe on the board, upright and on its side; and no error events on the page, playing, watching or resized (a resize observer's loop isn't an exception, so it was never caught: the game sets what's above the board as the window changes, not from inside one's call). Each reading waits until the page has been drawn and its own resize observers have run (a fixed wait read it too early now and then on a busy machine).
++## Your snake talks (a prototype after round six A)
++
++The owner, after playing: the lessons "flash before you, too quick to really register", "in your face in the middle of the screen" on a phone, while you’re playing a fast game; "can dialogue bubbles be used to teach you? We already got them nailed… better game design to show players what they can do and shouldn’t do, rather than flash them in the eyes with signs." And the woodpecker is "very small on the phone". Measured first (18 rounds as a new player, three screens): a lesson was up 2.5 to 3.2 s for 9 to 15 words, banners were up 39 to 50% of play, lessons came in chains of up to seven in 18 s at 2:00, a third of a phone’s lessons sat mid-board, and the perched bird was 38 to 52 px tall on a phone against 136 on a desktop.
++
++**What happens to you is said by your own snake.** The rules that were lesson banners are lines your own snake says, in the first person, in a speech bubble at its head, as the rivals say theirs (they mirror the rivals’ own lines for the same moments: a rival chokes "Ptooey!", yours "Pthoo! That’s my own tail."). The words are where your eyes already are, and nothing crosses the board.
++- *Its voice:* plain and plucky, a newcomer to the log learning it alongside you. One idea a line, 32 characters at most, so a phone’s bubble always shows it whole (the rivals’ longer lines go to the log on small boards). It names a key only when it asks you to press it ("Tap, and I’ll hop that!"), and only until you have.
++- *When:* the moment it happens, once a round, and only the first two rounds you meet each rule on this device (`snake-voice` in local storage: a rule told is told; the banners came every round, and hunger up to five times one). Then the board’s own pictures and the Field guide carry it. One line at a time: a line that can’t show while another is being read isn’t spent, so the next time teaches it; what just hurt you, or what you just got, takes over; and the cough’s line waits for the choke’s.
++- *How long:* its reading time, read in glances while you steer: 1.2 s and 0.45 s a word, 2.4 to 4.2 s (a banner was up 2.5 s for 15 words). It pops in from its tail (no slam), and holds still with reduced motion.
++- *Where:* the rivals’ bubble, edged in your colour with an ink hairline, a touch bolder and bigger (bigger again on a big board). It keeps clear of your head, the three cells ahead and the two of a turn you’ve pressed, the banner, and what it’s about (the bead you spat, the pit you bridge, the woodpecker’s mark). It stays put while that’s all still clear; when it must move it goes across the way you’ve been going (above or below a snake going sideways, beside one going up or down, and on a staircase the corner off to its side, clear of the way ahead and of the body behind), fading over rather than gliding across your head. It never fades for your head; the rivals’ make way for it. It’s in the log too, under your name, when the chatter’s on, and screen readers hear it; with the chatter off it still shows (it’s how the game teaches you).
++
++**What you could do, shown.** Two pictures, drawn while your snake asks for the press, until you’ve done it yourself twice: the jump’s way over what’s ahead (a dotted arc in the jump’s sky from your head over the hurdle to a ring on the cell it would land on: faint and still while it’s coming, from five cells; bright, its dots marching and its ring breathing once a press now would go, within the jump’s wait), and the flash’s two ember chevrons on the two cells it would cover, when your flash first comes ready. Both are inked so they read on bark, fire and snow.
++
++**Banners are the round’s news only** (the woodpecker, first blood, the last two, the weather, a spawn, land the woodpecker took, the last apples): one line on any phone where it can be ("The woodpecker is here."), held for its reading time (1 s and 0.4 s a word, up to 4.5 s), nothing cutting it short but a card, never two back to back (half a second’s breather), and never in the board’s middle: on a phone held upright it’s off the board, just above it, over the tags’ lower row; elsewhere at the board’s top or foot. It settles in with a short drop and fade: no slam from 1.9 times its size, no red throb, no shine running across the gold.
++
++**The woodpecker, full size on a phone.** On a phone held upright it clings to the chatter’s wood under the ledge, its crown still just under the board, down to the foot of the chatter’s head row, beside its title and its switch (never over either), in front of the moss hanging off the log: 78 px tall at 390×844 (was 52), 72 at 360×640 (was 38), 4.9 cells, a fifth of the board, as on a desktop or a phone on its side, its eye 5.2 to 5.7 px. So it no longer grows as it takes off to drum. Watching, the speed buttons between keep it on the ledge, as before.
++
+ ## Skipped or adapted guidelines
+ 
+ Each line gives the guideline, what was done, and why.
+diff --git a/chatter.js b/chatter.js
+index 7e95a48..655a841 100644
+--- a/chatter.js
++++ b/chatter.js
+@@ -1742,18 +1742,32 @@ window.SnakeChatter = (() => {
+     else if (!logShown && s.body?.length) showBubble(s, text, s.body[0]);
+   }
+ 
+-  function showBubble(s, text, at = null) {
++  // Your own snake's voice (the rules, the first times they happen to you,
++  // in the first person: snake.js voice; DESIGN "Your snake talks"). The
++  // same bubble as the rivals', edged in your colour, beside your head by
++  // the same rules (never over your path), held for its reading time (ms).
++  // It's placed first, so the rivals' make way for it; it never fades for
++  // your head; and it keeps off the cells it's about (avoid: [{ x, y }], the
++  // bead you spat, the pit you bridge). With the chatter off it still shows
++  // (it's how the game teaches you), and goes in the log when it's on.
++  function own(s, text, { ms = BUBBLE_MS, avoid = null } = {}) {
++    if (!s?.alive || !boardEl) return;
++    showBubble(s, text, null, { ms, avoid });
++    if (enabled) addLog(s, text);
++  }
++
++  function showBubble(s, text, at = null, mine = null) {
+     bubbles.get(s.id)?.el.remove();
+     bubbles.delete(s.id); // (so the newest comes last: it's the one that makes way)
+     const el = document.createElement('div');
+-    el.className = 'bubble';
++    el.className = mine ? 'bubble mine' : 'bubble';
+     el.setAttribute('aria-hidden', 'true'); // (screen readers get the log instead)
+     const words = document.createElement('span'); // (the bubble you see: it pops in, while its box is moved about)
+     setWords(words, text);
+     el.append(words);
+     el.style.setProperty('--edge', s.persona?.ink || s.color);
+     boardEl.appendChild(el);
+-    bubbles.set(s.id, { el, snake: s, until: performance.now() + (at ? LAST_WORDS_MS : BUBBLE_MS), at: at && { x: at.x, y: at.y }, w: 0, h: 0, box: { x: 0, y: 0, w: 0, h: 0 }, side: null, shown: null, want: null, wantSince: 0, ox: 0, oy: 0, x: NaN, y: NaN, tail: NaN, near: false });
++    bubbles.set(s.id, { el, snake: s, until: performance.now() + (mine ? mine.ms : at ? LAST_WORDS_MS : BUBBLE_MS), at: at && { x: at.x, y: at.y }, mine: !!mine, avoid: mine?.avoid || null, w: 0, h: 0, box: { x: 0, y: 0, w: 0, h: 0 }, side: null, shown: null, want: null, wantSince: 0, ox: 0, oy: 0, x: NaN, y: NaN, tail: NaN, near: false });
+   }
+ 
+   // Called every frame: bubbles follow the gliding heads, stay inside the
+@@ -1767,6 +1781,38 @@ window.SnakeChatter = (() => {
+   // room, and with no side clear, it's nudged out of the way (gliding too).
+   // keepClear: your snake, if you're playing: a bubble near your head fades.
+   const SIDE_DELAY = 450, GLIDE_MS = 110, CLEAR = 4; // (CLEAR: px between a bubble and what it keeps out of)
++  const MINE_FIRST = [true, false], MINE_HOP_MS = 110;
++  // Where your own bubble goes (offX, offY: where a place puts it). It stays
++  // where it is while that's still clear: of your head, of the cells ahead
++  // (three the way you're going, two the way you've pressed to turn), of the
++  // banner, of what it's about (avoid) and the board's edge. When it has to
++  // move, it goes across the way your snake has been going lately (its head
++  // from its fourth segment): above or below a snake going sideways, beside
++  // one going up or down, and on a staircase the corner off to its side (up
++  // and to the right: above-left or below-right), clear of the path ahead
++  // and of the body behind. So it stays put through a run of turns, rather
++  // than hopping sides at each one.
++  const CORNER = 0.75;
++  const MINE_PLACES = ['above', 'below', 'left', 'right', 'aboveL', 'aboveR', 'belowL', 'belowR'];
++  function mineSide(b, offX, offY, inX, inY, w, h, boardPx, cellPx) {
++    const s = b.snake, d = s.dir, q = s.queue?.[0], cells = [];
++    const cell = (dir, n) => ({ x: headAt.x + dir.x * cellPx * n - cellPx / 2 - 2, y: headAt.y + dir.y * cellPx * n - cellPx / 2 - 2, w: cellPx + 4, h: cellPx + 4 });
++    cells.push(cell(d, 0));
++    for (let n = 1; n <= 3; n++) cells.push(cell(d, n));
++    if (q && (q.x !== d.x || q.y !== d.y)) for (let n = 1; n <= 2; n++) cells.push(cell(q, n));
++    const over = (x, y, r) => x < r.x + r.w && r.x < x + w && y < r.y + r.h && r.y < y + h;
++    const ok = place => {
++      const x = inX(headAt.x + offX(place)), y = inY(headAt.y + offY(place)); // (kept on the board as it's drawn: slid along an edge, and then it must still be clear)
++      return !cells.some(r => over(x, y, r)) && free(x, y, w, h);
++    };
++    if (b.side && ok(b.side)) return b.side;
++    const body = s.body, k = Math.min(body.length - 1, 4), tx = Math.sign(body[0].x - body[k].x), ty = Math.sign(body[0].y - body[k].y);
++    const v = (y, x) => (y < 0 ? 'above' : 'below') + (x < 0 ? 'L' : 'R'); // (a corner)
++    const prefs = tx && ty ? [v(ty, -tx), v(-ty, tx)] // (a staircase: the corners off to its sides)
++      : ty === 0 ? (headAt.y < cellPx * 4 ? ['below', 'above'] : ['above', 'below']) // (sideways)
++      : (headAt.x < boardPx / 2 ? ['right', 'left'] : ['left', 'right']); // (up or down)
++    return prefs.find(ok) || MINE_PLACES.find(ok) || b.side || prefs[0];
++  }
+   let lastLayout = 0;
+   function layout(alpha, boardPx, keepClear = null) {
+     if (!bubbles.size || !boardPx) { lastLayout = 0; return; }
+@@ -1777,8 +1823,10 @@ window.SnakeChatter = (() => {
+     if (bannerStale || bannerPx !== boardPx) readBanner(boardPx);
+     taken.length = 0;
+     if (banner) taken.push(banner);
+-    for (const [id, b] of bubbles) {
++    for (const yours of MINE_FIRST) for (const [id, b] of bubbles) {
++      if (b.mine !== yours) continue; // (yours first: the rivals' make way for it)
+       if (now > b.until || (!b.snake.alive && !b.at)) { b.el.remove(); bubbles.delete(id); continue; }
++      if (b.avoid) for (const c of b.avoid) taken.push({ x: c.x * cellPx - 2, y: c.y * cellPx - 2, w: cellPx + 4, h: cellPx + 4 }); // (what it's about: it stays in sight)
+       if (b.at) { headAt.x = (b.at.x + 0.5) * cellPx; headAt.y = (b.at.y + 0.5) * cellPx; } // (last words: where it went out)
+       else window.SnakeRender.headPx(b.snake, alpha, boardPx, headAt);
+       if (!b.w) { b.w = b.el.offsetWidth; b.h = b.el.offsetHeight; } // (measured once, as it first shows)
+@@ -1787,8 +1835,10 @@ window.SnakeChatter = (() => {
+       // Where it sits on a side, relative to the head (its top-left corner),
+       // and where that is on the board; whether that side fits on the board,
+       // whether it's clear there too, or can be nudged clear (see nudge).
+-      const offX = side => side === 'left' ? -gap - w : side === 'right' ? gap : -w / 2;
+-      const offY = side => side === 'above' ? -gap - h : side === 'below' ? gap : -h / 2;
++      // (Yours also has the four corners, aboveL to belowR: off the head
++      // diagonally, its nearest corner CORNER cells out each way.)
++      const offX = side => side === 'left' ? -gap - w : side === 'right' ? gap : side.endsWith('L') ? -cellPx * CORNER - w : side.endsWith('R') ? cellPx * CORNER : -w / 2;
++      const offY = side => side === 'above' ? -gap - h : side === 'below' ? gap : side.startsWith('above') ? -cellPx * CORNER - h : side.startsWith('below') ? cellPx * CORNER : -h / 2;
+       const spotX = side => inX(headAt.x + offX(side)), spotY = side => inY(headAt.y + offY(side));
+       const fits = side => side === 'above' ? headAt.y - gap - h >= 0 : side === 'below' ? headAt.y + gap + h <= boardPx
+         : side === 'left' ? headAt.x - gap - w >= 0 : headAt.x + gap + w <= boardPx;
+@@ -1797,40 +1847,50 @@ window.SnakeChatter = (() => {
+       const choose = room => b.snake.dir.y !== 0
+         ? (b.side === 'left' || b.side === 'right') && room(b.side) ? b.side : room('right') && (headAt.x < boardPx / 2 || !room('left')) ? 'right' : 'left'
+         : b.side === 'below' && headAt.y < cellPx * 4 ? 'below' : room('above') ? 'above' : 'below';
+-      let want = choose(clear);
+-      if (!clear(want)) want = choose(movable); // (no side's clear as it is: one it can be nudged clear on,
+-      if (!movable(want)) want = choose(fits); //  or failing that, the side it'd have alone)
+-      if (!b.side) b.side = want;
+-      else if (want !== b.side) {
+-        if (b.want !== want) { b.want = want; b.wantSince = now; }
+-        if (now - b.wantSince >= SIDE_DELAY || !fits(b.side) || (!movable(b.side) && movable(want))) { b.side = want; b.want = null; }
+-      } else b.want = null;
++      if (b.mine) { // (yours: where it is while that's still clear, else the best place that is: see mineSide)
++        const want = mineSide(b, offX, offY, inX, inY, w, h, boardPx, cellPx);
++        if (!b.side) b.side = want; else if (want !== b.side) b.side = want;
++      } else {
++        let want = choose(clear);
++        if (!clear(want)) want = choose(movable); // (no side's clear as it is: one it can be nudged clear on,
++        if (!movable(want)) want = choose(fits); //  or failing that, the side it'd have alone)
++        if (!b.side) b.side = want;
++        else if (want !== b.side) {
++          if (b.want !== want) { b.want = want; b.wantSince = now; }
++          if (now - b.wantSince >= SIDE_DELAY || !fits(b.side) || (!movable(b.side) && movable(want))) { b.side = want; b.want = null; }
++        } else b.want = null;
++      }
+       // Where it goes, relative to the head, eased toward.
+       let tx = offX(b.side), ty = offY(b.side);
+-      if (taken.length && nudge(b.side, spotX(b.side), spotY(b.side), w, h, boardPx) && (nudged.x || nudged.y)) {
++      if (!b.mine && taken.length && nudge(b.side, spotX(b.side), spotY(b.side), w, h, boardPx) && (nudged.x || nudged.y)) {
+         tx = spotX(b.side) + nudged.x - headAt.x; ty = spotY(b.side) + nudged.y - headAt.y;
+       }
+       if (b.side !== b.shown) {
+         if (!b.shown) { b.ox = tx; b.oy = ty; }
+-        b.el.dataset.side = b.side;
++        else if (b.mine) { b.hopAt = now; b.el.classList.add('hop'); } // (yours fades out where it is and back in on its new side: gliding there, it crossed your head)
++        b.el.dataset.side = b.side.startsWith('above') ? 'above' : b.side.startsWith('below') ? 'below' : b.side; // (a corner's tail is on its top or bottom edge, at its end nearest the head)
+         b.shown = b.side;
+       }
+-      b.ox += (tx - b.ox) * glide;
+-      b.oy += (ty - b.oy) * glide;
++      if (b.hopAt) {
++        if (now - b.hopAt >= MINE_HOP_MS) { b.hopAt = 0; b.ox = tx; b.oy = ty; b.el.classList.remove('hop'); }
++      } else {
++        b.ox += (tx - b.ox) * glide;
++        b.oy += (ty - b.oy) * glide;
++      }
+       const x = Math.round(inX(headAt.x + b.ox));
+       const y = Math.round(inY(headAt.y + b.oy));
+       // (where it's going, not where it's got to: newer bubbles keep clear of that)
+       b.box.x = inX(headAt.x + tx); b.box.y = inY(headAt.y + ty); b.box.w = w; b.box.h = h;
+       taken.push(b.box);
+       let near = false;
+-      if (keepClear?.alive) {
++      if (keepClear?.alive && !b.mine) {
+         const mine = window.SnakeRender.headPx(keepClear, alpha, boardPx, headMine);
+         near = Math.abs(mine.x - x - w / 2) < w / 2 + cellPx * 1.5 && Math.abs(mine.y - y - h / 2) < h / 2 + cellPx * 1.5;
+       }
+       if (near !== b.near) { b.el.classList.toggle('near', near); b.near = near; }
+       if (x === b.x && y === b.y) continue;
+       // The tail points at the head, even when the bubble is pushed along at an edge.
+-      const across = b.side === 'above' || b.side === 'below';
++      const across = b.side.startsWith('above') || b.side.startsWith('below');
+       // (in steps of 5%: every change restyles the bubble)
+       const tail = 5 * Math.round(Math.min(85, Math.max(15, across ? (headAt.x - x) / w * 100 : (headAt.y - y) / h * 100)) / 5);
+       if (tail !== b.tail) { b.el.style.setProperty('--tail', `${tail}%`); b.tail = tail; }
+@@ -2276,5 +2336,5 @@ window.SnakeChatter = (() => {
+     }
+   }
+ 
+-  return { init, reset, update, layout, clearBubbles, setEnabled, isEnabled, setCompact, onSpeak, replay };
++  return { init, reset, update, layout, clearBubbles, setEnabled, isEnabled, setCompact, onSpeak, replay, own };
+ })();
+diff --git a/render.js b/render.js
+index 6f0f662..bf26aa6 100644
+--- a/render.js
++++ b/render.js
+@@ -8680,6 +8680,7 @@ window.SnakeRender = (() => {
+     drawBlasts(now);
+     drawParticles(dt);
+     drawYou(now);
++    drawHint(now);
+     drawFloaters(dt);
+     drawPress(); // (over the Bonk! a crash puts where you'll press)
+     drawFlash(now);
+@@ -8744,6 +8745,67 @@ window.SnakeRender = (() => {
+     }
+     ctx.globalAlpha = 1;
+   }
++  // What you could do now, drawn while your own snake asks for it (snake.js
++  // voice; DESIGN "Your snake talks"): a picture, not a word. The jump: its
++  // way over what's ahead, a dotted arc from your head (as it glides) over
++  // the hurdle to a ring on the cell it would land on, in the jump's sky.
++  // The flash: its two chevrons on the two cells it would cover, in ember.
++  // Each in ink first, so it reads on bark, fire and snow alike. It fades in
++  // and out; the dots march and the ring breathes, and with reduced motion
++  // they hold still. It never covers your head, and it's gone once you've
++  // pressed, once the moment has passed (until), or once you've died.
++  let hint = null, hintA = 0;
++  function setHint(h) { hint = h ? { ...h } : null; if (!h) hintA = Math.min(hintA, 0.6); }
++  function drawHint(now) {
++    const you = findById(viewerId), live = hint && game && game.tick <= hint.until && you?.alive && (!hint.dir || (you.dir.x === hint.dir.x && you.dir.y === hint.dir.y)); // (turned away: it fades)
++    hintA += ((live ? 1 : 0) - hintA) * Math.min(1, frameDt / 140);
++    if (!hint || hintA < 0.02) { if (!live) hint = null; return; }
++    const s = you, a = s && s.alive ? anim.get(s) : null;
++    if (!a || !a.n) return;
++    const c = CELL, hx = a.pts[0], hy = a.pts[1], t = reduced ? 0 : now / 1000;
++    ctx.save();
++    ctx.globalAlpha = hintA;
++    ctx.lineCap = ctx.lineJoin = 'round';
++    if (hint.kind === 'hop') {
++      const ox = (hint.over.x + 0.5) * c, oy = (hint.over.y + 0.5) * c, lx = (hint.land.x + 0.5) * c, ly = (hint.land.y + 0.5) * c;
++      // (up the screen for a jump across it, to the left for one up or down, as the press mark: never upside down)
++      const d = hint.dir, bx = -Math.abs(d.y), by = -Math.abs(d.x), rise = c * 1.7;
++      const kx = ox + bx * rise, ky = oy + by * rise;
++      // From just past your head (never on it) to just short of the ring.
++      const at = u => { const v = 1 - u; return [v * v * hx + 2 * v * u * kx + u * u * lx, v * v * hy + 2 * v * u * ky + u * u * ly]; };
++      // (Coming: faint and still. Within a jump's wait (LEAP_WINDOW cells), a press now goes: it's bright, its dots march and its ring breathes.)
++      const now2 = ((ox - hx) * d.x + (oy - hy) * d.y) / c <= T.LEAP_WINDOW + 0.5, march = now2 ? (t * 1.6) % 1 : 0.5, n = 8;
++      ctx.globalAlpha = hintA * (now2 ? 1 : 0.45);
++      for (let i = 0; i < n; i++) {
++        const u = 0.12 + (i + march) / n * 0.74;
++        const [x, y] = at(u), r = c * (0.09 + 0.05 * Math.sin(Math.PI * u)); // (bigger at the top of the arc)
++        ctx.beginPath(); ctx.arc(x, y, r + c * 0.05, 0, TAU); ctx.fillStyle = INK; ctx.fill();
++        ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fillStyle = SKY; ctx.fill();
++      }
++      const breathe = reduced || !now2 ? 0 : 0.04 * Math.sin(t * 5);
++      ctx.beginPath(); ctx.arc(lx, ly, c * (0.4 + breathe), 0, TAU);
++      ctx.strokeStyle = INK; ctx.lineWidth = c * 0.2; ctx.stroke();
++      ctx.strokeStyle = SKY; ctx.lineWidth = c * 0.11; ctx.stroke();
++    } else if (hint.kind === 'flash') {
++      const dx = s.dir.x, dy = s.dir.y, w = c * 0.24;
++      for (let i = 1; i <= 2; i++) {
++        const k = reduced ? 1 : 0.55 + 0.45 * Math.max(0, Math.sin(t * 6 - i * 1.1)); // (the far one a beat after the near one: onward)
++        const cx = hx + dx * c * (i + 0.15), cy = hy + dy * c * (i + 0.15);
++        if (cx < 0 || cy < 0 || cx > SIZE || cy > SIZE) continue;
++        ctx.globalAlpha = hintA * k;
++        ctx.beginPath();
++        for (const off of [0, -0.28]) {
++          const px = cx + dx * c * off, py = cy + dy * c * off;
++          ctx.moveTo(px - dx * w + dy * w, py - dy * w + dx * w);
++          ctx.lineTo(px, py);
++          ctx.lineTo(px - dx * w - dy * w, py - dy * w - dx * w);
++        }
++        ctx.strokeStyle = INK; ctx.lineWidth = c * 0.17; ctx.stroke();
++        ctx.strokeStyle = EMBER; ctx.lineWidth = c * 0.09; ctx.stroke();
++      }
++    }
++    ctx.restore();
++  }
+   // Which side of its head a snake's arrow goes (-1 over it, 1 under it):
+   // over it, unless its own body's there (heading down, as seat 2 starts
+   // online: the arrow and YOU covered the very snake they pointed at), and
+@@ -9407,6 +9469,7 @@ window.SnakeRender = (() => {
+ 
+   return {
+     showYou,
++    hint: setHint, // (what you could do now, drawn while your snake asks for it: { kind: 'hop', over, land, dir, until } or { kind: 'flash', until }, ticks; null: gone)
+     // (your jump's back, or with 'flash' your flash: its half-ring's flick; the renderer sees both itself, so this only makes sure)
+     ready: (s, kind) => { const a = animOf(s, lastNow || performance.now()), now = lastNow || performance.now(); if (kind === 'flash') { if (!(now - a.flashFx < 600)) a.flashFx = now; } else if (!(now - a.readyAt < 600)) a.readyAt = now; },
+     init, setGame, resize, frame, onTick, shake, hold, headPx, colorOf, markOf, celebrate, setQuality, setBoardRect, pressed,
+diff --git a/snake.js b/snake.js
+index 649e12d..16c07e3 100644
+--- a/snake.js
++++ b/snake.js
+@@ -93,7 +93,7 @@
+     golden: ['A golden apple! Everyone pretends not to have seen it.', 'A golden apple just dropped onto the log.'],
+     // The first time in a round you cross a rival's border.
+     field: { home: name => `You’re in ${name}’s realm now. It noticed.`, colony: name => `That’s one of ${name}’s colonies. It noticed.` },
+-    woodpecker: ['The woodpecker is here. Keep out of wherever it’s looking.', 'Rat-a-tat. The woodpecker has come for the log, a patch at a time.'],
++    woodpecker: ['The woodpecker is here.', 'Rat-a-tat. The woodpecker’s here.'], // (one line on any phone: keeping off its mark is your snake's line, the first time one comes near you)
+     woodpeckerWatch: ['The woodpecker is here. Everyone, keep clear of its mark.', 'Rat-a-tat. The woodpecker has come for the log, a patch at a time.'],
+     // The new rules, as they first happen to you in a round: one idea each, short.
+     // (A no-break space keeps "At 3" together: split, it reads as two statements.)
+@@ -139,6 +139,43 @@
+     youSnip: name => `Snip! You cut ${name} in two.`,
+     youSnipped: name => `Snip. ${name} flashed right through you.`,
+     youMushroom: ['You feel smaller. And somehow wiser.', 'A little less of you. Sneaky.'],
++    // Your own snake's lines (DESIGN "Your snake talks"): a rule, the first
++    // times it happens to you, said by your snake in the first person, in a
++    // bubble at its head, as the rivals say theirs. One idea each, and 32
++    // characters at most (COMPACT_CHARS: a phone's bubble shows it whole).
++    // A key only where the line asks you to press it, and only until you have.
++    mine: {
++      crash: 'Ow! Crashes cost me tail.',
++      crashToThree: 'Ow! One more and I’m out!',
++      atThree: 'Down to\u00a03. One more bump…',
++      hungry: 'So hungry… I need a snack.',
++      starvingSmall: 'Starving at\u00a03! Food, quick!',
++      alight: 'Hot, hot! I’m losing tail!',
++      choke: 'Pthoo! That’s my own tail.',
++      coughing: 'Hack! Can’t eat mid-cough…',
++      peckedUnder: 'Phew! Only heads fall in.',
++      dig: 'It’s digging in! Quick!',
++      dug: 'Gone! It left a burrow.',
++      knocked: 'Hey! The bird flicked my snack!',
++      mark: 'Its mark! I’ll keep off that.',
++      hopReady: touchFirst ? 'Tap, and I’ll hop that!' : 'Space, and I’ll hop that!',
++      leapFirst: 'Hup! That cost my tail tip.',
++      leapNothing: 'Nothing there to hop!',
++      leapEarly: 'Too soon! Wait till it’s close.',
++      flashReady: touchFirst ? 'Flash ready! Swipe ahead.' : 'Flash ready! E or Shift.',
++      fizzle: { resting: 'Not yet, I’m still puffed!', small: 'Too short! Jumps cost tail.', landing: 'Nowhere to land!' },
++      fizzleFlash: { resting: 'My flash isn’t back yet!', landing: 'No room to flash!' },
++      goldBeetle: n => `Golden! ${n} free long jump${n === 1 ? '' : 's'}.`,
++      leaf: n => `${n} golden flash${n === 1 ? '' : 'es'}! Mind edges.`,
++      dashFirst: 'Zing! That cuts thin snakes.',
++      goldcap: n => `Wheee! No edges for ${n} seconds.`,
++      wrapEnding: 'Uh-oh, the edges are back soon!',
++      snipped: name => `Ow! ${name} cut me short!`,
++      snip: name => `Snip! ${name}’s in two.`,
++      mushroom: 'Blech. I feel smaller.',
++      realm: name => `Uh-oh. I’m in ${name}’s realm.`,
++      colony: name => `Oops. That’s ${name}’s colony.`,
++    },
+     youHungry: ['Your tummy is rumbling. Time for a snack.', 'Getting peckish… find food soon.'],
+     youStarvingSmall: 'Starving at\u00a03, with nothing to spare. Eat now.',
+     // A press that couldn't go (the first time each way, in a round): a jump, or a flash.
+@@ -583,7 +620,7 @@
+       state = 'running';
+       hideCard();
+       hideToast(true);
+-      if (napToast) { const [text, kind, level, rest] = napToast; napToast = null; toast(text, 2600, kind, level); waiting.push(...rest); }
++      if (napToast) { const [text, kind, level, rest] = napToast; napToast = null; toast(text, 2600, kind, level); waiting.push(...rest.map(w => [...w])); }
+       lastFrame = 0; // (acc as it was: the board carries on from the very moment it stopped)
+       updateControls();
+       return;
+@@ -598,7 +635,7 @@
+     youHideAt = performance.now() + T.YOU_MS;
+     Audio.play('go');
+     if (guesting() && online.seat < 0) toast(FLAVOR.watchingFirst, 3000);
+-    else if (touchFirst && game.withPlayer && !powersTold && helpEl.getBoundingClientRect().bottom > innerHeight + 0.5) { powersTold = true; toast(FLAVOR.powersFirst, 3000, 'you', 'lesson'); } // (a short phone: the help under the board isn't wholly on the screen, so it's off it or hidden; how to steer is beside YOU. A lesson's banner, not Go!'s big one: it fits, and keeps out of the heads' way)
++    // (A short phone's first Go taught both powers in a banner, over YOU and its steering hint: now your snake asks for each press when it can go. DESIGN "Your snake talks")
+     else toast(pick(game.withPlayer && online?.seat !== -1 ? FLAVOR.go : FLAVOR.goWatch), 1300, 'go');
+     flashFrame('go');
+     acc = 0;
+@@ -878,7 +915,7 @@
+       }
+       if (inside && !inField) {
+         Audio.play('field', at(h.x));
+-        if (!game.toldField && state === 'running') { game.toldField = true; toast(FLAVOR.field[inside.home ? 'home' : 'colony'](inside.o.name), 2400, 'warn'); }
++        if (!game.toldField && state === 'running' && voice(inside.home ? 'realm' : 'colony', FLAVOR.mine[inside.home ? 'realm' : 'colony'](inside.o.name))) game.toldField = true; // (your snake says whose land it is: DESIGN "Your snake talks")
+       }
+       inField = !!inside;
+     }
+@@ -957,8 +994,7 @@
+     const once = key => !game.told?.[key] && ((game.told ||= {})[key] = true); // (the first time this round)
+     for (const e of game.events) if (e.type === 'woodpecker') {
+       flashFrame('bird', true);
+-      toast(lineFor('woodpecker'), 2800, 'bird', 'round');
+-      if (me?.alive && once('fairPecks')) toast(FLAVOR.youWoodpecker, 3000, 'bird', 'lesson', { still: () => me.alive }); // (its rules: it waits for the banner's hold)
++      toast(lineFor('woodpecker'), 2800, 'bird', 'round'); // (its knock: your snake's line when it knocks food from under your nose, below, and the rings)
+       return;
+     }
+     if (dying.length && alive.length === 2) {
+@@ -967,21 +1003,19 @@
+       return toast(`It’s down to ${who(a)} and ${who(b, true)}.`, 2800, 'kill', 'round');
+     }
+     const newsOnce = key => newsFree() && once(key); // (news that can't show now waits for its next chance, not spent on nothing)
++    const M = FLAVOR.mine, near = (e, n) => !!me?.alive && Math.abs(me.body[0].x - e.x) + Math.abs(me.body[0].y - e.y) <= n; // (your snake's lines; something within n cells of your head)
+     if (me?.alive) {
+       const small = me.body.length <= T.MIN_LENGTH;
+       // Your first crash: the rule, first (landing at 3, the lesson says so too).
+-      if (game.events.some(e => e.type === 'crash' && e.snake === me) && once('crash')) {
+-        if (small) once('atThree');
+-        return toast(small ? FLAVOR.youCrashToThree : pick(FLAVOR.youCrash), 3000, 'warn', 'lesson');
+-      }
++      const crash = game.events.find(e => e.type === 'crash' && e.snake === me);
++      if (crash && voice(small ? 'crashToThree' : 'crash', small ? M.crashToThree : M.crash, { urgent: true }) && small) game.told['v:atThree'] = true; // (landing at 3, it says so too)
+       const wrapLeft = me.wrapUntil - game.time;
+-      if (wrapLeft > 0 && wrapLeft <= T.WRAP_WARN_MS && !game.toldWrapEnd) { game.toldWrapEnd = true; return toast(pick(FLAVOR.wrapEnding(Math.round(T.WRAP_WARN_MS / 1000))), 1800, 'warn', 'lesson', { still: () => me.alive && me.wrapUntil > game.time }); }
+-      if (wrapLeft > T.WRAP_WARN_MS) game.toldWrapEnd = false;
++      if (wrapLeft > 0 && wrapLeft <= T.WRAP_WARN_MS) voice('wrapEnding', M.wrapEnding);
+       const left = E.hungerLeft(game, me);
+       const warnAt = T.HUNGER_WARN_MS * (small ? 1.5 : 1); // (at your smallest, starving is the end: a little earlier, and sharper)
+-      if (left < warnAt && !game.warnedHunger) { game.warnedHunger = true; Audio.play('hungerWarn'); return toast(small ? FLAVOR.youStarvingSmall : pick(FLAVOR.youHungry), 2800, 'warn', 'lesson'); }
++      if (left < warnAt && !game.warnedHunger) { game.warnedHunger = true; Audio.play('hungerWarn'); voice(small ? 'starvingSmall' : 'hungry', small ? M.starvingSmall : M.hungry); } // (the tag's bar and the sound say it every time; your snake, the first times)
+       if (left > warnAt) game.warnedHunger = false;
+-      if (small && game.time > 1000 && once('atThree')) return toast(pick(FLAVOR.youAtThree), 2600, 'warn', 'lesson', { still: () => me.alive && me.body.length <= T.MIN_LENGTH });
++      if (small && game.time > 1000) voice('atThree', M.atThree);
+     }
+     // A flag or a capital the woodpecker pecked out (see landLost): its rule,
+     // the first time each goes in a round, for everyone watching too (the
+@@ -998,42 +1032,122 @@
+       if (e.type === 'weather' && e.kind === 'storm') game.struck = false;
+       if (e.type === 'weather' && FLAVOR.weather[e.kind]) { flashFrame(e.kind); return toast(pick((!playerAlive() && FLAVOR.weatherWatch[e.kind]) || FLAVOR.weather[e.kind]), 2800, e.kind); }
+       if (e.type === 'rainbow') { flashFrame('gold', true); if (newsOnce('rainbow')) return toast(lineFor('rainbow'), 2800, 'gold'); }
+-      if (e.type === 'heal' && game.told?.digBurrow && teachable() && once('burrowHeal')) return toast(FLAVOR.burrowHeal, 2600, 'beetle', 'lesson'); // (one closing over: once the burrow's lesson is told, the first time the banner's free for it; it's over in a second, so else the next one teaches it. A dig at the cap closes one over on its burrow's tick, the heal first: that tick teaches the burrow)
+-      if (e.type === 'burrow' && e.dug && teachable() && once('digBurrow')) return toast(once('dig') ? FLAVOR.digAndBurrow : FLAVOR.digBurrow, 2600, 'beetle', 'lesson'); // (its rule, the first time the banner's free for one: shown then, or the next one teaches it. Not taught the dig yet (it was far from you, or the banner was busy), it teaches both, the dig first)
++      // (A burrow closing over: its picture, sawdust and moss filling it, and the Field guide.)
++      if (e.type === 'burrow' && e.dug && near(e, DIG_NEAR + 2)) voice('dug', M.dug, { avoid: [e] }); // (the bug you were after got away under the bark, leaving its bore: your snake saw it go)
+       if (e.type === 'spawn' && e.kind === 'golden') { flashFrame('gold'); if (newsOnce('golden')) return toast(pick(FLAVOR.golden), 2800, 'gold'); }
+       if (e.type === 'spawn' && e.kind === 'beetle' && e.gold) { flashFrame('gold'); if (newsOnce('goldBeetle')) return toast(lineFor('goldBeetle'), 2600, 'gold'); }
+       if (e.type === 'spawn' && e.kind === 'beetle') { flashFrame('beetle'); if (newsOnce('beetle')) return toast(pick(FLAVOR.beetle), 2200, 'beetle'); }
+       if (e.type === 'spawn' && e.kind === 'leaf') { flashFrame('gold'); if (newsOnce('leaf')) return toast(lineFor('leaf'), 2400, 'gold'); }
+       if (e.type === 'spawn' && e.kind === 'goldcap') { flashFrame('gold'); if (newsOnce('goldcap')) return toast(lineFor('goldcap'), 2400, 'gold'); }
+-      if (e.type === 'peck' && me?.alive && e.under?.includes(me.id) && once('peckedUnder')) return toast(FLAVOR.youPeckedUnder, 2800, 'bird', 'lesson'); // (struck under your body: a bridge, not a cut)
+-      if (e.type === 'dig' && me?.alive && Math.abs(me.body[0].x - e.x) + Math.abs(me.body[0].y - e.y) <= DIG_NEAR && teachable() && once('dig')) return toast(FLAVOR.youDig, 2600, 'beetle', 'lesson'); // (it's over in a second: shown now or kept for the next one, never left waiting)
++      if (e.type === 'peck' && me?.alive && e.under?.includes(me.id)) voice('peckedUnder', M.peckedUnder, { urgent: true, avoid: (e.cells || []).map(k => ({ x: k % GRID, y: Math.floor(k / GRID) })) }); // (struck under your body: a bridge, not a cut; its picture is your body drawn across the pit)
++      if (e.type === 'dig' && near(e, DIG_NEAR)) voice('dig', M.dig, { avoid: [e] }); // (one you could still catch)
++      if (e.type === 'knock' && e.tx != null && e.kind !== 'mushroom' && near(e, 4)) voice('knocked', M.knocked, { avoid: [{ x: e.tx, y: e.ty }] }); // (food from under your nose, flying to its ring: the woodpecker's knock)
+       if (!me || !isMe(e.snake || {}) && e.by !== me.id) continue; // (the rest is about you)
+-      if (e.type === 'choke' && once('choke')) return toast(FLAVOR.youChoke, 2600, 'you', 'lesson');
+-      if (e.type === 'nudge' && once('nudge')) return toast(FLAVOR.youCoughing, 2600, 'you', 'lesson');
+-      if (e.type === 'eat' && e.gold) { flashFrame('gold', true); return toast(FLAVOR.youGoldBeetle(e.snake.leaps), 3000, 'gold', 'lesson'); }
+-      if (e.type === 'eat' && e.kind === 'leaf') { flashFrame('gold', true); return toast(FLAVOR.youLeaf(e.snake.dashes), 3200, 'gold', 'lesson'); }
+-      if (e.type === 'eat' && e.kind === 'goldcap') { flashFrame('gold', true); return toast(FLAVOR.youGoldcap(Math.round((me.wrapUntil - game.time) / 1000)), 3000, 'gold', 'lesson'); } // (a second one adds to the first: the real total)
++      if (e.type === 'choke') voice('choke', M.choke, { urgent: true, avoid: [{ x: e.tx ?? e.x, y: e.ty ?? e.y }] }); // (the bead you spat stays in sight)
++      if (e.type === 'nudge') voice('coughing', M.coughing, { follow: true, avoid: [{ x: e.tx ?? e.x, y: e.ty ?? e.y }] }); // (mostly a moment after the choke: it follows that line)
++      if (e.type === 'eat' && e.gold) { flashFrame('gold', true); voice('goldBeetle', M.goldBeetle(e.snake.leaps), { urgent: true }); }
++      if (e.type === 'eat' && e.kind === 'leaf') { flashFrame('gold', true); voice('leaf', M.leaf(e.snake.dashes), { urgent: true }); }
++      if (e.type === 'eat' && e.kind === 'goldcap') { flashFrame('gold', true); voice('goldcap', M.goldcap(Math.round((me.wrapUntil - game.time) / 1000)), { urgent: true }); } // (a second one adds to the first: the real total)
+       if (e.type === 'eat' && e.kind === 'beetle') flashFrame('beetle');
+       if (e.type === 'eat' && e.kind === 'golden') flashFrame('gold', true);
+-      if (e.type === 'eat' && e.kind === 'mushroom' && once('mushroom')) return toast(pick(FLAVOR.youMushroom), 1800, 'warn');
+-      if (e.type === 'leap' && !e.gold && once('leap')) return toast(FLAVOR.youLeapFirst, 3000, 'you', 'lesson');
+-      if (e.type === 'dash' && e.snake === me) flashedEver = true; // (you know the key: no more telling)
+-      if (e.type === 'dash' && !e.plain && once('dash')) return toast(FLAVOR.youDashFirst, 2800, 'gold', 'lesson');
+-      const refused = e.type === 'fizzle' && (e.flash ? FLAVOR.fizzleFlash : FLAVOR.fizzle)[e.why];
+-      if (refused && once((e.flash ? 'fizzleFlash' : 'fizzle') + e.why)) return toast(refused, 1800, 'warn', 'lesson');
+-      if (e.type === 'cut' && e.by === me.id) return toast(FLAVOR.youSnip(who(e.snake, true)), 1800, 'gold');
+-      if (e.type === 'cut' && e.by != null) return toast(FLAVOR.youSnipped(game.snakes[e.by]?.name || 'Someone'), 2200, 'warn', 'lesson');
+-      if (e.type === 'alight') { flashFrame('kill'); if (once('alight')) return toast(pick(FLAVOR.youAlight), 2600, 'fire', 'lesson'); } // (later burns: the flames and the -1s say it)
+-    }
+-    // A few seconds in, your flash ready and never used yet (this visit): its key, once a round.
+-    if (me?.alive && !flashedEver && game.time >= 6000 && E.flashIn(game, me) === 0 && newsFree() && once('flashKey')) return toast(FLAVOR.flashKey, 3200, 'you', 'lesson');
++      if (e.type === 'eat' && e.kind === 'mushroom') voice('mushroom', M.mushroom);
++      if (e.type === 'leap') { voiceTold.hopped = (voiceTold.hopped || 0) + 1; keepVoice(); R.hint(null); } // (you've jumped: the picture of the way over goes, and two jumps end its teaching)
++      if (e.type === 'leap' && !e.gold) voice('leapFirst', M.leapFirst, { urgent: true });
++      if (e.type === 'dash' && e.snake === me) { flashedEver = true; voiceTold.flashed = (voiceTold.flashed || 0) + 1; keepVoice(); R.hint(null); } // (you know the key: no more telling)
++      if (e.type === 'dash' && !e.plain) voice('dashFirst', M.dashFirst);
++      const refused = e.type === 'fizzle' && (e.flash ? M.fizzleFlash : M.fizzle)[e.why];
++      if (refused) voice((e.flash ? 'fizzleFlash' : 'fizzle') + e.why, refused, { urgent: true });
++      if (e.type === 'cut' && e.by === me.id) voice('snip', M.snip(who(e.snake, true)), { urgent: true });
++      if (e.type === 'cut' && e.by != null && e.by !== me.id) voice('snipped', M.snipped(game.snakes[e.by]?.name || 'Someone'), { urgent: true });
++      if (e.type === 'alight') { flashFrame('kill'); voice('alight', M.alight, { urgent: true }); } // (later burns: the flames and the -1s say it)
++    }
++    const mark = me?.alive && game.woodpecker?.target?.length && game.woodpecker.strikeAt > game.tick ? game.woodpecker.target : null;
++    if (mark && mark.some(k => near({ x: k % GRID, y: Math.floor(k / GRID) }, 3))) voice('mark', M.mark, { avoid: mark.map(k => ({ x: k % GRID, y: Math.floor(k / GRID) })) }); // (the woodpecker's mark, the first time one comes near your head: its glow and cracks show it every time)
++    if (voiceNext && performance.now() >= voiceUntil) { const v = voiceNext; voiceNext = null; if (performance.now() < v.by) voice(v.key, v.text, v); } // (a line that waited for the one before it)
++    // What you could do now (DESIGN "Your snake talks"): your flash ready and
++    // never used, a few seconds in; your jump ready with something to hop
++    // just ahead and somewhere to land past it. The picture each time, and
++    // your snake asks for the press (once a round), until you've jumped twice.
++    if (me?.alive && !flashedEver && game.time >= 6000 && E.flashIn(game, me) === 0 && (voiceTold.flashed || 0) < 2 && voice('flashReady', M.flashReady)) R.hint({ kind: 'flash', until: game.tick + 14 });
++    const hop = me?.alive && (voiceTold.hopped || 0) < 2 && me.stunUntil < game.tick && E.leapIn(game, me) === 0 ? hopAhead(me) : null;
++    if (hop) { voice('hopReady', M.hopReady, { avoid: hopCells(me, hop) }); R.hint({ kind: 'hop', over: hop.over, land: hop.land, dir: { x: me.dir.x, y: me.dir.y }, until: game.tick + 2 }); } // (kept up tick by tick while it holds: gone as you turn away, or it passes)
+     if (me?.alive && me.leapArmed >= 0 && me.leapArmed === game.tick - 1 && !game.events.some(e => e.snake === me && (e.type === 'leap' || e.type === 'dash' || e.type === 'fizzle')) ) { // (it ran out: too early, with a hurdle on the line, or nothing to hop at all)
+       const early = hurdleAhead(me, 4);
+-      if (once(early ? 'leapEarly' : 'leapNothing')) return toast(early ? FLAVOR.leapEarly : FLAVOR.leapNothing, 2600, 'you', 'lesson');
++      voice(early ? 'leapEarly' : 'leapNothing', early ? M.leapEarly : M.leapNothing, { urgent: true });
+     }
+     for (const e of game.events) if (e.type === 'baked' && newsOnce('baked')) return toast(lineFor('baked'), 2600, 'fire');
+   }
+ 
++  // A jump you could make soon, from where your head is going: something to
++  // hop 2 to HOP_SEE cells ahead on your line (a body, a hole, fire) and a
++  // free cell past it to land on, before the edge. { over, land, at: cells
++  // to the hurdle } or null. (Seen from 5 cells, so there's time to read it;
++  // its picture says when a press goes: within LEAP_WINDOW, see R.hint.)
++  const HOP_SEE = 5;
++  function hopAhead(s) {
++    if (s.wrapUntil > game.time) return null; // (round the edges: kept simple)
++    const d = s.dir, h = s.body[0], hurdle = (x, y) => {
++      const k = y * GRID + x;
++      return game.holes.has(k) || !!game.fires?.has(k) || game.snakes.some(o => o.alive && o.body.some(c => c.x === x && c.y === y));
++    };
++    for (let i = 1; i <= HOP_SEE; i++) {
++      const x = h.x + d.x * i, y = h.y + d.y * i, lx = x + d.x, ly = y + d.y;
++      if (x < 0 || y < 0 || x >= GRID || y >= GRID) return null;
++      if (!hurdle(x, y)) continue;
++      if (i < 2 || lx < 0 || ly < 0 || lx >= GRID || ly >= GRID || hurdle(lx, ly)) return null; // (right in front is too late to read it; and somewhere to land)
++      return { over: { x, y }, land: { x: lx, y: ly }, at: i };
++    }
++    return null;
++  }
++
++  // The cells the jump's picture covers (see R.hint): the way from your head
++  // to its landing, and the arc's rise over it (up the screen for a jump
++  // across it, to the left for one up or down): your snake's line keeps off them.
++  function hopCells(s, hop) {
++    const d = s.dir, bx = -Math.abs(d.y), by = -Math.abs(d.x), h = s.body[0], out = [];
++    for (let i = 1; i <= hop.at + 1; i++) for (let k = 0; k <= 2; k++) out.push({ x: h.x + d.x * i + bx * k, y: h.y + d.y * i + by * k });
++    return out;
++  }
++
++  // ------------------------------------------------ your snake's own voice
++  // DESIGN "Your snake talks". A rule, the first times it happens to you, is
++  // said by your own snake at its head (Chatter.own), in the first person,
++  // held for as long as it takes to read in glances while you steer. Once a
++  // round each, and only the first VOICE_TEACH rounds you meet it on this
++  // device (a rule told is told: not every round, as the banners were);
++  // then the board's own pictures and the Field guide carry it. One line at
++  // a time: a line that can't show now (another still being read) isn't
++  // spent, so the next time teaches it; an urgent one (what just hurt you,
++  // or what you just got) takes over at once.
++  const VOICE_TEACH = 2, VOICE_KEY = 'snake-voice';
++  let voiceTold = {};
++  try { voiceTold = JSON.parse(localStorage.getItem(VOICE_KEY) || '{}') || {}; } catch { /* storage unavailable: told per visit */ }
++  const keepVoice = () => { try { localStorage.setItem(VOICE_KEY, JSON.stringify(voiceTold)); } catch { /* not kept */ } };
++  let voiceUntil = 0; // (when the line up now will have been read, performance.now() ms)
++  // (Reading in glances while you steer, about twice plain reading time: 1.2 s and 0.45 s a word, 2.4 to 4.2 s.)
++  const readMs = text => Math.max(2400, Math.min(4200, 1200 + 450 * text.trim().split(/\s+/).length));
++  // (follow: a line that goes with the one up now, the cough with its choke:
++  // it waits for that one to have been read, up to VOICE_FOLLOW_MS.)
++  let voiceNext = null;
++  const VOICE_FOLLOW_MS = 4500;
++  function voice(key, text, { urgent = false, avoid = null, times = VOICE_TEACH, follow = false } = {}) {
++    const me = player();
++    if (!me?.alive || !game || state !== 'running' || game.told?.['v:' + key] || (voiceTold[key] || 0) >= times) return false;
++    const now = performance.now();
++    if (!urgent && now < voiceUntil) {
++      if (follow && !voiceNext) voiceNext = { key, text, avoid, times, by: now + VOICE_FOLLOW_MS };
++      return false;
++    }
++    (game.told ||= {})['v:' + key] = true;
++    voiceTold[key] = (voiceTold[key] || 0) + 1;
++    keepVoice();
++    const ms = readMs(text);
++    voiceUntil = now + ms;
++    Chatter.own(me, text, { ms, avoid });
++    say(text);
++    return true;
++  }
++
+   // Is there something to hop on your line, within n cells (a body, a hole, fire)?
+   // (next: on the way it goes next, a turn queued included.)
+   function hurdleAhead(s, n, next = false) {
+@@ -1069,9 +1183,10 @@
+   // hold again).
+   let toastTimer, toastW = 0, toastH = 0, toastSlot = '', toastUnder = false, toastFresh = true; // (where it is: '' the top, 'low' the foot, 'mid' the middle; whether it's faded there; whether it's a new banner, still to place)
+   let toastFaded = 0, toastFadedAt = 0, toastLonger = false; // (how long this banner has been faded, since when, and whether it's had its time back)
+-  const SLOTS = ['', 'low', 'mid'], SHIFT = [{ opacity: 0 }, { opacity: 1 }];
++  const SLOTS = ['', 'low'], SHIFT = [{ opacity: 0 }, { opacity: 1 }]; // (never the middle of the board: DESIGN "Your snake talks")
++  let toastAbove = false; // (a phone held upright: the banner's above the board, off it altogether: see placeBoard)
+   function toastFade() {
+-    if (toastEl.hidden || toastEl.classList.contains('leaving')) return; // (going: it goes from where it is)
++    if (toastAbove || toastEl.hidden || toastEl.classList.contains('leaving')) return; // (going: it goes from where it is)
+     const busy = { '': false, low: false, mid: false }, soon = { '': false, low: false, mid: false };
+     if (boardPx && game) {
+       const cell = boardPx / GRID;
+@@ -1130,22 +1245,31 @@
+   // news and lessons (and the weather), not the chatter of spawns.
+   // opts: { quiet } (shown, not said: something else says it), { still }
+   // (a lesson that waits is shown only if this still holds).
+-  let toastLevel = 'news', toastHold = 0;
+-  const waiting = []; // lessons waiting for the one showing: [text, ms, kind, opts]
++  // (Since "Your snake talks", a banner is the round's news: what happens to
++  // you is said by your own snake, at its head. A banner is held for its
++  // reading time, read in glances while you steer, and nothing cuts it
++  // short but a card: round news and the rules left as banners (the last
++  // apples, land the woodpecker took) wait their turn, and are shown a
++  // breather after it; news (the weather, a spawn) that can't show is
++  // dropped. Never two back to back.)
++  let toastLevel = 'news', toastHold = 0, breatheUntil = 0, breather = 0;
++  const waiting = []; // banners waiting for the one showing: [text, ms, kind, opts, level]
+   const LEVELS = { news: 0, lesson: 1, round: 2 };
++  const BREATHE_MS = 500;
++  const bannerMs = (text, ms) => Math.max(ms, Math.min(4500, 1000 + 400 * text.trim().split(/\s+/).length)); // (reading in glances while you steer)
+   function toast(text, ms = 2800, kind = '', level = 'news', opts = {}) {
+     const now = performance.now();
+     if (level !== 'round' && !overlay.classList.contains('hidden')) return; // (a card's up)
+-    if (!toastEl.hidden && now < toastHold && LEVELS[level] <= LEVELS[toastLevel] && level !== 'round') {
+-      if (level === 'lesson' && waiting.length < 3) { // (it waits for the hold to end, not the whole banner)
+-        waiting.push([text, ms, kind, opts]);
+-        clearTimeout(toastTimer);
+-        toastTimer = setTimeout(nextToast, toastHold - now);
++    if (kind !== 'go') ms = bannerMs(text, ms);
++    if ((!toastEl.hidden && now < toastHold) || now < breatheUntil) {
++      if (level !== 'news' && waiting.length < 3) { // (it waits for the one showing to have had its time)
++        waiting.push([text, ms, kind, opts, level]);
++        if (!breather) { clearTimeout(toastTimer); toastTimer = setTimeout(nextToast, Math.max(0, toastHold - now)); }
+       }
+       return;
+     }
+     toastLevel = level;
+-    toastHold = now + Math.min(ms, level === 'news' ? T.NEWS_HOLD_MS : T.LESSON_HOLD_MS);
++    toastHold = now + ms;
+     toastEl.classList.remove('settled', 'leaving'); // (a new banner slams in)
+     toastEl.dataset.kind = kind;
+     toastEl.textContent = text;
+@@ -1172,17 +1296,22 @@
+       return;
+     }
+     toastHold = 0;
+-    while (waiting.length) {
+-      const [t, m, k, o] = waiting.shift();
+-      if (!o.still || o.still()) return toast(t, m, k, 'lesson', o);
+-    }
+     hideToast(true);
++    if (!waiting.length) return;
++    breatheUntil = performance.now() + 240 + BREATHE_MS; // (it fades, then a breather: never back to back)
++    breather = setTimeout(() => {
++      breather = 0; breatheUntil = 0;
++      while (waiting.length) {
++        const [t, m, k, o, lv] = waiting.shift();
++        if (!o.still || o.still()) return toast(t, m, k, lv || 'lesson', o);
++      }
++    }, 240 + BREATHE_MS);
+   }
+   // Gone at once (a card is coming up), or, when its time is up, faded out.
+   function hideToast(fade = false) {
+     clearTimeout(toastTimer);
+     toastHold = 0;
+-    if (!fade) waiting.length = 0;
++    if (!fade) { waiting.length = 0; clearTimeout(breather); breather = 0; breatheUntil = 0; }
+     if (fade && !reducedMQ.matches && !toastEl.hidden) {
+       toastEl.classList.add('leaving');
+       toastTimer = setTimeout(() => { toastEl.hidden = true; toastEl.classList.remove('leaving'); }, 240);
+@@ -1191,7 +1320,7 @@
+       toastEl.classList.remove('leaving');
+     }
+   }
+-  toastEl.addEventListener('animationend', e => { if (e.animationName === 'slam') toastEl.classList.add('settled'); });
++  toastEl.addEventListener('animationend', e => { if (e.animationName === 'settle') toastEl.classList.add('settled'); });
+ 
+   // Screen reader announcements (a permanently rendered, visually hidden region).
+   function say(text) { announcer.textContent = text; }
+@@ -2721,6 +2850,7 @@
+   const furniture = ['header', '.scoreboard', '.speed', '.chatter'].map(q => document.querySelector(q)).filter(Boolean);
+   const hanging = [...document.querySelectorAll('.frame .moss.bottom, .frame .leaves.bl, .frame .leaves.br')];
+   const ledgeEl = $('perch-ledge'), rootStyle = getComputedStyle(document.documentElement);
++  const chatterBox = document.querySelector('.chatter'), chatterHead = document.querySelector('.chatter-head');
+   const inset = name => parseFloat(rootStyle.getPropertyValue(name)) || 0;
+   // The help under the board, only partly on the screen (a short phone held
+   // upright, or the chatter grown above it): while you play, when the page
+@@ -2770,6 +2900,27 @@
+         const f = el.getBoundingClientRect();
+         if (f.width && f.bottom > b.bottom) free.hang.push([f.left - 2, f.right + 2]);
+       }
++      // (DESIGN "Your snake talks": the woodpecker at its full size on a
++      // phone held upright, as on a desktop: 4.9 cells tall, where the ledge
++      // alone left it 2.6 to 3.3. It clings to the chatter's wood under the
++      // ledge, its crown still just under the board, down to the foot of the
++      // chatter's head row, beside its title and its switch (never over
++      // either), in front of the moss hanging off the log. Watching, the
++      // speed buttons between keep it on the ledge, as before.)
++      const c = chatterBox.getBoundingClientRect(), head = chatterHead.getBoundingClientRect();
++      if (c.height && head.height && c.top >= b.bottom - 1 && Math.abs(free.bottom - c.top) < 1) {
++        free.bottom = Math.min(innerHeight - inset('--safe-b'), head.bottom + 2);
++        free.hang = [];
++        for (const el of chatterHead.children) { const r = el.getBoundingClientRect(); if (r.width) free.hang.push([r.left - 6, r.right + 6]); }
++      }
++    }
++    // (A banner on a phone held upright: above the board, over the tags'
++    // lower row, never on the board; elsewhere at the board's top or foot.)
++    const upright = free.ledge > 0;
++    if (upright !== toastAbove) {
++      toastAbove = upright;
++      (upright ? frameEl : boardEl).appendChild(toastEl);
++      toastEl.classList.remove('low', 'mid', 'under'); toastSlot = ''; toastUnder = false;
+     }
+     R.setBoardRect(b.left, b.top, b.width, free);
+     fitHelp();
+diff --git a/style.css b/style.css
+index ca9e2c3..38f6189 100644
+--- a/style.css
++++ b/style.css
+@@ -684,10 +684,14 @@ canvas {
+   text-wrap: balance; /* (two even lines, not a long one and a word) */
+   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 0 0 2px var(--parchment-2);
+   pointer-events: none;
+-  animation: slam 0.46s cubic-bezier(0.2, 0.9, 0.3, 1.2);
++  animation: settle 0.36s ease-out;
+   transition: opacity 0.2s;
+   overflow: hidden;
+ }
++/* (Round news settles in, a short drop and fade: it no longer slams in from
++   1.9x, wider than a phone's screen, nor throbs or shines. DESIGN "Your
++   snake talks": the lessons went to your snake's own voice.) */
++@keyframes settle { from { transform: translateX(-50%) translateY(-6px); opacity: 0; } }
+ .toast[hidden] { display: none; }
+ @keyframes slam {
+   0% { transform: translateX(-50%) scale(1.9); opacity: 0; }
+@@ -701,7 +705,7 @@ canvas {
+    shine running across it, a leafy Go!. */
+ .toast[data-kind="kill"] { color: #7f1d1d; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #dc2626; }
+ .toast[data-kind="warn"] { color: #7f1d1d; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #dc2626; }
+-.toast[data-kind="warn"]:not(.settled) { animation: slam 0.46s cubic-bezier(0.2, 0.9, 0.3, 1.2), throb 0.5s 0.46s ease-in-out 3 alternate; }
++.toast[data-kind="warn"]:not(.settled) { animation: settle 0.36s ease-out; }
+ @keyframes throb { to { background: #fecaca; } }
+ .toast[data-kind="beetle"] { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #059669; }
+ .toast[data-kind="bird"] { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #ea580c; }
+@@ -713,7 +717,7 @@ canvas {
+   inset: 0;
+   background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.85) 50%, transparent 70%);
+   transform: translateX(-120%);
+-  animation: shine 1.5s 0.35s ease-in-out infinite;
++  animation: none; /* (still gold; no shine sweeping across it) */
+ }
+ @keyframes shine { 55%, 100% { transform: translateX(120%); } }
+ /* The weather, as it turns: gold sun, rain blue, a storm's violet night, fire. */
+@@ -730,6 +734,9 @@ canvas {
+ .toast.low { top: auto; bottom: 12px; }
+ .toast.mid { top: calc(50% - var(--toast-h, 0px) / 2); }
+ .toast.settled { animation: none; } /* (dropped in once; moving it doesn't replay that) */
++/* On a phone held upright the banner is off the board altogether: just above
++   it, over the tags' lower row (snake.js placeBoard moves it into the frame). */
++.frame > .toast { top: auto; bottom: calc(100% + 6px); z-index: 6; max-width: calc(100% - 8px); font-size: 0.86rem; padding: 6px 12px; }
+ .toast.under { opacity: 0.3; }
+ 
+ /* How to steer, level with the YOU arrow as a round starts: positioned by
+@@ -799,6 +806,13 @@ canvas {
+   transform: translateX(-50%);
+ }
+ .bubble.near { opacity: 0.3; } /* your head is close: the bubble gets out of your way */
++/* Your own snake's voice (DESIGN "Your snake talks"): the same bubble, a
++   touch firmer, edged in your colour with an ink hairline round it (a pale
++   green edge alone fades into parchment), so it reads as yours at a glance. */
++.bubble.mine.hop { opacity: 0; transition: opacity 0.1s; } /* (changing sides: it fades over rather than gliding across your head) */
++.bubble.mine > span { font-weight: 650; font-size: 0.8rem; box-shadow: 0 0 0 1px rgba(58, 38, 20, 0.6), 0 3px 8px rgba(0, 0, 0, 0.3); }
++/* (on a big board, a touch bigger again: read at a glance from your head, at a desktop's distance) */
++@container (min-width: 560px) { .bubble.mine > span { font-size: 0.95rem; padding: 4px 10px; } }
+ .compact-chat .bubble { max-width: 62%; }
+ .bubble[data-side="below"] > span { transform-origin: var(--tail, 50%) -8px; }
+ .bubble[data-side="left"] > span { transform-origin: calc(100% + 8px) var(--tail, 50%); }

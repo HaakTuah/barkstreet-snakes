@@ -1,0 +1,4 @@
+{
+  "about": "The old copies the copies check still allows, window by window: each copied run of lines or words, by its hash, and how many places it stands in. They are removed over time by pointing to one place; never add a window or raise a count.",
+  "windows": {}
+}

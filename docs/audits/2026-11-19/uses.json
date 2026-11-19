@@ -1,0 +1,825 @@
+{
+ "files": 130,
+ "parts": [
+  "ai",
+  "audio",
+  "chatter",
+  "engine",
+  "game",
+  "render",
+  "root"
+ ],
+ "perPart": {
+  "ai": {
+   "files": 36,
+   "lines": 3276,
+   "bytes": 197664,
+   "sharedNames": 182
+  },
+  "audio": {
+   "files": 4,
+   "lines": 1616,
+   "bytes": 81220,
+   "sharedNames": 0
+  },
+  "chatter": {
+   "files": 22,
+   "lines": 2470,
+   "bytes": 161210,
+   "sharedNames": 90
+  },
+  "engine": {
+   "files": 16,
+   "lines": 2998,
+   "bytes": 177495,
+   "sharedNames": 185
+  },
+  "game": {
+   "files": 9,
+   "lines": 3889,
+   "bytes": 245299,
+   "sharedNames": 320
+  },
+  "render": {
+   "files": 34,
+   "lines": 11324,
+   "bytes": 624616,
+   "sharedNames": 952
+  },
+  "root": {
+   "files": 9,
+   "lines": 2163,
+   "bytes": 150819,
+   "sharedNames": 0
+  }
+ },
+ "sharedNames": 1729,
+ "namesDeclaredInMoreThanOneFile": [],
+ "namespaces": [
+  {
+   "namespace": "TUNING",
+   "file": "tuning.js",
+   "members": 0,
+   "files": 5
+  },
+  {
+   "namespace": "SnakeAI",
+   "file": "ai/decide.js",
+   "members": 2,
+   "files": 7
+  },
+  {
+   "namespace": "SnakeEngine",
+   "file": "engine/step.js",
+   "members": 26,
+   "files": 21
+  },
+  {
+   "namespace": "SnakeRecords",
+   "file": "records.js",
+   "members": 27,
+   "files": 9
+  },
+  {
+   "namespace": "SnakeChatter",
+   "file": "chatter/moments.js",
+   "members": 12,
+   "files": 5
+  },
+  {
+   "namespace": "SnakeAudioCues",
+   "file": "audio/cues.js",
+   "members": 0,
+   "files": 1
+  },
+  {
+   "namespace": "SnakeAudioMusic",
+   "file": "audio/music.js",
+   "members": 0,
+   "files": 1
+  },
+  {
+   "namespace": "SnakeAudioWeather",
+   "file": "audio/weather.js",
+   "members": 0,
+   "files": 1
+  },
+  {
+   "namespace": "SnakeAudio",
+   "file": "audio/sound.js",
+   "members": 11,
+   "files": 8
+  },
+  {
+   "namespace": "SnakeRender",
+   "file": "render/world.js",
+   "members": 25,
+   "files": 8
+  },
+  {
+   "namespace": "SnakeOnline",
+   "file": "online.js",
+   "members": 14,
+   "files": 2
+  },
+  {
+   "namespace": "SnakeRelays",
+   "file": "net-relays.js",
+   "members": 0,
+   "files": 1
+  },
+  {
+   "namespace": "SnakeNet",
+   "file": "net.js",
+   "members": 3,
+   "files": 2
+  },
+  {
+   "namespace": "SnakeVersion",
+   "file": "version.js",
+   "members": 2,
+   "files": 1
+  },
+  {
+   "namespace": "SnakeUpdate",
+   "file": "update.js",
+   "members": 0,
+   "files": 2
+  }
+ ],
+ "namesUsedByOtherFiles": {
+  "used": 837,
+  "unusedOutside": 892,
+  "byFiles": {
+   "n": 837,
+   "median": 1,
+   "p90": 4,
+   "max": 37
+  },
+  "byParts": {
+   "n": 837,
+   "median": 1,
+   "p90": 1,
+   "max": 3
+  },
+  "in5OrMoreFiles": 64,
+  "in10OrMore": 19,
+  "in25OrMore": 5,
+  "inMoreThanOneOtherPart": 14
+ },
+ "hubs": [
+  {
+   "name": "T",
+   "declaredAt": "engine/core.js:33",
+   "usedByFiles": 37,
+   "usedByParts": [
+    "engine",
+    "render"
+   ]
+  },
+  {
+   "name": "GRID",
+   "declaredAt": "engine/core.js:34",
+   "usedByFiles": 33,
+   "usedByParts": [
+    "engine",
+    "render"
+   ]
+  },
+  {
+   "name": "CELL",
+   "declaredAt": "render/core.js:75",
+   "usedByFiles": 30,
+   "usedByParts": [
+    "render"
+   ]
+  },
+  {
+   "name": "game",
+   "declaredAt": "render/core.js:92",
+   "usedByFiles": 27,
+   "usedByParts": [
+    "render"
+   ]
+  },
+  {
+   "name": "reduced",
+   "declaredAt": "render/core.js:91",
+   "usedByFiles": 26,
+   "usedByParts": [
+    "render"
+   ]
+  },
+  {
+   "name": "PERSONAS",
+   "declaredAt": "ai/rivals.js:87",
+   "usedByFiles": 23,
+   "usedByParts": [
+    "ai",
+    "engine",
+    "render"
+   ]
+  },
+  {
+   "name": "TAU",
+   "declaredAt": "render/core.js:79",
+   "usedByFiles": 22,
+   "usedByParts": [
+    "render"
+   ]
+  },
+  {
+   "name": "TUNE",
+   "declaredAt": "ai/core.js:62",
+   "usedByFiles": 22,
+   "usedByParts": [
+    "ai",
+    "game"
+   ]
+  },
+  {
+   "name": "addVoice",
+   "declaredAt": "chatter/voices.js:45",
+   "usedByFiles": 18,
+   "usedByParts": [
+    "chatter"
+   ]
+  },
+  {
+   "name": "SIZE",
+   "declaredAt": "render/core.js:76",
+   "usedByFiles": 16,
+   "usedByParts": [
+    "render"
+   ]
+  },
+  {
+   "name": "N",
+   "declaredAt": "ai/sight.js:6",
+   "usedByFiles": 15,
+   "usedByParts": [
+    "ai"
+   ]
+  },
+  {
+   "name": "key",
+   "declaredAt": "engine/core.js:51",
+   "usedByFiles": 14,
+   "usedByParts": [
+    "chatter",
+    "engine"
+   ]
+  },
+  {
+   "name": "powerStyle",
+   "declaredAt": "ai/rivals.js:81",
+   "usedByFiles": 13,
+   "usedByParts": [
+    "ai"
+   ]
+  },
+  {
+   "name": "view",
+   "declaredAt": "ai/decide.js:14",
+   "usedByFiles": 13,
+   "usedByParts": [
+    "ai"
+   ]
+  },
+  {
+   "name": "INK",
+   "declaredAt": "render/core.js:78",
+   "usedByFiles": 12,
+   "usedByParts": [
+    "render"
+   ]
+  },
+  {
+   "name": "frameDt",
+   "declaredAt": "render/looks.js:212",
+   "usedByFiles": 11,
+   "usedByParts": [
+    "render"
+   ]
+  },
+  {
+   "name": "inside",
+   "declaredAt": "engine/core.js:52",
+   "usedByFiles": 11,
+   "usedByParts": [
+    "engine"
+   ]
+  },
+  {
+   "name": "k",
+   "declaredAt": "render/core.js:90",
+   "usedByFiles": 11,
+   "usedByParts": [
+    "render"
+   ]
+  },
+  {
+   "name": "DRIVERS",
+   "declaredAt": "ai/rivals.js:88",
+   "usedByFiles": 10,
+   "usedByParts": [
+    "ai"
+   ]
+  },
+  {
+   "name": "anim",
+   "declaredAt": "render/looks.js:8",
+   "usedByFiles": 9,
+   "usedByParts": [
+    "render"
+   ]
+  },
+  {
+   "name": "circle",
+   "declaredAt": "render/core.js:120",
+   "usedByFiles": 9,
+   "usedByParts": [
+    "render"
+   ]
+  },
+  {
+   "name": "DIR_LIST",
+   "declaredAt": "ai/core.js:60",
+   "usedByFiles": 9,
+   "usedByParts": [
+    "ai"
+   ]
+  },
+  {
+   "name": "makeLayer",
+   "declaredAt": "render/core.js:126",
+   "usedByFiles": 9,
+   "usedByParts": [
+    "render"
+   ]
+  },
+  {
+   "name": "viewerId",
+   "declaredAt": "render/core.js:89",
+   "usedByFiles": 9,
+   "usedByParts": [
+    "render"
+   ]
+  },
+  {
+   "name": "CRAWL",
+   "declaredAt": "engine/beetles.js:79",
+   "usedByFiles": 8,
+   "usedByParts": [
+    "engine"
+   ]
+  },
+  {
+   "name": "FLAVOR",
+   "declaredAt": "game/core.js:68",
+   "usedByFiles": 8,
+   "usedByParts": [
+    "game"
+   ]
+  },
+  {
+   "name": "HOLE",
+   "declaredAt": "ai/core.js:79",
+   "usedByFiles": 8,
+   "usedByParts": [
+    "ai"
+   ]
+  },
+  {
+   "name": "manhattan",
+   "declaredAt": "ai/core.js:106",
+   "usedByFiles": 8,
+   "usedByParts": [
+    "ai"
+   ]
+  },
+  {
+   "name": "markStamp",
+   "declaredAt": "ai/buffers.js:9",
+   "usedByFiles": 8,
+   "usedByParts": [
+    "ai"
+   ]
+  },
+  {
+   "name": "overlay",
+   "declaredAt": "game/core.js:35",
+   "usedByFiles": 8,
+   "usedByParts": [
+    "game"
+   ]
+  }
+ ],
+ "matrixNames": {
+  "ai": {},
+  "audio": {},
+  "chatter": {
+   "engine": [
+    "key"
+   ]
+  },
+  "engine": {
+   "ai": [
+    "DIRS",
+    "PERSONAS",
+    "POOL"
+   ]
+  },
+  "game": {
+   "ai": [
+    "DIRS",
+    "TUNE"
+   ],
+   "engine": [
+    "PLAYER_COLOR"
+   ],
+   "render": [
+    "inRingReach"
+   ]
+  },
+  "render": {
+   "ai": [
+    "PERSONAS"
+   ],
+   "engine": [
+    "GRID",
+    "T",
+    "actOf",
+    "newIsles",
+    "pieceStanding"
+   ]
+  },
+  "root": {
+   "game": [
+    "hostRoom",
+    "online",
+    "openFriends",
+    "pickerEl",
+    "recordsEl"
+   ]
+  }
+ },
+ "matrix": {
+  "ai": {},
+  "audio": {},
+  "chatter": {
+   "engine": {
+    "names": 1,
+    "files": 1
+   }
+  },
+  "engine": {
+   "ai": {
+    "names": 3,
+    "files": 3
+   }
+  },
+  "game": {
+   "ai": {
+    "names": 2,
+    "files": 8
+   },
+   "engine": {
+    "names": 1,
+    "files": 2
+   },
+   "render": {
+    "names": 1,
+    "files": 1
+   }
+  },
+  "render": {
+   "ai": {
+    "names": 1,
+    "files": 1
+   },
+   "engine": {
+    "names": 5,
+    "files": 31
+   }
+  },
+  "root": {
+   "game": {
+    "names": 5,
+    "files": 1
+   }
+  }
+ },
+ "namespaceMatrix": {
+  "ai": {
+   "TUNING": {
+    "members": 0,
+    "files": 1
+   },
+   "SnakeEngine": {
+    "members": 3,
+    "files": 2
+   }
+  },
+  "audio": {},
+  "chatter": {
+   "TUNING": {
+    "members": 0,
+    "files": 2
+   },
+   "SnakeEngine": {
+    "members": 0,
+    "files": 1
+   },
+   "SnakeAI": {
+    "members": 0,
+    "files": 1
+   },
+   "SnakeRender": {
+    "members": 0,
+    "files": 1
+   }
+  },
+  "engine": {
+   "TUNING": {
+    "members": 0,
+    "files": 1
+   },
+   "SnakeAI": {
+    "members": 0,
+    "files": 1
+   }
+  },
+  "game": {
+   "SnakeEngine": {
+    "members": 21,
+    "files": 9
+   },
+   "SnakeAI": {
+    "members": 2,
+    "files": 4
+   },
+   "SnakeRecords": {
+    "members": 27,
+    "files": 6
+   },
+   "SnakeRender": {
+    "members": 25,
+    "files": 7
+   },
+   "SnakeAudio": {
+    "members": 11,
+    "files": 7
+   },
+   "SnakeChatter": {
+    "members": 12,
+    "files": 5
+   },
+   "SnakeOnline": {
+    "members": 14,
+    "files": 2
+   },
+   "SnakeNet": {
+    "members": 3,
+    "files": 2
+   },
+   "SnakeUpdate": {
+    "members": 0,
+    "files": 2
+   }
+  },
+  "render": {
+   "SnakeEngine": {
+    "members": 7,
+    "files": 7
+   },
+   "SnakeAudio": {
+    "members": 1,
+    "files": 1
+   }
+  },
+  "root": {
+   "SnakeAI": {
+    "members": 0,
+    "files": 1
+   }
+  }
+ },
+ "filesByNamesOfOthers": {
+  "n": 130,
+  "median": 7,
+  "p90": 37,
+  "max": 107
+ },
+ "filesByPartsReached": {
+  "n": 130,
+  "median": 0,
+  "p90": 2,
+  "max": 6
+ },
+ "filesByFilesReached": {
+  "n": 130,
+  "median": 3,
+  "p90": 12,
+  "max": 27
+ },
+ "mentionsWithinAPartAndAcross": {
+  "within": 1677,
+  "across": 76
+ },
+ "perPartFileReach": {
+  "ai": {
+   "n": 36,
+   "median": 3,
+   "p90": 9,
+   "max": 13
+  },
+  "audio": {
+   "n": 4,
+   "median": 0,
+   "p90": 3,
+   "max": 3
+  },
+  "chatter": {
+   "n": 22,
+   "median": 1,
+   "p90": 3,
+   "max": 4
+  },
+  "engine": {
+   "n": 16,
+   "median": 5,
+   "p90": 8,
+   "max": 16
+  },
+  "game": {
+   "n": 9,
+   "median": 14,
+   "p90": 18,
+   "max": 18
+  },
+  "render": {
+   "n": 34,
+   "median": 7,
+   "p90": 15,
+   "max": 27
+  },
+  "root": {
+   "n": 9,
+   "median": 1,
+   "p90": 4,
+   "max": 4
+  }
+ },
+ "filesReaching3OrMoreOtherParts": 8,
+ "widestFiles": [
+  {
+   "file": "render/world.js",
+   "filesReached": 27,
+   "namesOfOthers": 107,
+   "partsReached": 1
+  },
+  {
+   "file": "render/setup.js",
+   "filesReached": 18,
+   "namesOfOthers": 66,
+   "partsReached": 1
+  },
+  {
+   "file": "game/friends.js",
+   "filesReached": 18,
+   "namesOfOthers": 55,
+   "partsReached": 6
+  },
+  {
+   "file": "engine/step.js",
+   "filesReached": 16,
+   "namesOfOthers": 81,
+   "partsReached": 1
+  },
+  {
+   "file": "render/events.js",
+   "filesReached": 16,
+   "namesOfOthers": 50,
+   "partsReached": 1
+  },
+  {
+   "file": "render/sprites.js",
+   "filesReached": 15,
+   "namesOfOthers": 53,
+   "partsReached": 1
+  },
+  {
+   "file": "render/marks.js",
+   "filesReached": 15,
+   "namesOfOthers": 49,
+   "partsReached": 1
+  },
+  {
+   "file": "game/screen.js",
+   "filesReached": 15,
+   "namesOfOthers": 36,
+   "partsReached": 5
+  },
+  {
+   "file": "game/core.js",
+   "filesReached": 15,
+   "namesOfOthers": 20,
+   "partsReached": 6
+  },
+  {
+   "file": "game/round.js",
+   "filesReached": 14,
+   "namesOfOthers": 53,
+   "partsReached": 6
+  },
+  {
+   "file": "game/input.js",
+   "filesReached": 14,
+   "namesOfOthers": 48,
+   "partsReached": 6
+  },
+  {
+   "file": "ai/powers.js",
+   "filesReached": 13,
+   "namesOfOthers": 29,
+   "partsReached": 0
+  }
+ ],
+ "mostLeanedOnFiles": [
+  {
+   "file": "render/core.js",
+   "mentionsByOthers": 221,
+   "declares": 50
+  },
+  {
+   "file": "game/core.js",
+   "mentionsByOthers": 152,
+   "declares": 72
+  },
+  {
+   "file": "engine/core.js",
+   "mentionsByOthers": 150,
+   "declares": 29
+  },
+  {
+   "file": "ai/core.js",
+   "mentionsByOthers": 97,
+   "declares": 33
+  },
+  {
+   "file": "ai/rivals.js",
+   "mentionsByOthers": 63,
+   "declares": 10
+  },
+  {
+   "file": "render/looks.js",
+   "mentionsByOthers": 60,
+   "declares": 44
+  },
+  {
+   "file": "render/food.js",
+   "mentionsByOthers": 60,
+   "declares": 77
+  },
+  {
+   "file": "render/sprites.js",
+   "mentionsByOthers": 48,
+   "declares": 60
+  },
+  {
+   "file": "render/lead.js",
+   "mentionsByOthers": 47,
+   "declares": 57
+  },
+  {
+   "file": "render/marks.js",
+   "mentionsByOthers": 43,
+   "declares": 71
+  },
+  {
+   "file": "chatter/talk.js",
+   "mentionsByOthers": 40,
+   "declares": 73
+  },
+  {
+   "file": "render/weather.js",
+   "mentionsByOthers": 38,
+   "declares": 51
+  }
+ ],
+ "rulesReachingIntoTheDisplay": {
+  "sharedNames": [],
+  "namespaces": [],
+  "ofThePageOrClock": [
+   {
+    "file": "ai/core.js",
+    "Math.random": 1
+   },
+   {
+    "file": "engine/core.js",
+    "Math.random": 1
+   }
+  ]
+ }
+}
