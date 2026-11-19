@@ -85,7 +85,7 @@ later task then reads a few small files instead of these. The owner may veto it.
 ### 1b+. Wildcard's hair, again (the owner, 28 October 2026)
 
 The owner (28 October 2026): "Wildcard's hair still looks really weird. It flips to the front side, you know like a blond
-emo/goth haircut. Don't know what claud code insists on that, trump's hear doesn't go to the front and side like that."
+emo/goth haircut. Don't know what claud code insists on that, [the reference] hair doesn't go to the front and side like that."
 The earlier entry asked for hair "swept back, then forward and to one side", and `pompadour()` in `render/faces.js` does
 just that: it swoops forward along one side to a flick past the eye, a fringe over the face. The wrong part was the
 entry's, not the drawing's. What it should be, seen from above (the head points +x):
@@ -101,17 +101,17 @@ entry's, not the drawing's. What it should be, seen from above (the head points 
 - Art only, no rule changes: the render suite and its looks checks pass; no reviewer needed beyond the pictures.
 - *Done on 28 October 2026 (PR #107):* see "Wildcard's hair" in `docs/design/32-the-owners-playtest.md`.
 
-### 1b+++. Wildcard's hair: Trump's hair, seen from above (the owner, 28 October 2026; small, next, a UI lane beside the AI work)
+### 1b+++. Wildcard's hair: the reference hairstyle, seen from above (the owner, 28 October 2026; small, next, a UI lane beside the AI work)
 
 The owner (28 October 2026), on PR #107's pictures: "Also, looks like it is messing up wildcards hair again. But now by just
 making it look like 2 weird yellow blobs instead. You can take a look and see how it is making it now. Hope that isn't
-what it ends up going with." Then: "Can't you just describe who's hair it is making? Is it that difficult to make trump's
+what it ends up going with." Then: "Can't you just describe who's hair it is making? Is it that difficult to make [the reference]
 hair?" And, to sending it back with three versions for him to pick from: "Yes please, expertly!"
 
 [PR #107's after](https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/32e97b81e878686f4951b3b21f27a411b3bc18e7/pr107-desk-clear.jpg)
 draws a roll and a back mass as two shapes with a dark seam between them: two yellow halves, not a head of hair, and
 heading up or down it covers most of the head. 1b+'s entry asked for a roll and a back mass, and #107 drew exactly that;
-the wrong part was again the entry's. The reference is simply **Trump's hair**, which Wildcard caricatures (with the
+the wrong part was again the entry's. The reference is simply **a swept golden pompadour with a comb-over**, the hair that goes with Wildcard's costume (the
 stars-and-stripes body and the red tie): draw that, as seen from straight above (the head points +x).
 - **One shape.** A single golden mass with no seam, gap or dark line inside it; it replaces `hairRoll()` and
   `hairBack()` as two shapes.
@@ -132,11 +132,11 @@ stars-and-stripes body and the red tie): draw that, as seen from straight above 
   beyond the pictures and the owner's pick.
 - **The owner's pick, and one more pass** (28 October 2026, on PR #110): "Agree to all, expertly. Though a bit hard to
   decide on b or c. I feel maybe the bottom bit of b being smaller looks better, while the overall shape of c is better.
-  So maybe we'll go for c, but it is hard to pick. Not the biggest fan of any of them, to be honest. Doesn't scream trump
+  So maybe we'll go for c, but it is hard to pick. Not the biggest fan of any of them, to be honest. Doesn't scream [the reference]
   hair." So: **C's overall shape, with B's smaller back** (the part behind the head no bigger than B's). Then one more
   pass in the same PR, because all three read as a golden bun or a bread roll rather than hair. What makes them bread:
   the dark outline round the whole mass, a few deep grooves that look like the scoring on a loaf, a smooth closed oval
-  edge, and a warm baked colour. What makes it hair, and his:
+  edge, and a warm baked colour. What makes it hair, and that hair:
   - **Paler,** straw to pale gold, lighter than now, with near-white highlights; the orange only in the shadows.
   - **No dark outline.** The edge is set off by a soft shadow on the head beneath it, not by a stroke round the hair.
   - **A feathered edge:** fine wisps breaking out at the back and sides (never in front of the brow), so the outline is
@@ -147,13 +147,13 @@ stars-and-stripes body and the red tie): draw that, as seen from straight above 
   - **A parting on one side,** from which the hair is combed across the crown to the other side: the comb-over, seen
     from above.
   The PR shows C as it is beside the new pass, at the same sizes and boards, and asks the owner again. If the new pass
-  still does not read as his hair, the owner chooses between them; the costume (the stars-and-stripes body, the red tie,
+  still does not read as the reference hair, the owner chooses between them; the costume (the stars-and-stripes body, the red tie,
   the orange face) carries the rest.
   *Done on 28 October 2026 (PR #110): C's shape with B's smaller back, then the pass above; the owner is asked again.*
 
 ### 1b++. The phone's bottom: the chatter, the controls and the woodpecker (the owner, 28 October 2026)
 
-The owner (28 October 2026), with two screenshots from his phone ([the chatter open](https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/3a098b38f41f596834c3bd0fefc5c453eede2b1f/owner-2026-10-28-chat-open.jpg),
+The owner (28 October 2026), with two phone screenshots ([the chatter open](https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/3a098b38f41f596834c3bd0fefc5c453eede2b1f/owner-2026-10-28-chat-open.jpg),
 [the chatter shrunk](https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/3a098b38f41f596834c3bd0fefc5c453eede2b1f/owner-2026-10-28-chat-shrunk.jpg)): "See how the chat display overlaps with the buttons when it
 is shrunk? Also, it defaults to shrunk at start, even though the space below is used for nothing else. And the
 woodpecker is still too small when it is down there." Then, on whether it may cover things down there: "Really, I don't
@@ -263,18 +263,18 @@ nearest the bird), the dent beside it with its splits running inward and stoppin
 
 ### 2f. Wildcard's hair: lacquered, not a mop (the owner, 29 October 2026; small, an art lane): done, PR #144, version F
 
-The owner (29 October 2026), on PR #110's hair as it plays: "Trump's hair looks like a mop now…" Then, to one more pass:
-"Yes, and make it do it expertly! I want trump's hair for Pete's sake!"
+The owner (29 October 2026), on PR #110's hair as it plays: "[The hair] looks like a mop now…" Then, to one more pass:
+"Yes, and make it do it expertly! I want [the reference] hair for Pete's sake!"
 
 Three passes so far: two blobs (#107), a golden bun (#110's C), and now twenty fine strands with no outline, which read
-as straw or a mop. His hair is none of those: **one smooth, lacquered mass, combed and sprayed into place**, glossy and
+as straw or a mop. The reference is none of those: **one smooth, lacquered mass, combed and sprayed into place**, glossy and
 solid, never stringy. Seen from above (the head points +x):
 - **One sculpted shape,** C's overall outline with B's smaller back, puffed a little past the head over the ears and
   behind, never over the face. Its edge is set off by a soft darker-gold shadow on the head beneath it, not a dark
   stroke round the hair and not a feathered fringe.
 - **Asymmetric: the comb-over.** A parting on one side; from it the top is combed across the crown to the other side
   and swept back, so one side reads fuller and the whole top reads as one sweep in one direction. The asymmetry is
-  what makes it his.
+  what makes it that hairstyle.
 - **The front: one big wave,** just behind the brow, rolled up and over to the side as a single curl, with its
   shadow on the brow; both eyes clear in all four headings.
 - **A few long, broad comb grooves,** three to five, all following the sweep: not twenty strands, not scoring on a loaf.
@@ -291,7 +291,7 @@ solid, never stringy. Seen from above (the head points +x):
 
 ### 2f+. Wildcard's hair: F, a size smaller (the owner, 29 October 2026; small, an art lane beside the new moves): done, PR #156
 
-The owner (29 October 2026), playing with F: "Dont trumps hair look a bit too big now?" And, to keeping F's shape at about
+The owner (29 October 2026), playing with F: "Dont [the] hair look a bit too big now?" And, to keeping F's shape at about
 85% of its size: "Yes, let's try that!" Keep F's shape as it is, the wave, the sweep to the far side, the grooves and
 the gloss, and scale the whole mass to about 85%, so it sits on the head instead of towering over it, puffing past the
 head less over the ears and behind; the face, the set-back front edge and both eyes as they are. Drawing only. The PR

@@ -7,8 +7,8 @@ Word for word from `docs/handoff/queue-specs.md`, moved by the file-by-file revi
 
 #### 2n. Wildcard's hair: every version side by side, the owner picks (30 October 2026; small, an art lane)
 
-The owner: "trump looks like David Lynch now. I actually think the very first or second hairstyle trump had in the game is
-better than what he has right now". Draw Wildcard's head as each version has had it, side by side at the same size and
+The owner: "I actually think the very first or second hairstyle [Wildcard] had in the game is
+better than what [it] has right now". Draw Wildcard's head as each version has had it, side by side at the same size and
 heading. The design session made [the picture](https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/2b0f035452522c107030f31987ee78fdb7eaf97e/design-wildcard-hair-versions.jpg) from the PRs' own pictures (30 October 2026): 1 the
 original, 2 PR #107's two blobs, 3 and 4 PR #110's B and C (never shipped), 5 PR #110 as shipped (the "mop"), 6 PR #144's
 F, 7 PR #156's F at 85% (now). **The owner's pick: the original, its swirl turned up** (30 October 2026: "What if we took
@@ -89,7 +89,7 @@ plain power uses and neither better in aggregate, the pace kept: `docs/design/37
 prices the one stamina. Once it merges, the golden apple is measured again with the stamina refilled in place of the
 two rests (2z, #460): "The golden apple's worth" in `docs/design/04-food-and-the-world.md`.
 
-**Who builds it** (the owner, 6 November 2026; #530): the second account's builder, which merges its parked
+**Who builds it** (the owner, 6 November 2026; #530): another builder session, which merges its parked
 `entry/2u-stamina-looks` into `entry/2u-one-stamina` and finishes 2u in PR #462.
 
 Done (PR #462): one stamina for both plain powers, the looks on every snake (tired, awake, game on), your ring, no

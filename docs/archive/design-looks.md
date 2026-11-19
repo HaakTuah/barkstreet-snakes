@@ -111,7 +111,7 @@ Count its points to see how soon it can flash again, and box it in while they're
   - *a lit pit floor* (the critique: on the all but black floor a span's shadow had nothing to darken, and at phone size the gap under the body didn't show): the floor round where the shadow falls catches a little light, four faint steps laid on in the shadows' veil, and the shadow lies dark in it, further off down and to the right than on the bark. It's drawn as rectangles worked out from the cells (each straight run of what's well over the pit, cut to the hole cells near it, short of the rim), since a layer of its own cost 0.3 ms of GPU a frame and up to 2 ms of waiting, and a mask 0.7 ms.
   - *the cost:* nothing new is clipped or veiled; shadows over a pit go in the bark's veil, crescents are cached colour steps, and what's near a hole is worked out once a tick. Against 11fb49a, in one page with interleaved frames: the long, long-star, fields and holes scenes within noise (0.95 to 1.03); the new bridges scene 1.10, and leaps 1.21 while a jump is in the air (about half a second a jump). Measured again in wave 2, against 8d9cde2, the 1.21 didn't come back: leaps 1.0, no dearer than the long scene. A jump's trail costs about 0.2 ms a frame (now mitred, with one straight run over the top: the same line, 7% cheaper), and its shadow in the air about 0.75 ms. With the critique's lit floor and sag, against 554ebf4 (20 pairs): bridges 1.05 (quartiles 1.00 to 1.13), long 1.00, leaps 1.04, holes 1.06, woodpecker 1.07, all within their quartiles.
 
-**Copycat in the flag's red** (the owner: Copycat is a parody of the Chinese Communist Party, "but it has a pink color. Should its natural color be closer to that of the red in the flag? it already has the yellow symbol."). Its own colour was a pale red, `#fca5a5`, read by everyone as pink. Now it's the red of the flag, `#de2910`, and its party pin the flag's yellow, `#ffde00`. Two things keep it apart from the cast's other reds (Sniper's dark red, Colonist's redcoat crimson, Wildcard's Old Glory):
+**Copycat in the flag's red** (the owner: it "has a pink color. Should its natural color be closer to that of the red in the flag? it already has the yellow symbol."). Its own colour was a pale red, `#fca5a5`, read by everyone as pink. Now it's the red of the flag, `#de2910`, and its party pin the flag's yellow, `#ffde00`. Two things keep it apart from the cast's other reds (Sniper's dark red, Colonist's redcoat crimson, Wildcard's Old Glory):
 - **Its head stays its own.** Copying someone, its body still wears a pale copy of their colours (that's the joke: it can't help copying), but its cat-eared head keeps the flag's red and the yellow pin, so it always reads as red-and-gold at a glance.
 - **A yellow star on its tag's dot**, where the others have plain dots, and its beads keep their dashed rings.
 
@@ -164,7 +164,7 @@ So what starves a new player is not seeing hunger at all: unseen, 8.0% of rounds
 
 ### Wildcard's hair
 
-The owner: "Not a comb-over: his real swoop, a big fluffy golden-blond pompadour swept back, then forward and to one side.
+The owner: "Not a comb-over: [the reference's] real swoop, a big fluffy golden-blond pompadour swept back, then forward and to one side.
 It must read at phone size."
 
 - *Before:* a flat golden patch combed across the back of the head to a small curl over one eye, the same size as the
@@ -177,8 +177,8 @@ It must read at phone size."
   with a shine along its crest, fuller at the far end. Behind it, the fluffy golden mass puffs out past the head, most
   at the back and the far side; its strands run straight back over the crown and turn to the far side at their ends, so
   the comb reads up, back and round. The eyes, pout and squint are as they were.
-- *Then* PR #110's lacquered mop, PR #144's version F and PR #156's F at 85%. The owner (30 October): "trump looks like
-  David Lynch now. I actually think the very first or second hairstyle trump had in the game is better", and picked the
+- *Then* PR #110's lacquered mop, PR #144's version F and PR #156's F at 85%. The owner (30 October): "I actually think the very first or second
+  hairstyle [Wildcard] had in the game is better", and picked the
   first, "but have the swirl point upwards instead of downwards".
 - *Now* (2n, `render/faces.js`, `hairBack()`, `pompadour()`, `wildHair()`): PR #74's pompadour exactly as it was
   (shape, size, strands, colours and outline), with one change: its lick, the curl at the near end of the roll that came
