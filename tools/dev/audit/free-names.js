@@ -139,13 +139,13 @@ function freeNames(src) {
     if (next === ':' && (prev === '{' || prev === ',') ) continue; // an object's key
     if ((prev === 'function' || prev === 'class')) continue;
     // a method's or getter's own name in a class or object: a name, a (, a {  with the head's `)` `{` after
-    const mem = toks[i + 1] && toks[i + 1].t === '.' && toks[i + 2] && toks[i + 2].id ? toks[i + 2].t : null;
+    const mem = toks[i + 1] && (toks[i + 1].t === '.' || toks[i + 1].t === '?.') && toks[i + 2] && toks[i + 2].id ? toks[i + 2].t : null;
     if (!any.has(x.t)) any.set(x.t, []);
     any.get(x.t).push({ line: x.line, member: mem });
     let sc = scopeOf[i], local = false;
     for (; sc; sc = sc.parent) if (sc.bound.has(x.t)) { local = true; break; }
     if (local || heads.some(([a, b, ns]) => i > a && i < b && ns.has(x.t))) continue;
-    const member = next === '.' && toks[i + 2] && toks[i + 2].id ? toks[i + 2].t : null;
+    const member = (next === '.' || next === '?.') && toks[i + 2] && toks[i + 2].id ? toks[i + 2].t : null;
     if (!free.has(x.t)) free.set(x.t, []);
     free.get(x.t).push({ line: x.line, member });
   }

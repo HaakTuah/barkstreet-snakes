@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Which part of the game uses which names of the others (the code audit, issue #764): the 130 script files `index.html` loads
+// Which part of the game uses which names of the others (the code audit, issue #764; read as a module by the part check, tools/crossings-test.js): the 130 script files `index.html` loads
 // share one global space, with no imports, so this reads the uses a build tool would have read. Measures, prints, fails
 // nothing:  node tools/dev/audit/uses.js [--json file] [--root dir]
 //
@@ -30,8 +30,8 @@ const PARTS = [...new Set(files.map(partOf))].sort();
 
 const DECL = /^(?:async\s+)?function\s*\*?\s*([A-Za-z_$][\w$]*)|^class\s+([A-Za-z_$][\w$]*)|^(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*[=;,]|^(?:const|let|var)\s+[{[]([^=]*)[}\]]\s*=/;
 const NS = /^window\.([A-Za-z_$][\w$]*)\s*=/;
-const ALIAS = /(?:^|[\s;(,])(?:(?:const|let|var)\s+)?([A-Za-z_$][\w$]*)\s*=\s*(?:window\.)?(Snake[A-Za-z]*)\b(?!\s*[.=(])/; // (`const E = window.SnakeX;`, or `E = window.SnakeX || {};` after a `let E`, at any depth)
-const PICK = /^(?:const|let|var)\s+\{([^}]*)\}\s*=\s*(?:window\.)?([A-Za-z_$][\w$]*)\s*;/;
+const ALIAS = /(?:^|[\s;(,])(?:(?:const|let|var)\s+)?([A-Za-z_$][\w$]*)\s*=\s*(?:window\.)?(Snake[A-Za-z]*)\b(?!\s*(?:\?\.|[.=(]))/; // (`const E = window.SnakeX;`, or `E = window.SnakeX || {};` after a `let E`, at any depth)
+const PICK = /^\s*(?:const|let|var)\s+\{([^}]*)\}\s*=\s*(?:window\.)?([A-Za-z_$][\w$]*)\s*;/;
 
 const info = {};           // file -> { part, lines, bytes, text, tokens, declares: Set, aliases: Map(alias -> namespace), picks: [{ns, member, as}] }
 const declaredIn = new Map(); // shared name -> [file]
@@ -83,8 +83,27 @@ for (const f of files) {
   for (const [alias, ns] of aliasOf) for (const o of (info[f].aliases.has(alias) ? info[f].any : free).get(alias) || []) take(ns, o.member, f); // (an alias this file declares: by every mention, a local one too)
   for (const ns of nsIn.keys()) for (const o of free.get(ns) || []) take(ns, o.member, f);        // SnakeX.member
   for (const o of free.get('window') || []) if (nsIn.has(o.member)) take(o.member, null, f);       // window.SnakeX
+  for (const m of info[f].text.matchAll(/(?<![\w$.])window\s*\.\s*(Snake\w*)\s*\??\.\s*([A-Za-z_$][\w$]*)/g)) if (nsIn.has(m[1])) take(m[1], m[2], f); // window.SnakeX.member
   for (const [name, { ns, member }] of pickOf) if (free.has(name)) take(ns, member, f);
   for (const p of info[f].picks) { const ns = aliasOf.get(p.owner) || (nsIn.has(p.owner) ? p.owner : null); if (ns) take(ns, p.member, f); }
+}
+// uses of a namespace the reader cannot follow, by file: `window.SnakeX` or an alias of it with no `.member` after it, other than the line that
+// declares the alias or picks names out of it; one readable use of the namespace in the part must not hide one of these
+const opaque = [];
+for (const f of files) {
+  const tl = info[f].text.split('\n'), rec = info[f];
+  const declares = (l, name) => { const m = ALIAS.exec(l), q = PICK.exec(l); return (m && m[1] === name) || (q && q[2] === name) || new RegExp(`^\\s*(?:const|let|var)\\s+${escape(name)}\\s*[;=,]|^\\s*window\\.${escape(name)}\\s*=`).test(l); };
+  tl.forEach((l, i) => {
+    for (const m of l.matchAll(/(?<![\w$.])window\s*\.\s*(Snake\w*)(?![\w$])/g)) {
+      if (!nsIn.has(m[1]) || partOf(nsIn.get(m[1])) === partOf(f) || declares(l, m[1]) || /^\s*(?:\??\.\s*[A-Za-z_$]|&&|\?(?!\.))/.test(l.slice(m.index + m[0].length))) continue; // (`.member`, or a test that it is there)
+      if (ALIAS.exec(l)?.[2] === m[1] || PICK.exec(l)?.[2] === m[1]) continue;
+      opaque.push({ file: f, line: i + 1, namespace: m[1] });
+    }
+  });
+  for (const [alias, ns] of aliasOf) {
+    if (partOf(nsIn.get(ns)) === partOf(f)) continue;
+    for (const o of (rec.aliases.has(alias) ? rec.any : rec.free).get(alias) || []) if (!o.member && !declares(tl[o.line - 1] || '', alias)) opaque.push({ file: f, line: o.line, namespace: ns, alias });
+  }
 }
 // what the page, the clock and randomness give: read as plain text, by file
 const OUTWARD = ['document', 'localStorage', 'sessionStorage', 'navigator', 'requestAnimationFrame', 'AudioContext', 'webkitAudioContext', 'getComputedStyle', 'fetch', 'location', 'performance', 'matchMedia', 'Image', 'OffscreenCanvas', 'Path2D', 'Date.now', 'new Date', 'Math.random', 'setTimeout', 'setInterval'];
@@ -123,16 +142,16 @@ const perFile = files.map(f => {
 });
 
 // where the rules (engine, ai) reach into the display, or out of the page
-const DISPLAY = ['render', 'audio', 'chatter', 'game'];
+const RULES = ['engine', 'ai'], DISPLAY = ['render', 'audio', 'chatter', 'game']; // (the rules' parts, and the display's: the rules never use the display)
 const reach = [];
 for (const n of names) {
   const B = part(n.declaredIn[0]);
   if (!DISPLAY.includes(B)) continue;
-  for (const u of n.users) if (['engine', 'ai'].includes(part(u))) reach.push({ from: u, name: n.name, declaredIn: n.declaredIn[0] });
+  for (const u of n.users) if (RULES.includes(part(u))) reach.push({ from: u, name: n.name, declaredIn: n.declaredIn[0] });
 }
 const reachNs = [];
-for (const [ns, us] of nsUsers) { const B = part(nsIn.get(ns)); if (DISPLAY.includes(B)) for (const f of us) if (['engine', 'ai'].includes(part(f))) reachNs.push({ from: f, namespace: ns, members: [...(members.get(ns) || new Map())].filter(([, s]) => s.has(f)).map(([m]) => m) }); }
-const rulesOutward = Object.entries(outward).filter(([f]) => ['engine', 'ai'].includes(part(f))).map(([file, w]) => ({ file, ...w }));
+for (const [ns, us] of nsUsers) { const B = part(nsIn.get(ns)); if (DISPLAY.includes(B)) for (const f of us) if (RULES.includes(part(f))) reachNs.push({ from: f, namespace: ns, members: [...(members.get(ns) || new Map())].filter(([, s]) => s.has(f)).map(([m]) => m) }); }
+const rulesOutward = Object.entries(outward).filter(([f]) => RULES.includes(part(f))).map(([file, w]) => ({ file, ...w }));
 
 const result = {
   files: files.length, parts: PARTS,
@@ -155,16 +174,19 @@ const result = {
   rulesReachingIntoTheDisplay: { sharedNames: reach, namespaces: reachNs, ofThePageOrClock: rulesOutward },
 };
 
-const cell = (A, B) => { const m = matrix[A][B]; return A === B ? '·' : m.names.size ? `${m.names.size}/${m.files.size}` : '-'; };
-console.log(`files: ${files.length} script files in ${PARTS.length} parts; ${names.length} shared names, ${nsIn.size} namespaces; ${result.namesDeclaredInMoreThanOneFile.length} names declared in more than one file`);
-console.log('per part (files, lines, shared names):', PARTS.map(p => `${p} ${result.perPart[p].files}/${result.perPart[p].lines}/${result.perPart[p].sharedNames}`).join(', '));
-console.log(`\nnames of the column's part that the row's part mentions (names/files that do); rows use, columns declare:`);
-console.log(['       ', ...PARTS.map(p => p.padStart(8))].join(''));
-for (const A of PARTS) console.log([A.padEnd(7), ...PARTS.map(B => cell(A, B).padStart(8))].join(''));
-const u = result.namesUsedByOtherFiles;
-console.log(`\nof ${names.length} shared names: ${u.used} are mentioned by another file (median ${u.byFiles.median} files, 90th percentile ${u.byFiles.p90}, most ${u.byFiles.max}); in 5 or more files ${u.in5OrMoreFiles}, 10 or more ${u.in10OrMore}, 25 or more ${u.in25OrMore}; by more than one other part ${u.inMoreThanOneOtherPart}`);
-console.log(`a file takes names from ${result.filesByFilesReached.median} other files at the median (90th percentile ${result.filesByFilesReached.p90}, most ${result.filesByFilesReached.max}); ${result.mentionsWithinAPartAndAcross.within} mentions are inside the declaring part, ${result.mentionsWithinAPartAndAcross.across} across parts`);
-console.log(`a file reaches names of ${result.filesByPartsReached.median} other parts at the median (90th percentile ${result.filesByPartsReached.p90}, most ${result.filesByPartsReached.max}); ${result.filesReaching3OrMoreOtherParts} files reach 3 or more`);
-console.log('hubs:', result.hubs.slice(0, 12).map(h => `${h.name} (${h.usedByFiles} files, ${h.declaredAt})`).join('; '));
-console.log(`rules into the display: ${reach.length} uses of ${new Set(reach.map(r => r.name)).size} shared names of render/audio/chatter/game by engine/ai files; ${reachNs.length} namespace uses; ${rulesOutward.length} rules files touch the page or the clock`);
-if (jsonOut) fs.writeFileSync(jsonOut, JSON.stringify(result, null, 1) + '\n');
+module.exports = { result, nsMatrix, nsIn, part, opaque, RULES, DISPLAY }; // (tools/crossings-test.js reads these; run as a script it prints)
+if (require.main === module) {
+  const cell = (A, B) => { const m = matrix[A][B]; return A === B ? '·' : m.names.size ? `${m.names.size}/${m.files.size}` : '-'; };
+  console.log(`files: ${files.length} script files in ${PARTS.length} parts; ${names.length} shared names, ${nsIn.size} namespaces; ${result.namesDeclaredInMoreThanOneFile.length} names declared in more than one file`);
+  console.log('per part (files, lines, shared names):', PARTS.map(p => `${p} ${result.perPart[p].files}/${result.perPart[p].lines}/${result.perPart[p].sharedNames}`).join(', '));
+  console.log(`\nnames of the column's part that the row's part mentions (names/files that do); rows use, columns declare:`);
+  console.log(['       ', ...PARTS.map(p => p.padStart(8))].join(''));
+  for (const A of PARTS) console.log([A.padEnd(7), ...PARTS.map(B => cell(A, B).padStart(8))].join(''));
+  const u = result.namesUsedByOtherFiles;
+  console.log(`\nof ${names.length} shared names: ${u.used} are mentioned by another file (median ${u.byFiles.median} files, 90th percentile ${u.byFiles.p90}, most ${u.byFiles.max}); in 5 or more files ${u.in5OrMoreFiles}, 10 or more ${u.in10OrMore}, 25 or more ${u.in25OrMore}; by more than one other part ${u.inMoreThanOneOtherPart}`);
+  console.log(`a file takes names from ${result.filesByFilesReached.median} other files at the median (90th percentile ${result.filesByFilesReached.p90}, most ${result.filesByFilesReached.max}); ${result.mentionsWithinAPartAndAcross.within} mentions are inside the declaring part, ${result.mentionsWithinAPartAndAcross.across} across parts`);
+  console.log(`a file reaches names of ${result.filesByPartsReached.median} other parts at the median (90th percentile ${result.filesByPartsReached.p90}, most ${result.filesByPartsReached.max}); ${result.filesReaching3OrMoreOtherParts} files reach 3 or more`);
+  console.log('hubs:', result.hubs.slice(0, 12).map(h => `${h.name} (${h.usedByFiles} files, ${h.declaredAt})`).join('; '));
+  console.log(`rules into the display: ${reach.length} uses of ${new Set(reach.map(r => r.name)).size} shared names of render/audio/chatter/game by engine/ai files; ${reachNs.length} namespace uses; ${rulesOutward.length} rules files touch the page or the clock`);
+  if (jsonOut) fs.writeFileSync(jsonOut, JSON.stringify(result, null, 1) + '\n');
+}
