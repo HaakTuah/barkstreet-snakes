@@ -32,6 +32,7 @@ over rules" (`core/modules/how-to-work.md`) never reaches: the storage keys (`SE
 | The design, one file per topic | `docs/design/` (index: `DESIGN.md` at the root) |
 | Materials the queue points to, with the specs word for word of the entries that name one (`queue-specs.md`) | `docs/handoff/` |
 | Study and measuring tools from earlier rounds (censuses, audits, PR pictures) | `tools/dev/` (done ones: `docs/archive/`) |
+| Audits of how the code is put together: the reports and their numbers, one per day | `docs/audits/`; the measures: `tools/dev/audit/` |
 | History: the old polish audit, the plan as it grew, the owner's instructions word for word | `docs/archive/` |
 
 ## Starting a task
