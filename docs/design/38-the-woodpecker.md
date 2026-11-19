@@ -361,7 +361,7 @@ phone's address bar never resizes it.
 - **The lessons** (`game/core.js`, told by `game/banners.js`):
   - once a round, as it comes, after its banner and only while you're alive: "The woodpecker's watching… Mind where it
     looks." (`youWatched`: its gaze is the tell);
-  - once a round, at its first mark, the same way: "Food in the woodpecker's mark flies to its ring." (the one idea you
+  - once a round, at its first mark, the same way: "Food in the woodpecker's mark flies to the ring it shows." (the one idea you
     can act on, one line on a phone; that it won't shut you in if it can help it is the Field guide's);
   - the first time it pecks under you: "Pecking under you! Only your head can fall in.";
   - the first mark that cuts a piece loose (or as it falls, if the banner was busy): "The shaded piece is cut loose and will fall.

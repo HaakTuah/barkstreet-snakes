@@ -119,8 +119,8 @@ hop rarely reaches the next island across a hollow.
   jump and dash") has a sky notch at a jump's worth; when the stamina is back up to it, one bright sky flick and a
   wooden tick.
 - *The lessons:* the first plain jump or dash that leaves you tired, "One stamina: jump or dash, your choice."; the first time you're boxed in
-  with a jumpable gap, "Space hops up to three cells. Hop the gap!" ("Tap to hop up to three cells. Hop the gap!" on a
-  phone).
+  with a jumpable hole, "Space jumps up to three cells: enough to clear that hole." ("Tap to jump up to three cells: enough
+  to clear that hole." on a phone).
 - *The Field guide's Jump row:* "Space or a click on the log: jump over snakes, holes or fire, up to 3 cells, and
   land on the first free cell beyond. Press twice to jump now, even over open ground. A ring shows where you’ll land. Each jump
   takes half of your stamina. Bump a flier in the air and you drop: onto a body or into a hole, you’re out. Lie on a
@@ -205,9 +205,9 @@ a leap now down on it, puts the flier out (it comes down on a body).
 - *The cue:* a body over a pit is drawn as a bridge, and a head on another's back rides on top of it, with its shadow
   on the back below (`03-the-snake-as-a-character.md`, "Bridges and jumps you can see"). The tail end's last cells over
   the pit get a creak and a sag as it nears.
-- *The lesson:* the first time a snake lies across a pit near you, "A snake across a pit is a bridge, until its tail
-  passes!"
-- *The Field guide's Bridges row:* "A snake lying across a pit is a bridge: crawl onto its back there, or land on it
+- *The lesson:* the first time a snake lies across a pit near you, "A snake across a hole is a bridge, until its tail
+  passes."
+- *The Field guide's Bridges row:* "A snake lying across a hole is a bridge: crawl onto its back there, or land on it
   from a jump. Get off onto bark before its tail passes, or you fall in."
 - *The rivals* plan across bridges with the time each cell frees up, use them to reach an island, and never start
   across one they can't leave in time; a pit with a bridge over it is no barrier to them while the bridge lasts.
