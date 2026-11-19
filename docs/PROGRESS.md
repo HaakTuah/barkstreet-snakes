@@ -34,8 +34,8 @@ The game's polish lane (`core/modules/work-flow.md`, point 4; the owner, 31 Octo
 - **How, here:** a lesson and an online lobby among the screens; the picture on `pr-media`, and play proven unchanged by
   the suites and the simulation's fingerprints (seeds 3 and 11); one line per fix under this lane.
 
-*Next find:* #739, the Field guide rows for the weather and the rainbow and for a friend gone quiet, and the Jump row's
-early press (the stand-in's yes, 19 November 2026); then more by playing, as "How" says.
+*Next find:* more by playing, as "How" says (#739, the Field guide's rows for the weather and a friend gone quiet and
+the Jump row's early press, is done: PR #778).
 
 *Done in the lane:* each fix's line is in `docs/archive/progress-done/polish-lane.md`, "The polish lane, done" (the README for
 players, any key wakes, the woodpecker bigger on a phone, the flash become the dash, the room card and Join on a phone,
