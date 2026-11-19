@@ -3,7 +3,7 @@
 The owner's instructions, decisions and open questions about this project, each with the date and time (UTC) it was
 given, one file per day. Words that carry a decision or a reason are quoted word for word. A bare yes is not quoted: the
 entry says the owner agreed, and to what. Words addressed to the session ("expert" and the like) are left out of what
-stays (pruned 19 November 2026, #765; the entries then written keep their dates and what was decided). A new entry goes
+stays (pruned 19 November 2026, #765; the entries written before then keep their dates and what was decided). A new entry goes
 at the end of the newest file; the first entry given on a new day (UTC) starts that day's file,
 `instructions/<yyyy-mm-dd>.md`, and its line here.
 
