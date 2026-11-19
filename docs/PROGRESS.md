@@ -62,7 +62,7 @@ the owner's notes of 2 November, the portals blue and orange and the woodpecker'
 - **The cleaning lane from the code audit** (#783; the stand-in's yes, sure, 19 November, on the owner's words of 14
   November quoted in #764: "They are not allowed to get worse, and audits should run, and major refactoring runs
   scheduled"), each step its own small PR with behaviour proven unchanged, in order: (1) the part check, a suite with
-  today's crossings as its baseline; (2) `game/friends.js` split as a pure move; (3) one teaching file for each rule's
+  today's crossings as its baseline (done, PR #788: `tools/crossings-test.js`, `docs/developing.md`); (2) `game/friends.js` split as a pure move; (3) one teaching file for each rule's
   lesson words, guide row and trigger, checked that each lesson has its row; (4) the controller's round flags into
   their own per-round object, and the event switches into tables. Steps 1 to 3 go before item 4, the teaching system,
   starts. Step 5, in the engine and the AI, is entry 8c.
