@@ -15,9 +15,10 @@ for (const [w, h] of [[390, 844], [320, 640]]) {
   await tap(await at('#records-close'));
   p = await P();
   check(p.how === 'How to play', `phone ${w}: the start card has How to play`, p.how);
-  // A finger finds them: a seat's tap reaches 6 px above it, a tag's 1 px into the gap below it (nothing moved).
+  // A finger finds them: a seat is tapped 6 px above it where the names have the room (a card 375 px wide or more: with two rows, a seat's reach would take the name above), a tag 1 px into the gap below it (nothing moved).
   const reach = await ev(`(() => { const s = document.querySelector('.opponents .seat'), t = document.querySelector('.scoreboard li'), rs = s.getBoundingClientRect(), rt = t.getBoundingClientRect(); return { seat: document.elementFromPoint(rs.left + rs.width / 2, rs.top - 6)?.closest('.seat') === s, tag: document.elementFromPoint(rt.left + rt.width / 2, rt.bottom + 1)?.closest('li') === t }; })()`);
-  check(reach.seat && reach.tag, `phone ${w}: a seat is tapped 6 px above it, a tag 1 px under it`, JSON.stringify(reach));
+  check(reach.tag && reach.seat === (w === 390), `phone ${w}: a tag is tapped 1 px under it${w === 390 ? ', a seat 6 px above it' : ''}`, JSON.stringify(reach));
+  const ownSeats = sel => ev(`[...document.querySelectorAll(${JSON.stringify(sel)})].filter(s => s.getClientRects().length).filter(s => { const t = s.querySelector('strong').getBoundingClientRect(); return [0.2, 0.5, 0.8].some(f => document.elementFromPoint(t.left + t.width * f, t.top + t.height / 2)?.closest('.seat') !== s); }).map(s => s.textContent.trim()).join()`);
   // Three picked rivals, each pinned: the pins take next to no room (the card no taller), and a tap beside one still unpins it.
   const cardFit = () => ev(`(() => { const c = document.querySelector('.overlay .card'); return { h: c.scrollHeight, rows: new Set([...document.querySelectorAll('.opponents .seat')].map(s => Math.round(s.getBoundingClientRect().top))).size }; })()`);
   const unpinned = await cardFit();
@@ -35,6 +36,7 @@ for (const [w, h] of [[390, 844], [320, 640]]) {
   await b.sleep(300);
   const fit = await ev(`(() => { const c = document.querySelector('.overlay .card'); return { over: c.scrollHeight - c.clientHeight, steps: ['snug', 'snugger'].filter(k => c.classList.contains(k)).join() }; })()`);
   check(fit.over <= 1 && (w === 390 ? fit.steps === '' : fit.steps !== ''), `phone ${w}: the start card with the longest names fits its board${w === 390 ? ', nothing dropped' : ', its tip dropped'}`, JSON.stringify(fit));
+  check(await ownSeats('.opponents .seat') === '', `phone ${w}: with the longest names, a tap on each name lands on its own seat`, await ownSeats('.opponents .seat'));
   await load();
   // The room the host opens (a stand-in for the network): its four seats in a row of names, the card within its board.
   await ev(`SnakeDebug.setup(['capricious', 'desperado', 'metagamer']); SnakeNet.host = async () => ({ code: 'MOSSY', send() {}, broadcast() {}, admit() {}, quietFor: () => 0, rtt: () => 0, drop() {}, close() {} }); document.getElementById('friends').click(); 'ok'`);
@@ -43,6 +45,7 @@ for (const [w, h] of [[390, 844], [320, 640]]) {
   await wait(`!document.getElementById('lobby-players').hidden`);
   const room = await ev(`(() => { const c = document.querySelector('.overlay .card'); return { over: c.scrollHeight - c.clientHeight, seats: document.querySelectorAll('#lobby-players li').length }; })()`);
   check(room.over <= 1 && room.seats === 4, `phone ${w}: the room's card, four seats, fits its board`, JSON.stringify(room));
+  check(await ownSeats('#lobby-players .seat') === '', `phone ${w}: in the room, a tap on each name lands on its own seat`, await ownSeats('#lobby-players .seat'));
   await load();
   await tap(await at('#how'));
   p = await P();
