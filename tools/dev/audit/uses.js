@@ -87,6 +87,24 @@ for (const f of files) {
   for (const [name, { ns, member }] of pickOf) if (free.has(name)) take(ns, member, f);
   for (const p of info[f].picks) { const ns = aliasOf.get(p.owner) || (nsIn.has(p.owner) ? p.owner : null); if (ns) take(ns, p.member, f); }
 }
+// uses of a namespace the reader cannot follow, by file: `window.SnakeX` or an alias of it with no `.member` after it, other than the line that
+// declares the alias or picks names out of it; one readable use of the namespace in the part must not hide one of these
+const opaque = [];
+for (const f of files) {
+  const tl = info[f].text.split('\n'), rec = info[f];
+  const declares = (l, name) => { const m = ALIAS.exec(l), q = PICK.exec(l); return (m && m[1] === name) || (q && q[2] === name) || new RegExp(`^\\s*(?:const|let|var)\\s+${escape(name)}\\s*[;=,]|^\\s*window\\.${escape(name)}\\s*=`).test(l); };
+  tl.forEach((l, i) => {
+    for (const m of l.matchAll(/(?<![\w$.])window\s*\.\s*(Snake\w*)(?![\w$])/g)) {
+      if (!nsIn.has(m[1]) || partOf(nsIn.get(m[1])) === partOf(f) || declares(l, m[1]) || /^\s*(?:\??\.\s*[A-Za-z_$]|&&|\?(?!\.))/.test(l.slice(m.index + m[0].length))) continue; // (`.member`, or a test that it is there)
+      if (ALIAS.exec(l)?.[2] === m[1] || PICK.exec(l)?.[2] === m[1]) continue;
+      opaque.push({ file: f, line: i + 1, namespace: m[1] });
+    }
+  });
+  for (const [alias, ns] of aliasOf) {
+    if (partOf(nsIn.get(ns)) === partOf(f)) continue;
+    for (const o of (rec.aliases.has(alias) ? rec.any : rec.free).get(alias) || []) if (!o.member && !declares(tl[o.line - 1] || '', alias)) opaque.push({ file: f, line: o.line, namespace: ns, alias });
+  }
+}
 // what the page, the clock and randomness give: read as plain text, by file
 const OUTWARD = ['document', 'localStorage', 'sessionStorage', 'navigator', 'requestAnimationFrame', 'AudioContext', 'webkitAudioContext', 'getComputedStyle', 'fetch', 'location', 'performance', 'matchMedia', 'Image', 'OffscreenCanvas', 'Path2D', 'Date.now', 'new Date', 'Math.random', 'setTimeout', 'setInterval'];
 const outward = {};
@@ -156,7 +174,7 @@ const result = {
   rulesReachingIntoTheDisplay: { sharedNames: reach, namespaces: reachNs, ofThePageOrClock: rulesOutward },
 };
 
-module.exports = { result, nsMatrix, nsIn, part, RULES, DISPLAY }; // (tools/crossings-test.js reads these; run as a script it prints)
+module.exports = { result, nsMatrix, nsIn, part, opaque, RULES, DISPLAY }; // (tools/crossings-test.js reads these; run as a script it prints)
 if (require.main === module) {
   const cell = (A, B) => { const m = matrix[A][B]; return A === B ? '·' : m.names.size ? `${m.names.size}/${m.files.size}` : '-'; };
   console.log(`files: ${files.length} script files in ${PARTS.length} parts; ${names.length} shared names, ${nsIn.size} namespaces; ${result.namesDeclaredInMoreThanOneFile.length} names declared in more than one file`);

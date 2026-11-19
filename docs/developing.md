@@ -73,8 +73,8 @@ The REST calls from a cloud session: `core/modules/github-calls.md`. Updates, De
   check): the parts (a folder of script files, or `root`) share one global space, so this reads the uses with the audit's `uses.js` and holds
   them to the config. A bare shared name of one part used in another is a crossing and must be in the config's baseline (today's 19, of 17
   names); one the baseline lists that no longer happens fails too, so the count only goes down. A namespace is taken only by the parts its
-  `mayUse` names (engine takes only `SnakeAI.decide`); engine and ai never use render, audio, chatter or game; a namespace used with no member
-  readable (an alias the reader cannot follow) fails. The suite also stages each of those failures. Something new goes through the part's
+  `mayUse` names (engine takes only `SnakeAI.decide`); engine and ai never use render, audio, chatter or game; a use of a namespace with no member
+  to read (`window.SnakeX`, or an alias of it passed on bare) fails, whatever else the part reads of it. The suite also stages each of those failures. Something new goes through the part's
   namespace, never into the baseline.
 
 ## Run locally
