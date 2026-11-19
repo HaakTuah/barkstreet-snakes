@@ -46,7 +46,7 @@
 //                                   one on purpose (round six B; default SPIT)
 //   aim                           how hard I work to land one I've got in my cheek: getting in line with a
 //                                   head and leading it (3b+; default 1)
-//   powers                        { price, risk, everyWay, jumpAny, dashSpend, keepFlash }: a power habit (see
+//   powers                        { price, risk, everyWay, jumpAny, dashSpend, keepFlash, keepJump }: a power habit (see
 //                                   powerPick). price: what every power costs me, as a share of what it
 //                                   costs anyone else, wherever it ends with no more risk than `risk`
 //                                   (beyond that, the full price); everyWay: the flash weighed every way,
@@ -57,7 +57,8 @@
 //                                   that puts a rival out) as everyone else's; keepFlash: the reserve
 //                                   I keep for jumps is a flash's worth, for flashes, and a jump that
 //                                   leaves less costs this share of the wait it costs anyone (2u); my
-//                                   flashes mind the jump's worth as anyone's (7c)
+//                                   flashes mind the jump's worth as anyone's (7c); keepJump: what they
+//                                   keep is this share of a jump's worth, not margin / the default's (7e)
 //   golden                        { power, apple, contested }: golden power food (golden beetles, leaves,
 //                                   golden mushrooms) worth this many times what it's worth to anyone
 //                                   else, and a golden apple this many; contested: how much golden power
