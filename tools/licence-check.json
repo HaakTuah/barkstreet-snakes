@@ -3,6 +3,9 @@
     "tools/package-lock.json"
   ],
   "ships": [],
+  "data": [
+    "spdx-exceptions"
+  ],
   "ignoreScriptsIn": [
     "tools/.npmrc"
   ],
