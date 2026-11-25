@@ -11,12 +11,14 @@ https://haaktuah.github.io/barkstreet-snakes/. A builder of another provider: re
 This game takes the shared rules in `core/` by `core-manifest.md`, whose slots and names fill the core's words. Read
 these whole at the start of every task (Claude Code imports them; any other builder: read each file named):
 
+<!-- The core's part: a sync writes it; write yours outside. -->
 @core-manifest.md
 @core/floor/security.md
-@core/modules/how-to-work.md
-@core/modules/inbox.md
-@core/modules/work-flow.md
-@core/modules/git.md
+@core/roles/builder.md
+@core/roles/shared/how-to-work.md
+@core/roles/shared/inbox.md
+@core/roles/shared/work-flow.md
+<!-- The core's part ends. -->
 
 The other files of the core are read when a task needs them, each module saying when, among them `core/floor/topics.md`
 (when: the floor's opening says) and `core/modules/game-design.md`. Safety rules of this game's own, which "Principles
