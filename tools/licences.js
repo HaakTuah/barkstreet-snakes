@@ -24,7 +24,8 @@ for (const e of audit) if (e.loads && !e.ships) fail(`${e.name}: the game loads 
 const walk = (d, skip) => fs.readdirSync(path.join(root, d), { withFileTypes: true }).flatMap(x => x.isDirectory() ? (skip.has(x.name) ? [] : walk(path.join(d, x.name), skip)) : [path.join(d, x.name)]);
 const own = /^https?:\/\/(www\.w3\.org|haaktuah\.github\.io|github\.com\/HaakTuah)\b/i;
 const loads = audit.flatMap(e => (e.loads || []).map(u => [u, e]));
-const served = walk('.', new Set(['.git', 'tools', 'docs', 'scripts', '.github', '.claude', 'node_modules', 'types', 'core']));
+// ('checks': the core's checks' configs and baselines and the mutation tool's lock file land there; the game serves nothing from it)
+const served = walk('.', new Set(['.git', 'tools', 'docs', 'scripts', '.github', '.claude', 'node_modules', 'types', 'core', 'checks']));
 for (const f of served) {
   if (!/\.(html|js|css|json|webmanifest)$/.test(f)) continue;
   let policy = false; // (inside the content security policy's meta, whose lines only allow what others load)

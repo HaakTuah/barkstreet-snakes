@@ -4,7 +4,7 @@ A snake game on a mossy log: you against three AI rivals drawn from a cast of ei
 phone, with online play through PeerJS. Plain HTML, CSS and JavaScript: no build step and no dependencies, which is one
 of its features. The owner plays it, gives feedback and decides; builders like you build it. Live at
 https://haaktuah.github.io/barkstreet-snakes/. A builder of another provider: read
-`core/modules/other-builders.md` at the start of every task.
+`core/tools/other-builders.md` at the start of every task.
 
 ## The core
 
@@ -21,8 +21,8 @@ these whole at the start of every task (Claude Code imports them; any other buil
 <!-- The core's part ends. -->
 
 The other files of the core are read when a task needs them, each module saying when, among them `core/floor/topics.md`
-(when: the floor's opening says) and `core/modules/game-design.md`. Safety rules of this game's own, which "Principles
-over rules" (`core/modules/how-to-work.md`) never reaches: the storage keys (`SECURITY.md`, rule 7).
+(when: the floor's opening says) and `core/tasks/game-design.md`. Safety rules of this game's own, which "Principles
+over rules" (`core/roles/shared/how-to-work.md`) never reaches: the storage keys (`SECURITY.md`, rule 7).
 
 ## Where things are
 
@@ -39,12 +39,12 @@ over rules" (`core/modules/how-to-work.md`) never reaches: the storage keys (`SE
 
 ## Starting a task
 
-A builder of another provider starts from its brief instead (`core/modules/other-builders.md`).
+A builder of another provider starts from its brief instead (`core/tools/other-builders.md`).
 
 1. Take the main lane's next entry, as "State" in `docs/PROGRESS.md` names it. Its entry there, the section of
    `docs/handoff/queue-specs.md` it names where it names one, and the design sections it names are the spec.
 2. Read only those sections: `grep -rn "## Section" docs/design` finds a section that code or the queue names.
-3. What is read again before the PR (`core/modules/work-flow.md`, point 1): the task's spec, as point 1 here gives it;
+3. What is read again before the PR (`core/roles/shared/work-flow.md`, point 1): the task's spec, as point 1 here gives it;
    a large change goes in as its own entry right after the task.
 
 ## How to work, here
@@ -59,7 +59,7 @@ A builder of another provider starts from its brief instead (`core/modules/other
 
 ## Rules that stand
 
-This game's own, beside the core's (`core/modules/game-design.md`, whose sections the quoted names are). The owner's
+This game's own, beside the core's (`core/tasks/game-design.md`, whose sections the quoted names are). The owner's
 words behind them are in `docs/archive/instructions.md`.
 
 - **A person's input before it lands** is never in `aiView()` ("The computer players never cheat").
@@ -88,9 +88,9 @@ scripts/codemap.sh engine/step.js       # the functions of a game file, with lin
 ```
 
 The simulation always prints its fingerprint; `--check` also fails the run if a round stalls or a rival never wins. The
-fingerprints are this game's proof under "Same seed, same game" (`core/modules/game-design.md`).
+fingerprints are this game's proof under "Same seed, same game" (`core/tasks/game-design.md`).
 
 ## Review guidelines
 
-Every reviewer, the code reviewers and the security reviewer included, reads `core/modules/review-guidelines.md` and this game's
+Every reviewer, the code reviewers and the security reviewer included, reads `core/roles/shared/review-guidelines.md` and this game's
 `docs/review-guidelines.md` whole and judges the change by them, with `SECURITY.md` and the floor.

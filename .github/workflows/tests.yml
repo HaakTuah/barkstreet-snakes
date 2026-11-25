@@ -3,7 +3,7 @@
 # thinking ahead, and in headless Chrome (the runner has it) the page's shared scope, its content security policy, the
 # renderer's and controls' promises, the page on phones, tablets and desktops, and the owner's playtest. The jobs run
 # side by side. Each runs only where a change can affect it ("The smallest setup that tests the rule" in
-# core/modules/how-to-work.md): nothing for notes alone (docs/, tools/dev/ but the two files the part check reads, .claude/, any .md), the Node checks and the
+# core/roles/shared/how-to-work.md): nothing for notes alone (docs/, tools/dev/ but the two files the part check reads, .claude/, any .md), the Node checks and the
 # headless four for any change to the game or its tools, and the page on every screen and the playtest for a change to
 # what the page shows (index.html, style/, fonts/, render/, game/, chatter/, audio/, online.js, net.js, records.js,
 # lineup.js, scores-screen.js, sw.js, update.js, version.js, the layout and playtest tests and their parts, the parts'
@@ -82,7 +82,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version-file: core/.node-version # the core's one exact Node ("Node" in core/modules/updates.md)
+          node-version-file: core/.node-version # the core's one exact Node ("Node" in core/tasks/updates.md)
       - name: Rules
         if: needs.changes.outputs.code == 'true'
         run: node tools/rules-test.js
@@ -142,7 +142,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version-file: core/.node-version # the core's one exact Node ("Node" in core/modules/updates.md)
+          node-version-file: core/.node-version # the core's one exact Node ("Node" in core/tasks/updates.md)
       - name: The page's shared scope
         run: node tools/scope-test.js
       - name: The content security policy
@@ -180,7 +180,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version-file: core/.node-version # the core's one exact Node ("Node" in core/modules/updates.md)
+          node-version-file: core/.node-version # the core's one exact Node ("Node" in core/tasks/updates.md)
       - name: The page on every screen
         env:
           LAYOUT_JOB: ${{ matrix.job }}
@@ -197,7 +197,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version-file: core/.node-version # the core's one exact Node ("Node" in core/modules/updates.md)
+          node-version-file: core/.node-version # the core's one exact Node ("Node" in core/tasks/updates.md)
       - name: The owner's playtest
         run: node tools/ui-test.js
 

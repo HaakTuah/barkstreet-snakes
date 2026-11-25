@@ -16,7 +16,7 @@ const { execFileSync } = require('child_process');
 const root = path.join(__dirname, '..');
 const listed = JSON.parse(fs.readFileSync(path.join(root, 'tools/unused.json'), 'utf8'));
 const tracked = execFileSync('git', ['ls-files'], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 26 }).split('\n').filter(Boolean)
-  .filter(f => !f.startsWith('core/') && fs.existsSync(path.join(root, f)));
+  .filter(f => !f.startsWith('core/') && f !== 'checks/shape-baseline.json' && fs.existsSync(path.join(root, f))); // (the baseline the core's shape check writes names files by path, no use of them)
 const read = f => fs.readFileSync(path.join(root, f), 'utf8');
 const escape = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // (a name or file name as a pattern that matches only itself)
 

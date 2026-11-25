@@ -1,6 +1,6 @@
 # Review guidelines
 
-This game's own, read with `core/modules/review-guidelines.md`, which says who reads them and how a review passes. They
+This game's own, read with `core/roles/shared/review-guidelines.md`, which says who reads them and how a review passes. They
 change only on the owner's word (archive, 3 November 2026).
 
 - Text a player reads is held to the core's bar with this game's own tells, as `docs/slop-bar.md` says.
