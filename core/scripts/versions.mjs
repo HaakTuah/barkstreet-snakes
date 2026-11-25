@@ -14,6 +14,7 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { started } from "./started.mjs";
+import { parseBounded } from "./guards.mjs";
 
 const DAY = 864e5;
 // A stable release: two or three plain numbers (PyPI's "2.0" too), each short enough to compare exactly.
@@ -76,7 +77,7 @@ async function times(e) {
     if (!res.ok) throw new Error(`${e.name}: PyPI answered ${res.status}`);
     return pypiTimes(await res.json());
   }
-  return JSON.parse(npmView(e.name));
+  return parseBounded(npmView(e.name));
 }
 // npm's answer to what it knows of a package's releases. On Windows npm is a command script, which only the command
 // shell starts, so there the name reaches a shell: it must be a plain word that no program reads as an option, or
@@ -105,7 +106,7 @@ export const issue = (e, to, config) => ({
 if (started(import.meta.url)) {
   const config = process.argv[2];
   if (!config) { console.error("FAIL: name the config: node <core>/scripts/versions.mjs <config> [--issues]"); process.exit(1); }
-  const { entries } = JSON.parse(fs.readFileSync(config, "utf8"));
+  const { entries } = parseBounded(fs.readFileSync(config, "utf8"));
   const root = execFileSync("git", ["rev-parse", "--show-toplevel"], { encoding: "utf8" }).trim();
   const now = Date.now(), behind = [];
   for (const e of current(entries, root)) {

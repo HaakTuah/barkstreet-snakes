@@ -8,6 +8,7 @@ import { canonical, show, markOf, fold, describe } from "./agent-tools-entries.m
 import { listing, LISTING_MAX } from "./agent-tools-listing.mjs";
 import { whereToolsRead, TOOL_FILES, READS } from "./agent-tools-links.mjs";
 import { agentFile, readProject } from "./agent-tools-project.mjs";
+import { parseBounded } from "./guards.mjs";
 
 // The config as the base held it, parsed, or null where it held none as a JSON object.
 export function configAtBase(root, base, file) {
@@ -135,7 +136,7 @@ export function sortBehind(root, base, fail, notes) {
   const holds = new Set([was, now].flatMap(l => [...l.dirs, ...l.ids.keys()]).map(fold));
   for (const at of standing) {
     const text = textAt(root, "HEAD", at) ?? null, ways = [false, true].map(win => namedWay(at, text, win));
-    for (const key of new Set(ways.map(w => JSON.stringify(w)))) behindOne(at, JSON.parse(key), { was, now, raw, changed, holds }, fail, notes);
+    for (const key of new Set(ways.map(w => JSON.stringify(w)))) behindOne(at, parseBounded(key), { was, now, raw, changed, holds }, fail, notes);
   }
 }
 // One such link `at`, by the way `way` its text names, as sortBehind() reads it.

@@ -18,6 +18,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { CORE, CORE_SOURCE } from "./core-address.mjs";
 import { started } from "./started.mjs";
+import { parseBounded } from "./guards.mjs";
 
 export const MANIFEST = "core-manifest.md", DEFAULT = "core/";
 // (a folder of the repository, from its root: plain names joined by "/", ending in "/"; none is "." or "..", nor .git,
@@ -167,7 +168,7 @@ export function hookCommands(core) {
  *  path is core/, where `core` is null, or where the text has no such hook (an older kit's keeps its own). */
 export function hooksAt(text, core) {
   if (!core || core.path === "core/") return text;
-  const settings = JSON.parse(text), commands = hookCommands(core);
+  const settings = parseBounded(text), commands = hookCommands(core);
   for (const [event, command] of [["SessionStart", commands.start], ["PreToolUse", commands.helper], ["Stop", commands.stop]]) {
     const hook = settings.hooks?.[event]?.[0]?.hooks?.[0];
     if (hook) hook.command = command;

@@ -20,6 +20,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { npmIgnores, npmReadsAll, npmVersion } from "./npm-reads.mjs";
+import { noSignInWhole, parseBounded } from "./guards.mjs";
 import { INSTALLS, lockFaults, npmrcOthers } from "./packages.mjs";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
@@ -79,7 +80,7 @@ function refusal(name) {
   let faults;
   try { faults = lockFaults(JSON.parse(fs.readFileSync(at("package.json"), "utf8")), JSON.parse(fs.readFileSync(at("package-lock.json"), "utf8")), { overrides: Object.hasOwn(OWN_ONLY, name) }); }
   catch (e) { faults = [`${lock} or ${own}/package.json cannot be read`]; }
-  if (faults.length) return `${faults[0]}${faults.length > 1 ? `, and ${faults.length - 1} more` : ""}. Mend: write the package list and lock file as npm's own install from its registry writes them, with no other source`;
+  if (faults.length) return `${noSignInWhole(faults[0])}${faults.length > 1 ? `, and ${faults.length - 1} more` : ""}. Mend: write the package list and lock file as npm's own install from its registry writes them, with no other source`;
   const stray = strays(dir, at);
   if (stray) return stray;
   let npmrc = "";
@@ -107,8 +108,8 @@ const unanswered = text => NPM_UNANSWERED.test(String(text ?? "")) || (PIP_UNANS
 function namesNothing(name) {
   const { lock, folder, pip } = REGISTRIES[name];
   if (pip) return false;
-  const { packages: entries = {} } = JSON.parse(fs.readFileSync(path.join(root, lock), "utf8"));
-  const list = JSON.parse(fs.readFileSync(path.join(root, folder, "package.json"), "utf8"));
+  const { packages: entries = {} } = parseBounded(fs.readFileSync(path.join(root, lock), "utf8"));
+  const list = parseBounded(fs.readFileSync(path.join(root, folder, "package.json"), "utf8"));
   return Object.keys(entries).every(k => !k) && !Object.keys({ ...list.dependencies, ...list.devDependencies, ...entries[""]?.dependencies, ...entries[""]?.devDependencies }).length;
 }
 

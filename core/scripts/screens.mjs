@@ -35,6 +35,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { notLinked, parseBaseline, unclaimed } from "./shape.mjs";
 import { started } from "./started.mjs";
+import { parseBounded } from "./guards.mjs";
 
 // Each check of the module's, with what a session does about a new finding of it (#254).
 export const MENDS = {
@@ -130,7 +131,7 @@ export function verdict({ config, at, self, found, baseline, base }) {
 // A baseline as the check reads it: shape.mjs's form, and "checks", those whose findings it has listed from a run over
 // every screen (null where the key is missing).
 export function readBaseline(text, at, restore) {
-  const b = parseBaseline(text, at, restore), { checks } = JSON.parse(text);
+  const b = parseBaseline(text, at, restore), { checks } = parseBounded(text);
   if (checks !== undefined && !(Array.isArray(checks) && checks.every(c => CHECKS.includes(c)))) refuse(`"checks" in ${at} is not a list of the module's checks`, restore);
   return { ...b, checks: checks === undefined ? null : new Set(checks) };
 }

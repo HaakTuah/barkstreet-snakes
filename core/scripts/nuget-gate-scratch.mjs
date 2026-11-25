@@ -45,6 +45,10 @@ export function nugetScratch(prefix) {
     put(files);
     git(dir, "add", "-A");
     git(dir, "commit", "-q", "-m", "a change");
+    // (the merge a pull request's run checks out: HEAD^1 the base, which the job names as its --base, HEAD^2 the change)
+    const head = git(dir, "rev-parse", "HEAD");
+    git(dir, "checkout", "-q", "--detach", baseSha);
+    git(dir, "merge", "-q", "--no-ff", "-m", "the merge", head);
     const github = { event_name: "pull_request", repository: "someone/project", workflow_ref: "someone/project/.github/workflows/nuget.yml@refs/pull/1/merge", event: { pull_request: { base: { sha: baseSha } } } };
     const [job] = runWorkflow(workflow, { inputs: { config: "checks/licences.json" }, github, base: env, workspace: () => dir, uses: { "actions/checkout": () => {}, "actions/setup-node": () => {} }, temp: tmp });
     const out = job.steps.map(x => x.out).join("");

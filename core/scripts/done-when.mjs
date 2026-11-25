@@ -16,11 +16,12 @@ import fs from "node:fs";
 import { OWNER } from "./core-address.mjs";
 import { leftOut, asked as toRead } from "./reading.mjs";
 import { ownerOf } from "./releases.mjs";
+import { parseBounded } from "./guards.mjs";
 
 export const HEADING = "Done when", PROVED = "Proved by use", KIND = "feature";
 // The most items one pull request may queue or close, each read with a call or a few: a handful in practice.
 export const MOST = 12;
-export const CURRENT = JSON.parse(fs.readFileSync(new URL("./labels.json", import.meta.url), "utf8")).headings.current;
+export const CURRENT = parseBounded(fs.readFileSync(new URL("./labels.json", import.meta.url), "utf8")).headings.current;
 const SHAPE = /^(When|While|If)\b/u, PROOFS = /^(?:a test|a check|a picture|"?the owner tries this)/iu;
 const lines = text => String(text ?? "").split(/\r\n|\r|\n/u);
 // (each line read by steps of its own, with no pattern that backtracks: a description of any shape, which anyone who
@@ -221,7 +222,7 @@ export function readItem(repo, item, dir = ".", owner = String(repo).split("/")[
   const gh = route => {
     const r = spawnSync("gh", ["api", route], { encoding: "utf8", maxBuffer: 1 << 24 });
     if (r.status !== 0 && /rate limit/iu.test(String(r.stderr))) throw LIMITED;
-    return r.status === 0 ? JSON.parse(r.stdout) : null;
+    return r.status === 0 ? parseBounded(r.stdout) : null;
   };
   try {
     const n = item.slice(1), got = gh(`repos/${repo}/issues/${n}`);

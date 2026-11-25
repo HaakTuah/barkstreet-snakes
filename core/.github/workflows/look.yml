@@ -34,7 +34,10 @@ jobs:
     # branch a manual start names, so the scripts it runs and the files they read are always that branch's
     if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    # (the job's limit is a ceiling that cancels the whole job, and a cancelled job skips every step after it; the look's
+    # own step below has the lower limit, which fails that step alone, so the personal-terms step after it still runs;
+    # a limit costs a billed minute only for a minute run: #1311)
+    timeout-minutes: 20
     permissions:
       contents: read # the default branch's files, which the steps and the look read
       issues: write # the look's issues and its record, and the labels of the core's list it makes (#1092)
@@ -62,6 +65,7 @@ jobs:
         run: node "$CORE_AT"scripts/core-moved.mjs
       - name: The scheduled look
         if: ${{ !cancelled() }}
+        timeout-minutes: 12 # (a project's first run files the most issues and is the slowest, #1311)
         env:
           GH_TOKEN: ${{ github.token }}
           # (whether the call passes the secret PERSONAL_TERMS, true or false, for the owner's settings the look reads:

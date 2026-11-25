@@ -109,7 +109,7 @@ export function openPulls(repo, api) {
   for (let page = 1; page <= 50; page++) {
     const rows = api(`repos/${repo}/pulls?state=open&per_page=100&page=${page}`,
       ".[] | [.number, .title, .head.ref, .head.sha, ((.head.repo.full_name // \"\") | ascii_downcase), .draft, (.body // \"\"), [.labels[].name]] | @json")
-      .split("\n").filter(Boolean).map(l => JSON.parse(l));
+      .split("\n").filter(Boolean).map(l => parseBounded(l));
     for (const [number, title, ref, sha, from, draft, body, labels] of rows) pulls.push({ number, title, ref, sha, own: from === repo.toLowerCase(), draft, body, labels });
     if (rows.length < 100) break;
   }

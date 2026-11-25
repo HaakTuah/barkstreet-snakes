@@ -7,9 +7,10 @@
 // the tests that caught a fault ("killedBy"), which Stryker's command runner cannot name (it names its command "0").
 // The paths come from the run's own options, under "coreRun": { report, plan, sources }, `sources` a JSON file of
 // each file's text as it stood before Stryker wrote its own into it, in place, which its faults' places count in.
-// Node's own modules only.
+// Node's own modules, and guards.mjs beside it.
 import fs from "node:fs";
 import path from "node:path";
+import { parseBounded } from "./guards.mjs";
 
 // A place in a file as the report writes it: Stryker plans from 0, the report counts lines and columns from 1.
 const fromOne = p => ({ line: p.line + 1, column: p.column + 1 });
@@ -52,7 +53,7 @@ export function progress({ cwd = process.cwd(), read = f => fs.readFileSync(f, "
 export function coreReporter(options) {
   const { report, plan, sources } = options.coreRun ?? {};
   if (!report || !plan || !sources) throw new Error("stryker-plugin.mjs is run by stryker.mjs, which names its report, plan and sources under \"coreRun\"");
-  const before = JSON.parse(fs.readFileSync(sources, "utf8"));
+  const before = parseBounded(fs.readFileSync(sources, "utf8"));
   // (each file written whole beside its place and then moved there, so a run stopped mid-write leaves the last whole one)
   const whole = (at, value) => { const part = `${at}.part`; fs.writeFileSync(part, `${JSON.stringify(value)}\n`); fs.renameSync(part, at); };
   const state = progress({ read: f => before[named(f)] ?? fs.readFileSync(f, "utf8") }), write = r => whole(report, r);

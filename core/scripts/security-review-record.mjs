@@ -28,9 +28,10 @@ import { CORE, OWNER } from "./core-address.mjs";
 import { DEPENDABOT, FINDING, OPENS, POSTED, WRITERS, codexState, codexs, flat, pinsAlone } from "./security-review.mjs";
 import { FOLDER, SECURITY, compare, lower, recordings, time, verdictOf } from "./security-review-host.mjs";
 import { started } from "./started.mjs";
+import { parseBounded } from "./guards.mjs";
 
 // the host, through gh: a call is gh api's arguments, its answer the JSON gh prints (the test hands in its own)
-export const gh = (args) => JSON.parse(execFileSync("gh", ["api", ...args], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], maxBuffer: 1 << 28 }));
+export const gh = (args) => parseBounded(execFileSync("gh", ["api", ...args], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], maxBuffer: 1 << 28 }));
 const pages = (call, route) => flat(call(["--paginate", "--slurp", `${route}${route.includes("?") ? "&" : "?"}per_page=100`]));
 // why a call failed, in the host's or gh's own words, one line
 export const why = (e) => String(e?.stderr || e?.message).trim().split("\n").at(-1).slice(0, 300);
@@ -144,7 +145,7 @@ function fetchRights(call) {
 export function writeRights(call, folder, say) {
   const file = path.join(folder, "rights.json");
   const got = fetchRights(call);
-  const stands = fs.existsSync(file) && !JSON.parse(fs.readFileSync(file, "utf8")).unread;
+  const stands = fs.existsSync(file) && !parseBounded(fs.readFileSync(file, "utf8")).unread;
   if (got.unread && stands) return say(`The host's rights could not be read (${got.unread}): the recording that stands is kept.`);
   const as = standIns();
   const rights = got.unread ? { unread: got.unread } : { pushList: got.pushList.map((entry) => ({ ...entry, login: as(entry.login) })), answers: got.answers.map((answer) => rightOf(answer, as)) };

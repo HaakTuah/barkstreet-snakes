@@ -43,6 +43,7 @@ import { fileURLToPath } from "node:url";
 import { counted as bytesOf, sizeOf } from "./file-size.mjs";
 import { gather, library, reading } from "./reading.mjs";
 import { counted as countedBy, writersOf } from "./security-review.mjs";
+import { asText, logged } from "./guards.mjs";
 import { started } from "./started.mjs";
 
 // Each role's cap, a whole number of KB: one line a role, spelled exactly so. The record of each cap's raises, with its
@@ -168,7 +169,7 @@ function raise(baseFile, commentsFile, rightsFile, headFile) {
   if (comments === null || head === null) { console.error("FAIL: the base's size.mjs, the pull request's comments or the head's size.mjs could not be read. Mend: name them, readable: node scripts/size.mjs --raise <base> <comments, as JSON> [<rights> [<head>]]"); return 1; }
   const running = headFile === undefined ? CAPS : capsOf(head);
   const wrong = raised(base, head, comments, running, whoseOf(process.env.OWNER, rights));
-  if (wrong) { console.error(`FAIL: ${wrong}`); return 1; }
+  if (wrong) { console.error(asText(`FAIL: ${wrong}`)); return 1; }
   const from = capsOf(base), up = Object.keys(running).filter(r => from[r] !== undefined && from[r] < running[r]);
   console.log(up.length ? `ok   the cap of ${up.join(", ")} rises one step, and the pull request holds a leanness check's answer` : "ok   no role's cap is raised");
   return 0;
@@ -181,7 +182,7 @@ function startOf(role, roles) {
   const missing = files.filter(f => !fs.existsSync(f));
   if (missing.length) return { wrong: `what the role ${role} reads at its start cannot be counted: ${missing.join(", ")}. Mend: put back the file moved or taken out, or name it as it now stands in roles/${role}.md` };
   const total = files.reduce((sum, f) => sum + sizeOf(f), 0);
-  console.log(`what the role ${role} reads at its start (${files.join(", ")}): ${total} bytes of ${cap}`);
+  console.log(asText(`what the role ${role} reads at its start (${files.join(", ")}): ${total} bytes of ${cap}`));
   return { total };
 }
 
@@ -243,8 +244,9 @@ function main([flag, baseFile, commentsFile, rightsFile, headFile]) {
   const base = flag === "--base" ? sizesAt(baseFile) : null;
   if (flag === "--base" && base === null) { console.error(`FAIL: git cannot read the base ${baseFile ?? "(none named)"}. Mend: name a revision git holds here (the workflow fetches the merge commit's parents: HEAD^1)`); return 1; }
   const wrong = [], { fail, task } = judged(measured(roles, wrong), base, base ? capsAt(baseFile) : {});
-  for (const t of task) console.log(`::warning::${t}, which fails nothing: a task to trim, which the scheduled look keeps as the issue "${DUE_TITLE}"`);
-  for (const w of [...wrong, ...fail]) console.error(`FAIL: ${w}`);
+  // (each role's and file's name in a line as text alone, a pull request's to choose; #1348)
+  for (const t of task) console.log(`::warning::${logged(t)}, which fails nothing: a task to trim, which the scheduled look keeps as the issue "${DUE_TITLE}"`);
+  for (const w of [...wrong, ...fail]) console.error(asText(`FAIL: ${w}`));
   return wrong.length || fail.length ? 1 : 0;
 }
 

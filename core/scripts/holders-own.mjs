@@ -13,7 +13,7 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { copyOf } from "./core-path.mjs";
-import { inProject, leadsOut, oneLine } from "./guards.mjs";
+import { inProject, leadsOut, oneLine, parseBounded } from "./guards.mjs";
 import { counts, holderOf } from "./holder-form.mjs";
 import { FLOOR, ruleFiles, toolFiles } from "./rule-files.mjs";
 import { rulesOf } from "./rules.mjs";
@@ -51,7 +51,7 @@ export function ownHolders(root = process.cwd()) {
   const by = new Map(all.map(r => [r.key, []])), wrong = [], text = read(OWN);
   let named = {};
   if (text !== null) {
-    try { named = JSON.parse(text).holders ?? {}; if (typeof named !== "object" || Array.isArray(named)) throw new Error('its "holders" is no object'); }
+    try { named = parseBounded(text).holders ?? {}; if (typeof named !== "object" || Array.isArray(named)) throw new Error('its "holders" is no object'); }
     catch (e) { named = {}; wrong.push(`${OWN} cannot be read (${span(String(e.message).split("\n")[0])}). Mend: write it as JSON, its "holders" an object keyed by each rule's file and lead`); }
   }
   for (const [key, value] of Object.entries(named)) {
@@ -105,7 +105,7 @@ export function writeOwn(root = process.cwd()) {
   const h = ownHolders(root), at = path.join(root, OWN);
   if (leadsOut(root, at)) throw new Error(`${OWN} leads out of the project. Mend: take out the link on its way, then run it again`);
   let j = {};
-  if (fs.existsSync(at)) { try { j = JSON.parse(fs.readFileSync(at, "utf8")); } catch (e) { throw new Error(`${OWN} cannot be read (${span(String(e.message).split("\n")[0])}). Mend: write it as JSON, or take it out and run this again`); } }
+  if (fs.existsSync(at)) { try { j = parseBounded(fs.readFileSync(at, "utf8")); } catch (e) { throw new Error(`${OWN} cannot be read (${span(String(e.message).split("\n")[0])}). Mend: write it as JSON, or take it out and run this again`); } }
   const named = j.holders && typeof j.holders === "object" && !Array.isArray(j.holders) ? j.holders : {};
   for (const r of h.rules) named[r.key] ??= "none";
   fs.mkdirSync(path.dirname(at), { recursive: true });

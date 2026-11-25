@@ -27,7 +27,7 @@
 //   node core/scripts/labels.mjs [--make] [--owner login] [--since 2026-11-16T00:00:00Z]
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
-import { seen } from "./guards.mjs";
+import { parseBounded, seen } from "./guards.mjs";
 import { repoOf } from "./inbox.mjs";
 import { KINDS, LABEL, kindOf } from "./outcomes.mjs";
 import { broughtBy } from "./review-record.mjs";
@@ -36,7 +36,7 @@ import { ownerOf } from "./releases.mjs";
 import { VERDICT, byAgent, verdict } from "./stand-in-record.mjs";
 import { started } from "./started.mjs";
 
-export const LIST = JSON.parse(fs.readFileSync(new URL("./labels.json", import.meta.url), "utf8"));
+export const LIST = parseBounded(fs.readFileSync(new URL("./labels.json", import.meta.url), "utf8"));
 export const STATES = Object.keys(LIST.state), SENDERS = Object.keys(LIST.sender);
 const OWN_VOICE = ["by:owner", "by:chat", "by:design"];
 // Items and comments before the rule came stand as they were written: those before the day the project's copy gained
@@ -197,7 +197,7 @@ export const ghApi = (...a) => { const r = spawnSync("gh", ["api", ...a], { enco
 export function pagesOf(route, gh = ghApi) {
   const rows = [];
   for (let page = 1; page <= 500; page++) {
-    const got = JSON.parse(gh(`${route}${route.includes("?") ? "&" : "?"}per_page=100&page=${page}`) || "[]");
+    const got = parseBounded(gh(`${route}${route.includes("?") ? "&" : "?"}per_page=100&page=${page}`) || "[]");
     if (!Array.isArray(got)) throw new Error(`GitHub gave no list for ${route}`);
     rows.push(...got);
     if (got.length < 100) break;

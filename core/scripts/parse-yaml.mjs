@@ -2,6 +2,7 @@
 // that a reader of either reads less. Used by the runner (workflow-run.mjs) and by the scripts that read a project's
 // workflows (among them check.mjs, steps.mjs, checks.mjs, own-runs.mjs, workflows.mjs and pruning-read.mjs). Node's own
 // modules, and the YAML package.
+import { parseFault } from "./guards.mjs";
 import { installed, loadSync, notInstalled } from "./packages.mjs";
 import { LONGEST } from "./yaml-keys.mjs";
 
@@ -10,7 +11,9 @@ import { LONGEST } from "./yaml-keys.mjs";
  *  `__proto__` is the mapping's own). A key given twice, or more than one document, throws, as GitHub refuses either;
  *  a text with no value is an empty mapping; a text longer than LONGEST (yaml-keys.mjs) is never given to the package,
  *  whose parser builds a token for each mark before anything of the core's runs (#864). Where the package is not
- *  installed, it throws, saying so. */
+ *  installed, it throws, saying so. A text that is no YAML throws parseFault's form (guards.mjs), its kind the package's
+ *  code in words and its place, with the code and place kept as `code` and `linePos`; never the package's message, which
+ *  quotes the text's lines. */
 export function parseYaml(text) {
   // (where the package is not installed it throws, never stops the process, so a reader that asks, as the steps do,
   // reports the file as not read and goes on)
@@ -18,5 +21,8 @@ export function parseYaml(text) {
   if (String(text).length > LONGEST) throw new Error(`the file is longer than ${LONGEST} characters, past what this reader reads, so it is not given to the YAML package. Mend: cut the file to under ${LONGEST} characters, the steps it repeats moved to a script or a workflow of their own`);
   const { parse } = loadSync("yaml"); // (loaded where it is used: no import of this file needs it)
   // (an error throws, for the caller to say; a warning prints nothing, since it would print the workflow's own line)
-  return parse(text, { schema: "core", uniqueKeys: true, logLevel: "error" }) ?? {};
+  try { return parse(text, { schema: "core", uniqueKeys: true, logLevel: "error" }) ?? {}; } catch (e) {
+    const code = typeof e?.code === "string" && /^[A-Z_]+$/u.test(e.code) ? e.code : null, at = e?.linePos?.[0] ?? e?.pos?.[0];
+    throw Object.assign(parseFault(code ? code.toLowerCase().replaceAll("_", " ") : "not valid YAML", text, at ?? null), { code, linePos: e?.linePos });
+  }
 }

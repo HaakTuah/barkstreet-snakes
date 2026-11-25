@@ -15,13 +15,13 @@
 //   node core/scripts/inbox.mjs          from a project's root: where the owner's inbox is, and any mend
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
-import { aRepository } from "./guards.mjs";
+import { aRepository, parseBounded } from "./guards.mjs";
 import { started } from "./started.mjs";
 
 export const FOLDER = "inbox";
 // The two lines above an item's headings, in place of labels: its state and its sender, by the names of the labels'
 // list (labels.json, beside this file; core archive 217), a sender without its "by:".
-const LIST = JSON.parse(fs.readFileSync(new URL("./labels.json", import.meta.url), "utf8"));
+const LIST = parseBounded(fs.readFileSync(new URL("./labels.json", import.meta.url), "utf8"));
 export const STATES = Object.keys(LIST.state);
 export const SENDERS = Object.keys(LIST.sender).map(s => s.replace(/^by:/, ""));
 

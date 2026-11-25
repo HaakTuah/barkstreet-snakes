@@ -20,6 +20,7 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { ENTRY_FILES } from "./rule-files.mjs";
+import { asText } from "./guards.mjs";
 import { started } from "./started.mjs";
 
 export const AGENTS = "AGENTS.md";
@@ -89,8 +90,8 @@ if (started(import.meta.url)) {
   const read = verdict(fileAt, base ? gitAt(base) : null);
   // (in a project with no base to read against, nothing is new: each is a note)
   const { fails, notes } = core || base ? read : { fails: [], notes: [...read.notes, ...read.fails] };
-  for (const n of notes) console.log(`note (it stood so before this pull request, so it fails nothing): ${n}`);
-  for (const f of fails) console.error(`FAIL: ${f}`);
+  for (const n of notes) console.log(asText(`note (it stood so before this pull request, so it fails nothing): ${n}`));
+  for (const f of fails) console.error(asText(`FAIL: ${f}`));
   if (fails.length) process.exitCode = 1;
   else console.log(`each agent tool's entry file here pulls in every file ${AGENTS} names`);
 }

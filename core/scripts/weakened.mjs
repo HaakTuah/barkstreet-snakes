@@ -15,12 +15,13 @@
 //   node core/scripts/weakened.mjs --base <ref>    against where HEAD left <ref>, a base other than origin/main
 import { spawnSync } from "node:child_process";
 import { parseConfig, where } from "./shape.mjs";
+import { asText } from "./guards.mjs";
 import { started } from "./started.mjs";
 
 export const LINE = "Tests changed:";
 // A name or a line as it may be printed: a fork's pull request writes them, so no control, bidirectional or separating
 // character of theirs reaches a log.
-export const plain = text => String(text ?? "").replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/gu, "?");
+export const plain = text => asText(String(text ?? "").replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/gu, "?")); // (as text alone in a log; #1348)
 // A line that asserts, in the test frameworks and languages the projects use: node's assert and the core's ok(),
 // expect(...), xUnit's and NUnit's Assert, Python's assert and self.assert..., minitest's assert and refute, Rust's
 // assert! macros, Go's t.Error and t.Fatal, testify's require., XCTest's XCTAssert, FluentAssertions' .Should().

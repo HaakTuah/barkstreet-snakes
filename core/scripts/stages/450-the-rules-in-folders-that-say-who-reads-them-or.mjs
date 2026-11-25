@@ -3,6 +3,7 @@
 import path from "node:path";
 import { MOVED_GLOB, MOVED_GLOBS, moved, project } from "../steps.mjs";
 import { at, read, write } from "../stage-helpers.mjs";
+import { parseBounded } from "../guards.mjs";
 
 export default {
   asked: true,
@@ -29,7 +30,7 @@ export default {
       // (a line that now pulls in a file a line above pulls in already goes)
       const lines = next.split("\n").filter((l, i, all) => !(all.indexOf(l) < i && /^(@|#\[\[file:)/.test(l))).join("\n");
       // (and the size marks naming that file once)
-      const once = f === "checks/sizes.json" && lines !== text ? `${JSON.stringify(JSON.parse(lines), null, 2)}\n` : lines;
+      const once = f === "checks/sizes.json" && lines !== text ? `${JSON.stringify(parseBounded(lines), null, 2)}\n` : lines;
       if (once !== text) write(dir, f, once);
     }
     const manifest = read(dir, "core-manifest.md"), want = /^Paths: .*$/m.exec(read(dir, "core/setup/template/core-manifest.md.tmpl"))[0];

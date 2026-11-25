@@ -23,13 +23,14 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { OWNER } from "./core-address.mjs";
+import { asText, parseBounded } from "./guards.mjs";
 
 const args = process.argv.slice(2);
 const at = args.indexOf("--base");
 const baseRev = at >= 0 ? args[at + 1] : null;
 // (a commit, never an option: git is asked whether it is one, and it stands after --end-of-options)
 if (at >= 0 && (!/^[\w^~./][\w^~./-]*$/.test(baseRev ?? "") || (() => { try { execFileSync("git", ["rev-parse", "--verify", "--quiet", "--end-of-options", `${baseRev}^{commit}`], { stdio: "ignore" }); return false; } catch { return true; } })())) { console.log(`FAIL --base needs a commit of this repository, and "${baseRev ?? ""}" is none. Mend: fetch the base (git fetch origin main) and name its commit after --base`); process.exit(1); }
-const config = JSON.parse(fs.readFileSync(args.find((a, i) => !a.startsWith("--") && args[i - 1] !== "--base") ?? "scripts/general.json", "utf8"));
+const config = parseBounded(fs.readFileSync(args.find((a, i) => !a.startsWith("--") && args[i - 1] !== "--base") ?? "scripts/general.json", "utf8"));
 const account = { pattern: OWNER.replace(/[\\^$.*+?()[\]{}|/]/g, "\\$&"), say: "the *owner's account*, or the repository's own address" };
 const words = [...config.words, account].map(w => ({ re: new RegExp(w.pattern, w.case ? "u" : "iu"), say: w.say, outside: w.outside ?? [] }));
 const exempt = new Set(config.exempt);
@@ -68,7 +69,7 @@ for (const file of files) {
     for (const { re, say, outside } of words) {
       if (outside.some(dir => file.startsWith(`${dir}/`))) continue;
       const hit = line.match(re);
-      if (hit) { found++; console.log(`FAIL ${file}:${i + 1}: "${hit[0]}" fits only some projects. Mend: say ${say}`); }
+      if (hit) { found++; console.log(asText(`FAIL ${file}:${i + 1}: "${hit[0]}" fits only some projects. Mend: say ${say}`)); }
     }
   });
 }
@@ -80,7 +81,7 @@ for (const w of config.words.filter(w => w.added?.length)) {
   const added = addedLines(w.added);
   for (const a of added) {
     const hit = quoted(a.text) ? null : a.text.match(re);
-    if (hit) { found++; console.log(`FAIL ${a.file}:${a.line}: "${hit[0]}" in a line this change adds. Mend: say ${w.say}`); }
+    if (hit) { found++; console.log(asText(`FAIL ${a.file}:${a.line}: "${hit[0]}" in a line this change adds. Mend: say ${w.say}`)); }
   }
   console.log(`${added.length} lines added under ${w.added.join(", ")} since ${baseRev} read for "${w.pattern}"`);
 }
@@ -102,13 +103,13 @@ if (baseRev) {
   const other = file => /\.tmpl$/u.test(file) && !/\.md\.tmpl$/u.test(file) && kits.some(k => file.startsWith(`${k}/`));
   for (const a of addedLines(phrasePaths).filter(a => !other(a.file))) {
     fresh.add(`${a.file}:${a.line}`);
-    for (const { hit, say } of used(a.text)) { failedPhrases++; console.log(`FAIL ${a.file}:${a.line}: "${hit[0]}" in a rule or brief this change writes. Mend: ${say}`); }
+    for (const { hit, say } of used(a.text)) { failedPhrases++; console.log(asText(`FAIL ${a.file}:${a.line}: "${hit[0]}" in a rule or brief this change writes. Mend: ${say}`)); }
   }
 } else console.log("no --base given: the phrases are only reported, none failed");
 for (const file of ruleFiles) {
   fs.readFileSync(file, "utf8").split("\n").forEach((line, i) => {
     if (fresh.has(`${file}:${i + 1}`)) return;
-    for (const { hit, say } of used(line)) { reported++; console.log(`${file}:${i + 1}: "${hit[0]}" reported, standing before this change; ${say} (the audit brings it to the pattern, #259)`); }
+    for (const { hit, say } of used(line)) { reported++; console.log(asText(`${file}:${i + 1}: "${hit[0]}" reported, standing before this change; ${say} (the audit brings it to the pattern, #259)`)); }
   });
 }
 console.log(`${ruleFiles.length} rule and brief files read for ${phrases.length} phrases neither may use: ${failedPhrases} in what this change writes, ${reported} standing`);

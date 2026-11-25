@@ -7,6 +7,7 @@ import path from "node:path";
 import { KINDS, NUMBER } from "./outcomes.mjs";
 import { DIRECT } from "./pruning-record.mjs";
 import { ROOT } from "./rules.mjs";
+import { parseBounded } from "./guards.mjs";
 
 export const git = (args, cwd = ROOT) => execFileSync("git", args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], maxBuffer: 1 << 28 });
 
@@ -65,7 +66,7 @@ async function outcomesOf({ repo, from, to, owner, gh }) {
 function pagedOf(route, key, gh) {
   const out = [];
   for (let page = 1; page <= 50; page++) {
-    const got = JSON.parse(gh(`${route}&per_page=100&page=${page}`) || "{}")[key] ?? [];
+    const got = parseBounded(gh(`${route}&per_page=100&page=${page}`) || "{}")[key] ?? [];
     out.push(...got);
     if (got.length < 100) break;
   }

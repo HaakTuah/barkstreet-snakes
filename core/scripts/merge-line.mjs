@@ -17,7 +17,7 @@
 //   node core/scripts/merge-line.mjs --repo <owner>/<name> --measure [--count <n>]   the measure (30 where none is given)
 //   node core/scripts/merge-line.mjs --repo <owner>/<name> --cancel <front>[,<next>]  the cancelling of point 5
 import fs from "node:fs";
-import { aRepository, oneLine } from "./guards.mjs";
+import { aRepository, oneLine, parseBounded } from "./guards.mjs";
 import { timeOf } from "./moment.mjs";
 import { ghApi } from "./labels.mjs";
 import { held } from "./releases.mjs";
@@ -26,7 +26,7 @@ import { COUNT, lastMerged, median } from "./wait.mjs";
 
 class Refused extends Error {}
 const refuse = (what, mend) => { throw new Refused(`${what}. Mend: ${mend}`); };
-const json = text => JSON.parse(text || "null");
+const json = text => parseBounded(text || "null");
 
 // A row of the manifest that overrides a reading, `| *<slot>* | `<value>` |`: the value, or undefined where none.
 export function override(manifest, slot, values) {

@@ -27,7 +27,7 @@ import { execFileSync } from "node:child_process";
 import { appendFileSync, readFileSync, realpathSync } from "node:fs";
 import path, { posix } from "node:path";
 import { fileURLToPath } from "node:url";
-import { leadsOut, logged, parseBounded } from "./guards.mjs";
+import { leadsOut, logged, loggedCause, noSignInWhole, parseBounded } from "./guards.mjs";
 import { baseOf, configAt, loadConfig, lockInstalled, registryName, textAt } from "./licences.mjs";
 import { lockPackages, nugetConfig } from "./nuget.mjs";
 import { copyOf, projectAt } from "./core-path.mjs";
@@ -43,7 +43,8 @@ const NUGET_PAGES = 100;
 // (a name as npm's registry gives one, an old one in capitals too: at most a scope and a name, nothing an address reads)
 const NPM_NAME = /^(?:@[a-z0-9-~][a-z0-9-._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/iu;
 const KINDS = ["dependencies", "optionalDependencies", "peerDependencies"];
-const said = (value) => logged(String(value).slice(0, 200));
+// (any sign-in cut out before the text is cut short, so an "@" past the cut still ends it: floor rule 1)
+const said = (value) => logged(noSignInWhole(String(value)).slice(0, 200));
 const day = (ms) => new Date(ms).toISOString().slice(0, 10);
 const when = (text) => (typeof text === "string" && /^\d{4}-\d\d-\d\dT/u.test(text) ? Date.parse(text) : NaN);
 
@@ -97,7 +98,8 @@ function source(resolved) {
   if (typeof resolved !== "string" || !resolved) return "no address the lock file names";
   if (/^(?:git\+|git:|github:|gitlab:|bitbucket:)/u.test(resolved)) return "a git address";
   if (resolved.startsWith("file:")) return "a packed file named by its path";
-  const host = /^https?:\/\/([^/:@?#]{1,100})/u.exec(resolved)?.[1];
+  // (the host after any user and password, which are never printed: floor rule 1)
+  const host = /^https?:\/\/(?:[^/\\?#]*@)?([^/\\:@?#]{1,100})/u.exec(resolved)?.[1];
   return host ? `a web address on ${host}` : "an address of another kind";
 }
 
@@ -411,13 +413,18 @@ export function summarise(lines, nuget) {
   try { appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### The lookup${nuget ? " (NuGet)" : ""}\n\n${lines.map((l) => `- ${l.replace(/[<>&`*_[\]|]/gu, "?")}`).join("\n")}\n`); } catch { /* (a summary is a convenience: the log holds every line) */ }
 }
 
-// The pull request's base as its workflow names it (LOOKUP_BASE, from the event's base commit), where the checkout holds
-// that commit: a checkout of the head alone, or of a head that merges main, would read no base, or the pull request's
-// own earlier commit as its first parent.
+// The forms a job names its pull request's base in (LOOKUP_BASE): a commit, or HEAD^1, the first parent of the merge its
+// checkout holds, as the core's workflows name it, since the event's base commit may not be in a shallow checkout (#1231).
+export const NAMED_BASE = /^(?:[0-9a-f]{40}|HEAD\^1)$/u;
+
+// The pull request's base as its workflow names it (LOOKUP_BASE), as a commit, where the checkout holds it: a checkout
+// of the head alone, or of a head that merges main, would read no base, or the pull request's own earlier commit as its
+// first parent, so HEAD^1 is read only where HEAD is a merge.
 export function namedBase(root) {
-  const sha = process.env.LOOKUP_BASE;
-  if (typeof sha !== "string" || !/^[0-9a-f]{40}$/u.test(sha)) return null;
-  try { execFileSync("git", ["cat-file", "-e", `${sha}^{commit}`], { cwd: root, stdio: "ignore" }); return sha; } catch { return null; }
+  const name = process.env.LOOKUP_BASE;
+  if (typeof name !== "string" || !NAMED_BASE.test(name)) return null;
+  const commit = (rev) => execFileSync("git", ["rev-parse", "--verify", "-q", `${rev}^{commit}`], { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+  try { if (name === "HEAD^1") commit("HEAD^2"); return commit(name) || null; } catch { return null; }
 }
 
 if (started(import.meta.url)) {
@@ -425,7 +432,7 @@ if (started(import.meta.url)) {
   if (!configPath) { console.error("FAIL: no config was named. Mend: name it: node core/scripts/lookup.mjs <the licence check's config> [--nuget]"); process.exit(1); }
   let root;
   try { root = projectAt(fileURLToPath(new URL(".", import.meta.url))).root || execFileSync("git", ["rev-parse", "--show-toplevel"], { cwd: fileURLToPath(new URL(".", import.meta.url)), encoding: "utf8" }).trim(); }
-  catch (e) { console.error(`FAIL: ${logged(e.message)}. Mend: run it from the project's root, a git repository`); process.exit(1); }
+  catch (e) { console.error(`FAIL: ${loggedCause(e.message)}. Mend: run it from the project's root, a git repository`); process.exit(1); }
   const nuget = process.argv.includes("--nuget");
   const { lines, code } = await run(configPath, { root, base: namedBase(root) ?? baseOf(root), nuget });
   for (const line of lines) (line.startsWith("FAIL") ? console.error : console.log)(line);

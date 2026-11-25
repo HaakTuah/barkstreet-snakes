@@ -1,6 +1,8 @@
 // GitHub's expressions (`${{ }}`), as the workflow runner (workflow-run.mjs) and check.mjs read them: contexts,
 // literals, ! == != && || < > <= >=, the object filter `*` and the functions the core's workflows and the projects' use
-// (#1263). A context, function or sign it does not know throws, so a form GitHub reads and this does not is named rather than read other than GitHub would. Node alone.
+// (#1263). A context, function or sign it does not know throws, so a form GitHub reads and this does not is named rather than read other than GitHub would. Node, and guards.mjs beside it.
+
+import { parseBounded } from "./guards.mjs";
 
 const truthy = v => !(v === false || v === null || v === undefined || v === 0 || v === "" || Number.isNaN(v));
 export const str = v => (v === null || v === undefined ? "" : typeof v === "object" ? JSON.stringify(v) : String(v));
@@ -43,7 +45,7 @@ function expressionFunctions(state) {
     startswith: (a, b) => str(a).toLowerCase().startsWith(str(b).toLowerCase()),
     endswith: (a, b) => str(a).toLowerCase().endsWith(str(b).toLowerCase()),
     contains: (a, b) => (Array.isArray(a) ? a.some(x => equal(x, b)) : str(a).toLowerCase().includes(str(b).toLowerCase())),
-    fromjson: a => JSON.parse(str(a)), tojson: a => JSON.stringify(a ?? null),
+    fromjson: a => parseBounded(str(a)), tojson: a => JSON.stringify(a ?? null),
     join: (a, sep) => joined(a, sep),
     format: (f, ...args) => str(f).replace(/\{\{|\}\}|\{(\d+)\}/g, (m, k) => (m === "{{" ? "{" : m === "}}" ? "}" : str(args[Number(k)]))),
     always: () => true, cancelled: () => !!state.cancelled, success: () => !state.failed, failure: () => state.failed,

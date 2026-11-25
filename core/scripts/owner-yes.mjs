@@ -15,6 +15,7 @@
 import { spawnSync } from "node:child_process";
 import { under } from "./milestones.mjs";
 import { FLOOR, pathIn } from "./reading.mjs";
+import { parseBounded } from "./guards.mjs";
 
 export const WORD = "The owner's word";
 // The paths that ask for the yes, relative to the core's root.
@@ -131,7 +132,7 @@ export function yesOf({ paths, body, texts, read = true }) {
 // the host refuses past), whether it was edited and by whom: the host gives every editor, the first 100 of them.
 export const editsQuery = ids => `query { nodes(ids: [${ids.map(id => JSON.stringify(id)).join(", ")}]) { id ... on UserContentEditable { lastEditedAt userContentEdits(first: 100) { totalCount nodes { editor { login } } } } } }`;
 const NODE = /^[A-Za-z0-9_=-]{1,100}$/u, BATCH = 100;
-export const ghCall = (route, query) => { const r = spawnSync("gh", query === undefined ? ["api", route] : ["api", "graphql", "-f", `query=${query}`], { encoding: "utf8", maxBuffer: 1 << 24 }); return r.status === 0 ? JSON.parse(r.stdout) : null; };
+export const ghCall = (route, query) => { const r = spawnSync("gh", query === undefined ? ["api", route] : ["api", "graphql", "-f", `query=${query}`], { encoding: "utf8", maxBuffer: 1 << 24 }); return r.status === 0 ? parseBounded(r.stdout) : null; };
 
 // The texts of the issues `issues` of `repo`, through gh: { notes: [{ login, body, id }], read }, read false where an
 // issue or a page of its comments was not given, or the comments ran past MOST_PAGES.

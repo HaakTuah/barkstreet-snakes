@@ -6,6 +6,7 @@ import path from "node:path";
 import { NUMBER } from "./outcomes.mjs";
 import { DIRECT, UNHELD, ordered } from "./pruning-record.mjs";
 import { ROOT } from "./rules.mjs";
+import { parseBounded } from "./guards.mjs";
 
 export const MARKS = ["check", "case", "move", "goes", "describes"];
 export const EARLY = 20;
@@ -91,7 +92,7 @@ export function readUnheld(root = ROOT) {
   const file = path.join(root, UNHELD);
   if (!fs.existsSync(file)) return { proposals: {}, wrong: null };
   try {
-    const p = JSON.parse(fs.readFileSync(file, "utf8"))?.proposals;
+    const p = parseBounded(fs.readFileSync(file, "utf8"))?.proposals;
     if (p && typeof p === "object" && !Array.isArray(p)) return { proposals: p, wrong: null };
     return { proposals: {}, wrong: `\`${UNHELD}\` holds no object "proposals". Mend: write it as an object keyed by each rule's file and bold lead, each value { mark, by, why } and, beside a case, a move or a removal, form or noForm` };
   } catch (e) { return { proposals: {}, wrong: `\`${UNHELD}\` cannot be read (${String(e.message).split("\n")[0]}). Mend: write it as JSON, its "proposals" an object keyed by each rule` }; }

@@ -3,7 +3,7 @@
   "code": ["scripts"],
   "tests": ["tests/*-test.mjs"],
   "select": {
-    "whole": ["tests/init-test.mjs", "tests/init-dotnet-test.mjs", "tests/upgrade-test.mjs", "tests/staged-test.mjs", "tests/core-yml-test.mjs", "tests/pure-sync-test.mjs", "tests/copy-tree-test.mjs", "tests/copy-left-out-test.mjs"],
+    "whole": ["tests/init-test.mjs", "tests/init-dotnet-test.mjs", "tests/upgrade-test.mjs", "tests/staged-test.mjs", "tests/core-yml-test.mjs", "tests/pure-sync-test.mjs", "tests/copy-tree-test.mjs", "tests/copy-left-out-test.mjs", "tests/parse-errors-test.mjs"],
     "none": ["QUEUE.md", "archive/", ":(glob)reports/*.md"]
   },
   "wait": 1200,

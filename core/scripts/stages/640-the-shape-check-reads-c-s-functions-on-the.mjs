@@ -3,7 +3,7 @@
 import fs from "node:fs";
 import { spawnSync } from "node:child_process";
 import { READERS } from "../shape-readers.mjs";
-import { at, read, write } from "../stage-helpers.mjs";
+import { at, readJson, write } from "../stage-helpers.mjs";
 
 export default {
   asked: true,
@@ -11,7 +11,7 @@ export default {
   // (where the step of 16 November has taken the config and the baseline out, a baseline that names every reader but
   // that one, which that step's mend then keeps)
   stage: dir => {
-    const baseline = fs.existsSync(at(dir, "checks/shape-baseline.json")) ? JSON.parse(read(dir, "checks/shape-baseline.json")) : { reads: Object.keys(READERS), listed: {} };
+    const baseline = fs.existsSync(at(dir, "checks/shape-baseline.json")) ? readJson(dir, "checks/shape-baseline.json") : { reads: Object.keys(READERS), listed: {} };
     write(dir, "checks/shape-baseline.json", `${JSON.stringify({ ...baseline, reads: (baseline.reads ?? []).filter(r => r !== "csharp-tree") }, null, 2)}\n`);
   },
   // (as the step words it: the baseline written again)

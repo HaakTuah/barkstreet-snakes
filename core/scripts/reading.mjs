@@ -472,7 +472,7 @@ export function hookLine(dir, ms = 8000) {
 function alone(argv, dir, prefix, lib) {
   if (argv.includes("--check")) {
     const found = faults(lib, f => real(dir, `${prefix}${f}`) === "file");
-    for (const f of found) console.error(`FAIL: ${f}`);
+    failed(found.map(f => `FAIL: ${f}`));
     if (!found.length) console.log(`each of the ${Object.keys(lib.modules).length} modules and ${Object.keys(lib.roles).length} roles says when it is read, in words the reading script matches`);
     return found.length ? 1 : 0;
   }
@@ -481,6 +481,10 @@ function alone(argv, dir, prefix, lib) {
   return 0;
 }
 
+// Failures printed, each as text alone, a name in it being the pull request's (#1348): guards.mjs imported late, as the
+// start hook hands this file to node on its input, where none beside it can be imported at its top
+const failed = lines => lines.length && import("./guards.mjs").then(g => lines.forEach(l => console.error(g.asText(l))));
+
 // Where the core lies under `dir`, its roles and modules, and the project's manifest; the exit code, said, where the
 // core is not there or a link stands where its rules do.
 function located(dir) {
@@ -488,7 +492,7 @@ function located(dir) {
   if (prefix === null) { console.error("FAIL: the core's roles/ and floor/ are not here as a real folder and file, none of them or the folders above them a link. Mend: run it from the project's root, where core-manifest.md names the core's path, or from the core's own root; where the core's copy is a link, put the copy itself in its place"); return 1; }
   const manifest = prefix ? regular(dir, "core-manifest.md") : null; // (leftOut reads none as no line)
   const all = library(dir, prefix);
-  for (const l of all.links) console.error(`FAIL: ${shown(l)} is a symbolic link where the core's rules stand, and is read as nothing. Mend: put the file or folder itself in its place, or take the link out`);
+  failed(all.links.map(l => `FAIL: ${shown(l)} is a symbolic link where the core's rules stand, and is read as nothing. Mend: put the file or folder itself in its place, or take the link out`));
   if (all.links.length) return 1;
   return { prefix, all, manifest };
 }

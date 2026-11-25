@@ -7,6 +7,7 @@ import path from "node:path";
 import { offBy, parseBaseline, parseConfig, scanMend, where as shapeAt } from "./shape.mjs";
 import { READERS } from "./shape-readers.mjs";
 import { HERE, plain } from "./step-checks.mjs";
+import { parseBounded } from "./guards.mjs";
 
 // The shape check's config and baseline as a project holds them: { at, config, reads } (the readers its baseline names),
 // or { mend } where the config or the baseline is not there or cannot be read; { off } where the manifest turns the
@@ -53,7 +54,7 @@ export function shapeReadsParsed(p, reader) {
   if (held.off) return null;
   if (!held.mend) return readersNamed(held, [reader]);
   if (!held.none) return null;
-  const config = JSON.parse(fs.readFileSync(path.join(HERE, "setup/template/shape.json.tmpl"), "utf8")), baseline = p.read(config.baseline);
+  const config = parseBounded(fs.readFileSync(path.join(HERE, "setup/template/shape.json.tmpl"), "utf8")), baseline = p.read(config.baseline);
   if (baseline === null) return null;
   let reads = [];
   try { reads = parseBaseline(baseline, config.baseline, "").reads; } catch { /* (read as naming no reader) */ }

@@ -17,6 +17,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { repoOf } from "./inbox.mjs";
+import { parseBounded } from "./guards.mjs";
 
 const gh = route => { const r = spawnSync("gh", ["api", route], { encoding: "utf8", maxBuffer: 1 << 24 }); if (r.status !== 0) throw new Error(`${r.stderr || r.error || "no answer"}`.trim()); return r.stdout; };
 // (GitHub's API with no sign-in, through the machine's proxy where it names one, in a Node process of its own, since
@@ -47,7 +48,25 @@ export function privateOf(root, { env = process.env, ask = gh, bare = anonymous 
   return answer;
 }
 
-const originUrl = root => spawnSync("git", ["config", "--get", "remote.origin.url"], { cwd: root, encoding: "utf8" }).stdout?.trim() ?? "";
+// The clone's origin as its own config holds it: git follows no include there, and is not run where the clone's git
+// folder or its common folder lies on another machine, so such a clone reads as one with no origin.
+const originUrl = root => gitDirAfar(root) ? "" : spawnSync("git", ["config", "--no-includes", "--get", "remote.origin.url"], { cwd: root, encoding: "utf8" }).stdout?.trim() ?? "";
+// Whether the git folder of the clone at `at` (its .git, a link or a file naming it, or `at` itself where it is a bare
+// one) or the common folder that folder names lies on another machine, as afar() reads a path; each step read here,
+// a link by what it says and never by following it.
+function gitDirAfar(at) {
+  const named = (from, to) => afar(to) || afar(path.resolve(from, to));
+  const dotGit = path.join(at, ".git");
+  let dir = at;
+  try {
+    const kind = fs.lstatSync(dotGit);
+    if (kind.isSymbolicLink()) { const to = fs.readlinkSync(dotGit); if (named(at, to)) return true; dir = path.resolve(at, to); }
+    else if (kind.isFile()) { const to = /^gitdir:[ \t]*(.*?)[ \t\r]*$/m.exec(fs.readFileSync(dotGit, "utf8"))?.[1] ?? ""; if (!to || named(at, to)) return true; dir = path.resolve(at, to); }
+    else dir = dotGit;
+  } catch { /* (no .git: a bare clone, or none, which git answers itself) */ }
+  try { const common = fs.readFileSync(path.join(dir, "commondir"), "utf8").trim(); if (common && named(dir, common)) return true; } catch { /* (no common folder named) */ }
+  return false;
+}
 // The origin that names the repository: where a clone was made from a folder (check.mjs's scratch clone, a clone of
 // the project's working copy; #1246, point 6), that folder's own origin, a few clones deep, so the repository is the
 // one its first clone names, read and never guessed; else the clone's own origin. A folder that is not itself a clone
@@ -55,10 +74,10 @@ const originUrl = root => spawnSync("git", ["config", "--get", "remote.origin.ur
 function originOf(root, origin) {
   let at = root, url = origin;
   for (let hop = 0; hop < 4 && url && !repoOf(url); hop++) {
-    const local = /^file:\/\//i.test(url) ? fileFolder(url) : /^[a-z][\w+.-]*:\/\/|^[^/\\]+@[^:]+:/i.test(url) ? null : path.resolve(at, url);
+    const local = /^file:\/\//i.test(url) ? fileFolder(url) : /^[a-z][\w+.-]*:\/\/|^[^/\\]+@[^:]+:/i.test(url) || afar(url) ? null : path.resolve(at, url);
     // (a folder that is itself a clone, its .git there or a bare one's HEAD and objects; never one inside another
-    // clone, whose origin git would find by searching upward)
-    if (!local || !(fs.existsSync(path.join(local, ".git")) || (fs.existsSync(path.join(local, "HEAD")) && fs.existsSync(path.join(local, "objects"))))) break;
+    // clone, whose origin git would find by searching upward, nor one on another machine)
+    if (!local || afar(local) || !(fs.existsSync(path.join(local, ".git")) || (fs.existsSync(path.join(local, "HEAD")) && fs.existsSync(path.join(local, "objects"))))) break;
     at = local;
     url = originUrl(at);
   }
@@ -70,13 +89,18 @@ function originOf(root, origin) {
 // probing would send a sign-in to), so a hostile clone's origin makes no connection.
 const fileFolder = url => { try { const host = new URL(url).hostname; return host && host !== "localhost" ? null : fileURLToPath(url); } catch { return null; } };
 
+// Whether a path names another machine, or may: two slashes or backslashes first, as a UNC path (`\\host\share`,
+// `//host/share`) and a device path (`\\?\UNC\host\share`) begin on Windows; such an origin is never followed, nothing
+// there probed or read, and it reads as one that names no repository (#1295).
+const afar = at => /^[\\/]{2}/.test(at);
+
 // A test's answer for the project, by its root or by its origin, which each clone of it shares; else null.
 function answered(env, root, origin) {
   if (!env.CORE_HOST_ANSWERS) return null;
   const real = at => { try { return fs.realpathSync(at); } catch { return path.resolve(at); } };
   let answers = {};
   try { answers = JSON.parse(fs.readFileSync(env.CORE_HOST_ANSWERS, "utf8")); } catch { /* (none: as no answer) */ }
-  const found = Object.entries(answers).find(([at]) => real(at) === real(root) || (origin && real(at) === real(origin)))?.[1];
+  const found = Object.entries(answers).find(([at]) => real(at) === real(root) || (origin && !afar(origin) && real(at) === real(origin)))?.[1];
   return typeof found?.private === "boolean" ? { private: found.private } : null;
 }
 
@@ -93,7 +117,7 @@ function fromEvent(env, repo) {
 // none could, with the mend.
 function fromGh(ask, bare, repo, env) {
   let why = "";
-  try { const r = JSON.parse(ask(`repos/${repo}`)); if (typeof r?.private === "boolean") return { private: r.private }; } catch (e) { why = ` (${String(e.message).split("\n")[0].slice(0, 120)})`; }
+  try { const r = parseBounded(ask(`repos/${repo}`)); if (typeof r?.private === "boolean") return { private: r.private }; } catch (e) { why = ` (${String(e.message).split("\n")[0].slice(0, 120)})`; }
   let open = {};
   try { open = bare(`repos/${repo}`, env) ?? {}; } catch { /* (no answer) */ }
   if (open.status === 200 && typeof open.private === "boolean") return { private: open.private };

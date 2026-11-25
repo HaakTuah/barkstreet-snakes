@@ -40,6 +40,7 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { copyOf } from "./core-path.mjs";
+import { asText } from "./guards.mjs";
 import { MOST, ownerAt, progressOf, readItem } from "./done-when.mjs";
 import { byAgent, LIST, opens } from "./labels.mjs";
 import { LARGEST, linesOf } from "./queue.mjs";
@@ -220,6 +221,9 @@ export function rulesHere(list) {
   try { return list(); } catch (e) { return UNLISTED.test(String(e?.message)) ? [] : null; }
 }
 
+// the lines the answer prints, each as text alone, since a refusal quotes a line the pull request adds (#1348)
+export const printed = ({ head, why }) => ({ out: head ?? asText(`not queue-only: ${why}`), err: head ? asText(why) : null });
+
 if (started(import.meta.url)) {
   const [pullFile, filesFile] = process.argv.slice(2);
   if (!pullFile || !filesFile) {
@@ -238,7 +242,8 @@ if (started(import.meta.url)) {
   const rules = rulesHere(() => ruleFiles(undefined, undefined, { tools: true }));
   const verdict = /^[\w-]+\/[\w.-]+$/u.test(repo) ? judge(read(pullFile), read(filesFile), { progress, owner, read: (item) => readItem(repo, item, ".", owner), base, rules })
     : { head: null, why: "no repository named" };
-  console.log(verdict.head ?? `not queue-only: ${verdict.why}`);
-  if (verdict.head) console.error(verdict.why);
+  const { out, err } = printed(verdict);
+  console.log(out);
+  if (err) console.error(err);
   process.exit(verdict.head ? 0 : 1);
 }

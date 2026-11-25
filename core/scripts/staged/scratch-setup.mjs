@@ -12,12 +12,13 @@ import { CORE } from "../core-address.mjs";
 import { hookCommands, readCore } from "../core-path.mjs";
 import { plainEnv } from "../releases.mjs";
 import { sealOf } from "./scratch-reader.mjs";
+import { parseBounded } from "../guards.mjs";
 
 export const CORE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 // (logins GitHub refuses to register, with two hyphens in a row: no outsider can hold either on github.com)
 export const OWNER = "staged--owner", REPO = "scratch", PASSER = "a--passer-by";
 // The labels of the core's list (labels.json), as the project made them.
-const LIST = JSON.parse(fs.readFileSync(path.join(CORE_ROOT, "scripts", "labels.json"), "utf8"));
+const LIST = parseBounded(fs.readFileSync(path.join(CORE_ROOT, "scripts", "labels.json"), "utf8"));
 export const LABELS = ["state", "sender", "mark"].flatMap(k => Object.entries(LIST[k] ?? {}).map(([name, l]) => ({ name, color: l.color, description: l.description })));
 export const URL = `https://github.com/${OWNER}/${REPO}.git`;
 
@@ -69,7 +70,7 @@ export function carry(project, { submodule = false } = {}) {
     const moved = text.replace(/^Core: .*$/mu, m => (f === "core-manifest.md" ? line : m)).replace(/(^|[\s`'"(@:<[])core\//gmu, "$1lib/core/");
     if (moved !== text) put(file, moved);
   }
-  const settings = path.join(project, ".claude", "settings.json"), json = JSON.parse(fs.readFileSync(settings, "utf8"));
+  const settings = path.join(project, ".claude", "settings.json"), json = parseBounded(fs.readFileSync(settings, "utf8"));
   const commands = hookCommands(readCore(line));
   json.hooks.SessionStart[0].hooks[0].command = commands.start;
   json.hooks.PreToolUse[0].hooks[0].command = commands.helper;

@@ -38,7 +38,7 @@ import { readCore, atCopy, hooksAt, manifestText } from "./core-path.mjs";
 import { waysOf } from "./ways.mjs";
 import { baseOf } from "./licences.mjs";
 import { forget, textAt } from "./git-objects.mjs";
-import { parseBounded, logged } from "./guards.mjs";
+import { parseBounded, logged, loggedCause } from "./guards.mjs";
 import { notInstalled, unreached } from "./packages.mjs";
 import { started } from "./started.mjs";
 import { configured } from "./agent-tools-configured.mjs";
@@ -141,7 +141,7 @@ function run(root, file, { core = false, base = baseOf(root), ways = installedBy
   forget();
   let config;
   try { config = parseBounded(fs.readFileSync(path.resolve(root, file), "utf8")); } catch (e) {
-    return { fail: [`${file} cannot be read (${logged(e.message)}). Mend: name the licence check's config, written as JSON`], notes: [] };
+    return { fail: [`${file} cannot be read (${loggedCause(e.message)}). Mend: name the licence check's config, written as JSON`], notes: [] };
   }
   const head = readProject(root, null, base ? at => notFile(listing(root, base), at) || shownNotBlob(root, base, at) : undefined, undefined, base);
   const atBase = name => textAt(root, base, path.relative(root, path.join(KIT_DIR, name)).split(path.sep).join("/"));

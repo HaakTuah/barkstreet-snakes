@@ -3,11 +3,12 @@
 import { licenceConfig } from "../check-configs.mjs";
 import { project } from "../steps.mjs";
 import { read, write } from "../stage-helpers.mjs";
+import { parseBounded } from "../guards.mjs";
 
 export default {
   // (an .npmrc that keeps install scripts off and that stood without the week's wait; the mend adds the line the step words)
   stage: dir => {
-    const file = licenceConfig(project(dir)), config = JSON.parse(read(dir, file));
+    const file = licenceConfig(project(dir)), config = parseBounded(read(dir, file));
     write(dir, "stage-wait/.npmrc", "ignore-scripts=true\n");
     write(dir, file, `${JSON.stringify({ ...config, ignoreScriptsIn: [...(config.ignoreScriptsIn ?? []), "stage-wait/.npmrc"] }, null, 2)}\n`);
   },

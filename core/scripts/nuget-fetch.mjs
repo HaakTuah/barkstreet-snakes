@@ -27,6 +27,7 @@ import { inflateRawSync } from "node:zlib";
 import { fileURLToPath } from "node:url";
 import { baseOf, configAt, loadConfig, textAt } from "./licences.mjs";
 import { NOT_A_FILE, NOT_A_FILE_IS, REGISTRY, heldBefore, lockPackages, nugetConfig, readProject, sourcesOf, twoHashes, unmarked } from "./nuget.mjs";
+import { asText } from "./guards.mjs";
 import { started } from "./started.mjs";
 import { copyOf, projectAt } from "./core-path.mjs";
 
@@ -36,7 +37,9 @@ const isTools = (f) => posix.basename(f).toLowerCase() === TOOLS;
 const MANIFEST_MAX = 1 << 24; // the most a manifest is inflated to: a real one is a few KB
 const EXACT = /^[0-9]+(\.[0-9]+){1,3}(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$/u; // one version, no range
 const ID = /^[A-Za-z0-9_][A-Za-z0-9_.-]{0,99}$/u;
-const shown = (text) => String(text).replace(/[\u0000-\u001f\u007f\u0085\u2028\u2029]/gu, "?");
+// (what a lock file, a tool manifest, a source or its file gives is shown as text alone, as nuget.mjs shows it: none of
+// it starts a line of its own or holds a runner's workflow command; #1348)
+const shown = asText;
 
 /** The manifest (.nuspec) at the root of a package file, as text; throws where the file is no package this reads. */
 export function nuspecOf(zip) {
@@ -373,6 +376,11 @@ export async function fetchAll(config, root, tracked, into, sources = sourcesOf(
   return { failures, notes, reports, summary: `${fetched} of ${wanted.size} NuGet packages and tools fetched before the restore, each held to its lock file's content hash where it has one; ${failures.length} failing` };
 }
 
+/** The lines it prints of a result, each as text alone (shown): its notes and reports, for the standard output, and its
+ *  failures, for the error output. */
+export const printed = ({ notes, reports, failures }) => ({
+  out: [...notes.map(n => `note ${shown(n)}`), ...reports.map(r => `REPORT: ${shown(r)}`)], err: failures.map(f => `FAIL: ${shown(f)}`) });
+
 if (started(import.meta.url)) {
   const args = process.argv.slice(2), at = args.indexOf("--into");
   const fail = (msg) => { console.error(`FAIL: ${shown(msg)}`); process.exit(1); };
@@ -388,9 +396,9 @@ if (started(import.meta.url)) {
     const base = baseOf(root);
     result = await fetchAll(loadConfig(configPath), root, tracked, into, undefined, { base, baseConfig: configAt(root, base, configPath) });
   } catch (e) { fail(e.message); }
-  for (const n of result.notes) console.log(`note ${shown(n)}`);
-  for (const r of result.reports) console.log(`REPORT: ${shown(r)}`);
-  for (const f of result.failures) console.error(`FAIL: ${shown(f)}`);
+  const { out, err } = printed(result);
+  for (const line of out) console.log(line);
+  for (const line of err) console.error(line);
   console.log(result.summary);
   process.exit(result.failures.length ? 1 : 0);
 }

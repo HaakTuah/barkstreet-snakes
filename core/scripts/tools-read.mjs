@@ -17,7 +17,7 @@
 //   node core/scripts/tools-read.mjs [--last <n, 10 where none is given>] [--repo <owner/name>]
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
-import { aRepository, logged } from "./guards.mjs";
+import { aRepository, logged, parseBounded } from "./guards.mjs";
 import { repoOf } from "./inbox.mjs";
 import { hostAccount, hostSaid, ownerOf } from "./releases.mjs";
 import { started } from "./started.mjs";
@@ -26,7 +26,7 @@ import { toolOf } from "./stand-in-record.mjs";
 export const NONE = "no tool named";
 const LED = /^\s*(?:Security|Code) review:/u;
 // (each agent tool the core knows, with the logins of its own bot accounts, its documentation's; beside this file)
-const BOTS = JSON.parse(fs.readFileSync(new URL("./tool-bots.json", import.meta.url), "utf8")).bots;
+const BOTS = parseBounded(fs.readFileSync(new URL("./tool-bots.json", import.meta.url), "utf8")).bots;
 
 /** The tool whose own bot account `login` is (tool-bots.json's list, any case), or null: a login alone, never a body. */
 export const botTool = login => Object.keys(BOTS).find(t => BOTS[t].some(l => l.toLowerCase() === String(login ?? "").toLowerCase())) ?? null;
@@ -69,7 +69,7 @@ function reviewedBy(p, owner) {
 // request is updated when it merges, if not later: once `n` are merged and a page's oldest update stands before the
 // n-th newest merge, no page after it holds a newer one (at most `pages` pages are read).
 export function readPulls(repo, n, ask, pages = 20) {
-  const json = args => JSON.parse(ask(["api", ...args]));
+  const json = args => parseBounded(ask(["api", ...args]));
   const byMerge = list => list.sort((a, b) => String(b.merged_at).localeCompare(String(a.merged_at)));
   let merged = [];
   for (let page = 1; page <= pages; page++) {

@@ -19,6 +19,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { counted } from "./file-size.mjs";
 import { FLOOR, FLOOR_WHEN, STEPS, budget, gather, kindsOf, reading, shown, textOf } from "./reading.mjs";
+import { asText } from "./guards.mjs";
 import { started } from "./started.mjs";
 
 const ROOT = path.resolve(fileURLToPath(new URL("..", import.meta.url)));
@@ -39,7 +40,7 @@ const QUIET = { GIT_TERMINAL_PROMPT: "0", GIT_NO_LAZY_FETCH: "1", GCM_INTERACTIV
 const git = (args, encoding = "utf8") => execFileSync("git", ["--no-optional-locks", "-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null", "-c", "core.quotePath=false", ...args],
   { cwd: ROOT, encoding, maxBuffer: 1 << 28, stdio: ["ignore", "pipe", "pipe"], env: { ...process.env, ...QUIET } });
 // Each line printed, its control characters written out, so that no name a pull request gives starts a line of its own.
-const safe = s => String(s).replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]/gu, c => `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}`);
+const safe = s => asText(String(s).replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]/gu, c => `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}`)); // (as text alone; #1348)
 
 // What the total read reads at most, on either tree: a file of this many bytes (past it, its size alone is counted, and
 // its text is not read), this many bytes of all the files' text together, this many rule files and kinds of task, this

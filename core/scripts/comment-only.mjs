@@ -19,7 +19,8 @@
 // beside an action's version (`uses:`) must stand. It reads YAML as GitHub's parser does where it reads it at all, and
 // refuses, rather than guess, every line it cannot read for sure: a tab, a carriage return or another control character
 // or line break, a byte order mark, a character YAML refuses; a value that runs on to the next line (a quoted or plain
-// one, or one in [ ] or { }); a quote or # inside [ ] or { }; an anchor, alias, tag, explicit key or document marker. A
+// one, or one in [ ] or { }); a # inside [ ] or { }, or a quote there but one around plain words in [ ]
+// (#1313); an anchor, alias, tag, explicit key or document marker. A
 // line inside a block scalar (`run: |`) is text, a # line too, and changes nothing only where it is unchanged; the blank
 // lines after its last are not, unless it keeps them (`|+`). Of the
 // files outside what it reads, it refuses those that run by themselves or decide what does (RUNS_TOO below) and lists
@@ -51,6 +52,8 @@ const HEADER = /^[|>](?:[1-9][+-]?|[+-][1-9]?)?(?: +(#.*)?)?$/u; // a block scal
 export const RUNS_TOO = /(?:^|\/)(?:\.mcp\.json|package\.json|package-lock\.json|npm-shrinkwrap\.json|yarn\.lock|pnpm-lock\.yaml|\.yarnrc(?:\.yml)?|\.npmrc|\.node-version|\.node-least|\.nvmrc|\.envrc|\.devcontainer\.json|\.pre-commit-config\.ya?ml|\.gitmodules|\.gitattributes|(?:[^/]*\.)?(?:Dockerfile|Containerfile)[^/]*|Makefile|GNUmakefile|justfile|Taskfile\.ya?ml|\.tool-versions|\.?mise\.toml|nuget\.config|global\.json|dotnet-tools\.json|packages\.lock\.json|[^/]+\.(?:(?:cs|fs|vb)?proj(?:\.user)?|projitems|shproj|props|targets)|Directory\.Build\.rsp|\.pnpmfile\.cjs)$|(?:^|\/)\.(?:vscode|devcontainer|husky|yarn\/releases|kiro|codex|agents?|gemini|cursor|windsurf|amazonq|continue|roo)(?:\/|$)|^core\/|(?:^|\/)[^/]*~\d/iu;
 // a comment a tool may read as an instruction (a check silenced, a linter told to look away)
 const DIRECTIVE = /\b(?:ignore|disable|suppress|skip|allowlist|nosec|noqa|nosemgrep|semgrep|nolint|noinspection|nocheck|codeql|lgtm|nosonar|ggignore|zizmor|actionlint|shellcheck|checkov|trivy|gitleaks|lint|pragma)/iu;
+// a quoted value of plain words in [ ] (the starter kit's `update-types: ["minor", "patch"]`, `patterns: ["*"]`)
+const WORDS = /^(["'])[A-Za-z0-9 ._/*+-]*\1$/u;
 // a plain step's name YAML 1.1 or 1.2 reads as no string
 const NOT_TEXT = /^(?:~|null|true|false|yes|no|on|off|y|n)$/iu;
 
@@ -138,7 +141,19 @@ function flow(rest, toks, k) {
     else if ("]}".includes(toks[j].src) && --depth === 0) break;
   }
   const end = j < toks.length ? toks[j].col + 1 : rest.length;
-  if (/["'#&*!]/u.test(rest.slice(at, end))) return { why: "a quote, #, anchor, alias or tag inside [ ] or { }" };
+  // (in [ ] alone, a quoted value the lexer ends on its own quote and that holds only plain words is read: no quote,
+  // escape, #, bracket, comma or colon within it to read two ways; #1313)
+  // (what stands between them, gathered in one pass, so a long list costs no more than its length)
+  let text = "", from = at;
+  // (the brackets open around each token: only one whose innermost is a [ is read so, never one in a { } within it)
+  const open = [];
+  for (const t of toks.slice(k, j)) {
+    if ("[{".includes(t.src)) open.push(t.src);
+    else if ("]}".includes(t.src)) open.pop();
+    else if (rest[at] === "[" && open.at(-1) === "[" && WORDS.test(t.src)) { text += rest.slice(from, t.col); from = t.col + t.src.length; }
+  }
+  text += rest.slice(from, end);
+  if (/["'#&*!]/u.test(text)) return { why: "a quote, #, anchor, alias or tag inside [ ] or { }" };
   if (j >= toks.length || toks.slice(k, j).some(t => t.runs)) return { why: "a [ ] or { } that runs on to the next line" };
   return after(rest, toks, j + 1, at, end, "flow");
 }

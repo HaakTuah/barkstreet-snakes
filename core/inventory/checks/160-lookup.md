@@ -1,4 +1,4 @@
-- `scripts/lookup.mjs`, `scripts/week-wait.mjs`, `scripts/lookup-stage.mjs`, `tests/lookup-run-test.mjs`, `tests/lookup-step-test.mjs`, `scripts/held.mjs`: asks its registry of each package a pull request brings in new, and fails a
+- `scripts/lookup.mjs`, `scripts/week-wait.mjs`, `scripts/lookup-stage.mjs`, `tests/lookup-run-test.mjs`, `tests/lookup-step-test.mjs`, `tests/base-parent-test.mjs`, `scripts/held.mjs`: asks its registry of each package a pull request brings in new, and fails a
   name the registry does not know or one first published days ago, printing the rest for the review (#488, point 1,
   merged later the same day). *Runs:* any session and the runners, with the registry reachable. *Else:* npm's own `npm
   view`, dropped on fact: the script asks npm's registry and NuGet's directly, as `npm view` would, with no npm needed;

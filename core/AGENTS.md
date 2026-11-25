@@ -182,23 +182,27 @@ one says it does, and its conditions stand there. The main lane is the lines in 
   one would carry. **Each release is tried on a real project first** (#1084). By default, before the `release` workflow
   is started, the orchestrator has a builder at the strongest tier try the release on a copy of a project that takes the
   core and whose owner allows it, the owner's own as `scripts/state-report.mjs --projects` finds them, read-only,
-  nothing written there: its checks run as on a pull request
-  (`scripts/check.mjs --base <its main> --own --verdicts <a file outside every repository>`) once before the update, as
-  a baseline, and again after it, the sync between; where the copy holds no `check.mjs`, or one without `--verdicts`,
-  the baseline is taken with the release's, from a clone of the core at the release's commit, run from the project's
-  clone, the core's clone outside it, its verdicts still outside every repository, and the record says which way each
-  was taken (#1244); each passed both, failed both (standing before), or passed before, or ran not before, and failed
-  after (the release's, which stops the cut), or ran before and could not be read after, or could not be read before
-  and failed after (not measured, which stops it too; #1257), or was read in neither run (not measured, which stops
-  nothing); it records the counts alone (`node scripts/release.mjs --trial`) in a pull
-  request of its own. Another owner's project has its own code run only where no sign-in or key of the owner's is held
-  (floor rule 18). The one condition that changes it: no such project allows a trial; the record says so, and so does
-  the release. It does not mean that a project is written to, that its private code leaves it, or that it is named
-  anywhere. Reason: #1079 passed every check of the core and failed only on a real project. Held by
-  `scripts/release.mjs` with `scripts/release-trial.mjs`, which say the trial has not run, and cut nothing, where its
-  record does not stand for the commit, cut nothing where a check passed before, or ran not before, and failed after,
-  or ran before and was not measured after, or was not read before and failed after, and refuse the record of none allowed where a project of the owner's takes the core; where another owner's code may
-  run, by nothing yet.
+  nothing written there: its checks run as on a pull request (`scripts/check.mjs --base <its main> --own --verdicts <a
+  file outside every repository>`) once before the update, as a baseline, and again after it, the sync between; where
+  the copy holds no `check.mjs`, or one without `--verdicts`, the baseline is taken with the release's, from a clone of
+  the core at the release's commit, run from the project's clone, the core's clone outside it, its verdicts still
+  outside every repository, and the record says which way each was taken (#1244); each passed both, failed both
+  (standing before), or passed before, or ran not before, and failed after (the release's, which stops the cut), or ran
+  before and could not be read after, or could not be read before and failed after (not measured, which stops it too;
+  #1257), or ran before and was stopped behind a failure or not run after (which stops it too, the trial run again once
+  what stopped it is mended), or ran or was read in neither run (which stops nothing); the sync is read pure or not
+  against the release's commit by floor rule 8's proof (`scripts/pure-sync.mjs --trial <the commit>`, a reading whose
+  answer stops nothing and proves no merge, though a trial recorded without it for each project stops the cut; #1261);
+  it records the counts alone (`node scripts/release.mjs --trial`) in a pull request of its own. Another owner's project
+  has its own code run only where no sign-in or key of the owner's is held (floor rule 18). The one condition that
+  changes it: no such project allows a trial; the record says so, and so does the release. It does not mean that a
+  project is written to, that its private code leaves it, or that it is named anywhere. Reason: #1079 passed every check
+  of the core and failed only on a real project, and the sync's proof was first met on one after the cut (#1261). Held
+  by `scripts/release.mjs` with `scripts/release-trial.mjs`, which say the trial has not run, and cut nothing, where its
+  record does not stand for the commit, cut nothing where a check passed before, or ran not before, and failed after, or
+  ran before and was not measured, stopped or not run after, or was not read before and failed after, and refuse the
+  record of none allowed where a project of the owner's takes the core, or a record without the sync's reading for each
+  project tried (with `scripts/trial-sync.mjs`); where another owner's code may run, by nothing yet.
 - **Nothing locks a project,** in any owner's project, the core's owner's own included.
   By default, once a project syncs to a release, nothing the release brings stops its work or waits on its owner:
   what an agent can mend alone may bind, and what only the owner can do (a yes the floor names, a setting on the

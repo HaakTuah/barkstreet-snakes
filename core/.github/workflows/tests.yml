@@ -247,6 +247,9 @@ jobs:
       - name: The licence check's lists and readers
         if: ${{ !cancelled() && contains(matrix.parts, 'scans') && (env.RUN == 'all' || contains(env.RUN, ' tests/licences-test.mjs ')) }}
         run: node tests/licences-test.mjs
+      - name: The licence check's npm lock files its config does not name, and the core's own config's form
+        if: ${{ !cancelled() && contains(matrix.parts, 'scans') && (env.RUN == 'all' || contains(env.RUN, ' tests/licence-locks-test.mjs ')) }}
+        run: node tests/licence-locks-test.mjs
       - name: The licence check on a whole project, and its scan
         if: ${{ !cancelled() && contains(matrix.parts, 'scans') && (env.RUN == 'all' || contains(env.RUN, ' tests/licence-scan-test.mjs ')) }}
         run: node tests/licence-scan-test.mjs
@@ -520,6 +523,9 @@ jobs:
       - name: The one script of the core's checks without a secret (on Linux; the NuGet check's test runs it on Windows too)
         if: ${{ !cancelled() && runner.os == 'Linux' && contains(matrix.parts, 'rest') && (env.RUN == 'all' || contains(env.RUN, ' tests/checks-test.mjs ')) }}
         run: node tests/checks-test.mjs
+      - name: The base the core's workflows name on a pull request, HEAD^1, read by the lookup and the package checks (on Linux)
+        if: ${{ !cancelled() && runner.os == 'Linux' && contains(matrix.parts, 'rest') && (env.RUN == 'all' || contains(env.RUN, ' tests/base-parent-test.mjs ')) }}
+        run: node tests/base-parent-test.mjs
       - name: Where the core's copy stands, as the manifest names it
         if: ${{ !cancelled() && contains(matrix.parts, 'second') && (env.RUN == 'all' || contains(env.RUN, ' tests/core-path-test.mjs ')) }}
         run: node tests/core-path-test.mjs
@@ -647,6 +653,9 @@ jobs:
       - name: The words check, the dated records' added lines too
         if: ${{ !cancelled() && contains(matrix.parts, 'third') && (env.RUN == 'all' || contains(env.RUN, ' tests/general-test.mjs ')) }}
         run: node tests/general-test.mjs
+      - name: A parse error names where, not what, and every JSON.parse of the scripts stands where its error is worded so
+        if: ${{ !cancelled() && contains(matrix.parts, 'third') && (env.RUN == 'all' || contains(env.RUN, ' tests/parse-errors-test.mjs ')) }}
+        run: node tests/parse-errors-test.mjs
       - name: The marks check, a rule written read for its reason, its holder and its condition
         if: ${{ !cancelled() && contains(matrix.parts, 'third') && (env.RUN == 'all' || contains(env.RUN, ' tests/pattern-test.mjs ')) }}
         run: node tests/pattern-test.mjs
@@ -692,6 +701,9 @@ jobs:
       - name: The steps' writers, each step a script does whole written and read done after it, the rule files' words kept
         if: ${{ !cancelled() && contains(matrix.parts, 'writes') && (env.RUN == 'all' || contains(env.RUN, ' tests/steps-write-test.mjs ')) }}
         run: node tests/steps-write-test.mjs
+      - name: The steps' writers keep a file's Windows line ends
+        if: ${{ !cancelled() && contains(matrix.parts, 'writes') && (env.RUN == 'all' || contains(env.RUN, ' tests/step-writers-crlf-test.mjs ')) }}
+        run: node tests/step-writers-crlf-test.mjs
       - name: The reading of a run's configs, from its script, its argument and every source of a config
         if: ${{ !cancelled() && contains(matrix.parts, 'writes') && (env.RUN == 'all' || contains(env.RUN, ' tests/steps-run-configs-test.mjs ')) }}
         run: node tests/steps-run-configs-test.mjs
@@ -794,7 +806,7 @@ jobs:
       - name: Each package new to the core's own lock file looked up in its registry (floor rule 15; once, on Linux)
         if: ${{ !cancelled() && runner.os == 'Linux' && matrix.node == '.node-version' && contains(matrix.parts, 'licences') }}
         env:
-          LOOKUP_BASE: ${{ github.event.pull_request.base.sha }} # empty on a push to main, where nothing is new
+          LOOKUP_BASE: ${{ github.event_name == 'pull_request' && 'HEAD^1' || '' }} # the merge's first parent, which the checkout holds (#1231); empty on a push to main, where nothing is new
         shell: bash
         run: node scripts/lookup.mjs .github/licences.json
       - name: The week's wait on each package the lock files bring or update (floor rule 7; once, on Linux)

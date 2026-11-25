@@ -23,9 +23,10 @@ import { callsPosting } from "./review-caller.mjs";
 import { inBare, plainEnv } from "./releases.mjs";
 import { CONTEXT } from "./security-review.mjs";
 import { started } from "./started.mjs";
+import { parseBounded } from "./guards.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-export const SETTINGS = JSON.parse(fs.readFileSync(path.join(HERE, "owner-settings.json"), "utf8"));
+export const SETTINGS = parseBounded(fs.readFileSync(path.join(HERE, "owner-settings.json"), "utf8"));
 const LIST = "scripts/owner-settings.json";
 // The most of an answer of GitHub's read (each of at most five reads, 30 s each; SECURITY.md, rule 5).
 const ANSWER_MOST = 16 << 20;

@@ -25,6 +25,7 @@ import { matcher } from "./select-matcher.mjs";
 import { notLinked, parseConfig, standing, survey, where } from "./shape.mjs";
 import { started } from "./started.mjs";
 import { median } from "./wait.mjs";
+import { parseBounded } from "./guards.mjs";
 
 class Refused extends Error {}
 const refuse = (what, mend) => { throw new Refused(`${what}. Mend: ${mend}`); };
@@ -163,8 +164,8 @@ function runsOf(opts, tests) {
     if (!/^[\w.-]+\/[\w.-]+$/u.test(opts["--repo"]) || !/^[\w.-]+\.ya?ml$/u.test(wf ?? "")) refuse("--repo needs <owner>/<name> and --workflow the file of the workflow that runs the tests", "run it with --repo <owner>/<name> --workflow <file>.yml");
     const at = `.github/workflows/${wf}`, steps = stepsOf(fs.existsSync(at) ? fs.readFileSync(at, "utf8") : refuse(`there is no workflow at ${at}`, "name the workflow that runs the tests, as it stands under .github/workflows/"), tests);
     const count = Number(opts["--count"] ?? COUNT);
-    const ids = JSON.parse(ghApi(`repos/${opts["--repo"]}/actions/workflows/${wf}/runs?status=completed&per_page=${Math.min(100, count)}`)).workflow_runs.slice(0, count);
-    for (const run of ids) runs.push(...fromJobs(JSON.parse(ghApi(`repos/${opts["--repo"]}/actions/runs/${run.id}/jobs?filter=all&per_page=100`)).jobs.map(j => ({ ...j, created_at: run.created_at })), steps));
+    const ids = parseBounded(ghApi(`repos/${opts["--repo"]}/actions/workflows/${wf}/runs?status=completed&per_page=${Math.min(100, count)}`)).workflow_runs.slice(0, count);
+    for (const run of ids) runs.push(...fromJobs(parseBounded(ghApi(`repos/${opts["--repo"]}/actions/runs/${run.id}/jobs?filter=all&per_page=100`)).jobs.map(j => ({ ...j, created_at: run.created_at })), steps));
   }
   if (opts["--junit"]) {
     const dir = opts["--junit"], files = fs.existsSync(dir) ? fs.readdirSync(dir).filter(f => f.endsWith(".xml")).sort() : refuse(`there is no folder at ${dir}`, "name the folder that holds the JUnit reports, one a run");

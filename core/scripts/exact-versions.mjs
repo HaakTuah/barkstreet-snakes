@@ -15,7 +15,7 @@
 // Usage, from the project's root:  node core/scripts/exact-versions.mjs <the licence check's config>
 import { readFileSync } from "node:fs";
 import { join, posix, resolve } from "node:path";
-import { inProject, logged, parseBounded } from "./guards.mjs";
+import { inProject, logged, loggedCause, noSignInWhole, parseBounded, quotedAlone } from "./guards.mjs";
 import { started } from "./started.mjs";
 
 const KINDS = ["dependencies", "devDependencies", "optionalDependencies", "peerDependencies"];
@@ -31,7 +31,8 @@ export const exact = (text) => {
   return parts !== null && parts.slice(1, 4).every((number) => number.length <= 15) && !/\.(?:tgz|tar.gz|tar)$/iu.test(text); // (npm's own pattern, any one letter between "tar" and "gz")
 };
 const inside = (key) => !key.startsWith("/") && !`/${key}/`.includes("/../") && !/[\\:]/u.test(key); // (a folder of the project's, by its key)
-const show = (value) => JSON.stringify(value) ?? String(value); // (a name or version printed so that it stays on its line)
+// (a name or version printed so that it stays on its line, any address's sign-in cut out: floor rule 1)
+const show = (value) => quotedAlone(value) ?? String(value);
 
 // Whether a "$name" points to a dependency every list of the root's that holds the name holds at one exact version, and
 // one does.
@@ -81,7 +82,7 @@ function ownLink(entry, packages) {
 
 // What a dependency's spec says of its entry in the lock file, as the problems it has: none, or one.
 function dependencyProblems({ file, kind, name, spec, entry, lockfile }) {
-  if (!exact(spec)) return [`${file}: ${kind} ${show(name)}: ${show(spec)} is not one exact version. Mend: write the one exact version the lock file installs${entry && typeof entry === "object" && typeof entry.version === "string" ? `, ${entry.version}` : ""}, then write the lock file anew with npm: its install, given --package-lock-only`];
+  if (!exact(spec)) return [`${file}: ${kind} ${show(name)}: ${show(spec)} is not one exact version. Mend: write the one exact version the lock file installs${entry && typeof entry === "object" && typeof entry.version === "string" ? `, ${noSignInWhole(entry.version)}` : ""}, then write the lock file anew with npm: its install, given --package-lock-only`];
   if (entry === undefined) {
     if (kind === "peerDependencies" || kind === "optionalDependencies") return []; // (a lock file may leave these out)
     return [`${file}: ${kind} ${show(name)}: ${show(spec)} is not in ${lockfile}. Mend: write the lock file anew with npm: its install, given --package-lock-only`];
@@ -108,7 +109,7 @@ function packageProblems(lockfile, root, packages, key, read) {
   if (!inside(key)) return [`${lockfile}: the package ${show(key)} is no folder of the project's. Mend: make it a folder inside the project, or take it out of the project's workspaces, then write the lock file anew with npm: its install, given --package-lock-only`];
   const file = posix.join(root, key, "package.json");
   let list;
-  try { list = parseBounded(read(file)); } catch (e) { return [`${file}: cannot be read as JSON (${logged(e.message)}). Mend: correct it to JSON`]; }
+  try { list = parseBounded(read(file)); } catch (e) { return [`${file}: cannot be read as JSON (${loggedCause(e.message)}). Mend: correct it to JSON`]; }
   const problems = [];
   if (key === "" && list?.overrides !== undefined) overrides(list.overrides, list, file, "", problems);
   for (const kind of KINDS) for (const problem of kindProblems(file, kind, list?.[kind], lockfile, packages, key)) problems.push(problem); // (one at a time: a spread of a long list overflows the stack)
@@ -118,7 +119,7 @@ function packageProblems(lockfile, root, packages, key, read) {
 export function check(lockfile, read) {
   const problems = [];
   let lock;
-  try { lock = parseBounded(read(lockfile)); } catch (e) { return [`${lockfile}: cannot be read as JSON (${logged(e.message)}). Mend: write the lock file anew with npm, never by hand: its install, given --package-lock-only`]; }
+  try { lock = parseBounded(read(lockfile)); } catch (e) { return [`${lockfile}: cannot be read as JSON (${loggedCause(e.message)}). Mend: write the lock file anew with npm, never by hand: its install, given --package-lock-only`]; }
   const packages = lock?.packages;
   if (packages === null || typeof packages !== "object" || Array.isArray(packages)) return [`${lockfile}: holds no "packages" (lockfileVersion 2 or later is needed). Mend: write the lock file anew with npm 7 or later, never by hand: its install, given --package-lock-only`];
   const root = posix.dirname(lockfile);
@@ -137,7 +138,7 @@ export function report(configPath, root = ".", textAt = null, noBase = false) {
   const failed = (message, status = 1) => ({ status, out: [], err: [message] });
   if (!configPath) return failed("usage: node core/scripts/exact-versions.mjs <the licence check's config>", 2);
   let lockfiles;
-  try { lockfiles = JSON.parse(readFileSync(resolve(root, configPath), "utf8")).lockfiles ?? []; } catch (e) { return failed(`FAIL: ${configPath} cannot be read (${logged(e.message)}). Mend: name the licence check's config, written as JSON`); }
+  try { lockfiles = parseBounded(readFileSync(resolve(root, configPath), "utf8")).lockfiles ?? []; } catch (e) { return failed(`FAIL: ${configPath} cannot be read (${loggedCause(e.message)}). Mend: name the licence check's config, written as JSON`); }
   if (!Array.isArray(lockfiles) || lockfiles.some((f) => typeof f !== "string")) return failed(`FAIL: "lockfiles" in ${configPath} is no list of paths. Mend: write it as a list of the lock files' paths`);
   const outside = lockfiles.filter((f) => !inProject(f));
   if (outside.length) return failed(`FAIL: ${logged(`"lockfiles" in ${configPath} names a path outside the project: ${outside.join(", ")}`)}. Mend: name each lock file by its path from the project's root, with no ".." that leads above it`);

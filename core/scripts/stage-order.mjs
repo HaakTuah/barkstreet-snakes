@@ -25,7 +25,7 @@
 //   node core/scripts/stage-order.mjs [--repo <owner/name>] [--last <n, 30 where none is given>] [--warning <tool>]
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
-import { aRepository, logged } from "./guards.mjs";
+import { aRepository, logged, parseBounded } from "./guards.mjs";
 import { repoOf } from "./inbox.mjs";
 import { workflowsIn } from "./runners.mjs";
 import { started } from "./started.mjs";
@@ -36,7 +36,7 @@ export const LAST = 30;
 const RATES = [[/^macos(-|$)/u, 10], [/^windows(-|$)/u, 2], [/^ubuntu(-|$)/u, 1]];
 const ASKED = /^\s*@[\w-]+(?:\[bot\])?\s+review\b/iu;
 // (the agent tools the core knows, each with its part in tools/, beside this file; and a bot's login of the plain form)
-const TOOLS = JSON.parse(fs.readFileSync(new URL("./staged-tools.json", import.meta.url), "utf8")).tools;
+const TOOLS = parseBounded(fs.readFileSync(new URL("./staged-tools.json", import.meta.url), "utf8")).tools;
 const PLAIN_BOT = /^[a-z0-9][a-z0-9-]{0,38}\[bot\]$/iu;
 
 /** Whether a name read from the record may stand in the order: a tool the core knows, in any case, or a bot's login of

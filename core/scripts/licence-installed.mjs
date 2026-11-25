@@ -19,7 +19,7 @@
 //   node core/scripts/licence-installed.mjs [the folder that holds the lock file, the current one if left out]
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { DEEPEST, leadsOut, parseBounded } from "./guards.mjs";
+import { DEEPEST, leadsOut, parseBounded, quotedAlone } from "./guards.mjs";
 import { lockInstalled, lockPathOk, lockRead, workspacesIn } from "./licences.mjs";
 import { started } from "./started.mjs";
 
@@ -108,7 +108,7 @@ const optional = (entry) => entry && typeof entry === "object" && (entry.optiona
 const elsewhere = (entry, system) => !fits(entry.os, system.os) || !fits(entry.cpu, system.cpu) || (entry.libc !== undefined && entry.libc !== null && (system.libc === null || !fits(entry.libc, system.libc)));
 
 // (what a lock file or a package holds, on one line of a log, and no longer than a line)
-const shown = (value) => (value === undefined ? "none" : JSON.stringify(value).replace(/[\u007f-\u009f\u2028\u2029]/gu, "?").slice(0, 200));
+const shown = (value) => (value === undefined ? "none" : (quotedAlone(value) ?? String(value)).replace(/[\u007f-\u009f\u2028\u2029]/gu, "?").slice(0, 200));
 
 /** A package's own package.json at `file`, read as npm reads one (a byte-order mark before it is no part of it), and
  *  only inside the project `dir`: the object, or, where it is not read, the failure's words. */

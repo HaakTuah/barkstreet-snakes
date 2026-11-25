@@ -13,6 +13,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { MODULES } from "./reading.mjs";
+import { asText } from "./guards.mjs";
 import { started } from "./started.mjs";
 
 export const SECTION = "## The core this repository takes";
@@ -96,8 +97,8 @@ export function report(root = path.resolve(path.dirname(fileURLToPath(import.met
 
 function main() {
   const { status, out, err } = report();
-  for (const line of err) console.error(line);
-  for (const line of out) console.log(line);
+  for (const line of err) console.error(asText(line));
+  for (const line of out) console.log(asText(line));
   return status;
 }
 

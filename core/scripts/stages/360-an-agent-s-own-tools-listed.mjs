@@ -2,15 +2,16 @@
 // scripts/steps-stage.mjs loads it, in the order of the names.
 import fs from "node:fs";
 import { at, read, write } from "../stage-helpers.mjs";
+import { parseBounded } from "../guards.mjs";
 
 export default {
   // (a plug-in turned on and listed nowhere; the mend lists it, with its publisher and one exact version)
   stage: dir => {
-    const file = ".claude/settings.json", settings = fs.existsSync(at(dir, file)) ? JSON.parse(read(dir, file)) : {};
+    const file = ".claude/settings.json", settings = fs.existsSync(at(dir, file)) ? parseBounded(read(dir, file)) : {};
     write(dir, file, `${JSON.stringify({ ...settings, enabledPlugins: { ...settings.enabledPlugins, "staged@example-market": true } }, null, 2)}\n`);
   },
   mend: dir => {
-    const config = JSON.parse(read(dir, "checks/licences.json"));
+    const config = parseBounded(read(dir, "checks/licences.json"));
     write(dir, "checks/licences.json", `${JSON.stringify({ ...config, agentTools: [...(config.agentTools ?? []), { kind: "plugin", name: "staged@example-market", publisher: "Example Tools", version: "1.0.0" }] }, null, 2)}\n`);
   },
 };

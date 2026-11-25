@@ -22,7 +22,7 @@ import { fileURLToPath } from "node:url";
 import { CORE } from "./core-address.mjs";
 import { copyOf, readCore } from "./core-path.mjs";
 import { progressOf } from "./done-when.mjs";
-import { aRepository, inProject } from "./guards.mjs";
+import { aRepository, inProject, parseBounded } from "./guards.mjs";
 import { repoOf } from "./inbox.mjs";
 import { RULES, ruleFiles } from "./rule-files.mjs";
 import { started } from "./started.mjs";
@@ -123,7 +123,7 @@ export function statesOf(repo, gh = route => {
   const open = new Set();
   for (let page = 1; ; page++) {
     let rows;
-    try { rows = JSON.parse(gh(`repos/${repo}/issues?state=open&per_page=100&page=${page}`)); } catch (e) { throw new Error(e instanceof SyntaxError ? "GitHub's list of open issues is no JSON" : e.message); }
+    try { rows = parseBounded(gh(`repos/${repo}/issues?state=open&per_page=100&page=${page}`)); } catch (e) { throw new Error(e instanceof SyntaxError ? "GitHub's list of open issues is no JSON" : e.message); }
     if (!Array.isArray(rows)) throw new Error("GitHub's list of open issues is no list");
     for (const row of rows) {
       if (row === null || typeof row !== "object" || !Number.isSafeInteger(row.number) || row.number < 1 || row.state !== "open") throw new Error("GitHub's list of open issues holds a row that is no open issue with its number");

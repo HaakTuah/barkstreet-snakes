@@ -31,9 +31,10 @@ import { notLinked, parseConfig, where } from "./shape.mjs";
 import { started } from "./started.mjs";
 import { measuredCode, toolOf } from "./strength.mjs";
 import { installIn } from "./stryker.mjs";
+import { parseBounded } from "./guards.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-export const LIST = JSON.parse(fs.readFileSync(path.join(HERE, "mutation-tools.json"), "utf8"));
+export const LIST = parseBounded(fs.readFileSync(path.join(HERE, "mutation-tools.json"), "utf8"));
 const ROW = "*mutation tool*";
 const MANIFEST = "core-manifest.md";
 // (the reasons the kit and this script give where there are no tests or no code yet: a row that says one is filled again)
