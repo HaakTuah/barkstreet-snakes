@@ -17,7 +17,8 @@
   "split": 51200,
   "skip": [
     "docs/archive/",
-    "checks/shape-baseline.json"
+    "checks/shape-baseline.json",
+    "checks/mutation/package-lock.json"
   ],
   "past": {}
 }

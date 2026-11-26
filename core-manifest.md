@@ -32,3 +32,4 @@ Floor: whole. Modules: all.
 | *use-against-ignore measurement* | `tools/abtest.js` on fresh seeds, rivals that use the move against a copy where only some rivals lose it (the rule itself unchanged), and the conditional-goods simulations, which check that neither always nor never using it wins ("Rules that stand" in `AGENTS.md`) |
 | *where the numbers go* | the PR's table |
 | *where rules are taught* | a visible cue and a lesson: the one-time lesson and a Field guide row, always both |
+| *mutation tool* | `node core/scripts/stryker.mjs --tool checks/mutation --report {report} {lines}`: Stryker, from the core's list (`mutation-tools.json`) |
