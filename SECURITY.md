@@ -28,11 +28,12 @@ floor's numbers, what only this game has and what the floor leaves to it; who mi
      hostile tests: `tools/net-test.js`.
    - **Online peers** (PeerJS, `net.js`, `net-relays.js` and `online.js`): anyone with a room code. Their checks: each
      message's pinned shape (`tools/online-test.js`, `tools/protocol-shapes.json`); names through the one cleaner
-     (`SnakeRecords.cleanName`); a colour, kind or id one of the game's own values; caps on counts and lengths, so
-     nothing a peer sends stalls the host's tick; a hello of any version but the host's refused, with words to reload
-     both pages. Limits: 65,536 characters a message through the relays, none of our own through PeerJS (its channel
-     holds it); a name of 16 characters, an owner of 40, a line of chatter of 200; eight connections and four people a
-     room, 512 portals a tick; a friend let in within 5 s, gone after 20 s unheard, a host after 8 s, a round trip
+     (`SnakeRecords.cleanName`), save the host's lobby names on a guest, which are not capped yet (#818); a colour,
+     kind or id one of the game's own values; caps on counts and lengths, so nothing a peer sends stalls the host's
+     tick; a hello of any version but the host's refused, with words to reload both pages. Limits: 65,536 characters a
+     message through the relays, none of our own through PeerJS (its channel holds it); a friend's name in a hello of
+     16 characters, before the seat's number the host adds to tell two alike apart, an owner of 40, a line of chatter
+     of 200; eight connections and four people a room, 512 portals a tick; a friend let in within 5 s, gone after 20 s unheard, a host after 8 s, a round trip
      counted only between 0 and 5 s; the newest version a host knows, version 32 (`VERSION` in `online.js`, which
      `tools/online-test.js` holds this to); hostile tests: `tools/online-test.js` and `tools/net-test.js`.
    - **Shared records and Halls of Fame** (`records.js`): what friends send is cleaned (`cleanShared`) before it is
