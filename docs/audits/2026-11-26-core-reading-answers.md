@@ -160,7 +160,7 @@ All n/a: no adviser session shows in this project's records (no adviser label, h
 | 103 | Keep it lean | met | shape baseline | check (shape) | |
 | 104 | Split by meaning, from the start | met | `ai/`, `engine/`, `game/`, `render/`; `checks/sizes.json` | check (sizes) | |
 | 105 | Principles over rules | met | "Readings taken" sections | review | |
-| 106 | A project's own rules add to the core's | partly | "no dependencies" a feature (`AGENTS.md`), not under the manifest's Differences | check (manifest) | owner: word for the Difference (G4) |
+| 106 | A project's own rules add to the core's | partly | "no dependencies" a feature (`AGENTS.md`), not under the manifest's Differences | check (manifest) | the Difference, read from `AGENTS.md` (G4) |
 | 107 | The smallest setup that tests the rule | met | `AGENTS.md` "smallest setup"; scripted boards in `tools/rules/` | test | |
 | 108 | Rule files state rules | met | rule files short, archive pointed to | check (reading-size) | |
 
@@ -307,7 +307,7 @@ All n/a: one owner, no team, no employer setting.
 | 208 | Between systems, absolute for new code | not met | no systems, so nothing held between them | check (shape) | agent (G3) |
 | 209 | Portable by default | met | plain web platform code | review | |
 | 210 | A function is held to three marks | met | baseline holds them | check (shape) | |
-| 211 | A job a maintained package does is done by it | partly | "no dependencies" a feature, not declared under Differences | check (manifest) | owner (G4) |
+| 211 | A job a maintained package does is done by it | partly | "no dependencies" a feature, not declared under Differences | check (manifest) | the Difference (G4) |
 | 212 | A port or a rewrite states what it keeps | n/a | no port | | |
 | 213 | A new project starts as rules with no screen | n/a | project older than the rule | | |
 | 214 | How strong the tests are is measured on the lines a pull request changes | not met | mutation tool named; no workflow runs it (`steps.mjs`) | nothing | agent (G6) |
