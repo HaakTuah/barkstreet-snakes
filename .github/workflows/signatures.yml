@@ -18,4 +18,4 @@ jobs:
   signatures:
     uses: HaakTuah/agent-core/.github/workflows/signatures.yml@ec5978ed97210c772a49ab9634953c1bf82be292
     with:
-      directory: tools
+      directory: "tools" # (in quotes: a folder named true or null is still a folder's name)
