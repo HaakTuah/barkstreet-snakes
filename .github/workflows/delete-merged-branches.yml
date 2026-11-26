@@ -11,11 +11,13 @@ on:
         default: false
 
 permissions:
-  contents: write
-  pull-requests: read
+  contents: read
 
 jobs:
   delete:
+    permissions:
+      contents: write
+      pull-requests: read
     uses: HaakTuah/agent-core/.github/workflows/delete-merged-branches.yml@16320a137f7323400af7902b44f5b2bc4ef38027
     with:
       dry_run: ${{ inputs.dry_run }}
