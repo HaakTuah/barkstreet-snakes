@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Prepare a cloud machine (Ubuntu 24.04, run as root) for the suites: the core's one exact Node, the one CI runs ("Node"
-# in core/modules/updates.md), the tools' packages (tools/package.json: TypeScript, Playwright), and Chrome or Chromium.
+# in core/tasks/updates.md), the tools' packages (tools/package.json: TypeScript, Playwright), and Chrome or Chromium.
 # tools/browser.js looks in /usr/bin/google-chrome, /usr/bin/chromium and /usr/bin/chromium-browser, or uses CHROME.
 # Safe to run twice; always exits 0 and says what it could not do.
 # The same script can be pasted into a cloud environment's "Setup script" field: it works from the repository this
