@@ -1,7 +1,7 @@
 # The queue's specs
 
 The full text of each open entry in `docs/PROGRESS.md`, moved here on 31 October 2026, by the owner's word, so the
-progress file stays under the workshop check's 20 KB. Each entry in the queue keeps its title, a line of what it is and a
+progress file stays under the workshop check's 20 KB. Each entry in the queue keeps its title, what is next and a
 pointer here; this text is its spec, as the entry's own words were. When an entry is done, its section moves to
 `docs/archive/progress-done/done-specs.md` with it.
 
@@ -128,6 +128,35 @@ starves, and rounds feel alike. Each round draws its **food season**, as it draw
 - **Measured:** starving reaches about 5 to 8% of deaths overall, more in lean rounds; the spread of round lengths and
   of deaths by cause widens, per season; per-rival wins within noise overall; every trademark kept; no refuges.
 - **Online:** the host draws the season and sends it; a protocol bump.
+
+### 2y++. The golden flight, followed up (the owner, 2 November 2026; #399 and #401; side lanes now, the last step after part 7)
+
+Moved from `docs/PROGRESS.md` at its trim (26 November 2026), which keeps there only what is next.
+
+2y left the flight even both ways (24.9% against 25.1% head to head; +0.10 ± 0.15 place a use): between rivals a
+landing is almost never contestable. The flight stays as built for now, and no rule changes yet:
+1. **The ring tinted by its taker** (#401): done, PR #550 (the cue: "Taking a landing" in design 40).
+2. **The flight measured against fliers who fly like people:** done, PR #588; still even, and no AI change. Fliers that
+   take off into contested rings, as people do, came out even with develop's careful ones head to head (wins 25.0%
+   against 24.9%, place 2.49 against 2.51, 1,200 pairs on seeds 631 and 632), and so did each flight (+0.03 ± 0.07
+   place a use, against develop's −0.02 ± 0.05, seeds 631 to 633). Contested rings rose (3.3 to 3.9 jump-ticks a
+   round), but rivals went for one only 0.2 times a round, and fliers came down on a body no more often (0.2 a round).
+   Even taking a landing worth ten times as much took no more of them: a ring is almost never reachable in time, so the
+   ring costs a flier little.
+3. **Portals with a real cost** (#447): done, PR #591; no rule changed. A follower snipping its owner's body out of the
+   exit bit in a third of follows but moved no places either way ("Portals for the wrap" in design 40); the
+   owner's call is #592.
+4. **Measured again after 2u and part 7,** whose stamina and pricing change what a flight costs. Only if it is still
+   even then does a bigger change go to the design session: a longer flight, or the ring shown before take-off.
+
+### 3b++. The spit lands more, and stays a shot you can dodge (the owner, 9 November 2026; #583; after part 7)
+
+Moved from `docs/PROGRESS.md` at its trim (26 November 2026), which keeps there only what is next.
+
+Between rivals 2% of spits hit a head. Make it land more as a skill shot fired in front of a snake, which the target sees
+coming and can step out of (longer reach, the spitter choosing its moment, a lead), never by a shorter warning or a
+flight too quick for 2q's reaction time. Done when spitters come out ahead both ways. Design 40, "The spit flies along
+the line".
 
 ### 3b. The rivals who change: Capricious, Copycat and Wildcard (Wildcard's part after 5)
 
@@ -264,6 +293,25 @@ Moved from `docs/PROGRESS.md` (2 November 2026, the file-by-file review). The dr
 - Ghost's memorial: the planned smoke wisp, or the owner's idea of a broken shackle with a few chain links. Ghost's tongue stays smoke.
 - The earlier "the bird eats the food" variant for that A/B is in `tools/dev/r6-study-tools/patch-flex3.js` (PECK_FOOD).
 
+Its six playable PRs, each merged before the next, as `docs/PROGRESS.md` had them until its trim (26 November 2026):
+1. **Done** (PR #605): the three acts (calm, the watcher and its gaze, the first pecks, the frenzy), `?acts=`; Sovereign's
+   time at home asked in #607.
+2. **Done** (PR #610): it cuts shapes along an outline, down to a floor, then fights.
+3. **Done** (PR #615): hunger a conditional good to the end, by one hunger clock for the whole round (#616; design 04),
+   and the opening it made too hungry eased: a lean round keeps both apples until the first beetles, and the rivals turn
+   desperate with 6 s of life left, not 11 (#673; design 04 and 39). Its weighing beats never eating but only ties always
+   eating. 3+. **Done** (PR #756): islands that stay (#611; design 38, "Islands that stay"): a piece cut off stays standing while it touches the board's edge and lies a hop from the log; before the
+   frenzy the piece it cuts out at the edge stays, in the frenzy its pieces fall. 3++. **Closed as measured** (#655,
+   "Make length cost more in the endgame, so always eating there loses clearly"; the stand-in's no, sure, of 19
+   November there): three floor shapes (PR #760; design 38, "The floor") and more of the last apples (PR #777; design
+   04, "The last apples fall one at a time") left the weighing tied with always eating, since in the frenzy which meals
+   a snake takes moves its length only a segment or two against a cut's thirty, so no rule keyed on length can tell the
+   two apart. Part 3's tie stands: never eating does clearly worse, always eating comes out even. 4. The food A/B
+   (`?food=fall`), with part 3's head to head again (falling food takes meals out of the frenzy: never eating must still
+   do worse),
+   chips and a bounce if the knock stays (the old study patches, `tools/dev/r6-study-tools/patch-flex*.js`, rebuilt for
+   it). 5. Skeletons and trademark memorials. 6. 2h's numbers measured again.
+
 ### 8. Near the end: beetles who meet, fight (the owner, 29 October 2026; an engine-rules entry, last but the writing pass)
 
 The owner (29 October 2026), watching two beetles walk about an island the woodpecker made, away from the snakes: "It looked
@@ -284,6 +332,18 @@ unnecessary feature we have discussed here, so leave it last or close to last."
 - **Online stays in step:** a protocol bump if the beetles' messages change.
 - **Measured:** the simulation counts fights a round (rare is fine, as long as it happens), and deaths near a beetle,
   the one real risk, stay within noise.
+
+### 8b. Fed rivals take the apple on the edge row (#595, "Idea: fed rivals turn from an apple on the edge row because the edge counts against their territory"; an AI entry, after 8, before the writing pass)
+
+Moved from `docs/PROGRESS.md` at its trim (26 November 2026), which keeps there only what is next.
+
+A person takes a free apple on the edge, but eleven of the eighteen rivals refuse one three cells along it when fed: from
+the edge more of the board is nearer their head, so the meal looks like ground lost, though the snake leaves the edge
+on its next move. A line that has just eaten counts its territory as it will be once it leaves the edge. An AI entry,
+run one at a time, with the design check, after the hunger part (entry 6, part 3) merges, since it touches
+`ai/food.js`; measured both ways with `tools/abtest.js` on fresh seeds, with a staged-board rules test (a fed rival with
+no one near takes the apple), the rot by the edge from `tools/dev/nerve/census.js` and `--signatures` for every
+trademark. Spec: the issue's text; design 39, "A meal isn't a pin".
 
 ### 9. At the very end: the writing pass (the owner, 31 October 2026; Fable, its newest version, after everything else, entry 8 included)
 
@@ -359,3 +419,13 @@ with what it saves said). One folder per PR; `render/world.js` waits for the mai
   made a scripted board for a few ticks. `tools/trace.js` is run by nothing and named only in a comment: say what it is
   for in `docs/developing.md`, or archive it.
 
+### The polish lane (the owner, 31 October 2026; beside the main lane)
+
+Moved from `docs/PROGRESS.md` at its trim (26 November 2026), which keeps there only what is next.
+
+The game's polish lane (`core/roles/shared/work-flow.md`, point 4).
+- **What belongs, here:** the same thing drawn, named or worded differently in two places (a rival's colours, a move's
+  name in the lesson and the Field guide); the phone held upright and sideways; the wording of banners, chatter, the
+  Field guide and menus; sound levels that jar. Never the online messages: they go to their entries.
+- **How, here:** a lesson and an online lobby among the screens; the picture on `pr-media`, and play proven unchanged by
+  the suites and the simulation's fingerprints (seeds 3 and 11); one line per fix under this lane.
