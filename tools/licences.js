@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // The licence check's part that is this game's own (SECURITY.md, rule 10, with floor rule 10), run on every pull request
-// by .github/workflows/licences.yml beside the core's check (core/scripts/licences.mjs, with tools/licence-check.json),
+// by .github/workflows/licences.yml beside the core's check (core/scripts/licences.mjs, with checks/licences.json),
 // which holds every entry of tools/licences.json and every package to its list, each shipped entry's notice in
 // THIRD-PARTY-NOTICES.txt, and, by its scan, anything the game or its tools use that the audit leaves out. This adds what
 // only a game served as it is, from GitHub Pages, has: every address the game loads from is an entry's ("loads"), and so
