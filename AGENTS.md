@@ -20,7 +20,7 @@ these whole at the start of every task (Claude Code imports them; any other buil
 @core/roles/shared/work-flow.md
 <!-- The core's part ends. -->
 
-The other files of the core are read when a task needs them, each module saying when, among them `core/floor/topics.md`
+The other files of the core are read when a task needs them, each module saying when, among them `core/floor/topics/`, a file a topic
 (when: the floor's opening says) and `core/tasks/game-design.md`. Safety rules of this game's own, which "Principles
 over rules" (`core/roles/shared/how-to-work.md`) never reaches: the storage keys (`SECURITY.md`, rule 7).
 

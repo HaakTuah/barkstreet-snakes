@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// The far ends of "Using a feature must pay" (core/modules/game-design.md)
+// The far ends of "Using a feature must pay" (core/tasks/game-design.md)
 // for the plain jump and flash: turns a copy of the game into one whose
 // rivals never use a plain power, or always do, the rules unchanged, to set
 // against rivals that use them where they fit (tools/abtest.js

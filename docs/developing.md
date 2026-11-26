@@ -15,8 +15,8 @@ For people working on the game: how to run it locally, the checks and experiment
 
 ## Updates: what this game adds
 
-The REST calls from a cloud session: `core/modules/github-calls.md`. Updates, Dependabot, Node and CodeQL:
-`core/modules/updates.md`, with floor rules 7, 15 and 17 (`core/floor/topics.md`); this game's part of them:
+The REST calls from a cloud session: `core/tasks/github-calls.md`. Updates, Dependabot, Node and CodeQL:
+`core/tasks/updates.md`, with floor rules 7, 15 and 17 (`core/floor/topics/what-ships.md` and `dependencies.md`); this game's part of them:
 
 - **What Dependabot cannot see** (PeerJS, loaded from cdnjs with its SRI hash) is listed in `tools/versions.json` for
   the core's monthly versions check, and `scripts/test.sh versions` checks offline on every PR that each pattern still
@@ -38,7 +38,7 @@ The REST calls from a cloud session: `core/modules/github-calls.md`. Updates, De
   in a cloud session, which cannot reach Sigstore; the pull request's own run is the check. It reports on every pull
   request, so a ruleset can require it; until one does, merge only once it is green, and not by auto-merge alone.
 - **Node:** the core's one exact pin, `core/.node-version`, which CI and the cloud setup read ("Node" in
-  `core/modules/updates.md`); here a move also keeps the fingerprints.
+  `core/tasks/updates.md`); here a move also keeps the fingerprints.
 - **The description check** (`.github/workflows/pr-description.yml`) runs the core's on every pull request that is no
   draft: it fails one whose description lacks the heading "What the owner can try" or "Readings taken", and passes by
   itself once the description is put right. Where there is nothing to say, the heading stands with "None" under it.
@@ -48,7 +48,7 @@ The REST calls from a cloud session: `core/modules/github-calls.md`. Updates, De
   status at the first such comment). It gives the head commit the status `security-review`, which says whether the pull
   request's security review has run (floor rule 8). Advisory for now: the status always passes and says what the check
   would have done, so nothing waits for it. A security review that Codex's app did not post itself is posted in a
-  comment that opens "Security review:" (`core/modules/reviews.md`, point 3).
+  comment that opens "Security review:" (`core/tasks/reviews.md`, point 3).
 - **The licence check** (`.github/workflows/licences.yml`) runs the core's, `core/scripts/licences.mjs` with
   `tools/licence-check.json`, against the audit, `tools/licences.json`, and the notices, `THIRD-PARTY-NOTICES.txt`; what
   it and its scan hold is in the headers of `core/scripts/licences.mjs` and `core/scripts/licence-scan.mjs`. Beside it,
@@ -58,7 +58,7 @@ The REST calls from a cloud session: `core/modules/github-calls.md`. Updates, De
   new goes into the audit with its licence, checked from its own published licence file.
 - **Code nothing uses** (`scripts/unused.js`, run by `scripts/test.sh unused` and by CI beside the versions check): it
   lists every top-level function, constant and class that no line outside its own declaration names, and every file of
-  the game and the tools that no other file names, so a leftover fails ("Keep it lean", `core/modules/how-to-work.md`).
+  the game and the tools that no other file names, so a leftover fails ("Keep it lean", `core/roles/shared/how-to-work.md`).
   A use is any name in the project's tracked JS, HTML, JSON, shell and workflow files (comments of JS files left out):
   a call from a suite, a script tag, an `sw.js` entry, a name inside a string. What only an unused declaration names is
   unused too. A name or file that is reached some way a search cannot see, such as a suite's folder of parts read whole
