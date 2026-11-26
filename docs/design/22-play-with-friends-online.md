@@ -124,7 +124,7 @@ object literal has) and every event the engine makes, so a new kind can't skip t
 ### What stays in step
 
 - **Everything new works online** ("In a game played online, everything new works online" in
-  `core/modules/game-design.md`). Each move or rule says what it sends in its own topic file (above); this file holds
+  `core/tasks/game-design.md`). Each move or rule says what it sends in its own topic file (above); this file holds
   only the general rules.
 - **A round replays from its seed and the log of every input** ("Same seed, same game"): the host's rules draw from the
   round's own seed, each rival's decision from a stream of its own (the round, the tick and the snake), and the

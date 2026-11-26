@@ -1,6 +1,6 @@
 # Security
 
-The floor's rules hold here whole: `core/floor/security.md` and `core/floor/topics.md`. This file adds, under the
+The floor's rules hold here whole: `core/floor/security.md` and `core/floor/topics/`. This file adds, under the
 floor's numbers, what only this game has and what the floor leaves to it; who might attack it is
 `docs/threat-model.md`, with the floor's.
 
@@ -62,4 +62,4 @@ floor's numbers, what only this game has and what the floor leaves to it; who mi
 
 ## Reporting a weakness
 
-Through the Security tab, as "Reporting a weakness" in `core/floor/topics.md` says.
+Through the Security tab, as "Reporting a weakness" in `core/floor/topics/weaknesses.md` says.

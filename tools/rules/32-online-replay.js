@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------- an online round, replayed from its log
-// ("Same seed, same game", core/modules/game-design.md: a game replays exactly from its seed and, where people play, from
+// ("Same seed, same game", core/tasks/game-design.md: a game replays exactly from its seed and, where people play, from
 // its log of every input.) A live round between a host and a friend, each in a context of its own as on two screens: the
 // host runs the game with its randomness from a seed and takes every press by the game's own code (fromFriend, checkAway,
 // handBack and sendPlan from game/friends.js; turn, swipeTo, powerOf and hostPress from game/input.js, read from the

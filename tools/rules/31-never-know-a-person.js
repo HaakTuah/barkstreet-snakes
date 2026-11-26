@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------- the rivals never know who is a person
-// ("The computer players never know who is a person", core/modules/game-design.md: nothing in a rival's logic nor in what
+// ("The computer players never know who is a person", core/tasks/game-design.md: nothing in a rival's logic nor in what
 // it is shown says whether another player is a person, and its timing gives none away.)
 // (1) By reading: no code in ai/ reads a person flag, aiView() reads none, and the engine hands a rival nothing but its
 // view, its own brain and its memory. (2) By playing: the same board twice, a seat first a rival's, then a person's, with
