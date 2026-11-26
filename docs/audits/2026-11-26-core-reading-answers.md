@@ -18,7 +18,7 @@ Answers: met, partly, not met, n/a. "Missing" names who acts, owner or agent, an
 | 8 | Nothing runs on the owner's computer unless the owner starts it | met | no poller, schedule or service in the tree; hooks run only inside sessions | review | |
 | 9 | Test data is never real | met | sample names in `tools/online-test.js`, `records-test.js` | review | |
 | 10 | 11. Nothing personal, ever | met | `personal-terms.yml` on every PR; README/LICENSE hold no person | check (personal-terms.yml) | |
-| 11 | 12. `main` is the owners' | met | `pages.yml:11` publishes per merge from `main`; up-to-date rule in ruleset unread | check (tests.yml); host ruleset (unread) | |
+| 11 | 12. `main` is the owners' | partly | `pages.yml:11` publishes per merge, `publish` needing only `build`; 3 of the last 60 merges not up to date (#815, #795, #794); ruleset unread | check (tests.yml); host ruleset (unread) | agent (G22); owner (G14) |
 | 12 | 13. Each project's files stay in its own repository | met | no write to another repository in workflows or scripts | review | |
 | 13 | 14. Nothing waits for the owner but the yeses the floor names | met | `needs-owner` on 2 issues only (#802 settings, #804 blind sample) | nothing | |
 | 14 | A run with a model has a cap | n/a | the game calls no model | | |
@@ -40,20 +40,20 @@ Answers: met, partly, not met, n/a. "Missing" names who acts, owner or agent, an
 | --- | --- | --- | --- | --- | --- |
 | 21 | 19. Accounts, roles and a server | n/a | no accounts, no server: static page plus peer-to-peer | | |
 | 22 | 15. Dependencies | met | `tools/.npmrc`, `checks/mutation/.npmrc` ignore-scripts; exact versions in `tools/package.json` | check (licences) | |
-| 23 | A new one is taken in an order | met | two tool packages only (playwright, typescript); none added lately | review | |
-| 24 | A new one is looked up in its registry | met | same; no new package since the rule | review | |
+| 23 | A new one is taken in an order | met | the tools' packages (playwright, typescript), and Stryker in `checks/mutation` (#819), the core's listed mutation tool | review | |
+| 24 | A new one is looked up in its registry | met | same; Stryker taken from the core's list (`mutation-tools.json`) | review | |
 | 25 | Code of another publisher is named in a lock file | met | tools' lock; PeerJS pinned by SRI (`net.js:20`) and `tools/versions.json` | check (licences, versions.yml) | |
 | 26 | An agent's own tools are code with its sign-ins | met | hooks run the copy on `origin/main` (`.claude/settings.json`, `.codex/hooks.json`) | review | |
 | 27 | 17. Dependabot's own PRs | met | `.github/dependabot.yml` cooldown 7 days, groups; #823 open | check (licences); review | |
-| 28 | 5. Untrusted input is checked before it is used | partly | inputs named with limits in `SECURITY.md`; #818 lobby names uncapped, #817 tick used before its check | test (online-test, net-test, records-test) | agent: fix #817, #818 (G20) |
-| 29 | Every named input has hostile tests | met | `tools/net-test.js`, `online-test.js`, `records-test.js`, `rules/29-woodpecker-acts.js` | test | |
+| 28 | 5. Untrusted input is checked before it is used | partly | inputs named with limits in `SECURITY.md`; #818 lobby names uncapped, #817 tick used before its check; `?debug` and `?perf` unnamed | test (online-test, net-test, records-test) | agent: fix #817, #818 (G20); name the parameters (G27) |
+| 29 | Every named input has hostile tests | partly | `tools/net-test.js`, `online-test.js`, `records-test.js`, `rules/29-woodpecker-acts.js`; cases missing for #817 and #818 | test | agent (G20) |
 | 30 | A reader refuses a version it does not know | partly | peers refuse (`game/friends.js:371`, `online.js:99` VERSION 32); stored records carry no version, cleaned field by field (`records.js:44-49`) | test (online-test) | agent: version the stored records or say why not (G17) |
 | 31 | A failure refuses | met | `records.js:27` falls back on a parse error | test (records-test) | |
 | 32 | 6. Nothing untrusted becomes markup or code | met | escaping in `game/hud.js`, `game/cards.js`; CSP `default-src 'none'` (`index.html:7`) | test (csp-test) | |
 | 33 | 10. Licences: free to use, kept that way | met | `THIRD-PARTY-NOTICES.txt`; licences.yml | check (licences) | |
-| 34 | 9. Security alerts and reported weaknesses | met | `codeql.yml` runs; alerts not readable here | check (CodeQL) | |
+| 34 | 9. Security alerts and reported weaknesses | partly | `codeql.yml` runs; alerts unread | check (CodeQL) | owner (G14) |
 | 35 | In a PR's own change | met | security review per PR | review | |
-| 36 | In merged code, if it reaches what the threat model protects | met | none known that reaches it | review | |
+| 36 | In merged code, if it reaches what the threat model protects | partly | none known that reaches it; alerts unread | review | owner (G14) |
 | 37 | Any other weakness in merged code | met | #817, #818 filed as bugs | nothing | |
 | 38 | Secret scanning with push protection is switched on | partly | not readable with the job's token (#802) | nothing | owner: confirm or switch on (G14) |
 | 39 | 7. What runs on users' machines | met | SRI on PeerJS, CSP pinned by `tools/csp-test.js`, `sw.js` caches same-origin only | test (csp-test) | |
@@ -89,7 +89,7 @@ All n/a: no adviser session shows in this project's records (no adviser label, h
 | 57 | Reads at its start | met | this reading, first of its kind here | review | |
 | 58 | It reads, and changes nothing | met | this reading wrote only to scratch | review | |
 | 59 | Each answer has its evidence, on a fixed scale | met | this file | review | |
-| 60 | It proposes a check only for a finding seen twice | met | `gaps.md` proposes no new check | review | |
+| 60 | It proposes a check only for a finding seen twice | met | the report's gaps propose no new check | review | |
 | 61 | Only counts and conclusions leave the project | met | nothing left the project | review | |
 | 62 | It runs on the strongest tier | met | run on Opus | nothing | |
 | 63 | Hands over, gets back | met | answers to the calling session | nothing | |
@@ -150,7 +150,7 @@ All n/a: no adviser session shows in this project's records (no adviser label, h
 | 93 | A question from the owner is a question | n/a | conduct in chat; no record | | |
 | 94 | Match effort to the task | met | Explore helper on haiku/low (`.claude/agents/Explore.md`) | nothing | |
 | 95 | A choice that one pull request cannot reverse gets a record | not met | no `docs/choices.md` (`choices.mjs`) | check (choice records, in copies) | agent: write the records (G2) |
-| 96 | A need is stated in numbers where there is one | met | `docs/design/10-feel-targets…`, `45-performance.md` | review | |
+| 96 | A need is stated in numbers where there is one | partly | `docs/design/10-feel-targets…`, `45-performance.md` (a frame budget); no number for a first start (#763) | review | agent (G26) |
 | 97 | Read little, print little | met | `scripts/codemap.sh`, *large file* slot, quiet `scripts/test.sh` | nothing | |
 | 98 | No one is asked before a read | met | no such ask on record | nothing | |
 | 99 | Edit in place | met | no "old" copies in the tree | review | |
@@ -238,7 +238,7 @@ All n/a: one owner, no team, no employer setting.
 | 154 | Nothing waits silently | met | "Waits on:" since #799 | check (pr-description) | |
 | 155 | A description is written in as few edits as the work allows | met | no sign otherwise | nothing | |
 | 156 | Push after every commit | met | work-saved hooks (Claude, Codex, Kiro) | check (hook) | |
-| 157 | Updates, Dependabot and CodeQL | met | dependabot.yml, codeql.yml, versions.yml | check | |
+| 157 | Updates, Dependabot and CodeQL | partly | dependabot.yml watches only `/tools`; `checks/mutation` (#819) has no update path; codeql.yml, versions.yml | check | agent (G23) |
 
 ## tasks/choices.md
 
@@ -257,14 +257,14 @@ All n/a: one owner, no team, no employer setting.
 | 168 | the judgment | n/a | as 159 | | |
 | 169 | the pick | n/a | as 159 | | |
 | 170 | A choice of stack ends with what the core cannot read in it | n/a | as 159 | | |
-| 171 | The choices a project already made are recorded too | not met | `choices.mjs`: no records yet; draft in `choices-draft.md` | check (choice records) | agent (G2) |
+| 171 | The choices a project already made are recorded too | not met | `choices.mjs`: no records at e0688d9; recorded in `docs/choices.md` by this reading's pull request, three left out (G25) | check (choice records) | agent (G2, G25) |
 | 172 | What reopens a choice | not met | no records, so no signs | nothing | agent (G2) |
 | 173 | its sign trips | not met | no signs to trip | nothing | agent (G2) |
 | 174 | the pass twice a year | not met | no record to pass over | nothing | agent (G2) |
 | 175 | When a feature may leave the stack | n/a | no move off the stack proposed | | |
 | 176 | A split between languages is decided at the start where it can be | n/a | one language (JavaScript) | | |
 | 177 | The session decides, tells the owner, and asks in two cases only | n/a | no choice made under the module | | |
-| 178 | What the project would be built on today | not met | not asked; belongs with the records | nothing | agent (G2) |
+| 178 | What the project would be built on today | not met | not asked; `docs/choices.md` records what stands, none judged as if written today | nothing | agent (G24) |
 | 179 | A move that pays is built in steps; one that must happen at once is capped | n/a | no move | | |
 | 180 | Every move passes the same gates | n/a | no move | | |
 | 181 | A move has an end and states its cost | n/a | no move | | |
@@ -288,7 +288,7 @@ All n/a: one owner, no team, no employer setting.
 | 194 | A limit on its own proposals | met | audit's proposals queued as #783, #784 only | review | |
 | 195 | A project is read against the core once, then for what each release changes | not met | no `checks/core-reading.json`; `steps.mjs` lists it | check (steps, in look) | agent (G1) |
 | 196 | Its question, for each rule it is given | not met | this reading not yet recorded | nothing | agent (G1) |
-| 197 | The reading asks what a project holds twice | partly | `twice.mjs`: 469 pairs, judged in `twice-judged.md`, not recorded | nothing | agent (G1) |
+| 197 | The reading asks what a project holds twice | partly | `twice.mjs`: 469 pairs, judged in the report's "What the game holds twice", not recorded | nothing | agent (G1) |
 | 198 | A sweep's scope is read, not listed | n/a | no sweep on record | | |
 | 199 | An inventory or an audit is challenged once for what it missed | partly | no challenge recorded on the 19 November audit | nothing | agent (G15) |
 | 200 | The state report leads with the outcomes | not met | no state report; queued #805 | nothing | agent (G19) |
@@ -363,9 +363,9 @@ All n/a: one owner, no team, no employer setting.
 | 254 | Play that is measured and play that entertains are told apart | n/a | no model seat, no show mode | | |
 | 255 | In a game played online, everything new works online | met | `tools/online-test.js`; VERSION bumps | test | |
 | 256 | Players always play the newest version | met | `update.js`, `sw.js:17`, `docs/design/36-updating.md` | test (ui) | |
-| 257 | Same seed, same game | met | mulberry32 (`engine/luck.js:8`); fingerprints in `tests.yml:118` | test | |
+| 257 | Same seed, same game | met | mulberry32 (`engine/luck.js:8`); `tests.yml:118-127` compares one commit with and without `--ahead`, no fingerprint pinned | review | |
 | 258 | The polish lane | met | polish lane done record | review | |
-| 259 | Readable by every player | met | `style/access.css`, reduced motion | review | |
+| 259 | Readable by every player | met | `aiView()` (`engine/view.js:75-81`) shows the rivals what a person is shown, `tools/rules/26-noticed-like-people.js`; `style/access.css`, reduced motion | test | |
 | 260 | A game's own scene is no desktop program's window | met | menus and settings use page controls | review | |
 | 261 | How a game answers a player | partly | its checks are off: no *screen checks* slot | nothing | agent (G9) |
 | 262 | Every action is answered within a tenth of a second | met | `docs/design/10-feel-targets…`, 42 controls | review | |
@@ -393,7 +393,7 @@ All n/a: one owner, no team, no employer setting.
 | 274 | One layer knows no host | met | host calls only in core workflows | review | |
 | 275 | Each host's part | met | GitHub only | review | |
 | 276 | Proven host by host | n/a | one host | | |
-| 277 | What users get is published only from a green default branch | met | `pages.yml:11` per merge; branches brought up to date (ruleset unread) | check (tests.yml) | |
+| 277 | What users get is published only from a green default branch | partly | `pages.yml:11` per merge, before `main`'s tests; 3 of the last 60 merges not up to date (#815, #795, #794) | check (tests.yml) | agent (G22) |
 | 278 | The merge line follows the host | met | auto-merge used | nothing | |
 | 279 | Where the front waits behind the cap, runs far from their turn are cancelled | n/a | no cap, no merge queue | | |
 | 280 | Where the proof is billed, an owner is told what can be done | n/a | public repository, Actions free | | |
@@ -474,7 +474,7 @@ All n/a: one owner, no team, no employer setting.
 | 330 | Restraint | met | design 08 | review | |
 | 331 | Real content and every state | met | PR pictures over real rounds | review | |
 | 332 | Motion with a purpose | met | reduced motion honoured | review | |
-| 333 | Speed and waiting | met | design 45 performance | review | |
+| 333 | Speed and waiting | partly | design 45 performance, a frame budget only; no number for a first start (#763) | review | agent (G26) |
 | 334 | Every control has its states | met | design 42 controls | review | |
 | 335 | An accessibility floor, in numbers | met | `style/access.css`; design 31 tap targets | review | |
 | 336 | Each size it is used at | met | design 31 phones; pictures at phone and desktop | review | |
@@ -524,7 +524,7 @@ All n/a: one owner, no team, no employer setting.
 | 370 | Each tool's part says whether it starts a session of its own | met | same | check (copies) | |
 | 371 | What the core offers one tool, it offers each | met | work-saved hook for Claude, Codex, Kiro | check (entry-files) | |
 | 372 | A question or difference about a rule of the core starts from its reasons | met | #808's differences argued from reasons | review | |
-| 373 | The newest stable version, unless there is a reason | met | playwright 1.65 bump open (#823) | check (versions.yml) | |
+| 373 | The newest stable version, unless there is a reason | partly | playwright 1.65 bump open (#823); Stryker's packages (`checks/mutation`) never updated | check (versions.yml) | agent (G23) |
 | 374 | Node | met | core's pin used (`dependabot.yml` comment) | check (versions.yml) | |
 | 375 | CodeQL | met | `codeql.yml` | check | |
 | 376 | A way of running sessions has a part of its own | n/a | the core's parts; the project adds no way | | |

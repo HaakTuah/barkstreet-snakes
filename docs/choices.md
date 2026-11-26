@@ -25,11 +25,14 @@ Players' browsers connect directly (WebRTC through PeerJS, `net.js`); they find 
 Nostr relays at once, so no one is needed (`net-relays.js:3`), and the host's browser runs the round (`online.js`).
 Chosen so online play needs no server of the project's own, no accounts and no cost (`docs/design/22-play-with-friends-online.md`).
 PeerJS is loaded from cdnjs with an integrity hash only when someone opens Play with friends (`net.js:20`, `:58`); the
-relays are named hosts in the page's content security policy (`index.html:7`).
+relays are named hosts in the page's content security policy (`index.html:7`). PeerJS's public broker
+(`0.peerjs.com`, also in the policy) is a second way to find a friend, and `?way=` tries one way alone (`net.js:45`).
+Connections cross networks through Google's public STUN servers (`net.js:34`); there is no TURN relay, so some strict
+networks (certain mobile carriers, offices) cannot connect (#709).
 
 - Stood before: this record; online play since 12 October 2026 (`net.js`), the relays added later.
 - Reopens it: rooms that fail to connect: more than 1 in 10 attempts failing across a month of reports, or two of the
-  named relays gone at once; PeerJS unmaintained (no release in 18 months, read by the monthly versions check); or a
+  named relays gone at once, or the broker or both STUN servers gone; PeerJS unmaintained (no release in 18 months, read by the monthly versions check); or a
   need the host-runs-the-round design cannot meet (a guest's input reaching a round later than the human limit of
   `docs/design/10-feel-targets-checked-in-phase-7.md`).
 - The core cannot read: none.
@@ -84,7 +87,7 @@ relays and cdnjs named), pinned by `tools/csp-test.js`. Chosen with the host: wh
 (`docs/design/36-updating.md`). Chosen so the game opens offline and players always play the newest version without a
 reload mid-round.
 
-- Stood before: this record; since November 2026.
+- Stood before: this record; `sw.js` since 14 October 2026.
 - Reopens it: a player kept on an old version after an update: any report of one, or the ui suite's update check
   failing on `main`.
 - The core cannot read: none.
@@ -92,8 +95,8 @@ reload mid-round.
 ## Choice: the tools' own packages: TypeScript, Playwright and Stryker
 
 The checking tools are the only packages: TypeScript and Playwright in `tools/package.json`, Stryker in
-`checks/mutation/package.json`, each at an exact version with its lock, scripts not run on install (`.npmrc`), updated
-by Dependabot after a week's cooldown (`.github/dependabot.yml`). Chosen as the maintained tools for types, a real
+`checks/mutation/package.json`, each at an exact version with its lock, scripts not run on install (`.npmrc`). The tools'
+are updated by Dependabot after a week's cooldown (`.github/dependabot.yml`); Stryker's, since #819, by nothing yet (#838). Chosen as the maintained tools for types, a real
 browser and test strength, kept out of what ships.
 
 - Stood before: this record.

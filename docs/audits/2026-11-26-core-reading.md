@@ -13,7 +13,9 @@ code changed.
 
 | Met | Partly | Not met | Not applicable | Rules |
 | --- | --- | --- | --- | --- |
-| 256 | 44 | 28 | 75 | 403 |
+| 247 | 53 | 28 | 75 | 403 |
+
+After the challenge below; the reader's own answers were 256, 44, 28 and 75.
 
 **Not applicable** covers the tools and roles the game does not use (Kiro, Antigravity, Copilot, teams, a shared
 server, the adviser), each said in its row. **Unread:** the repository's settings (its rulesets, secret scanning and
@@ -29,7 +31,7 @@ stays held until release 8 of the core is cut (the owner's order for now), so th
 | Gap | Task | Rules | Who | Size | Issue |
 | --- | --- | --- | --- | --- | --- |
 | G1 | Record this reading (`checks/core-reading.json` by the core's script, with the twice judgments), and fill the *quick check* slot in the manifest (protected file) | 149, 195, 196, 197 | agent | small | #835 (the quick check; the record: this reading's pull request) |
-| G2 | Write `docs/choices.md` from `choices-draft.md`: the standing choices, each with `Stood before:` and `Reopens it:`, and what the project would be built on today | 95, 158, 171, 172, 173, 174, 178 | agent | small | this reading's pull request (docs/choices.md) |
+| G2 | Write `docs/choices.md`: the standing choices, each with `Stood before:` and `Reopens it:` | 95, 158, 171, 172, 173, 174 | agent | small | this reading's pull request (docs/choices.md) |
 | G3 | Name the systems in `checks/shape.json` (engine, ai, render, game, online, tools) under the core's domains, with the keys the check reads; re-baseline | 207, 208, 220 | agent | medium | #824 |
 | G4 | Declare "no dependencies" under the manifest's Differences, as `tasks/code-shape.md` asks of a project that counts it a feature; `AGENTS.md` already states it, so it is read, not asked | 106, 211 | agent | small | #825 |
 | G5 | `tests.yml` (protected; two security reviews): skip drafts, one group for `main` keeping only the newest run, `select.mjs` for what a change reaches, suite time marks in `checks/shape.json`, slow rounds once per batch, no rerun of a passed tree | 220, 346, 347, 349, 350, 351, 352, 361, 362 | agent | medium | #826 |
@@ -49,12 +51,18 @@ stays held until release 8 of the core is cut (the owner's order for now), so th
 | G19 | The state report (#805), leading with outcomes and the merge line's measure | 144, 200 | agent | small | #805 |
 | G20 | Fix #817 and #818, and read the online messages' whole input once (one at a time: online messages) | 28, 217 | agent | medium | #817, #818 |
 | G21 | List `barkbite-voices` (`audio/sound.js`) among `SECURITY.md` rule 7's storage keys, which are never renamed (found in checking the choices' draft) | 30 | agent | small | #834 |
+| G22 | Publish only once `main`'s checks have passed at that commit (`pages.yml`, protected; two security reviews); until then the ruleset's up-to-date requirement joins G14 | 11, 277 | agent | medium | #837 |
+| G23 | Keep Stryker's packages (`checks/mutation`) up to date: `dependabot.yml` (protected) and `SECURITY.md` rule 17 | 157, 373 | agent | small | #838 |
+| G24 | Judge the choices once as if written today, at the strongest tier, taking in #771's view | 178 | agent | medium | #839 |
+| G25 | Record three standing choices: classic scripts sharing globals, hand-written cryptography (with a security reading), art drawn in code | 171 | agent | small | #840 |
+| G26 | A number for a first start in `docs/design/45-performance.md`, the first choice's reopen sign pointed to it | 96, 333 | agent | small | #841 |
+| G27 | Name `?debug` and `?perf` in `SECURITY.md` rule 5 with their tests, or take them out of what ships | 28 | agent | small | #842 |
 
 ## What the game holds twice
 
-`node core/scripts/twice.mjs --all` at e0688d9 lists 469 pairs (`twice.txt` shows the first 40). Every one is the
+`node core/scripts/twice.mjs --all` at e0688d9 lists 469 pairs. Every one is the
 project's own against the project's own: **none is against the core.** Judged by group. A pair "worth a task" points
-to its gap in `gaps.md`.
+to its gap above.
 
 | Group | Pairs | Example | Judgment | Worth a task |
 | --- | --- | --- | --- | --- |
@@ -77,6 +85,30 @@ to its gap in `gaps.md`.
 Unsure: none. Contradicting: none found in the groups sampled (each archive file says its text is superseded where it
 is). Two groups are worth a task, both under G10: the owner's words quoted in the specs as well as the archive, and the
 queue repeating spec text and the done file holding open lines.
+
+## Challenged 26 November 2026
+
+A fresh session that wrote no part of the reading read the report, the answers and `docs/choices.md` once, checked a
+sample of answers against the repository at 3acaa17, and changed nothing (`core/tasks/cleaning.md`, "An inventory or
+an audit is challenged once for what it missed"). The answers above and in the answers file carry its changes.
+
+- **Nine answers from met to partly:** rows 11 and 277 (the game publishes each merge before `main`'s tests, and 3
+  of the last 60 merges were not up to date: G22); 34 and 36 (they rest on alerts no one here could read, as row 38
+  already said: G14); 29 (#817 and #818 lack hostile cases: G20); 157 and 373 (Stryker's packages, added by #819, have
+  no update path: G23); 96 and 333 (no number for a first start, #763: G26).
+- **Evidence or holder corrected, answer kept:** rows 23 and 24 (#819 added Stryker, taken from the core's list);
+  257 (the fingerprint step compares one commit with and without `--ahead`, no fingerprint pinned, so the review holds
+  it, not a test); 259 (the rule's point is `aiView()` showing the rivals what a person is shown).
+- **Row 178** stays not met and leaves G2: `docs/choices.md` records what stands, none judged as if written today
+  (G24).
+- **`docs/choices.md` mended:** Stryker is updated by nothing yet, not by Dependabot; the online record names PeerJS's
+  broker, Google's STUN servers and the missing TURN relay (#709); `sw.js` dates from 14 October 2026. Three
+  choices it left out: G25.
+- **`?debug` and `?perf`** are URL parameters `SECURITY.md` rule 5 does not name (row 28: G27).
+- **Pointers to scratch files** that were never in the repository were taken out.
+- **Answered otherwise:** the challenger read G4 (#825) as the owner's to take, to be labelled `needs-owner`. It is
+  read from `AGENTS.md`, which already states "no dependencies" as a feature, so it is an agent's task (the core's
+  "What can be read is never asked or declared"). #763 standing 12 days with no state label joins G11.
 
 ## The answers
 
