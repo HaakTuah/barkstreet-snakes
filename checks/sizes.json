@@ -1,0 +1,24 @@
+{
+  "each": 20480,
+  "read": {
+    "AGENTS.md": 20480,
+    "CLAUDE.md": 20480,
+    "docs/PROGRESS.md": 8192,
+    "core-manifest.md": 20480,
+    "core/floor/security.md": 20480,
+    "core/roles/shared/how-to-work.md": 20480,
+    "core/roles/shared/inbox.md": 20480,
+    "core/roles/shared/work-flow.md": 20480,
+    "core/tools/claude.md": 20480,
+    "core/tools/other-builders.md": 20480,
+    "core/roles/builder.md": 20480
+  },
+  "total": 25600,
+  "split": 51200,
+  "skip": [
+    "docs/archive/",
+    "checks/shape-baseline.json",
+    "checks/mutation/package-lock.json"
+  ],
+  "past": {}
+}

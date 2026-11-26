@@ -1,0 +1,4 @@
+# What a tool writes, marked so the core's step writers can tell it from the game's own source (core/scripts/steps.mjs).
+* -linguist-generated
+checks/holders.json linguist-generated
+checks/shape-baseline.json linguist-generated

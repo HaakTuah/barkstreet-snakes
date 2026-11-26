@@ -1,0 +1,63 @@
+# The signature check (floor rule 7: "the registry's signature verified"), for a project whose packages come from npm:
+# it installs from the lock file, from npm's registry alone and running no package's install script, and then runs
+# npm's own `npm audit signatures`, which fails where the registry's copy of an installed name and version has no valid
+# signature, or a provenance that does not hold. npm's own tool on npm's own data. Then, with the packages installed,
+# the caller's own core/scripts/licence-installed.mjs holds each lock entry's licence and version to what the installed
+# package says of itself (floor rule 10), so that the licence check, which reads the lock file, reads what the
+# packages say; it runs nothing of what it reads. The install refuses a package from git, from a web address or from a tarball file, which the signature check
+# would pass over in silence (npm 11.20, which the core's Node brings, knows these settings; given on the command line,
+# they overrule an `.npmrc`). An `.npmrc` that names another registry, or sets anything else that changes where npm
+# fetches from, already fails the licence check (scripts/licences.mjs), which is why no registry is named here.
+# What it does not hold: that a lock entry which names one registry package resolves to that package and not another
+# of the registry's, and the rest of rule 7's source check (the same publisher and repository, a provenance kept where
+# the old version had one, the diff read against the release notes): those stay with the reviews, which read the lock
+# file's diff. A project calls it (workflow_call) from a workflow of its own of the same name, on every pull request,
+# pinned to a full commit SHA ("How a project takes the core" in README.md, point 5), or calls core.yml with signatures, which
+# runs the same in its one job (#376); its steps are the project's own core/scripts/checks.mjs's. It looks itself whether the pull
+# request changes a package list, a lock or shrinkwrap file, an `.npmrc`, the Node version, this workflow or the calling one
+# (git's own diff against the base), installs and checks only then, and passes otherwise: so it reports on every pull
+# request and a ruleset can require it. Where it cannot tell what changed, it checks. Read-only, with no secret.
+name: signatures
+
+on:
+  workflow_call:
+    inputs:
+      directory:
+        description: The folder that holds package-lock.json, from the repository's root. Left out, the root itself.
+        required: false
+        type: string
+        default: "."
+
+permissions:
+  contents: read
+
+jobs:
+  signatures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # (a pull request's run gives way to a newer one for the same pull request, whose head it no longer is; a run on
+    # main, a schedule or a start by hand is its own group and is never cancelled; #388)
+    concurrency:
+      group: signatures-${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.run_id }}-${{ inputs.directory }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false # nothing after the checkout needs the token
+          fetch-depth: 2 # the merge commit and its parents: the base the first step diffs from
+      - name: Where the core's copy stands, for the signature check (core-manifest.md's "Core:" line; the core's tasks/repositories.md)
+        id: core-at
+        run: |
+          at=$(sed -n -E 's#^Core: [^ ]+( at [0-9a-f]{40}, copied whole|, carried by (([A-Za-z0-9_][A-Za-z0-9._-]*/)+)) under (([A-Za-z0-9_][A-Za-z0-9._-]*/)+)( .*)?$#\4 \2#p' core-manifest.md 2>/dev/null | head -n 1)
+          set -- ${at:-core/}; [ -z "${2:-}" ] || [ -e "$1scripts" ] || git submodule update --init --depth 1 -- "${2%/}" || { echo "FAIL the library ${2%/}, a submodule that carries the core, could not be fetched here. Mend: commit the library's files in this repository, or make the submodule one this workflow can fetch with no token."; exit 1; }; echo "CORE_AT=$1" >> "$GITHUB_ENV"
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: ${{ env.CORE_AT }}.node-version # the one exact Node ("Node" in the core's tasks/updates.md)
+      - name: The core's packages, installed from its lock file for the signature check (#654)
+        run: if [ -f "${CORE_AT}scripts/install.mjs" ]; then node "${CORE_AT}scripts/install.mjs"; fi
+      - name: The signature check (its steps in scripts/checks.mjs, its part signatures)
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && 'HEAD^1' || '' }} # the merge's first parent, which the checkout holds (#1231); empty where the caller runs on anything but a pull request
+          CALLER: ${{ github.workflow_ref }} # the calling workflow, by its own path, whatever it is named
+          FOLDER: ${{ inputs.directory }}
+        run: node "$CORE_AT"scripts/checks.mjs signatures --signatures "$FOLDER" ${BASE:+--base "$BASE"}

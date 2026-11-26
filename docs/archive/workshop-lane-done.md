@@ -1,0 +1,98 @@
+# The workshop lane, done
+
+The done lines of `docs/PROGRESS.md`'s workshop lane, moved word for word on 3 November 2026 to keep that file under
+the workshop check's 20 KB. New ones are added here.
+
+- *Done:* the audit of how the code is put together (#764, PR #780): its measures in `tools/dev/audit/` (one run, `run.sh`), the report and its baseline numbers in `docs/audits/` (19 November 2026), the eight questions answered by a fresh reader; the cleaning lane it proposes is #783.
+- *Done:* `coughs` removed from `ai/` (nobody coughs: `ai/evaluate.js`, `ai/room.js`, `ai/buffers.js`, `ai/food.js`),
+  fingerprint-identical (the workshop/remove-coughs PR).
+- *Done:* the woodpecker's two unplayed cues removed (`audio/cues.js`, `audio/sound.js`; PR #434).
+- *Done:* the workshop check's point (2): `AGENTS.md` from 21.5 to 20.0 KB, every rule kept; the workshop check's marks
+  moved to `docs/orchestrating.md`, the file table's detail to `docs/developing.md` (PR #420).
+- *Done:* the render suite's virtual clock starts at a fixed time, so the woodpecker's ring check (and every staged
+  check) draws at the same phase on every run, whatever the load (#424, PR #427).
+- *Done:* the input suite's "rivals have all thought" check, counted round after round to its 100-tick floor and its
+  round started on the virtual clock, so neither a short random round nor load can flip it (#414, PR #415).
+- *Done:* the layout suite in cloud sessions (#383): it never hung, it ran about 28 minutes in one process, silent
+  until its end; `scripts/test.sh` now runs its five CI jobs side by side, each part's end is printed, and the banner
+  probe no longer misreads a banner on its way out (PR #396).
+- *Done:* the workflows' actions, `actions/checkout` and `actions/setup-node` 4 to 7 (Dependabot, PR #361).
+- *Done:* TypeScript 6.0.2 to 7.0.2, the native compiler, its 20 platform packages audited (Dependabot, PR #390).
+- *Done:* CI and the cloud setup on Node 26 (from 22; suites green, fingerprints unchanged; PR #369).
+- *Done:* licences audited (`tools/licences.json`), gated on every PR (`.github/workflows/licences.yml`) and their notices
+  shipped (`THIRD-PARTY-NOTICES.txt`); two lists, what ships and tools that only run (PR #377).
+- *Done:* every version where Dependabot sees it: the tools' packages in `tools/package.json` (Playwright 1.49.1 to
+  1.64.1), Dependabot's npm updates, and a monthly check of the rest, PeerJS and Node (`tools/versions.json`; PR #385).
+- **The file-by-file review's moves:** done, a folder a PR (#341, #342, #343, #344, #345):
+  `docs/archive/progress-done/split-lane.md`, "The split lane, done". `render/world.js` (40 KB)
+  split by meaning: the player's marker and refused ×, the dead, the tick's events and the canvas's setup to
+  `render/you.js`, `corpses.js`, `events.js` and `setup.js`, leaving the frame and the API (40.7 to 8.8, 5.8, 19.5, 2.7 and
+  4.6 KB; the last part; the workshop/split-world PR).
+  `render/food.js` split by meaning: its burrows and the beetle's bore to `render/burrows.js` (66 to 43.5 and 22.6 KB;
+  PR #421).
+- **The design by topic, not by round** (#336): *Done:* the round files are pointers and records; topics made or widened:
+  `02`–`05`, `09`, `12` (the round's arc), `13`, `21`, `22`, `30`, `31`, `33` and `38`–`45`, their history in
+  `docs/archive/design-*.md` (PR #425 to PR #451).
+- *Done:* `docs/archive/progress-done.md` (99 KB) split by section into `docs/archive/progress-done/`, with an index,
+  word for word, every pointer to it updated (the workshop/progress-done-split PR).
+- *Done:* a pointer check and a reading-size check on every PR (`tools/pointers-test.js`, `tools/sizes-test.js` and
+  `tools/sizes.json`, run by `tools/copies-test.js` in the copies check's CI step; PR #525).
+- *Done:* a content security policy for the page (the meta in `index.html`, pinned by `tools/csp-test.js`; the
+  lettering served with the game; PR #526; its CI step, PR #527, waits for the owner's yes).
+- *Done:* `style/screens.css` (52 KB) split by meaning into `style/small-boards.css`, `phones.css`, `beside.css`,
+  `header.css` and `access.css`, linked in the same order (the workshop/split-screens PR).
+- *Done:* the old copy in `tools/copies-baseline.json` removed (the shared header probe, PR #522); the workshop check's
+  point (2) condensed again, `AGENTS.md` from 23.6 to 19.8 KB (PR #360).
+- *Done:* the README as a front page (an outside review, 11 November 2026: about 6,400 words): what the game is, how it
+  plays, the controls, friends and the licences in about 560 words; the rules were already in `docs/design/`, and the
+  dozen the topics lacked (the board's size, golden apple and beetle timings, the stamina's refill, the full-bar fizzle
+  and others) were moved to their topics, the lesson and the Field guide teaching each in the game (the
+  workshop/readme-front-page PR).
+- *Done:* of "The core's game rules this game does not meet yet" (the design session, 11 November 2026), moved word for
+  word on 19 November 2026: (2) a check that nothing in `aiView()` says which snake is a person and that no rival's
+  timing gives one away ("The computer players never know who is a person") (done: PR #728,
+  `tools/rules/31-never-know-a-person.js`; it found a dropped tail's colour in the food a rival is shown, taken out);
+  (3) whatever the game shows from the past showing its age ("No rule untaught") (done: PR #740; the Field guide, the
+  lessons, the hints and the Hall hold no stale past; it fixed the dash chip's tooltip, which still said "flash", the
+  sudden-death banner's "Nothing grows now", and stale quotes in design 09, 40 and 42; three rules lack a Field guide
+  row: #739); (4) online rounds replaying from the log of every input ("Same seed, same game") (done: PR #730,
+  `tools/rules/32-online-replay.js`; it found that the inputs alone don't replay a round: where a press lands among the
+  rivals' thinking, and which rivals thought ahead, change the host's game, #729, fixed in PR #741: each decision draws
+  from a stream of its own). The updating rule needs nothing: `docs/design/36-updating.md` takes a new version between
+  rounds, as the core's "Players always play the newest version" now says.
+- *Done:* a check for code nothing uses (the owner, 11 November 2026: "Should we have a rule about removing unused code,
+  expert?", then "Yes, expertly to all, expert!"): `scripts/unused.js`, its exceptions in `tools/unused.json`, in
+  `scripts/test.sh unused` and CI; its two finds removed (PR #773).
+- *Done:* the browser suites' one ending (#526): `tools/render-test.js` and `tools/input-test.js` end with
+  `report.end(b)` like the others (input passes `printed: true`, its last part printing the lines); a failure still
+  fails, as the run showed (PR #779).
+
+## The lane's lines in `docs/PROGRESS.md`, as they stood at its trim (26 November 2026)
+
+*Done in the lane:* each line is in `docs/archive/workshop-lane-done.md`.
+
+- **The core's game rules this game does not meet yet** (the design session, 11 November 2026; from "What each game does
+  not yet do" in `reports/2026-11-10-step-3-now.md` of the core's own repository, which no copy holds): (1) whether one
+  `tools/abtest.js` run plays all three groups of "Using a feature must pay" (where it fits, always, never), and its
+  threshold for "by more than chance" listed as a first guess; points (2) to (4) are done (`docs/archive/workshop-lane-done.md`).
+  What changes the AI, the engine's rules or the online messages goes to the main lane as an entry of its own.
+- **The owner's audit, prune and trials** (agreed in chat, 14 and 15 November 2026; the stand-in's yes, 19 November):
+  #764, the audit of how the code is put together, done (PR #780: `docs/audits/`, its baseline for #771's view on the stack; its
+  cleaning lane is #783 and its two small drifts #784, waiting for the stand-in's verdicts); #765, the
+  prune of the records of the owner's words, closed as superseded by #792 (the owner's words that stand cleaned,
+  under way); and the trials, nothing merged, each reporting to the core:
+  #766 (a first-time player), #769 (the change probe), #767 (a public rule set) and #768 (two rival entries measured
+  side by side: the next two in the main lane on different files).
+- **The cleaning lane from the code audit** (#783; the stand-in's yes, sure, 19 November, on the owner's words of 14
+  November quoted in #764: "They are not allowed to get worse, and audits should run, and major refactoring runs
+  scheduled"), each step its own small PR with behaviour proven unchanged, in order: (1) the part check, a suite with
+  today's crossings as its baseline (done, PR #788: `tools/crossings-test.js`, `docs/developing.md`); (2) `game/friends.js` split as a pure move; (3) one teaching file for each rule's
+  lesson words, guide row and trigger, checked that each lesson has its row; (4) the controller's round flags into
+  their own per-round object, and the event switches into tables. Steps 1 to 3 go before item 4, the teaching system,
+  starts. Step 5, in the engine and the AI, is entry 8c.
+- **The file-by-file review** (the owner, 2 November 2026; part 1, the docs every session reads, done in PR #334;
+  part 2, `docs/design/`, PR #335; part 3, the code, PR #337): its spec is in
+  `docs/handoff/queue-specs.md` under the same title.
+- **The shared core** (archive, 5 November 2026): the rules common to every project live in one repository, each
+  project carrying a checked copy (here `core/`); its spec is in `docs/handoff/queue-specs.md` under the same title.
+  Step 3 is done (#636, #637).

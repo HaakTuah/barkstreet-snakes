@@ -1,0 +1,47 @@
+# {{project}}
+
+FILL IN: what this project is, in two or three lines: what it does, who uses it and what it is built in.
+
+The owner decides; builders like you build it. A session of any tool but Claude Code: read
+`core/tools/other-builders.md` at the start of every task.
+
+## The core
+
+This project takes the shared rules in `core/` by `core-manifest.md`, whose slots and names fill the core's words. A
+builder reads these whole at the start of every task (Claude Code, Kiro and Antigravity pull them in through their
+entry files; any other tool: open each file named):
+
+<!-- The core's part: a sync writes it; write yours outside. -->
+@core-manifest.md
+@core/floor/security.md
+@core/roles/builder.md
+@core/roles/shared/how-to-work.md
+@core/roles/shared/inbox.md
+@core/roles/shared/work-flow.md
+<!-- The core's part ends. -->
+
+What else a task calls for, and what another role reads, one command prints:
+`node core/scripts/reading.mjs <role> --issue <its issue>`.
+
+## Where things are
+
+| What | Where |
+| --- | --- |
+| The queue, in order: what is next and in flight | `docs/PROGRESS.md` |
+| Security: what this project adds to the floor; who might attack it | `SECURITY.md`, `docs/threat-model.md` |
+
+## Starting a task
+
+A session handed a brief starts from it instead (`core/tools/other-builders.md`).
+
+1. Take the main lane's next entry in `docs/PROGRESS.md`. Its issue is the spec; a stage with no issue, its text there.
+2. Read what that command prints for it, as a builder, and what that entry names.
+
+## Commands
+
+FILL IN: the commands that set the project up, run its tests and build it, each with a word on what it prints.
+
+## Review guidelines
+
+Every reviewer, the code reviewers and the security reviewer included, reads `core/roles/shared/review-guidelines.md` whole
+and judges the change by it, with `SECURITY.md` and the floor.

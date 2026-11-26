@@ -1,0 +1,17 @@
+# The core's file: core/scripts/converge.mjs writes it from the starter kit at each sync. To keep a change of the project's own, take this line out and name the file in core-manifest.md's "Differences".
+# The description check ("Each PR has the headings" in core/roles/shared/work-flow.md): a pull request that is no draft has the
+# headings "What the owner can try" and "Readings taken". The core's, on every pull request when it opens, gets a new
+# commit, is marked ready or has its description edited, so that one put right passes by itself. A draft is not asked,
+# nor Dependabot's own. Read-only, and no secrets: the description reaches the core's script as data, never in a command.
+name: pr-description
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize, ready_for_review]
+
+permissions:
+  contents: read
+
+jobs:
+  pr-description:
+    uses: HaakTuah/agent-core/.github/workflows/pr-description.yml@ec5978ed97210c772a49ab9634953c1bf82be292

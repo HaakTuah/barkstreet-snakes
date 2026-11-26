@@ -1,0 +1,40 @@
+# The security-review check (floor rule 8, "No PR merges before its security review has run"): the core's. It gives the
+# head commit of each open pull request that is no draft the status "security-review", which says whether its security
+# review has run: when the pull request opens or is marked ready, at each push, and whenever Codex's summary on it
+# changes or a comment that opens "Security review:" is posted by the owner, a member or a collaborator (a pull
+# request from a fork, or one Dependabot pushes to, gets its status at the first such comment). Advisory for now: the
+# status always passes and says what the check would have done, so nothing waits for it and no ruleset requires it.
+# What it takes as proof, what it does not hold, and what keeps a workflow that a comment can start safe are in the
+# header of the core's workflow: it runs the default branch's copy of the core's script, never a pull request's, and
+# its token can read, and write a commit status, nothing more. No secret.
+# Before it, the core's queue-only.yml proves a pull request that changes only the progress file, which then needs no
+# review of its own (floor rule 8): its job alone may read issues. This repository is public, so it runs with no
+# `private` input.
+name: security-review
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+  issue_comment:
+    types: [created, edited]
+
+permissions:
+  contents: read
+
+jobs:
+  queue:
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+    uses: HaakTuah/agent-core/.github/workflows/queue-only.yml@16320a137f7323400af7902b44f5b2bc4ef38027
+  security-review:
+    needs: queue
+    if: ${{ !cancelled() }}
+    permissions:
+      contents: read
+      pull-requests: read
+      statuses: write
+    uses: HaakTuah/agent-core/.github/workflows/security-review.yml@16320a137f7323400af7902b44f5b2bc4ef38027
+    with:
+      queue: ${{ needs.queue.outputs.head }}

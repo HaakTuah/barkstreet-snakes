@@ -1,0 +1,80 @@
+# Realms and colonies, as it was decided: the design files' text
+
+Sovereign's realm and Colonist's colonies as the design files had them, word for word, with their superseded versions
+and measurements. The current rules are in `docs/design/44-realms-and-colonies.md`.
+
+## From food and the world (`04-food-and-the-world.md`)
+
+- **Borders: Sovereign's realm and Colonist's colonies** (round four; they were force fields). The land is drawn as on a map: its cells, exactly the land the rules mean, under a light wash in the owner's colour; a band and a riband of the colour inside a true ink line with rounded corners, a parchment keyline just inside the ink, so a border reads for every eye (no line along the board's edge or round a hole: holes are lost land); where two owners' land meets, the line is dashed in both colours over true ink, the dashes standing still, and land both claim is hatched in both. (Without the keyline, Colonist's rose went grey-khaki to colour-blind eyes, its ink no darker than the bark's grain.) Land grows a ring of cells at a time as a realm widens, and shrinks back into its capital when its owner goes. The border flares as it changes and when lightning strikes, breathes while a rival's head is on it, and lights up from where a head crosses in. A rival on the land wears the land's colour round its pieces on the land's own cells, with a parchment keyline outside it, so it shows round a red body too. If it's you, you hear it: a muffled drum and a fife (see Sound). (Drawing only: the rules of trespass are as they were, and the AIs know nothing more than before.) *History:* they began as flat tinted discs with a hard edge, and nothing happened when you went in. The third pass made them domes of light with a honeycomb, ripples, sparks round the rim, rain dimples, frost and a wind shiver; those cost 2.3–2.6 times the same board without them, and round four replaced them with these borders (see "Borders, not force fields").
+- **Sovereign's realm grows and moves.** It starts at radius 4 and gains a cell of radius for every 8 segments Sovereign grows, up to 7. If Sovereign wastes away, it shrinks back (2 segments' grace, so it doesn't flicker). Every 1.5 s it checks whether a cell's step would put clearly more of it on open log (holes and fire are lost land) and drifts that way, one cell at a time. On screen its land grows or shrinks a ring of cells at a time, and its border flares. Its capital flies a swallow-tailed banner in parchment and ink, its crown inked, trimmed in the realm's colour (no gold: gold means a power). Sovereign remarks on it ("Our realm expands!", "A strategic retreat. A royal one.", "The court relocates."). Over 600 seeded rounds it wins as often as before (28% to 27%); over 120 rounds against two others its realm reached radius 5 to 7 in four rounds of five.
+- **Colonist's flags.** It plants the Union Flag and it flies (drawn in strips that ripple out from the pole), on an inked pole with a parchment knob (round four; it had a gilt finial). It used to be St George's cross, which is England's flag; redcoats were the British Army from 1707, and the colonies were claimed under the Union Flag. The game uses the 1801 flag everyone recognises, the one of the Empire's great colonising century (a tricorn-era purist would leave out St Patrick's red saltire). **Its later colonies fly colonial ensigns**, as the Empire's colonies did: the Union Flag in the corner of a Blue Ensign with the Southern Cross (the second, fourth, …) or a Red Ensign with the colony's badge, here the log's own oak on a white roundel (the third, fifth, …). The first colony keeps the Union Flag. Each colony remembers its number, so its flag never changes.
+
+## From looks and lines (`19-looks-and-lines.md`)
+
+- **Fields that overlap.** A snake's own fields that overlap (Colonist's colonies) are drawn as one merged field with one rim round the lot, not rings crossing rings. Where two snakes' fields meet (a colony planted in Sovereign's realm, say), the border between them crackles: a jagged, flickering seam of pale light, throwing the odd spark, outlining the contested ground. Colonist may plant in anyone's land; the field is a look, and the rules don't change. (Round four's borders keep the merging: one line round a snake's own land, and where two owners' land meets, a line dashed in both colours, standing still, with the land both claim hatched; the seam and its sparks went with the domes.)
+
+## From round four (`24-round-four-the-owners-feedback-and-the-calls.md`)
+
+### Borders, not force fields
+
+Sovereign's realm and Colonist's colonies are drawn as **borders on a map**, like a grand strategy game, not as domes:
+- the land, cell-exact, under a light wash in the owner's colour;
+- a band and a riband of colour along the inside of a true ink line (`#1c1209`), its corners rounded, with a parchment keyline just inside the ink (no line along the board's edge or round a hole). The keyline came with the critique: without it, Colonist's rose went grey-khaki to colour-blind eyes, its ink no darker than the bark's grain;
+- where two claims meet, a line dashed in both colours over true ink, and hatching on land both claim;
+- land that grows a ring of cells at a time as a realm widens, and shrinks back into its capital when its owner dies;
+- a border that flares as it changes and when lightning strikes, breathes while a rival's head is on it, and lights up from where a head crosses in;
+- a rival on the land wearing the land's colour round its pieces on the land's own cells (where two claim it, the later realm's colour), with a parchment keyline outside it, so it shows round a red body too (an ink ring outside that as well took a third fill pass, and put the land over its budget);
+- Sovereign's capital marked with a swallow-tailed banner in parchment and ink, its crown inked, trimmed in the realm's colour (a blue banner vanished into the blue wash), and Colonist's flags on inked poles with parchment knobs. No gold: gold means power.
+
+*As built*, the contested dashes stand still. Marching, their many short pieces cost about as much as all the rest of the land together, so they're cached in one small layer. The optional light sweep across the land was left out.
+
+The land rule becomes one rule everywhere (the AI, the chatter, the HUD and the borders): a cell is land if its centre is within radius + `LAND_REACH` (0.5) of a field's centre. That removes the one-cell nubs the old radius + 1 left at the four tips. Snow lies on land like anywhere else, tinted by it. The domes' weather effects go, except a flare when lightning strikes. Crossing a border sounds like a muffled drum knock with a fife note, not an electric hum.
+
+*Why:* the domes cost about 3.3 ms a frame in a real round (2.6 times the same board without them). *Measured* as built, the staged scene with both owners' land costs 1.28–1.40 times the same board without it (the domes 2.26–2.62), and their canvases hold 5.2 MB instead of 23.9. They read better at phone size.
+
+## From round six A (`27-round-six-a-fairness-and-fixes.md`)
+
+**A pecked flag is a lost colony** (the owner: "territory stays behind when the woodpecker takes out the flag. Probably shouldn't do that."). Land used to outlive its flag when the woodpecker pecked it out. Now:
+- **Colonist:** a colony whose flag cell becomes a hole is lost. Its flag falls into the pit, its land shrinks away, and Colonist may plant again.
+- **Sovereign:** a pecked capital moves the realm at once to the nearest good land, banner and all.
+- **As built:** Colonist sets off at once to plant another, and swaps a pecked site it was heading for; Sovereign moves to the nearest centre that isn't a pit (the most land among those as near), and its slow drift never moves onto one. The flag tips over and drops into the pit, shrinking and fading (760 ms; with reduced motion it fades in place); once Colonist forgets the colony, its land shrinks into the pit ring by ring. Sovereign's banner glides 240 ms when the realm drifts a cell. **Since 2 November 2026** (the owner: flags jumped when a gap opened under them; they should fall) a pecked capital's banner falls into the pit as a colony's flag does, and a new one pops up at the new capital (it was teetering, then carried 700 ms, lifted and leaning: a jump); and a flag or banner on a piece the strike cuts loose rides that piece down, upright, shrinking and fading with it (750 ms), as its food does, instead of tipping over on its own pole. Both say so (Colonist: "The flag's gone down the hole! Abandon colony!"; Sovereign: "The capital has fallen. Into a hole."), even just after another line; the peck itself goes without its usual line. The Field guide has a row and a picture for it.
+- **The lesson** (the critique: until then a rival's chatter line was the only word, and with Bark chatter off there was none): the first time each happens in a round, for everyone, players and watchers, chatter on or off, "The woodpecker took a flag: that colony's lost." or "The woodpecker took a capital: its realm moves." It's seen as the chatter sees it, a tick after the strike (a colony gone from its snake's memory with a hole where its flag stood, or a realm moved off a centre that's now a hole), so a colony Colonist simply lets go says nothing; it waits behind a lesson holding the banner.
+
+## From the owner's playtest (`32-the-owners-playtest.md`)
+
+### Flags that bend under a snake
+
+The owner (29 October 2026; entry 2l): Sovereign's banner and Colonist's flags bend over while any part of any snake lies
+on their tile. The pole tips from its foot the way that snake stepped onto the tile, and the cloth trails behind and
+droops. The snake already on it keeps it; when it leaves, another snake there takes over and the flag eases to the new
+way. A north or south push also leans the flag out to its cloth's side (east), because a pole leaning straight along a
+body lay hidden on it. North stretches the pole a touch and hangs the cloth; south shortens the pole. While a flag
+leans it is drawn over the snakes, since under them it couldn't be seen. Freed, it springs upright with a wobble that
+dies away in under a second. With reduced motion it leans and stands up at once. The banner bends only at rest on its
+cell, never while it glides or pops up at a new capital. A flag that falls into a pit drops its bend.
+Drawing only (`bendOn` in `render/flags.js`): each screen draws it from the snakes it has, so online play needs no
+protocol change, and the simulation doesn't load the renderer.
+
+### Flags in depth, hit head-on (2p)
+
+The owner (30 October 2026): "the flag bends now. But i would like to give it some perspective also. So people that pass
+behind it, dont show up in front of it. They should be behind it. Also, it doesn't quiet know what to do when a snake
+hits it dead on, so that must be accounted for. And it should also react to soverign and colonists hitting it."
+- **In depth.** Every flag and banner is drawn over the snakes (`drawBentFlags` in `render/flags.js`), upper rows first, so
+  anything on the tiles behind it goes under its pole and cloth. Over the row in front of it, it is cut away where a
+  snake lies (`clipFront`: each body cell a fifth of a cell above its row for its outline, a head's a third for its face), so
+  whatever stands in front hides the pole's foot.
+- **Head-on.** A head that comes onto the tile from the north or the south has no side to push the pole to: it is knocked
+  flat ahead of the head (`look[4]`, how flat: laid towards you, the pole turns right round and lies down the screen; laid
+  away, it lies up it), and for `WRAP_MS` (260 ms) its cloth is wrapped round the head, over it, its ends folded back along
+  the head's sides (`wrapCloth`). Then it lies under the body, drawn under the snakes, and springs back as any flag does
+  once the tile is free. A flag laid away swings up through upright as it springs back, never flattening towards you. With
+  reduced motion there is no wrap.
+- **Owners.** Sovereign over its own banner and Colonist over its own flags bend them as anyone does (they already did;
+  a render test now proves it). What looked wrong was the head-on case, which owners meet most, heading for their own
+  flag.
+- **Planted under a snake** (PR #255, polish). A flag that wasn't on the board a moment ago (not drawn in the last frame drawn, by frames, not ms, so watching at 4x never counts a flag in sight as new; Sovereign's banner counts as in sight while it glides)
+  and turns up with a snake already on its tile, as each new colony does under Colonist's head, is bent from its first
+  frame: never seen standing, it doesn't stand for a frame and then snap over, and a head-on one lies flat under the
+  head without wrapping the face that planted it.
+- Drawing only, from the snakes each screen has: no simulation, no protocol change.

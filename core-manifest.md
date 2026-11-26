@@ -1,0 +1,48 @@
+# Core manifest
+
+Core: HaakTuah/agent-core at ec5978ed97210c772a49ab9634953c1bf82be292, copied whole under core/ (never edited here).
+Paths: in the core's files, one into floor/, roles/, tasks/, tools/, scripts/, setup/ or archive/ is under core/; any other is ours.
+Floor: whole. Modules: all.
+
+## Names
+- A task: an entry of the queue in `docs/PROGRESS.md`.
+- The main lane: that queue, in order.
+
+## Slots
+| Slot | Here |
+| --- | --- |
+| *owner's account* | `HaakTuah` |
+| *follows* | `releases` |
+| *progress file* | `docs/PROGRESS.md` |
+| *report* | the PR's description |
+| *settling references* | "Rules that stand" in `AGENTS.md`, or the design section |
+| *descriptions* | the topic file in `docs/design/` and, for what a player sees, the README, the lesson, the Field guide row and the hints on screen |
+| *copies check* | `core/scripts/copies.mjs` with `checks/copies.json` |
+| *size marks* | `checks/sizes.json` |
+| *large file* | a game file of about 40 KB or more (such as `render/food.js`): `scripts/codemap.sh <file>` or grep |
+| *one at a time* | AI and engine-rules changes, and changes to the online messages |
+| *design-checked PRs* | engine-rules and AI entries (new moves and rules, the rivals' play) |
+| *review reference* | the design sections the entry names, in `docs/design/` |
+| *planning design* | the rivals' planning |
+| *hard work* | the AI's planning, the engine's rules and online sync (not a big-file split: its fingerprints and suites check it) |
+| *major version checks* | the full suites, and played through for what ships |
+| *other builders' checks* | `scripts/test.sh`, and `scripts/sim.sh` with the fingerprint for a change that should keep behaviour |
+| *computer players* | the rivals |
+| *measured players* | the rivals, each by name |
+| *what they are shown* | `aiView()` |
+| *use-against-ignore measurement* | `tools/abtest.js` on fresh seeds, rivals that use the move against a copy where only some rivals lose it (the rule itself unchanged), and the conditional-goods simulations, which check that neither always nor never using it wins ("Rules that stand" in `AGENTS.md`) |
+| *where the numbers go* | the PR's table |
+| *where rules are taught* | a visible cue and a lesson: the one-time lesson and a Field guide row, always both |
+| *mutation tool* | `node core/scripts/stryker.mjs --tool checks/mutation --report {report} {lines}`: Stryker, from the core's list (`mutation-tools.json`) |
+
+## Tools
+The core's default (`core/tasks/roles.md`, "Tools are preferences"), save each role a row orders otherwise.
+
+| Role | Preferred | When it is not at hand |
+| --- | --- | --- |
+
+## Pace
+None set: no session slows work to save usage (`core/roles/orchestrator.md`, "The pace is the owner's").
+
+## Differences
+- "SECURITY.md" and "docs/threat-model.md": the game's own text; the core writes none of it where they stand.
