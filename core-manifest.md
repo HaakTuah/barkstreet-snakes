@@ -5,7 +5,8 @@ Paths: in the core's files, one into floor/, roles/, tasks/, tools/, scripts/, s
 Floor: whole. Modules: all.
 
 ## Names
-- A task: an entry in the queue.
+- A task: an entry of the queue in `docs/PROGRESS.md`.
+- The main lane: that queue, in order.
 
 ## Slots
 | Slot | Here |
@@ -33,3 +34,15 @@ Floor: whole. Modules: all.
 | *where the numbers go* | the PR's table |
 | *where rules are taught* | a visible cue and a lesson: the one-time lesson and a Field guide row, always both |
 | *mutation tool* | `node core/scripts/stryker.mjs --tool checks/mutation --report {report} {lines}`: Stryker, from the core's list (`mutation-tools.json`) |
+
+## Tools
+The core's default (`core/tasks/roles.md`, "Tools are preferences"), save each role a row orders otherwise.
+
+| Role | Preferred | When it is not at hand |
+| --- | --- | --- |
+
+## Pace
+None set: no session slows work to save usage (`core/roles/orchestrator.md`, "The pace is the owner's").
+
+## Differences
+- "SECURITY.md" and "docs/threat-model.md": the game's own text; the core writes none of it where they stand.
