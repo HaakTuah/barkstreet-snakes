@@ -12,8 +12,8 @@
   check('each act starts at a random time in its window, after the one before', inWindows);
   const pinned = make({ withPlayer: false, acts: [70000, 140000, 200000] }).acts;
   check('...and ?acts= pins them', pinned.watch === 70000 && pinned.pecks === 140000 && pinned.frenzy === 200000, JSON.stringify(pinned));
-  const odd = [[140000, 70000, 200000], [70000, NaN, 200000], [70000, 140000]].map(a => make({ withPlayer: false, acts: a }).acts);
-  check('...but times out of order, or not numbers, or too few, are ignored', odd.every(a => a.watch >= T.ACT_WATCH_MS[0] && a.watch <= T.ACT_WATCH_MS[1]), JSON.stringify(odd));
+  const odd = [[140000, 70000, 200000], [70000, NaN, 200000], [70000, 140000], [70000, 140000, 200000, 260000], [], [-1, 140000, 200000], [70000, Infinity, 2e5]].map(a => make({ withPlayer: false, acts: a }).acts);
+  check('...but times out of order, not numbers, below zero or endless, too few, too many or none, are ignored', odd.every(a => a.watch >= T.ACT_WATCH_MS[0] && a.watch <= T.ACT_WATCH_MS[1]), JSON.stringify(odd));
 }
 
 // Two snakes far from the middle, held still (stunned) and fed; the round run on to `until`, starting at `from`.

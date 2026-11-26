@@ -74,6 +74,19 @@ ok(row && row.color === '#a8a29e', 'a colour that isn\'t a colour is replaced');
 ok(row && row.place === 2 && row.eaten === 9999 && row.survived === 0, 'numbers are clamped to sense');
 ok(row && !row.name.includes('\u202e') && row.id === 'img', 'names and ids are cleaned');
 ok(C.recordFriend({ place: 1, eaten: 1, survived: 1 }, { name: 'Me?', color: '#4ade80', owner: C.playerId(), round: 'R1' }) === null, 'a friend can\'t record a round as yours');
+// What the host passes on of a friend's: at most MAX_SCORES rows, of that friend alone; markup and paths only as text.
+const shared = n => Array.from({ length: n }, (_, i) => ({ owner: 'f1', place: 1, date: Date.now() - i, eaten: i, name: '<b>Bo</b>', id: '../../x' + i }));
+const kept = C.cleanShared(shared(C.MAX_SCORES + 1), 'f1');
+ok(kept.length === C.MAX_SCORES, `${C.MAX_SCORES + 1} shared rows: the first ${C.MAX_SCORES} kept`, kept.length);
+ok(kept[0].name === '<b>Bo</b>' && kept[0].id === 'x0', 'a name of markup stays text (never built as markup: the scope suite\'s markup check), an id that is a path loses all but its word', JSON.stringify(kept[0]));
+ok([undefined, null, 'rows', 7, {}].every(v => Array.isArray(C.cleanShared(v, 'f1')) && !C.cleanShared(v, 'f1').length), 'nothing at all, or not a list, shares nothing');
+// And at most four friends' worth (4 * MAX_SCORES) of rows a message on import: one row past it, the best of all, is never taken.
+const Many = player(), cap = 4 * Many.MAX_SCORES;
+Many.importShared(shared(cap + 1).map((e, i) => ({ ...e, owner: 'f' + i, place: i === cap ? 1 : 4, won: i === cap })), '#123456');
+const took = () => Many.scores().map(e => e.place).join('');
+ok(took() === '4'.repeat(Many.MAX_SCORES), `${cap + 1} rows from friends: the ${cap + 1}st, the best, never taken`, took());
+for (const v of [undefined, null, 'rows', 7, {}]) Many.importShared(v, '#123456');
+ok(took() === '4'.repeat(Many.MAX_SCORES), 'nothing at all, or not a list, imports nothing');
 
 // Names that are also built-in object keys, or replacement patterns.
 C.recordPlayer({ place: 4, eaten: 0, survived: 1000, killer: 'constructor' });

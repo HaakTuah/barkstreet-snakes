@@ -573,6 +573,18 @@ if (promised !== JSON.stringify([[300, 302], [301, -1]]) || 'landings' in g.wood
 
 // A guest's press the host can't use (an unknown power, a made-up direction) is refused.
 if (O.POWERS.includes('dash') || O.POWERS.includes(undefined) || O.DIR_NAMES.includes('ahead')) { console.error('a bad press got through'); process.exit(1); }
+// Nor more portals than online.js's PORTALS_MAX, however many a tick holds.
+const PORTALS_MAX = Number(/\bPORTALS_MAX = (\d+)/.exec(fs.readFileSync(path.join(ROOT, 'online.js'), 'utf8'))?.[1]);
+bad.po = Array(PORTALS_MAX + 1).fill([1, 1, 1, 0, 2, 2, 0, 9e9]);
+O.apply(g, bad, E.DIRS);
+if (!PORTALS_MAX || g.portals.length !== PORTALS_MAX) { console.error('portals kept past PORTALS_MAX:', g.portals.length); process.exit(1); }
+// Room codes, linked or typed: cut to 5 of their own alphabet; anything else is no code.
+const badCode = [['K7QXM', 'K7QXM', 1], ['k7qxmAAAA', 'K7QXM', 1], ['<img src=x>', 'IMGSR'], ['../../etc', 'ETC'], [{}, 'OBJEC'], [12345, '12345'], [undefined, ''], ['K7Q', 'K7Q']]
+  .find(([t, clean, is]) => O.cleanCode(t) !== clean || O.isCode(t) !== !!is);
+if (badCode) { console.error('a room code cleaned wrong:', JSON.stringify(badCode)); process.exit(1); }
+// SECURITY.md, rule 5, names the newest version a host knows: online.js's.
+const secVersion = /version\s+(\d+)\s+\(`VERSION`\s+in\s+`online\.js`/.exec(fs.readFileSync(path.join(ROOT, 'SECURITY.md'), 'utf8'))?.[1];
+if (+secVersion !== O.VERSION) { console.error(`SECURITY.md, rule 5, says version ${secVersion}: say online.js's ${O.VERSION}`); process.exit(1); }
 
 const n = key => seen.get(key) || 0, stagedAll = [...staged.values()].reduce((a, b) => a + b, 0);
 console.log(`ok: ${rounds} rounds (seed ${SEED}), ${ticks} ticks, ${checks} checks, guest matched the host every tick (${presses} power presses, ${n('dash plain')} plain flashes, ${plans} plans, ${n('squash')} squashes, ${n('crash failed')} failed flashes, ${n('dig')} digs, ${n('knock')} knocks, ${n('shut')} burrows growing shut, ${n('heal')} closing over, ${eaten} things eaten); biggest message ${biggest} bytes`);

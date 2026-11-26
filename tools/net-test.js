@@ -23,6 +23,9 @@ const { launch, serve } = require('./browser');
 const FAST = 100;
 const root = path.join(__dirname, '..');
 const code = fs.readFileSync(path.join(root, 'net.js'), 'utf8');
+// (a relay note's and a relayed message's own limits, as net-relays.js holds them: each "too long" case is one past)
+const relaysCode = fs.readFileSync(path.join(root, 'net-relays.js'), 'utf8');
+const MAX_NOTE = Number(/\bMAX_NOTE = (\d+)/.exec(relaysCode)?.[1]), MAX_DATA = Number(/\bMAX_DATA = (\d+)/.exec(relaysCode)?.[1]);
 
 const emitter = () => {
   const on = new Map();
@@ -155,8 +158,13 @@ async function inNode() {
   const friend = channel('relay-fedcba9876543210');
   calls.onConnection(friend);
   friend.opens();
+  for (const junk of [null, undefined, '', 'hello', 42]) friend.emit('data', junk); // (nothing at all, and not an object: an array or {} goes on to the game, which reads no kind in it)
   friend.emit('data', { t: 'hello' });
-  ok(calls.joins[0] === 'relay-fedcba9876543210' && calls.messages[0]?.[1]?.t === 'hello', 'a friend who came by the relays joins the room and is heard, as one by the broker');
+  ok(calls.joins[0] === 'relay-fedcba9876543210' && calls.messages.length === 1 && calls.messages[0]?.[1]?.t === 'hello', 'a friend who came by the relays joins the room and is heard, as one by the broker, and nothing that isn’t a message reaches the game', JSON.stringify(calls.messages));
+  // (a ninth connection at once, past MAX_CONNECTIONS in net.js, is closed unheard)
+  const more = Array.from({ length: 8 }, (_, i) => channel('relay-' + String(i).padStart(16, '0')));
+  for (const c of more) { calls.onConnection(c); c.opens(); }
+  ok(more.slice(0, 7).every(c => !c.closed) && more[7].closed && calls.joins.length === 8, 'eight friends at once, and a ninth is closed unheard', `${calls.joins.length} joined`);
   h.room.close();
   h = await host({ open: peer => peer.id === 'barkbite-mossy' ? fails(peer, 'unavailable-id') : peer.emit('open'), listen: 'ok' }, ['MOSSY', 'K7QXM']);
   await new Promise(r => later(r, 2000));
@@ -245,6 +253,34 @@ async function inChrome() {
     })()`);
     const refused = await b.ev(`friendWin.SnakeRelays.connect(${JSON.stringify(wrong)}, [], 8000).then(r => (r.conn.close(), 'joined'), e => e.type)`);
     ok(refused === 'unanswered', 'a code that shares the room’s topic but isn’t its code can’t join: its offer is never answered', `${wrong}: ${refused}`);
+    // A modified friend's hellos, each on a connection of its own into the room as it plays: a newer version is
+    // refused, as are nothing at all and a message past MAX_DATA (dropped unread), and a hello of markup, a name too
+    // long and a path for an owner gets in only as cleaned text.
+    const hellos = await b.ev(`(async () => {
+      const name = 'barkbite-' + SnakeDebug.online().code.toLowerCase(), sleep = ms => new Promise(r => setTimeout(r, ms));
+      const people = () => SnakeDebug.online().players.length, V = SnakeOnline.VERSION;
+      const ask = async sent => {
+        const { conn } = await friendWin.SnakeRelays.connect(name, [], 15000), heard = [];
+        conn.on('data', m => { if (m?.t !== 'ping' && m?.t !== 'k') heard.push(m?.t + (m?.why ? ' ' + m.why : '')); });
+        for (const m of sent) conn.send(m);
+        await sleep(1500);
+        const out = { heard: heard.slice(0, 3).join(), people: people(), last: SnakeDebug.online().players.at(-1) };
+        conn.close();
+        for (let i = 0; i < 100 && people() > 2; i++) await sleep(50);
+        return out;
+      };
+      const hello = { t: 'hello', v: V, name: 'Probe', owner: 'probe1', scores: [] };
+      const newer = await ask([{ ...hello, v: V + 1 }]);
+      const nothing = await ask([null, '', 7, [], {}]);
+      const long = await ask([{ ...hello, pad: 'x'.repeat(${MAX_DATA}) }]);
+      const markup = await ask([{ ...hello, name: '<img src=x onerror=alert(1)>' + 'x'.repeat(40), owner: '../../etc/passwd', scores: 'not a list' }]);
+      return { newer, nothing, long, markup: { ...markup, img: !!document.querySelector('img[src="x"]') }, after: people() };
+    })()`);
+    ok(hellos.newer.heard === 'reject version' && hellos.newer.people === 2, 'a hello of a newer version than the room’s is refused, its friend never seated', JSON.stringify(hellos.newer));
+    ok(!hellos.nothing.heard && hellos.nothing.people === 2 && !hellos.long.heard && hellos.long.people === 2, `nothing at all, the wrong type and a hello past ${MAX_DATA} characters get no answer and no seat`, JSON.stringify([hellos.nothing, hellos.long]));
+    const probe = hellos.markup.last;
+    ok(hellos.markup.heard.startsWith('welcome') && probe.name === '<img src=x onerr' && probe.owner === 'etcpasswd' && !hellos.markup.img && hellos.after === 2,
+      'a hello of markup, a name too long and a path for an owner is seated only as cleaned text (16 characters), nothing of it built as markup', JSON.stringify(hellos.markup));
     // Notes the room must drop, sent under its own topic: none gets a handshake back; a fresh, well-made one does.
     const dropped = await b.ev(`(async () => {
       const name = 'barkbite-' + SnakeDebug.online().code.toLowerCase(), R = SnakeRelays, { w, topic } = await R.roomOf(name);
@@ -252,22 +288,29 @@ async function inChrome() {
       const say = (content, t = topic, kind = 26517) => ws.send(JSON.stringify(['EVENT', { id: Math.random().toString(36), kind, tags: [['x', t]], content, pubkey: '00', sig: '00', created_at: 0 }]));
       const heys = to => [...posted.values()].filter(c => c.includes('"hey"') && c.includes(to)).length;
       const { X } = await R.half(w, 'M'), off = '02' + 'f'.repeat(64);
+      const padded = (note, n) => JSON.stringify({ ...note, pad: 'x'.repeat(n - JSON.stringify({ ...note, pad: '' }).length) }); // (a note of exactly n characters)
       const cases = {
         'not JSON': ['{nope', 'aaaaaaaaaaaaaaa1'], 'stale': [JSON.stringify({ k: 'hi', from: 'aaaaaaaaaaaaaaa2', X, at: Date.now() - 120000 }), 'aaaaaaaaaaaaaaa2'],
         'a bad id': [JSON.stringify({ k: 'hi', from: 'AAAA', X, at: Date.now() }), 'AAAA'], 'a point off the curve': [JSON.stringify({ k: 'hi', from: 'aaaaaaaaaaaaaaa3', X: off, at: Date.now() }), 'aaaaaaaaaaaaaaa3'],
-        'too long': [JSON.stringify({ k: 'hi', from: 'aaaaaaaaaaaaaaa4', X, at: Date.now(), pad: 'x'.repeat(20000) }), 'aaaaaaaaaaaaaaa4'],
+        'too long': [padded({ k: 'hi', from: 'aaaaaaaaaaaaaaa4', X, at: Date.now() }, ${MAX_NOTE} + 1), 'aaaaaaaaaaaaaaa4'],
+        'markup': [JSON.stringify({ k: 'hi', from: '<img src=x onerror=alert(1)>', X, at: Date.now() }), '<img src=x'],
+        'a file path': [JSON.stringify({ k: 'hi', from: '../../../etc/pass', X, at: Date.now() }), '../../../etc/pass'],
+        'the wrong type': [JSON.stringify({ k: 'hi', from: 'aaaaaaaaaaaaaaa8', X, at: String(Date.now()) }), 'aaaaaaaaaaaaaaa8'],
+        'from the future': [JSON.stringify({ k: 'hi', from: 'aaaaaaaaaaaaaaa9', X, at: Date.now() + 120000 }), 'aaaaaaaaaaaaaaa9'],
+        'no point': [JSON.stringify({ k: 'hi', from: 'aaaaaaaaaaaaaab1', at: Date.now() }), 'aaaaaaaaaaaaaab1'],
+        'nothing at all': ['', 'aaaaaaaaaaaaaab2'],
         'another topic': [JSON.stringify({ k: 'hi', from: 'aaaaaaaaaaaaaaa5', X, at: Date.now() }), 'aaaaaaaaaaaaaaa5', 'barkbite-zzz'],
         'another kind': [JSON.stringify({ k: 'hi', from: 'aaaaaaaaaaaaaaa6', X, at: Date.now() }), 'aaaaaaaaaaaaaaa6', topic, 1],
       };
       const out = {};
       for (const [what, [content, from, t, kind]] of Object.entries(cases)) { say(content, t, kind); await new Promise(r => setTimeout(r, 1200)); out[what] = heys(from); }
-      say(JSON.stringify({ k: 'hi', from: 'aaaaaaaaaaaaaaa7', X, at: Date.now() })); await new Promise(r => setTimeout(r, 1200));
+      say(padded({ k: 'hi', from: 'aaaaaaaaaaaaaaa7', X, at: Date.now() }, ${MAX_NOTE})); await new Promise(r => setTimeout(r, 1200)); // (as long as a note may be)
       out.fresh = heys('aaaaaaaaaaaaaaa7');
       ws.close();
       return out;
     })()`);
     const { fresh, ...junk } = dropped;
-    ok(fresh >= 1 && Object.values(junk).every(n => n === 0), 'the room drops notes that aren’t JSON, stale, badly made, a point off the curve, too long, or of another topic or kind, and answers a well-made one', JSON.stringify(dropped));
+    ok(fresh >= 1 && Object.values(junk).every(n => n === 0), `the room drops notes that aren’t JSON, stale or from the future, badly made, markup or a path for an id, a time that isn’t a number, a point off the curve or none, too long (${MAX_NOTE + 1} characters), empty, or of another topic or kind, and answers a well-made one of ${MAX_NOTE}`, JSON.stringify(dropped));
     const keys = await b.ev(`(async () => {
       const R = SnakeRelays, a = await R.roomOf('barkbite-mossy'), b = await R.roomOf('barkbite-k7qxm');
       const guest = await R.half(a.w, 'M'), room = await R.half(a.w, 'N'), stranger = await R.half(b.w, 'M');
