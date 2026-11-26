@@ -31,6 +31,11 @@ The REST calls from a cloud session: `core/tasks/github-calls.md`. Updates, Depe
   place CI's types step, `scripts/cloud-setup.sh` and `scripts/test.sh` read them from (`npm ci --prefix tools`, into
   `tools/node_modules/`, never committed), and Dependabot's npm updates aim at it; the licence check reads each
   package's licence from the lock at every version. The game itself ships no dependencies.
+- **The mutation tool** (Stryker, the manifest's *mutation tool*, at the version the core's list pins,
+  `core/scripts/mutation-tools.json`) is in `checks/mutation/package.json` and its lock, beside an `.npmrc` that keeps
+  install scripts off and waits a week for a release; Dependabot leaves it alone. No job runs it yet: the tests load
+  the game's files into `vm` contexts with no `process`, where Stryker's faults never switch on, so every fault would
+  read as survived.
 - **The signature check** (`.github/workflows/signatures.yml`) runs the core's on every pull request. Where one changes
   a package list or a lock file anywhere in the repository, an `.npmrc` or the Node version, it installs the tools'
   packages from the registry alone with no install script run, then runs `npm audit signatures`, npm's own check of the

@@ -1,0 +1,11 @@
+{
+  "name": "mutation-tool",
+  "private": true,
+  "devDependencies": {
+    "@stryker-mutator/core": "10.1.1"
+  },
+  "overrides": {
+    "mutation-testing-report-schema": "3.9.0",
+    "qs": "6.16.1"
+  }
+}

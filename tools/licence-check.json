@@ -1,13 +1,16 @@
 {
   "lockfiles": [
-    "tools/package-lock.json"
+    "tools/package-lock.json",
+    "checks/mutation/package-lock.json"
   ],
   "ships": [],
   "data": [
-    "spdx-exceptions"
+    "spdx-exceptions",
+    "caniuse-lite"
   ],
   "ignoreScriptsIn": [
-    "tools/.npmrc"
+    "tools/.npmrc",
+    "checks/mutation/.npmrc"
   ],
   "audit": "tools/licences.json",
   "notices": "THIRD-PARTY-NOTICES.txt",

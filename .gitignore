@@ -5,3 +5,4 @@
 tools/dev/**/out/
 tools/dev/**/runs/
 tools/node_modules/
+checks/mutation/node_modules/

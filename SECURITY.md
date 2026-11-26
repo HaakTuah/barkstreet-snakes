@@ -13,7 +13,7 @@ floor's numbers, what only this game has and what the floor leaves to it; who mi
    - **the checks on the work:** the configs of the core's copies, reading-size and licence checks
      (`tools/copies.json`, `tools/copies-baseline.json`, `tools/sizes.json` and `tools/licence-check.json`), the licence
      audit (`tools/licences.json`), this game's own part of the licence check and its test (`tools/licences.js`,
-     `tools/licences-test.js`), and `tools/.npmrc`, which keeps install scripts off.
+     `tools/licences-test.js`), and `tools/.npmrc` and `checks/mutation/.npmrc`, which keep install scripts off.
 5. **Untrusted input, and its checks:**
    - **Notes on the public relays** (`net-relays.js`): anyone can post under a room's topic (one in 4,096 codes share
      it). A note is kept only in its exact shape (a handshake's point on the curve, ids of our own alphabet and length,
@@ -70,7 +70,8 @@ floor's numbers, what only this game has and what the floor leaves to it; who mi
 10. **What ships** is the files the live site serves; its notices file is
     [`THIRD-PARTY-NOTICES.txt`](THIRD-PARTY-NOTICES.txt), which the licence check holds every shipped entry's name in.
     The audit of every licence, with which list each is held to, is `tools/licences.json`.
-15. **No install scripts:** `ignore-scripts` in `tools/.npmrc`, for every install of the tools' packages.
+15. **No install scripts:** `ignore-scripts` in `tools/.npmrc` and `checks/mutation/.npmrc`, for every install of the
+    tools' packages and of the mutation tool's.
 17. **Dependabot's package files:** `tools/package.json` and `tools/package-lock.json`, whose every package the
     licence check reads from the lock at each version.
 
