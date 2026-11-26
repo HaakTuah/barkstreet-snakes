@@ -94,3 +94,19 @@ owner's three notes of 2 November merged as PRs #322 (the remains), #320 (the fl
   lean or plentiful round keeps its mark in the row under the board from Go on (the log's apple with a bite out of it,
   or a basket heaped with apples; none in a normal round), the picture of its Field guide row, named "A lean season" or
   "A season of plenty" in its tooltip; design 04, "Food seasons".
+
+## The lane's lines in `docs/PROGRESS.md`, as they stood at its trim (26 November 2026)
+
+The game's polish lane (`core/roles/shared/work-flow.md`, point 4; the owner, 31 October 2026).
+- **First: the slop audit** (the owner, 2 November 2026: "Are these 2 games ai sloppy?", then "Yes, please,
+  expertly!"): its bar and method are in `docs/slop-bar.md`; the lines it has fixed so far, in
+  `docs/archive/progress-done/polish-lane.md`, "The slop audit, done so far". Done: nothing left (one name for each
+  thing, the last item: PR #776).
+*Next find:* more by playing, as "How" says (#739, the Field guide's rows for the weather and a friend gone quiet and
+the Jump row's early press, is done: PR #778; the book's tabs, which jumped as a finger changed pages, stay put: PR #781; #782, the rivals'
+name tags and the start card's seats a fingertip's room to tap on a phone, is done: a seat's tap reaches 6 px above and
+below it, a tag's half the gap round it, nothing moved).
+
+*Done in the lane:* each fix's line is in `docs/archive/progress-done/polish-lane.md`, "The polish lane, done" (the README for
+players, any key wakes, the woodpecker bigger on a phone, the flash become the dash, the room card and Join on a phone,
+the owner's notes of 2 November, the portals blue and orange and the woodpecker's piece washed, among them).

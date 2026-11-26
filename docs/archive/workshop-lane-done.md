@@ -66,3 +66,33 @@ the workshop check's 20 KB. New ones are added here.
 - *Done:* the browser suites' one ending (#526): `tools/render-test.js` and `tools/input-test.js` end with
   `report.end(b)` like the others (input passes `printed: true`, its last part printing the lines); a failure still
   fails, as the run showed (PR #779).
+
+## The lane's lines in `docs/PROGRESS.md`, as they stood at its trim (26 November 2026)
+
+*Done in the lane:* each line is in `docs/archive/workshop-lane-done.md`.
+
+- **The core's game rules this game does not meet yet** (the design session, 11 November 2026; from "What each game does
+  not yet do" in `reports/2026-11-10-step-3-now.md` of the core's own repository, which no copy holds): (1) whether one
+  `tools/abtest.js` run plays all three groups of "Using a feature must pay" (where it fits, always, never), and its
+  threshold for "by more than chance" listed as a first guess; points (2) to (4) are done (`docs/archive/workshop-lane-done.md`).
+  What changes the AI, the engine's rules or the online messages goes to the main lane as an entry of its own.
+- **The owner's audit, prune and trials** (agreed in chat, 14 and 15 November 2026; the stand-in's yes, 19 November):
+  #764, the audit of how the code is put together, done (PR #780: `docs/audits/`, its baseline for #771's view on the stack; its
+  cleaning lane is #783 and its two small drifts #784, waiting for the stand-in's verdicts); #765, the
+  prune of the records of the owner's words, closed as superseded by #792 (the owner's words that stand cleaned,
+  under way); and the trials, nothing merged, each reporting to the core:
+  #766 (a first-time player), #769 (the change probe), #767 (a public rule set) and #768 (two rival entries measured
+  side by side: the next two in the main lane on different files).
+- **The cleaning lane from the code audit** (#783; the stand-in's yes, sure, 19 November, on the owner's words of 14
+  November quoted in #764: "They are not allowed to get worse, and audits should run, and major refactoring runs
+  scheduled"), each step its own small PR with behaviour proven unchanged, in order: (1) the part check, a suite with
+  today's crossings as its baseline (done, PR #788: `tools/crossings-test.js`, `docs/developing.md`); (2) `game/friends.js` split as a pure move; (3) one teaching file for each rule's
+  lesson words, guide row and trigger, checked that each lesson has its row; (4) the controller's round flags into
+  their own per-round object, and the event switches into tables. Steps 1 to 3 go before item 4, the teaching system,
+  starts. Step 5, in the engine and the AI, is entry 8c.
+- **The file-by-file review** (the owner, 2 November 2026; part 1, the docs every session reads, done in PR #334;
+  part 2, `docs/design/`, PR #335; part 3, the code, PR #337): its spec is in
+  `docs/handoff/queue-specs.md` under the same title.
+- **The shared core** (archive, 5 November 2026): the rules common to every project live in one repository, each
+  project carrying a checked copy (here `core/`); its spec is in `docs/handoff/queue-specs.md` under the same title.
+  Step 3 is done (#636, #637).

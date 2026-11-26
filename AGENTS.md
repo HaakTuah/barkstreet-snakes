@@ -28,7 +28,7 @@ over rules" (`core/roles/shared/how-to-work.md`) never reaches: the storage keys
 
 | What | Where |
 | --- | --- |
-| What is done and the queue, in order | `docs/PROGRESS.md` |
+| What is next, in order, and what each entry waits on (what is done: `docs/archive/progress-done/`) | `docs/PROGRESS.md` |
 | Security: what this game adds to the floor; who might attack it | `SECURITY.md`, `docs/threat-model.md` |
 | Running and checking it: every tool, its updates; each file and where each folder lists its parts ("How it's put together") | `docs/developing.md`; PR pictures: `docs/pr-pictures.md` |
 | The design, one file per topic | `docs/design/` (index: `DESIGN.md` at the root) |
