@@ -50,13 +50,15 @@ main lane as an entry of its own.
 
 Next, its step 4: the flight measured again after 2u and part 7, whose stamina and pricing change what a flight costs.
 Only if it is still even then does a bigger change go to the design session: a longer flight, or the ring shown before
-take-off. Steps 1 to 3: PRs #550, #588 and #591.
+take-off. Steps 1 to 3: PRs #550, #588 and #591. Spec: `docs/handoff/queue-specs.md`, "2y++. The golden flight,
+followed up".
 
 ### 3b++. The spit lands more, and stays a shot you can dodge (#583; after part 7)
 
 Make the spit land more as a skill shot fired in front of a snake, which the target sees coming and can step out of,
 never by a shorter warning or a flight too quick for 2q's reaction time. Done when spitters come out ahead both ways.
-Design 40, "The spit flies along the line".
+Spec: `docs/handoff/queue-specs.md`, "3b++. The spit lands more, and stays a shot you can dodge"; design 40, "The spit
+flies along the line".
 
 ### 3b. The rivals who change: Capricious, Copycat and Wildcard (Wildcard's part)
 
@@ -95,7 +97,8 @@ Spec: `docs/handoff/queue-specs.md`, "8. Near the end: beetles who meet, fight".
 
 ### 8b. #595, fed rivals take the apple on the edge row (an AI entry, one at a time; after 8, before the writing pass)
 
-Spec: the issue's text; design 39, "A meal isn't a pin".
+Spec: the issue's text and `docs/handoff/queue-specs.md`, "8b. Fed rivals take the apple on the edge row"; design 39, "A
+meal isn't a pin".
 
 ### 8c. The cleaning lane's engine and AI step (#783, step 5; one at a time, as engine and AI work)
 
