@@ -93,7 +93,7 @@ export function idleFinding(repo, add, manifest = null, owner = "") {
     const pulls = openPulls(repo, api), lanes = stalled(pulls, Date.now(), HOURS);
     stillFinding({ repo, manifest, owner, pulls }, add);
     for (const l of lanes) {
-      try { l.checks = checksOf(pagesOf(`repos/${repo}/commits/${l.sha}/check-runs`, (...a) => JSON.stringify(JSON.parse(ghApi(...a)).check_runs ?? [])), JSON.parse(ghApi(`repos/${repo}/commits/${l.sha}/status`))); }
+      try { l.checks = checksOf(pagesOf(`repos/${repo}/commits/${l.sha}/check-runs`, (...a) => JSON.stringify(parseBounded(ghApi(...a)).check_runs ?? [])), parseBounded(ghApi(`repos/${repo}/commits/${l.sha}/status`))); }
       catch { l.checks = "not read (the token may not read checks and statuses)"; }
     }
     add(TITLES.idle, lanes.length ? idleBody(lanes, HOURS) : null);

@@ -17,6 +17,7 @@ import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { standsFrom } from "./security-review.mjs";
 import { started } from "./started.mjs";
+import { parseBounded } from "./guards.mjs";
 
 const SHA = /^[0-9a-f]{40}$/u;
 const flat = (pages) => (Array.isArray(pages) ? pages.flat() : []).filter((entry) => entry !== null && typeof entry === "object");
@@ -58,6 +59,6 @@ if (started(import.meta.url)) {
     console.error("usage: node scripts/clean-merges.mjs <the pull request, as JSON> <its commits, as JSON>");
     process.exit(2);
   }
-  const read = (file) => JSON.parse(readFileSync(file, "utf8"));
+  const read = (file) => parseBounded(readFileSync(file, "utf8"));
   console.log(JSON.stringify(proved(read(pullFile), read(commitsFile), process.cwd())));
 }

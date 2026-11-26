@@ -18,7 +18,10 @@
 // that pin, compared as copy-tree.mjs compares (and says why), without the folder the core keeps to itself; and every
 // call to a core workflow is pinned to a commit of the core's main.
 // It prints the head it checked, for the merge call's `sha` (`tasks/github-calls.md`), so nothing pushed after the
-// check can merge. Git and Node's own modules only, and gh where no workflow's event says whose account holds the
+// check can merge.
+// With `--trial <full SHA>`, a release's trial asks it against that commit before it is a release (#1261): the pin must
+// be that commit, read as the release it is to be. A reading, no proof: it never exits 0 nor names a head to merge, and
+// ends with `trial answer: ` and JSON, for release-trial.mjs. The merge's gate gives no argument. Git and Node's own modules only, and gh where no workflow's event says whose account holds the
 // repository (releases.mjs, hostAccount); it changes nothing.
 import "./whole-output.mjs";
 import { execFileSync } from "node:child_process";
@@ -37,6 +40,11 @@ import { privateOf } from "./host-private.mjs";
 import { project } from "./steps.mjs";
 
 const CORE = `https://github.com/${ADDRESS}.git`;
+const [mode, asked, ...more] = process.argv.slice(2), tried = mode === "--trial" && !more.length && /^[0-9a-f]{40}$/u.test(asked ?? "") ? asked : null;
+if (mode !== undefined && !tried) {
+  console.log("not a pure sync: give no argument, or `--trial <the full SHA of the commit tried>` in a release's trial");
+  process.exit(2);
+}
 const raw = (args, cwd) => execFileSync("git", args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], maxBuffer: 1 << 26 });
 const git = (args, cwd) => raw(args, cwd).trim();
 // the only SHAs a sync may move: the manifest's pin, and a call's to a core workflow (any case, as GitHub reads it)
@@ -52,6 +60,7 @@ const show = (rev, file) => { try { return git(["show", `${rev}:${file}`]); } ca
 // synced in the library's repository, so a change here is no sync of it)
 const was = readCore(show(base, "core-manifest.md")), now = readCore(show(head, "core-manifest.md"));
 const oldPin = was.pin, pin = now.pin, at = was.path ?? "core/";
+if (tried && pin && pin !== tried) fail.push(`the sync moves the copy to ${pin}, not to the commit tried, ${tried}`);
 if (!oldPin || !pin) fail.push(`core-manifest.md has no one "Core: ${ADDRESS} at <full SHA>, copied whole under <path>/" line on both sides${was.form === "carried" || now.form === "carried" ? ": a core a library carries is synced in the library's own repository" : ""}`);
 else if (now.path !== at) fail.push(`the copy's path moves from ${at} to ${now.path}: a sync moves the pin alone`);
 
@@ -189,6 +198,7 @@ for (const f of git(["ls-tree", "--name-only", head, "--", ".github/workflows/"]
 }
 // (the core's main, fetched into a bare repository of its own, which every call names outright: releases.mjs)
 const dir = mkdtempSync(join(tmpdir(), "core-main-"));
+let from = "unknown";
 const inCore = (args) => { try { inBare(dir, args); return true; } catch { return false; } };
 try {
   inBare(dir, ["init", "-q", "--bare", dir]);
@@ -198,13 +208,15 @@ try {
   // (a project that follows the core's releases takes, unreviewed, only what the core's owner chose to hand on: a sync
   // to any other commit of main is reviewed like any PR, and merges after its review; core archive 201)
   const follows = followsOf(show(head, "core-manifest.md"), hostSaid(console.error));
-  if (pin && follows !== "main" && !releasesIn(dir).some((r) => r.sha === pin)) {
+  if (pin && follows !== "main" && pin !== tried && !releasesIn(dir).some((r) => r.sha === pin)) {
     // (and how to take a release instead: a copy older than release-1 lands here, its own sync script taking main; #365)
     const [newest] = releasesIn(dir);
-    fail.push(`the project ${follows === "releases" ? "follows the core's releases" : "does not say what it follows"}, and ${pin} is no release of the core: the sync is reviewed like any PR${newest ? `, or made again from the project's main to a release with its full SHA, \`node ${at}scripts/sync.mjs ${newest.sha}\` (${newest.name}, the newest), as a copy older than release-1, whose sync script takes the core's main, must` : ""}${newest && inCore(["merge-base", "--is-ancestor", newest.sha, pin]) ? `; in a release's trial on a copy of a project (the core's AGENTS.md, "Each release is tried on a real project first"), ${pin} is a commit of main past the newest release, not yet a release, and nothing is to be done (#1245, point 12)` : ""}`);
+    fail.push(`the project ${follows === "releases" ? "follows the core's releases" : "does not say what it follows"}, and ${pin} is no release of the core: the sync is reviewed like any PR${newest ? `, or made again from the project's main to a release with its full SHA, \`node ${at}scripts/sync.mjs ${newest.sha}\` (${newest.name}, the newest), as a copy older than release-1, whose sync script takes the core's main, must` : ""}${newest && inCore(["merge-base", "--is-ancestor", newest.sha, pin]) ? `; in a release's trial on a copy of a project (the core's AGENTS.md, "Each release is tried on a real project first"), ${pin} is a commit of main past the newest release, not yet a release: ask the trial's reading instead, \`--trial ${pin}\`, which proves no merge: outside a trial, this pull request gets its reviews (#1261)` : ""}`);
   }
   if (pin && oldPin && inCore(["merge-base", "--is-ancestor", pin, "refs/heads/main"])) provedOwned(dir);
   else if (later.length || gone.length) fail.push(`${[...later, ...gone].join(", ")}: no file outside the copy is proved where the pin is not a commit of the core's main`);
+  // (the copy main held, by the release at its pin, `main` for no release, for the trial's record)
+  if (tried) from = releasesIn(dir).find((r) => r.sha === oldPin)?.name ?? (oldPin && inCore(["merge-base", "--is-ancestor", oldPin, "refs/heads/main"]) ? "main" : "unknown");
   const own = git(["rev-parse", "--absolute-git-dir"]); // (the project's clone, named outright as copy-tree.mjs asks)
   if (pin && inCore(["cat-file", "-e", `${pin}^{commit}`])) {
     const theirs = copyTree(pin, dir), ours = `${head}:${at.slice(0, -1)}`;
@@ -216,8 +228,13 @@ try {
   rmSync(dir, { recursive: true, force: true });
 }
 
+for (const f of fail) console.log(`  NOT PURE ${f.replace(/[\u0000-\u001f\u007f]/gu, "?")}`);
+if (tried) {
+  console.log(`${fail.length ? "not a pure sync" : "a pure sync"} against the commit tried, ${tried}: a trial's reading, which proves no merge (floor rule 8)`);
+  console.log(`trial answer: ${JSON.stringify({ commit: tried, pure: !fail.length, from })}`);
+  process.exit(1);
+}
 if (fail.length) {
-  for (const f of fail) console.log(`  NOT PURE ${f.replace(/[\u0000-\u001f\u007f]/gu, "?")}`);
   console.log("not a pure sync: it gets its reviews as any PR (floor rule 8)");
   process.exit(1);
 }

@@ -65,6 +65,7 @@ import { HOLDS, numberMend } from "./pr-number.mjs";
 import { calledFor } from "./pr-reads.mjs";
 import { MANIFEST_MAX, REASONS, UNREADABLE, differencesAdded, reasonsMend } from "./pr-reasons.mjs";
 import { WAITS, heldAt, waitsMend, waitsOn } from "./pr-waits.mjs";
+import { asText, parseBounded } from "./guards.mjs";
 
 // (what each line's check holds, exported from here as before they were split)
 export { HOLDS, calledFor, MANIFEST_MAX, NO_COST, REASONS, UNREADABLE, WAITS, costMend, differencesAdded, heldAt, numberMend, reasonsMend, waitsMend, waitsOn };
@@ -141,7 +142,7 @@ if (started(import.meta.url)) {
     try {
       const commits = JSON.parse(gh(`repos/${repo}/commits?path=${file}&sha=${base}&per_page=100`)).map(c => ({ sha: c.sha, date: c.commit?.committer?.date })).filter(c => /^[0-9a-f]{40}$/.test(c.sha));
       then = "";
-      heldAt(commits, created, sha => { then = Buffer.from(JSON.parse(gh(`repos/${repo}/contents/${file}?ref=${sha}`)).content ?? "", "base64").toString("utf8"); return true; });
+      heldAt(commits, created, sha => { then = Buffer.from(parseBounded(gh(`repos/${repo}/contents/${file}?ref=${sha}`)).content ?? "", "base64").toString("utf8"); return true; });
     } catch { then = null; }
     const why = then === null ? "whether the copy on its base held it could not be read" : "the copy on its base did not hold it when the pull request opened";
     if (then?.includes("export const WAITS_SINCE")) { const mend = waitsMend(process.env.PR_BODY); if (mend) mends.push(mend); }
@@ -203,16 +204,17 @@ if (started(import.meta.url)) {
       else {
         // (a file whose change only follows files the pull request moves asks no yes: path-only.mjs; #886, point 1)
         const follow = paths.length ? proven(process.cwd(), "HEAD^1", "HEAD", paths) : [], left = paths.filter(p => !follow.includes(p));
-        if (follow.length) console.log(`ok   the owner's yes is not asked of ${follow.join(", ")}: only paths that follow files the pull request moves`);
+        // (each path as text alone, the pull request's to name; #1348)
+        if (follow.length) console.log(`ok   the owner's yes is not asked of ${asText(follow.join(", "))}: only paths that follow files the pull request moves`);
         // (nor one the design check states keeps its meaning, at the head's text: meaning-kept.mjs; #886, point 2)
         const kept = statedOf({ cwd: process.cwd(), repo, number: numberOf(process.env.GITHUB_REF), asked: left }), rest = left.filter(p => !kept.includes(p));
-        if (kept.length) console.log(`ok   the owner's yes is not asked of ${kept.join(", ")}: the design check states that its meaning is unchanged`);
+        if (kept.length) console.log(`ok   the owner's yes is not asked of ${asText(kept.join(", "))}: the design check states that its meaning is unchanged`);
         const issues = issuesOf(process.env.PR_BODY), got = rest.length && issues.length ? textsOf(repo, issues) : { texts: [], read: true };
         const yes = yesOf({ paths: rest, body: process.env.PR_BODY, ...got });
         if (yes.mend) mends.push(yes.mend); else console.log(`ok   ${yes.note}`);
       }
     } else console.log(`ok   the owner's yes is not asked here: ${why}`);
   }
-  for (const mend of mends) console.log(`FAIL ${mend}`);
+  for (const mend of mends) console.log(asText(`FAIL ${mend}`));
   process.exit(absent.length || mends.length ? 1 : 0);
 }

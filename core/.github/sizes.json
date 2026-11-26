@@ -18,10 +18,12 @@
     "scripts/copies.mjs": { "mark": 34376, "why": "the question of a split is asked in #1102" },
     "scripts/mutation-tools.mjs": { "mark": 23365, "why": "the question of a split is asked in #1253" },
     "tests/mutation-tools-test.mjs": { "mark": 20863, "why": "the question of a split is asked in #1253" },
+    "tests/nuget-gate-test.mjs": { "mark": 21798, "why": "the question of a split is asked in #1326" },
     "tests/steps-write-test.mjs": { "mark": 27675, "why": "the question of a split is asked in #1253" },
     "tests/converge-test.mjs": { "mark": 22202, "why": "the question of a split is asked in #1283" },
     "scripts/labels.mjs": { "mark": 22008, "why": "the question of a split is asked in #1186" },
     "scripts/sync.mjs": { "mark": 22147, "why": "the question of a split is asked in #1250" },
+    "scripts/comment-only.mjs": { "mark": 28954, "why": "the question of a split is asked in #1341" },
     "SECURITY.md": { "mark": 21346, "why": "the question of a split is asked in #1255" },
     ".github/sizes.json": { "mark": 20901, "why": "a list a script reads, each entry looked up by its path; no split lets anyone read less" },
     "scripts/licences.mjs": { "mark": 52937, "why": "the question of a split is asked in #1151" },
@@ -118,7 +120,7 @@
       "why": "Whoever changes how the total is counted reads its tree reader, its readers, its cut and its conditions together, each calling the others; split, that session opens more files and reads no less, and no other task reads it."
     },
     "scripts/reading.mjs": {
-      "mark": 32082,
+      "mark": 40311,
       "why": "The start hook runs it from git with no file beside it, so it stands alone (its opening says so): no part can be moved to a file of its own."
     },
     "scripts/size.mjs": {
@@ -278,6 +280,14 @@
     "tests/nuget-fetch-test.mjs": {
       "mark": 27539,
       "why": "One feature's cases (the fetch before the NuGet check's restore) on the scratch project and the package files they share, each case reading what the one before committed; split, each file would write that project again and add to the suite's time"
+    },
+    "scripts/merge-line.mjs": {
+      "mark": 20602,
+      "why": "the question of a split is asked in #1345"
+    },
+    "scripts/screens.mjs": {
+      "mark": 23155,
+      "why": "the question of a split is asked in #1345"
     }
   }
 }

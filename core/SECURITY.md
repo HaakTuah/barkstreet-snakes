@@ -71,7 +71,10 @@ This repository takes the floor whole, `floor/security.md` and `floor/topics/`, 
        through the proxy its environment names;
      - else from `CORE_PRIVATE`, `true` or `false`, which the gate of `pure-sync.mjs` clears;
      - the repository named by the clone's origin, or, where that is a folder that is itself a clone, by that folder's
-       origin, at most four deep;
+       origin, at most four deep, never a folder on another machine: an origin that begins with two slashes or
+       backslashes, as written or once mapped, as a UNC or device path does, is not followed, and names none; the
+       origin read from the clone's own config, no include followed, and git not run where the clone's git folder (a
+       `.git` file's or link's) or the common folder it names lies on another machine, a worktree on this machine read;
      - limits: 16 MB of gh's answer; 20 s for the read with no sign-in, and 30 s for its process; of each answer only a
        boolean field `private` is taken, from the read with no sign-in only with status 200, all else reading nothing;
      - hostile tests: `tests/host-private-test.mjs`.

@@ -48,6 +48,7 @@ import * as stackChoice from "./staged/stack-choice.mjs";
 import * as steps from "./staged/steps.mjs";
 import * as stop from "./staged/stop.mjs";
 import * as weakness from "./staged/weakness.mjs";
+import { parseBounded } from "./guards.mjs";
 
 export const CASES = [outsider, stop, noQuestion, secret, finish, oldContent, orderForNow, steps, stackChoice, carried, noFloor, fetched, weakness, relay, redMain, review, adviserRemark, adviserOrders, adviserStarts];
 export const RECORD = "reports/staged-cases.json";
@@ -57,7 +58,7 @@ export const MONTHS = 3;
 // The agent tools a run may name, each with its part in tools/ (tasks/tools.md, "Each tool's part"), in
 // staged-tools.json, beside this file, which core.yml reads too: a run of a tool that has none is not recorded. Read case
 // and spacing aside, so "claude code" is TOOL, the first.
-export const TOOLS = JSON.parse(fs.readFileSync(new URL("./staged-tools.json", import.meta.url), "utf8")).tools;
+export const TOOLS = parseBounded(fs.readFileSync(new URL("./staged-tools.json", import.meta.url), "utf8")).tools;
 export const TOOL = TOOLS[0];
 export const toolNamed = name => TOOLS.find(t => t.toLowerCase() === String(name ?? "").toLowerCase().replace(/\s+/gu, " ").trim()) ?? null;
 

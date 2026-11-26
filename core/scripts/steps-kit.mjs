@@ -15,6 +15,7 @@ import { READ, TEMPLATES, files, licences, sizes } from "./init.mjs";
 import { READERS } from "./shape-readers.mjs";
 import { ruleFiles } from "./rule-files.mjs";
 import { hostSays, root } from "./scratch-core.mjs";
+import { parseBounded } from "./guards.mjs";
 
 export const PIN = "a".repeat(40);
 const modules = ["roles/shared", "tasks", "tools"].flatMap(d => fs.readdirSync(path.join(root, d)).filter(n => n.endsWith(".md")));
@@ -47,7 +48,7 @@ export function kitIn(tmp) {
     }
     if (at !== "core/") {
       // (its hooks are the commands core-path.mjs gives for that path, which stop a session whose floor cannot be read there)
-      const settings = path.join(dir, ".claude/settings.json"), hooks = JSON.parse(fs.readFileSync(settings, "utf8")), commands = hookCommands(readCore(fs.readFileSync(path.join(dir, "core-manifest.md"), "utf8")));
+      const settings = path.join(dir, ".claude/settings.json"), hooks = parseBounded(fs.readFileSync(settings, "utf8")), commands = hookCommands(readCore(fs.readFileSync(path.join(dir, "core-manifest.md"), "utf8")));
       hooks.hooks.SessionStart[0].hooks[0].command = commands.start; hooks.hooks.PreToolUse[0].hooks[0].command = commands.helper; hooks.hooks.Stop[0].hooks[0].command = commands.stop;
       fs.writeFileSync(settings, `${JSON.stringify(hooks, null, 2)}\n`);
     }

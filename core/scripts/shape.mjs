@@ -80,7 +80,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { CODE, append, cycles, lyingUnder, nameTree, resolve } from "./code-shape.mjs";
-import { inProject, logged } from "./guards.mjs";
+import { inProject, logged, loggedAlone } from "./guards.mjs";
 import { didNotRun, installStep, installed, notInstalled } from "./packages.mjs";
 import { shapeFaults } from "./schemas.mjs";
 import { CHANGE_MARKS, FIRST_READS, PACKAGE_FILES, REACH, READERS, WHOLE_ON_PARSER, index, isCode, isPackageFile, linked, reachRuns, reading, shared, unreachedReaders } from "./shape-readers.mjs";
@@ -1085,5 +1085,5 @@ function main(argv) {
 if (started(import.meta.url)) {
   try { process.exitCode = main(process.argv.slice(2)); }
   // (a reader's own failure that says its mend, as the parser's that cannot be loaded, is told as the check's own)
-  catch (e) { if (!(e instanceof Refused) && !/\. Mend: /u.test(String(e?.message))) throw e; console.error(`FAIL: ${logged(e.message)}`); process.exitCode = 1; }
+  catch (e) { if (!(e instanceof Refused) && !/\. Mend: /u.test(String(e?.message))) throw e; console.error(`FAIL: ${loggedAlone(e.message)}`); process.exitCode = 1; }
 }

@@ -45,6 +45,7 @@ import { configs, plain, project } from "./steps.mjs";
 import { where as shapeAt } from "./shape.mjs";
 import { Unwritten, writable } from "./step-writers.mjs";
 import { inside } from "./step-paths.mjs";
+import { asText } from "./guards.mjs";
 import { started } from "./started.mjs";
 import { requiredOf } from "./schemas.mjs";
 
@@ -205,8 +206,9 @@ function check(p, base) {
   const { kit } = kits(p, null, k);
   const read = kit.filter(([to]) => changed.includes(to) && !p.differences.some(l => l.includes(`"${to}"`))).map(([to, want]) => [to, judged(p, base, to, want)]);
   const wrong = read.filter(([, j]) => j === "wrong").map(([to]) => to);
-  for (const [to] of read.filter(([, j]) => j === "stale")) console.log(`${to}: ${BLOCKS.includes(to) ? "the core's part of it" : "the core's file"} stood otherwise than the core writes it before this pull request, which ${BLOCKS.includes(to) ? "left that part as it was" : "did not bring it nearer"}: reported, not failed. Mend, in a task: run \`node ${copyAt(p)}scripts/converge.mjs --write\` and commit what it writes.`);
-  for (const to of wrong) console.log(`FAIL ${to}: ${BLOCKS.includes(to) ? "the core's part of it" : "the core's file"} is not as the core writes it for this project at its pin. Mend: run \`node ${copyAt(p)}scripts/converge.mjs --write\`, which writes it again, and commit it; or, to keep the change as the project's own, ${BLOCKS.includes(to) ? "write it outside the core's part" : "take out its first line, the core's mark, and name the file in core-manifest.md's \"Differences\" on the owner's word"}.`);
+  // (each path as text alone, where the manifest places it; #1348)
+  for (const [to] of read.filter(([, j]) => j === "stale")) console.log(`${asText(to)}: ${BLOCKS.includes(to) ? "the core's part of it" : "the core's file"} stood otherwise than the core writes it before this pull request, which ${BLOCKS.includes(to) ? "left that part as it was" : "did not bring it nearer"}: reported, not failed. Mend, in a task: run \`node ${copyAt(p)}scripts/converge.mjs --write\` and commit what it writes.`);
+  for (const to of wrong) console.log(`FAIL ${asText(to)}: ${BLOCKS.includes(to) ? "the core's part of it" : "the core's file"} is not as the core writes it for this project at its pin. Mend: run \`node ${copyAt(p)}scripts/converge.mjs --write\`, which writes it again, and commit it; or, to keep the change as the project's own, ${BLOCKS.includes(to) ? "write it outside the core's part" : "take out its first line, the core's mark, and name the file in core-manifest.md's \"Differences\" on the owner's word"}.`);
   if (wrong.length) process.exitCode = 1;
   else console.log("the core's files and parts the pull request changed are as the core writes them");
 }

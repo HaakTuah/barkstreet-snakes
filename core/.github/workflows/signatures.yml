@@ -57,7 +57,7 @@ jobs:
         run: if [ -f "${CORE_AT}scripts/install.mjs" ]; then node "${CORE_AT}scripts/install.mjs"; fi
       - name: The signature check (its steps in scripts/checks.mjs, its part signatures)
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }} # empty where the caller runs on anything but a pull request
+          BASE: ${{ github.event_name == 'pull_request' && 'HEAD^1' || '' }} # the merge's first parent, which the checkout holds (#1231); empty where the caller runs on anything but a pull request
           CALLER: ${{ github.workflow_ref }} # the calling workflow, by its own path, whatever it is named
           FOLDER: ${{ inputs.directory }}
-        run: node "$CORE_AT"scripts/checks.mjs signatures --signatures "$FOLDER"
+        run: node "$CORE_AT"scripts/checks.mjs signatures --signatures "$FOLDER" ${BASE:+--base "$BASE"}

@@ -1,6 +1,6 @@
 - `scripts/licences.mjs`, `scripts/licence-scan.mjs`, `scripts/licence-installed.mjs`, `scripts/licence-yes.mjs`,
   `.github/workflows/licences.yml`, `scripts/licence-commands.mjs`, `scripts/licence-npm.mjs`, `scripts/licence-fetchers.mjs`,
-  `scripts/licence-pages.mjs`, `scripts/licence-scan-stage.mjs`,
+  `scripts/licence-pages.mjs`, `scripts/licence-scan-stage.mjs`, `scripts/licence-locks.mjs`, `tests/licence-locks-test.mjs`,
   `scripts/licences.d.mts`, `.github/licences.json`, `.github/licences-audit.json`, `tests/licence-fetch-test.mjs`, `tests/licence-fetch-places-test.mjs`,
   `tests/licence-fetch-other-test.mjs`, `tests/licence-fetch-pages-test.mjs`, `tests/licence-scan-limits-test.mjs`,
   `tests/licence-scan-pins-test.mjs`: hold

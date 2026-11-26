@@ -17,6 +17,7 @@ import { library, reading } from "./reading.mjs";
 import { ROOT, rules } from "./rules.mjs";
 import { codexs, WRITERS } from "./security-review.mjs";
 import { started } from "./started.mjs";
+import { parseBounded } from "./guards.mjs";
 
 export const HEADING = "The rules each role cites";
 // Each opener of labels.json that names a role, with that role's file's name (roles/).
@@ -91,7 +92,7 @@ export function citedIn(text, { leads, numbered }) {
 export function mergedIn(repo, from, to, gh = ghApi) {
   const out = [];
   for (let page = 1; page <= 50; page++) {
-    const rows = JSON.parse(gh(`repos/${repo}/pulls?state=closed&sort=updated&direction=desc&per_page=100&page=${page}`) || "[]");
+    const rows = parseBounded(gh(`repos/${repo}/pulls?state=closed&sort=updated&direction=desc&per_page=100&page=${page}`) || "[]");
     out.push(...rows.filter(p => p.merged_at && p.merged_at >= from && p.merged_at < to));
     if (rows.length < 100 || rows.every(p => String(p.updated_at) < from)) break;
   }

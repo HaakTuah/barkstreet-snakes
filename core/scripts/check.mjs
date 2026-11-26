@@ -144,7 +144,7 @@ function calledJobs(p, tmp) {
   return jobs;
 }
 
-// Runs those jobs, then, with --own, the project's own, where the copy is the core: how many ran, and how many failed.
+// Runs those jobs, then, with --own, the project's own, where the copy is the core: how many ran, failed and were unrun, and with --own how many of those were the project's own.
 // Where it is not, each job left that would run is written stopped (#1245, point 2).
 function runAll(p, run, jobs, tmp) {
   const n = { failed: 0, ran: 0, unrun: 0 };
@@ -159,7 +159,13 @@ function runAll(p, run, jobs, tmp) {
     stopBehind(p, r, jobs.slice(i + 1), tmp);
     return n;
   }
-  if (p.own) for (const o of ownWorkflows(p)) { const r = run.own(o); n.failed += r.failed; n.ran += r.ran; n.unrun += r.unrun | 0; }
+  if (p.own) {
+    n.own = { failed: 0, ran: 0, unrun: 0 }; // (the project's own jobs, counted in the totals above and apart here: #1287)
+    for (const o of ownWorkflows(p)) {
+      const r = run.own(o);
+      for (const [k, v] of [["failed", r.failed], ["ran", r.ran], ["unrun", r.unrun | 0]]) { n[k] += v; n.own[k] += v; }
+    }
+  }
   return n;
 }
 

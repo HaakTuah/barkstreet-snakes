@@ -6,9 +6,11 @@ import path from "node:path";
 import { CORE } from "./core-address.mjs";
 import { copiesConfig } from "./check-configs.mjs";
 import { project } from "./steps.mjs";
+import { parseBounded } from "./guards.mjs";
 
 export const at = (dir, f) => path.join(dir, f);
 export const read = (dir, f) => fs.readFileSync(at(dir, f), "utf8");
+export const readJson = (dir, f) => parseBounded(read(dir, f));
 export const write = (dir, f, text) => { fs.mkdirSync(path.dirname(at(dir, f)), { recursive: true }); fs.writeFileSync(at(dir, f), text); };
 // The manifest's line "Not taken:" without the module named, the line gone where it names no other.
 export const notTakenWithout = (text, name) => text.replace(/^Not taken: (.*?)\.?(\r?\n|$)/m, (all, items, end) => {

@@ -14,7 +14,7 @@
 //   node core/scripts/stand-in-record.mjs [--open] [--repo owner/name] [--owner login]
 import { execFileSync } from "node:child_process";
 import { REPO } from "./core-cost.mjs";
-import { seen } from "./guards.mjs";
+import { parseBounded, seen } from "./guards.mjs";
 import { started } from "./started.mjs";
 
 // (no two runs that can take the same spaces or stars, so a line of any shape is read in time in step with its length)
@@ -106,7 +106,7 @@ export function pages(path, jq) {
   for (let page = 1; page <= 500; page++) {
     const out = execFileSync("gh", ["api", `${path}&per_page=100&page=${page}`, "--jq", jq],
       { encoding: "utf8", stdio: ["ignore", "pipe", "inherit"], maxBuffer: 1 << 28 });
-    const got = out.split("\n").filter(Boolean).map(l => JSON.parse(l));
+    const got = out.split("\n").filter(Boolean).map(l => parseBounded(l));
     rows.push(...got);
     if (got.length < 100) break;
   }

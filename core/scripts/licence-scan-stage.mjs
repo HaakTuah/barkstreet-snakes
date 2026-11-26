@@ -7,6 +7,7 @@ import path from "node:path";
 import { CORE } from "./core-address.mjs";
 import { scratchDir } from "./scratch-core.mjs";
 import { check, loadConfig } from "./licences.mjs";
+import { parseBounded } from "./guards.mjs";
 
 let failed = 0;
 export const ok = (cond, what, more = "") => { console.log(`${cond ? "ok  " : "FAIL"} ${what}`); if (!cond) { failed++; if (more) console.log(more); } };
@@ -58,7 +59,7 @@ export function run(change = () => {}) {
 }
 export const write = (f, text) => (dir) => { fs.mkdirSync(path.join(dir, path.dirname(f)), { recursive: true }); fs.writeFileSync(path.join(dir, f), text); };
 export const append = (f, text) => (dir) => fs.appendFileSync(path.join(dir, f), text);
-export const json = (f, edit) => (dir) => { const p = path.join(dir, f), j = JSON.parse(fs.readFileSync(p, "utf8")); edit(j); fs.writeFileSync(p, JSON.stringify(j)); };
+export const json = (f, edit) => (dir) => { const p = path.join(dir, f), j = parseBounded(fs.readFileSync(p, "utf8")); edit(j); fs.writeFileSync(p, JSON.stringify(j)); };
 export const entry = (e) => json("audit.json", (j) => j.entries.push(e));
 export const LOCK = (license) => (dir) => {
   write("package.json", JSON.stringify({ name: "bark", dependencies: { "mossgrip-lib": "1.0.0" } }))(dir);

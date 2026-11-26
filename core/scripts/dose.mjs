@@ -24,6 +24,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileOf, notLinked, parseBaseline, parseConfig, standing, survey, where } from "./shape.mjs";
 import { started } from "./started.mjs";
+import { parseBounded } from "./guards.mjs";
 
 export const STATES = ["in debt", "paying down", "in standard"];
 export const DEBT = 0.05, STANDARD = 0.005, DAYS = 30, BATCH = 0.1, MOVED = 0.25;
@@ -90,7 +91,7 @@ function changesOf(config, root) {
 
 // The debt a baseline's text lists: how many entries, and the sum of their numbers; null where it cannot be read.
 function debtOf(text) {
-  const listed = tolerant(() => JSON.parse(text).listed, null);
+  const listed = tolerant(() => parseBounded(text).listed, null);
   if (!listed || typeof listed !== "object") return null;
   const numbers = Object.values(listed).flatMap(n => (n === true ? [] : Object.values(n)));
   return { entries: Object.keys(listed).length, sum: numbers.reduce((a, b) => a + b, 0) };
@@ -169,7 +170,7 @@ export const auditIsDue = reader(TITLES.audit, (r, at, home) => auditBody(r, at,
 
 // The audit recorded in the baseline: its day and the counts it stood at.
 function audited(r, at) {
-  const raw = JSON.parse(fs.readFileSync(r.config.baseline, "utf8"));
+  const raw = parseBounded(fs.readFileSync(r.config.baseline, "utf8"));
   const { audited: _was, ...rest } = raw;
   fs.writeFileSync(r.config.baseline, `${JSON.stringify({ audited: { day: at.slice(0, 10), listed: r.listed, read: r.read }, ...rest }, null, 2)}\n`);
   return `${r.config.baseline}: the audit of ${at.slice(0, 10)} is recorded, at ${r.listed} listed of ${r.read} read.`;

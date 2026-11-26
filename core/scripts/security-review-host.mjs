@@ -17,6 +17,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { FINDING, codexState, codexs, flat, judge, postedBy, writersOf } from "./security-review.mjs";
+import { parseBounded } from "./guards.mjs";
 
 export const FOLDER = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "reports", "security-review-host");
 // how a security review of Codex's opens in the host's list of reviews, its kind given by the heading after the receipt
@@ -96,4 +97,4 @@ const onPurpose = (answer) => answer.user?.type !== "User" || !ROLES.includes(an
 
 // the recordings in a folder, each as { file, record }
 export const recordings = (folder = FOLDER) => fs.readdirSync(folder).filter((name) => /^pr-\d+\.json$/u.test(name)).sort()
-  .map((name) => ({ file: name, record: JSON.parse(fs.readFileSync(path.join(folder, name), "utf8")) }));
+  .map((name) => ({ file: name, record: parseBounded(fs.readFileSync(path.join(folder, name), "utf8")) }));

@@ -14,10 +14,10 @@
 //   import { reasonsUnsaid } from "./reasons-said.mjs";   reasonsUnsaid({ issues, owner, since }) -> [{ what, items }]
 import fs from "node:fs";
 import { headingOf } from "./done-when.mjs";
-import { seen } from "./guards.mjs";
+import { parseBounded, seen } from "./guards.mjs";
 import { rules } from "./rules.mjs";
 
-export const HEADING = JSON.parse(fs.readFileSync(new URL("./labels.json", import.meta.url), "utf8")).headings.reasons;
+export const HEADING = parseBounded(fs.readFileSync(new URL("./labels.json", import.meta.url), "utf8")).headings.reasons;
 const FORMS = ["question.md", "feature_request.md"];
 
 // The words under a text's heading `name`, outside HTML comments and fenced blocks, to the next of the forms' headings (a

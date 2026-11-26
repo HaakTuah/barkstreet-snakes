@@ -21,7 +21,7 @@ import fs from "node:fs";
 import { execFileSync } from "node:child_process";
 import { tokens, jsxIn } from "./code-shape-lexer.mjs";
 import { marked } from "./core-owned.mjs";
-import { logged } from "./guards.mjs";
+import { logged, noSignInWhole } from "./guards.mjs";
 
 export const PATTERN_LEAST = 30;
 const PIN = /(?<![0-9A-Za-z_])(?:[0-9a-fA-F]{64}|[0-9a-fA-F]{40})(?![0-9A-Za-z_])/gu;
@@ -166,7 +166,11 @@ function values({ core, config, configPath, configAt, base, ls }) {
 
 function report({ asked, fresh, kept, stale, base, configPath }) {
   // (a pin by its first 12 characters, so a secret written twice never stands whole in a log: its file and line find it)
-  const shown = v => (pinsIn(v).has(v) ? `${v.slice(0, 12)}...` : v.length > 80 ? `${v.slice(0, 77)}...` : v);
+  const shown = v => {
+    if (pinsIn(v).has(v)) return `${v.slice(0, 12)}...`;
+    const cut = noSignInWhole(v); // (any address's sign-in cut out before the value is cut short: floor rule 1)
+    return cut.length > 80 ? `${cut.slice(0, 77)}...` : cut;
+  };
   const where = places => [...places].map(([f, l]) => `${f}:${l}`).join(" and ");
   const old = asked.filter(([v]) => !fresh.some(([k]) => k === v));
   if (old.length) {

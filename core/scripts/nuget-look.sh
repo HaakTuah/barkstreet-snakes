@@ -22,6 +22,13 @@ paths=(':(glob,icase)**/*.csproj' ':(glob,icase)**/*.fsproj' ':(glob,icase)**/*.
 # (the SDK's own reference packs, which it adds by itself, a Windows project's with EnableWindowsTargeting: no
 # package of the project's, and the same for every project on the runner's SDK)
 PACKS='Microsoft\.(NETCore|WindowsDesktop|AspNetCore)\.App\.Ref'
+# A file's name as a line here writes it: each "::" and "##[" broken, as in NuGet's own output below, so that no name a
+# pull request adds starts or holds a workflow command, on any of its lines, also where only bytes beyond printable
+# ASCII stand between a pair's marks (as asText in guards.mjs, which the scripts in Node print by; #1348).
+COLONS='s/:\([^ -~]*:\)/: \1/' HASHES='s/#\([^ -~]*#[^ -~]*\[\)/# \1/g'
+# (any other ASCII control byte shown as "?", as oneLine shows it; a line break too in one name, named)
+shown() { printf '%s\n' "$1" | LC_ALL=C tr '\000-\011\013-\037\177' '?' | LC_ALL=C sed -e ':a' -e "$COLONS" -e 'ta' -e "$HASHES"; }
+named() { shown "${1//$'\n'/?}"; }
 holds() {
   local empty config stamp project out codes id projects locks records
   # (from here the pull request's build files have run in this job: the licence read before the restore is
@@ -44,12 +51,12 @@ holds() {
     # (its error lines, whole, so the next reader sees the cause; each behind "  | " and with "##[" broken, so none is
     # read as a workflow command, which the runner finds after leading spaces, and "##[" anywhere; where none says
     # error, all it printed; #1239)
-    [ -n "$codes" ] || { echo "$project: the restore failed with no error NuGet names. It printed:"
-      { printf '%s\n' "$out" | grep -iw error || printf '%s\n' "$out"; } | tr -d '\r' | sed 's/##\[/# #[/g; s/^/  | /'; return 1; }
-    if printf '%s\n' "$codes" | grep -qvE '^error NU110[123]$'; then echo "$project:" $codes; return 1; fi
+    [ -n "$codes" ] || { echo "$(named "$project"): the restore failed with no error NuGet names. It printed:"
+      { printf '%s\n' "$out" | grep -iw error || printf '%s\n' "$out"; } | tr -d '\r' | LC_ALL=C sed -e "$HASHES" -e 's/^/  | /'; return 1; }
+    if printf '%s\n' "$codes" | grep -qvE '^error NU110[123]$'; then echo "$(named "$project"):" $codes; return 1; fi
     while IFS= read -r id; do
       printf '%s\n' "$id" | grep -qxE "$PACKS" && continue
-      [ "${#locks[@]}" -gt 0 ] && grep -qiF -- "\"$id\": {" "${locks[@]}" || { echo "$project: a package no lock file names is asked for ($id)"; return 1; }
+      [ "${#locks[@]}" -gt 0 ] && grep -qiF -- "\"$id\": {" "${locks[@]}" || { echo "$(named "$project"): a package no lock file names is asked for ($(named "$id"))"; return 1; }
     done < <(printf '%s\n' "$out" | grep -oE 'NU110[123]: Unable to find (a stable )?package [^ ]+' | sed -E 's/.* package //; s/\.$//' | sort -u)
   done
   # (each project's own record of its restore, written just now inside the checkout and naming that project:
@@ -58,7 +65,7 @@ holds() {
     | xargs -0 -r jq -r '.project.restore.projectPath // empty' | tr '\\' '/' | tr -d '\r')
   for project in "${projects[@]}"; do
     printf '%s\n' "$records" | while IFS= read -r r; do [[ "${r,,}" == *"/${project,,}" ]] && echo yes; done | grep -q yes \
-      || { echo "$project: its own record of its restore lies outside the checkout"; return 1; }
+      || { echo "$(named "$project"): its own record of its restore lies outside the checkout"; return 1; }
   done
   while IFS= read -r -d '' assets; do
     jq -e --arg packs "$PACKS" '[.project.frameworks[]? | .downloadDependencies // [] | .[] | select(.name | test("^(" + $packs + ")$") | not)] | length == 0' "$assets" > /dev/null \
@@ -83,7 +90,7 @@ if [ -n "$BASE" ] && extra=$(jq -r '[.audit, (.nuget.sources // [])[]] | .[] | s
     && listed=$(git ls-files -s -- "${paths[@]}"); then
     if [ -n "$changed" ]; then
       echo "Changed:"
-      printf '%s\n' "$changed" | sed 's/^/- /' # behind a dash, so that no file's name starts a workflow command
+      shown "$changed" | sed 's/^/- /' # behind a dash and broken as above, so that no file's name starts or holds a workflow command
     elif printf '%s\n' "$listed" | grep -q '^120000 '; then
       echo "A listed file is a link to another, whose changes this step would not see."
     elif holds; then

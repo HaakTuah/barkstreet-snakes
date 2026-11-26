@@ -9,6 +9,7 @@ import { lateBody, lateOf, pullOf, repliersOf } from "./review-marks.mjs";
 import { codexFind } from "./review-record.mjs";
 import { writersOf } from "./security-review.mjs";
 import { plain, TITLES } from "./look-kinds.mjs";
+import { parseBounded } from "./guards.mjs";
 
 // How far back a late finding is read (tasks/reviews.md, "A late review is still read": the last week), the most pull
 // requests whose merge is read for it in one run, and the most pages of the week's review comments read for it.
@@ -38,7 +39,7 @@ export function redFinding(repo, add) {
   try {
     const branch = JSON.parse(ghApi(`repos/${repo}`)).default_branch;
     if (typeof branch !== "string" || !branch) throw new Error("no default branch");
-    add(TITLES.red, redBody(pagesOf(`repos/${repo}/commits/${encodeURIComponent(branch)}/check-runs`, (...a) => JSON.stringify(JSON.parse(ghApi(...a)).check_runs ?? [])), branch));
+    add(TITLES.red, redBody(pagesOf(`repos/${repo}/commits/${encodeURIComponent(branch)}/check-runs`, (...a) => JSON.stringify(parseBounded(ghApi(...a)).check_runs ?? [])), branch));
   } catch {
     add(TITLES.red, null, `the default branch's checks could not be read: the token here may not read them. A project's daily job reads them where it calls the core's \`look.yml\` with \`checks: read\`, as \`core/setup/template/workflows/look.yml.tmpl\` has it`);
   }
@@ -64,7 +65,7 @@ export function lateFinding(repo, add, at, gh = ghApi) {
     let pages = 0;
     const inline = pagesOf(`repos/${repo}/pulls/comments?sort=created&direction=desc&since=${since}`, route => (++pages > LATE_PAGES ? "[]" : gh(route)));
     const all = [...new Set(inline.filter(c => codexFind(c)).map(pullOf).filter(Number.isInteger))].sort((a, b) => b - a);
-    const merged = new Map(all.slice(0, LATE_PULLS).map(n => [n, JSON.parse(gh(`repos/${repo}/pulls/${n}`)).merged_at ?? null]).filter(([, m]) => typeof m === "string"));
+    const merged = new Map(all.slice(0, LATE_PULLS).map(n => [n, parseBounded(gh(`repos/${repo}/pulls/${n}`)).merged_at ?? null]).filter(([, m]) => typeof m === "string"));
     const left = [pages > LATE_PAGES && `the review comments past the first ${LATE_PAGES * 100} of the week`, all.length > LATE_PULLS && `Codex's findings on ${all.length - LATE_PULLS} older pull requests`].filter(Boolean);
     // a reply answers a finding only where the host says its author may write: a right not read, or past LATE_PULLS
     // accounts, counts as none, so its finding stays listed, and is said

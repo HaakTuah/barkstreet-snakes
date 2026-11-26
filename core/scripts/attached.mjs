@@ -147,7 +147,7 @@ export function sideOf(root, at, bare, { pin, main }, said) {
   const releases = releasesIn(bare);
   if (releases.some(r => r.sha === pin)) return pin;
   // (a commit of main past the newest release is the one a release's trial syncs to, before it is cut: #1245, point 7)
-  if (past(pin, "refs/heads/main", bare) && (!releases.length || past(releases[0].sha, pin, bare))) return said.unread("the sync", `it moves the copy to ${pin.slice(0, 7)}, a commit of the core's main past its newest release, not yet a release: in a release's trial on a copy of a project (the core's AGENTS.md, "Each release is tried on a real project first") nothing is to be done; elsewhere, sync to the newest release, \`node ${at}scripts/sync.mjs\` with no commit named. pure-sync.mjs was not run`), null;
+  if (past(pin, "refs/heads/main", bare) && (!releases.length || past(releases[0].sha, pin, bare))) return said.unread("the sync", `it moves the copy to ${pin.slice(0, 7)}, a commit of the core's main past its newest release, not yet a release: in a release's trial on a copy of a project (the core's AGENTS.md, "Each release is tried on a real project first") the trial asks its own reading, \`node <a clone of the core at ${pin.slice(0, 7)}>/scripts/pure-sync.mjs --trial ${pin}\` (#1261), which proves no merge, and nothing else is to be done; elsewhere, sync to the newest release, \`node ${at}scripts/sync.mjs\` with no commit named. pure-sync.mjs was not run`), null;
   return said.way("the sync", `it moves the copy to ${pin.slice(0, 7)}, which is no release of the core, and the project follows the releases. Mend: sync to the newest release, \`node ${at}scripts/sync.mjs\` with no commit named`), null;
 }
 

@@ -14,8 +14,9 @@
 //                                                  requiredOf("copies") -> the keys it asks, at each depth
 import fs from "node:fs";
 import { installed, loadSync } from "./packages.mjs";
+import { parseBounded } from "./guards.mjs";
 
-const schemaOf = name => JSON.parse(fs.readFileSync(new URL(`./schemas/${name}.json`, import.meta.url), "utf8"));
+const schemaOf = name => parseBounded(fs.readFileSync(new URL(`./schemas/${name}.json`, import.meta.url), "utf8"));
 const checkers = new Map();
 function checker(name) {
   if (!checkers.has(name)) {

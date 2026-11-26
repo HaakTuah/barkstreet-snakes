@@ -78,6 +78,7 @@ import { MISSED, TITLES } from "./look-kinds.mjs";
 import { idleFinding } from "./look-pulls.mjs";
 import { lateFinding, redFinding, staleFinding } from "./look-checks.mjs";
 import { keepIssues, lastRun, mine, RECORD, slug, toFolder } from "./look-keep.mjs";
+import { parseBounded } from "./guards.mjs";
 
 // What the look is made of stands in the files beside this one, each read for one thing: look-kinds.mjs (the title of
 // each kind of issue), look-pulls.mjs (the pull requests: idle, and the work standing still), look-checks.mjs (the
@@ -148,7 +149,7 @@ function settingOf(options, manifest) {
 function reachOf(repo) {
   if (!repo) return { yes: false, why: "its origin is not on github.com" };
   let got = null, refused = false;
-  try { got = JSON.parse(ghApi(`repos/${repo}`)); } catch (e) { refused = /\bHTTP 404\b/.test(String(e.message)); }
+  try { got = parseBounded(ghApi(`repos/${repo}`)); } catch (e) { refused = /\bHTTP 404\b/.test(String(e.message)); }
   return got && typeof got === "object" && got.permissions ? asked(repo, got) : refused ? { yes: false, why: "GitHub finds no such repository for this account" } : null;
 }
 

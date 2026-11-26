@@ -36,7 +36,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { CODE, OTHER } from "./code-shape.mjs";
-import { logged, parseBounded } from "./guards.mjs";
+import { asText, logged, loggedAlone, parseBounded } from "./guards.mjs";
 import { pathIn } from "./reading.mjs";
 import { notLinked, parseBaseline, parseConfig, rowToken, where } from "./shape.mjs";
 import { started } from "./started.mjs";
@@ -177,7 +177,7 @@ function onPullRequest(p, base) {
 function measured(p, lines, baseline) {
   try { return lines.size ? faultsOf(runTool(p.tool.command, linesArg(lines)), lines) : []; } catch (e) {
     if (baseline || !(e instanceof Refused)) throw e;
-    console.log(`Reported only, and not measured: ${e.message}`);
+    console.log(`Reported only, and not measured: ${asText(e.message)}`); // (the manifest's command, as text alone; #1348)
     return [];
   }
 }
@@ -232,7 +232,7 @@ function main(argv) {
   if (!known) refuse(`the check does not know ${argv.join(" ")}`, "run it with no option on a pull request, with --whole for the audit's whole run, or with --lower <file>[,<file>...] in a cleaning task");
   const p = project();
   if (!p.tool) { console.log(`The project names no mutation tool: its manifest has no row ${ROW}. The measure waits for that step (${p.home}setup/sync-notes/, "how strong the tests are").`); return 0; }
-  if (p.tool.none !== undefined) { console.log(`The measure is left out: the project names no mutation tool${p.tool.none ? ` (${p.tool.none})` : ""}.`); return 0; }
+  if (p.tool.none !== undefined) { console.log(`The measure is left out: the project names no mutation tool${p.tool.none ? ` (${asText(p.tool.none)})` : ""}.`); return 0; }
   if (!p.config) { console.log("The measure waits for the shape check's config, whose \"code\" and \"tests\" it reads."); return 0; }
   if (option === "--whole") return whole(p);
   if (option === "--lower") return lower(p, files);
@@ -244,5 +244,5 @@ function main(argv) {
 
 if (started(import.meta.url)) {
   try { process.exitCode = main(process.argv.slice(2)); }
-  catch (e) { if (!(e instanceof Refused)) throw e; console.error(`FAIL: ${logged(e.message)}`); process.exitCode = 1; }
+  catch (e) { if (!(e instanceof Refused)) throw e; console.error(`FAIL: ${loggedAlone(e.message)}`); process.exitCode = 1; }
 }

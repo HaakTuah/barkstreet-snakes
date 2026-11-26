@@ -19,6 +19,7 @@
     "changes"
   ],
   "grown": {
+    "process: tests/base-parent-test.mjs -> node:child_process": "What it guards is the base as git resolves it in a checkout (#1231): HEAD^1 of a merge that git makes, and checks.mjs run as the core's workflows run it, its command line given --base HEAD^1, the base it hands each stand-in and its exit code being what the cases read; checks.mjs runs its parts from main(), which it does not export.",
     "process: tests/steps-run-hostile-test.mjs -> node:child_process": "The grammar's time for a step's text (bash-commands.mjs; #1163) is what the case guards, and it is read when the parser's thread starts, so the case that a text past it is not read runs in a process of its own at the default time, the other cases in this one under a longer.",
     "timed: tests/nuget-fetch-test.mjs -> setTimeout": "The one real registry is tried three times with a wait between (#543): that nuget.org answers after a moment is what the wait is for, and only a clock gives it.",
     "process: tests/npm-mend-test.mjs -> node:child_process": "A mend followed as worded is what it guards (#1262), and no other way holds it: the mend is a command a session runs, so npm itself must run it, installing the version it names from the registry, and the check must run as a project runs it, from a scratch project that git commits, its exit code and what it prints with its mend being what the cases read; checks-test.mjs's stand-in npm reads the refusal's words, but runs no install.",
@@ -92,6 +93,7 @@
     "process: tests/agent-tools-list-test.mjs -> node:child_process": true,
     "process: tests/agent-tools-test.mjs -> node:child_process": true,
     "process: tests/agent-tools-tree-test.mjs -> node:child_process": true,
+    "process: tests/base-parent-test.mjs -> node:child_process": true,
     "process: tests/check-sync-test.mjs -> node:child_process": true,
     "process: tests/npm-mend-test.mjs -> node:child_process": true,
     "process: tests/check-test.mjs -> node:child_process": true,

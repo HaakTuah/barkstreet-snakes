@@ -53,6 +53,11 @@ export function writable(p, f, busy) {
   if (spawnSync("git", ["check-ignore", "-q", "--", f], { cwd: p.root }).status === 0) throw new Unwritten(`git ignores \`${shown(f)}\`: take it out of the ignore list and commit it, then run it again`);
 }
 
+// A file's own line ends (#1238), from its raw text (`p.read` turns CRLF into LF): CRLF where every line ends so, else
+// LF; `inEnds` writes an LF text in them.
+export const eolOf = (p, f) => { const raw = p.read(f, true) ?? ""; return /\r\n/u.test(raw) && !/(^|[^\r])\n/u.test(raw) ? "\r\n" : "\n"; };
+export const inEnds = (p, f, text) => eolOf(p, f) === "\r\n" ? text.replace(/\r?\n/gu, "\r\n") : text;
+
 // A file written, its folders made, once `writable` passed.
 function put(p, f, text) {
   fs.mkdirSync(path.dirname(path.join(p.root, f)), { recursive: true });
@@ -99,8 +104,7 @@ export function marksWritten(p, run, change, busy) {
   if (!run.json || typeof run.json !== "object" || Array.isArray(run.json)) throw new Unwritten(`${run.marks} is no JSON object to write a mark in`);
   const json = structuredClone(run.json);
   change(json);
-  const eol = /\r\n/u.test(p.read(run.marks) ?? "") ? "\r\n" : "\n";
-  put(p, run.marks, `${JSON.stringify(json, null, 2)}\n`.replace(/\n/gu, eol));
+  put(p, run.marks, inEnds(p, run.marks, `${JSON.stringify(json, null, 2)}\n`));
   return [run.marks];
 }
 
@@ -231,7 +235,7 @@ export function writeMoved(p, busy) {
   }
   pathsLine(p, writes);
   writes.forEach(([f]) => writable(p, f, busy));
-  for (const [f, text] of writes) put(p, f, text);
+  for (const [f, text] of writes) put(p, f, inEnds(p, f, text));
   return writes.map(([f]) => f);
 }
 
@@ -283,9 +287,7 @@ export const writePlaced = opts => (p, busy) => {
   const text = rewritten(p, opts);
   if (text === p.manifest) return [];
   writable(p, "core-manifest.md", busy);
-  // (its own line ends kept: the manifest is read as LF, and a file the tree holds with Windows ones, as git writes it
-  // with core.autocrlf, would otherwise be written whole in LF, every line of it changed; #1227)
-  const raw = p.read("core-manifest.md", true) ?? "", crlf = /\r\n/u.test(raw) && !/(^|[^\r])\n/u.test(raw);
-  put(p, "core-manifest.md", crlf ? text.replace(/\n/gu, "\r\n") : text);
+  // (its own line ends kept: #1227)
+  put(p, "core-manifest.md", inEnds(p, "core-manifest.md", text));
   return ["core-manifest.md"];
 };

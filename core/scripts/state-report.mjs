@@ -37,6 +37,7 @@ import { readHere, ruleFiles } from "./rule-files.mjs";
 import { ROOT, rules } from "./rules.mjs";
 import { started } from "./started.mjs";
 import { billedLine, line as waitLine, measure as measureWait, selfHosted } from "./wait.mjs";
+import { parseBounded } from "./guards.mjs";
 
 export const TITLE = "State report";
 export const COUNTS = "Counts for the core";
@@ -255,7 +256,7 @@ function reached(gh, account, named) {
   // (a named repository counts as given access where it is private and readable, or the account is its collaborator,
   // read-only too, as GitHub answers; else, a public one of another owner, only by its row)
   if (named.length) for (const name of named) {
-    const r = JSON.parse(gh(`repos/${name}`)), theirs = String(r.owner?.login).toLowerCase() !== account.toLowerCase();
+    const r = parseBounded(gh(`repos/${name}`)), theirs = String(r.owner?.login).toLowerCase() !== account.toLowerCase();
     found.set(r.full_name, { private: r.private, owner: r.owner?.login, shared: theirs && !r.private && !r.permissions?.push && !collaboratorOf(gh, account, r.full_name) });
   }
   else for (const r of pagesOf("user/repos?affiliation=owner,collaborator", gh)) found.set(r.full_name, { private: r.private, owner: r.owner?.login, shared: false });
@@ -288,7 +289,7 @@ function countsOf(gh, name, r, own) {
 export function rowOf(gh, account, name, r) {
   if (name.toLowerCase() === CORE.toLowerCase()) return null;
   let manifest;
-  try { manifest = Buffer.from(JSON.parse(gh(`repos/${name}/contents/core-manifest.md`)).content ?? "", "base64").toString("utf8"); } catch (e) { if (/\(HTTP 404\)\s*$/.test(String(e?.message).trim())) return null; throw e; }
+  try { manifest = Buffer.from(parseBounded(gh(`repos/${name}/contents/core-manifest.md`)).content ?? "", "base64").toString("utf8"); } catch (e) { if (/\(HTTP 404\)\s*$/.test(String(e?.message).trim())) return null; throw e; }
   if (!pinOf(manifest) || (r.shared && !SHARES.test(manifest))) return null;
   const own = String(r.owner).toLowerCase() === account.toLowerCase();
   const shown = shownAs(name, own, r.private);

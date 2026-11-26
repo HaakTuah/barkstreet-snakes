@@ -167,9 +167,12 @@ function shellOf(step, job, defaults, id) {
 // it, as GitHub sets it; the file is emptied for the next step.
 function carryEnv(file, env, id) {
   if (!fs.existsSync(file)) return;
-  for (const line of fs.readFileSync(file, "utf8").split(/\r?\n/u).filter(Boolean)) {
+  const lines = fs.readFileSync(file, "utf8").split(/\r?\n/u);
+  for (const [i, line] of lines.entries()) {
+    if (!line) continue;
     const at = line.indexOf("=");
-    if (at <= 0) throw new Error(`a line of GITHUB_ENV in a form this runner does not read: ${line.slice(0, 80)} (in ${id})`);
+    // (where, never what: a line of GITHUB_ENV may hold any value a step set; guards.mjs, parseFault)
+    if (at <= 0) throw new Error(`a line of GITHUB_ENV in a form this runner does not read, no NAME= before its value, at line ${i + 1} (in ${id})`);
     env[line.slice(0, at)] = line.slice(at + 1);
   }
   fs.rmSync(file);

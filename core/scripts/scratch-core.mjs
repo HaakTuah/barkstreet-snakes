@@ -18,6 +18,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { CORE } from "./core-address.mjs";
+import { parseBounded } from "./guards.mjs";
 
 /** The core's root, where these scripts stand. */
 export const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -87,7 +88,7 @@ export function scratchDir(prefix) {
 let answers = null;
 export function hostSays(dir, isPrivate) {
   if (!answers) { answers = path.join(scratchDir("host-answers-"), "answers.json"); fs.writeFileSync(answers, "{}"); process.env.CORE_HOST_ANSWERS = answers; }
-  if (dir) fs.writeFileSync(answers, JSON.stringify({ ...JSON.parse(fs.readFileSync(answers, "utf8")), [dir]: { private: !!isPrivate } }));
+  if (dir) fs.writeFileSync(answers, JSON.stringify({ ...parseBounded(fs.readFileSync(answers, "utf8")), [dir]: { private: !!isPrivate } }));
   return answers;
 }
 

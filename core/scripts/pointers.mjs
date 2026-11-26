@@ -40,7 +40,7 @@ import fs from "node:fs";
 import { posix } from "node:path";
 import { fileURLToPath } from "node:url";
 import { corePath, projectAt } from "./core-path.mjs";
-import { logged } from "./guards.mjs";
+import { logged, loggedAlone } from "./guards.mjs";
 import { checkRules } from "./links.mjs";
 import { markdownReader } from "./markdown.mjs";
 import { didNotRun, installed } from "./packages.mjs";
@@ -82,7 +82,7 @@ try {
   const old = CORE ? tracked.filter(f => /^(floor|floor\/topics|modules|roles|roles\/shared|tasks|tools)\/[^/]+\.md$/.test(f)) : listed();
   TOOLS = new Set(toolFiles(show, under).filter(f => tracked.includes(f) && !old.includes(f)));
   RULES = AT ? [...TOOLS] : [...old, ...TOOLS];
-} catch (e) { console.error(`FAIL: ${logged(e.message)}`); process.exit(1); }
+} catch (e) { console.error(`FAIL: ${loggedAlone(e.message)}`); process.exit(1); }
 for (const rf of RULES.filter(f => !tracked.includes(f))) { console.error(`FAIL: ${logged(`the rule file ${rf} is no tracked file`)}. Mend: add it to git, or take out the pointer that names it as a rule file`); process.exitCode = 1; }
 if (process.exitCode) process.exit(1);
 const files = new Set(tracked), dirs = new Set(tracked.flatMap(f => f.split('/').slice(0, -1).map((_, i, p) => p.slice(0, i + 1).join('/') + '/')));

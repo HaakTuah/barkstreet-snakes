@@ -367,7 +367,7 @@ jobs:
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
           PR_CREATED: ${{ github.event.pull_request.created_at }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }} # (read through GitHub's API alone, never from the checkout: #1231)
           GH_TOKEN: ${{ github.token }} # (read only: the base's commits and copy, and the issues a pull request queues or closes)
           PARTS: ${{ inputs.parts }}
         run: node "$CORE_AT"scripts/checks.mjs description --parts "$PARTS"
@@ -396,19 +396,19 @@ jobs:
         if: ${{ !cancelled() && steps.core-at.outcome == 'success' && inputs.signatures != '' && github.event_name == 'pull_request' }}
         timeout-minutes: 10
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BASE: HEAD^1 # (the merge's first parent, which the checkout holds, where the event's base commit may not be: #1231)
           CALLER: ${{ github.workflow_ref }} # the calling workflow, by its own path, whatever it is named
           FOLDER: ${{ inputs.signatures }}
-        run: node "$CORE_AT"scripts/checks.mjs signatures --signatures "$FOLDER"
+        run: node "$CORE_AT"scripts/checks.mjs signatures --signatures "$FOLDER" --base "$BASE"
       # (last of all: the NuGet check runs the pull request's build files, so no step runs after it)
       - name: The NuGet check, last
         if: ${{ !cancelled() && steps.core-at.outcome == 'success' && inputs.nuget != '' && github.event_name == 'pull_request' }}
         timeout-minutes: 10
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BASE: HEAD^1 # (the merge's first parent, which the checkout holds: #1231)
           CALLER: ${{ github.workflow_ref }} # the calling workflow, by its own path, whatever it is named
           CONFIG: ${{ inputs.nuget }}
           ADVISORY: ${{ inputs.advisory }}
         run: |
-          set -- nuget --nuget "$CONFIG"; [ "$ADVISORY" != true ] || set -- "$@" --advisory
+          set -- nuget --nuget "$CONFIG" --base "$BASE"; [ "$ADVISORY" != true ] || set -- "$@" --advisory
           node "$CORE_AT"scripts/checks.mjs "$@"

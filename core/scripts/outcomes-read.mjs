@@ -44,7 +44,7 @@ export function read(repo, from, to, owner = repo.split("/")[0], ghRaw = ghApi, 
   const pulls = [];
   // (newest updated first: a pull request merged in the span was updated in it, however long before it was opened)
   for (let page = 1; page <= 200; page++) {
-    const rows = JSON.parse(gh(`repos/${repo}/pulls?state=all&sort=updated&direction=desc&per_page=100&page=${page}`) || "[]");
+    const rows = parseBounded(gh(`repos/${repo}/pulls?state=all&sort=updated&direction=desc&per_page=100&page=${page}`) || "[]");
     pulls.push(...rows);
     if (rows.length < 100 || rows.every(p => String(p.updated_at) < iso)) break;
   }
@@ -112,7 +112,7 @@ function sampled(p, { repo, owner, gh, notes, events }) {
   });
   return { ...p, events: [...mine.map(c => c.at), ...own.map(e => e.at), ...commits.map(c => c.at)].filter(Boolean), after };
 }
-const failedOn = (repo, sha, gh) => { try { return JSON.parse(gh(`repos/${repo}/commits/${sha}/check-runs?per_page=100`)).check_runs?.some(r => r.conclusion === "failure") ?? false; } catch (e) { if (e instanceof RangeError) throw e; return false; } };
+const failedOn = (repo, sha, gh) => { try { return parseBounded(gh(`repos/${repo}/commits/${sha}/check-runs?per_page=100`)).check_runs?.some(r => r.conclusion === "failure") ?? false; } catch (e) { if (e instanceof RangeError) throw e; return false; } };
 
 // The first reading's texts for `repo`, by key, from the core's own file (a project's copy holds no reports/, and a file
 // of a project's is never read for it); null where it holds none for it, or none in its form.
@@ -153,7 +153,7 @@ if (started(import.meta.url)) {
   else {
     const w = { from: Date.parse(`${from}T00:00:00Z`), to: Date.parse(`${to}T00:00:00Z`) };
     const data = read(repo, w.from, w.to, undefined, ghApi, { calls: 20000, ms: 3600e3 }); // (a session's one reading of history, no job's run)
-    if (given) data.corrections = JSON.parse(fs.readFileSync(given, "utf8"));
+    if (given) data.corrections = parseBounded(fs.readFileSync(given, "utf8"));
     const rows = MEASURES.map(m => ({ key: m.key, outcome: m.outcome, direct: m.direct, label: m.label, text: m.of(data, w).text, months: 1 }));
     const grown = dir ? grownAt(dir) : null;
     console.log(lines({ rows, grown }).join("\n"));

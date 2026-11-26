@@ -34,6 +34,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { LONGEST, Refused, copyOf, limitOf, projectOf, refuse, run, stopAll, takeAway, testsOf, wantedOf } from "./mutate.mjs";
 import { started } from "./started.mjs";
+import { parseBounded } from "./guards.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ACTIVE = "__STRYKER_ACTIVE_MUTANT__"; // (the variable Stryker's command runner names the fault to switch on by)
@@ -47,7 +48,7 @@ export const word = (p, windows = process.platform === "win32") => {
 
 // The tests to run for one fault, those of the file the plan names for it; none in the run before any fault
 // (Stryker's dry run): from `map`, { files: { file: [tests] }, plan: <its path>, asIs: <a folder> }.
-export function testsFor(map, active, readPlan = p => JSON.parse(fs.readFileSync(p, "utf8"))) {
+export function testsFor(map, active, readPlan = p => parseBounded(fs.readFileSync(p, "utf8"))) {
   if (active === undefined || active === "") return [];
   return map.files[readPlan(map.plan)[active]] ?? [];
 }
@@ -123,7 +124,7 @@ export async function dispatch(map, active, run1 = once) {
 }
 
 // The tests left out, failing or past LONGEST as they stood, from the folder the faults kept them in.
-const leftOut = asIs => fs.readdirSync(asIs).filter(f => f.endsWith(".json")).map(f => [Buffer.from(f.slice(0, -5), "hex").toString(), JSON.parse(fs.readFileSync(path.join(asIs, f), "utf8"))]).filter(([, r]) => r.result !== "passed").map(([t]) => t).sort();
+const leftOut = asIs => fs.readdirSync(asIs).filter(f => f.endsWith(".json")).map(f => [Buffer.from(f.slice(0, -5), "hex").toString(), parseBounded(fs.readFileSync(path.join(asIs, f), "utf8"))]).filter(([, r]) => r.result !== "passed").map(([t]) => t).sort();
 
 // The run's options for Stryker: its command runner starting this script with --tests, in place in the working copy,
 // with the core's reporter and nothing else.
@@ -197,7 +198,7 @@ const EMPTY = `${JSON.stringify({ schemaVersion: "1", thresholds: { high: 80, lo
 // What the run says once it ends: the tests left out, and the counts.
 function said(report, { asIs, ended, files }) {
   if (!fs.existsSync(report)) fs.writeFileSync(report, EMPTY);
-  const c = counted(JSON.parse(fs.readFileSync(report, "utf8"))), all = Object.values(c).reduce((a, b) => a + b, 0), left = leftOut(asIs);
+  const c = counted(parseBounded(fs.readFileSync(report, "utf8"))), all = Object.values(c).reduce((a, b) => a + b, 0), left = leftOut(asIs);
   if (left.length) console.log(`left out, failing or past ${LONGEST} s as they stand: ${left.join(", ")}`);
   if (!ended && !all) console.log("the budget ran out before Stryker had planned its faults: nothing was measured");
   console.log(`stryker: ${all} faults in ${files} files: ${(c.Killed ?? 0) + (c.Timeout ?? 0)} caught, ${(c.Survived ?? 0) + (c.NoCoverage ?? 0)} survived, ${c.Pending ?? 0} not run${ended ? "" : " (the budget)"}; the report is written`);
@@ -206,7 +207,7 @@ function said(report, { asIs, ended, files }) {
 // Of the files named (`named`, as the command line gives them) and of the code (`code`), those Stryker measures, of the
 // endings the core's list gives it, and `left` the others: { named, code, left }. Where files were named and none is
 // Stryker's, `named` is null: there is nothing to measure.
-const ENDINGS = JSON.parse(fs.readFileSync(path.join(HERE, "mutation-tools.json"), "utf8")).languages.filter(l => l.tool === "Stryker").flatMap(l => l.endings);
+const ENDINGS = parseBounded(fs.readFileSync(path.join(HERE, "mutation-tools.json"), "utf8")).languages.filter(l => l.tool === "Stryker").flatMap(l => l.endings);
 export function strykers(named, code, endings = ENDINGS) {
   const fileOf = part => /^(.+?)(?::\d+-\d+)?$/u.exec(part)[1], ours = f => endings.includes(path.posix.extname(f));
   const parts = named.flatMap(a => a.split(",")).filter(Boolean), mine = parts.filter(p => ours(fileOf(p)));
@@ -216,7 +217,7 @@ export function strykers(named, code, endings = ENDINGS) {
 
 async function main(argv) {
   const t = argv.indexOf("--tests");
-  if (t >= 0) return dispatch(JSON.parse(fs.readFileSync(argv[t + 1], "utf8")), process.env[ACTIVE]);
+  if (t >= 0) return dispatch(parseBounded(fs.readFileSync(argv[t + 1], "utf8")), process.env[ACTIVE]);
   const { out, bin, budget, vitest, named: asked } = askedOf(argv), until = Date.now() + budget * 1000;
   const program = vitest ? vitestAt(".") : null;
   if (vitest && !program) refuse("the tests are to be run by vitest, and node_modules/vitest at the project's root names no program", "install the project's packages first (npm ci --ignore-scripts), as its job does before its tests, then run this again");

@@ -92,7 +92,7 @@ import { closeSync, existsSync, openSync, readFileSync, readSync, readdirSync, r
 import { basename, delimiter, dirname, isAbsolute, join, posix, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { acceptedList, yesFaults } from "./licence-yes.mjs";
-import { leadsOut, oneLine, parseBounded } from "./guards.mjs";
+import { asText, leadsOut, oneLine, parseBounded } from "./guards.mjs";
 import { MOVED_OFF, baseOf, configAt, licenceOk, loadConfig, movedOff, policy, textAt } from "./licences.mjs";
 import { started } from "./started.mjs";
 import { copyOf, projectAt } from "./core-path.mjs";
@@ -453,8 +453,9 @@ const DECLARATION = new RegExp(`^<\\?xml${XB}+version${XB}*=${XB}*(?:"1\\.[0-9]+
 // one), and a reference to a character as XML writes one
 const ATTRIBUTES = /^(?:[ \t\r\n]+[A-Za-z_][A-Za-z0-9_.-]*(?::[A-Za-z_][A-Za-z0-9_.-]*)?[ \t\r\n]*=[ \t\r\n]*(?:"[^"<\u0000\u0001]*"|'[^'<\u0000\u0001]*'))*[ \t\r\n]*$/u;
 const AMPERSAND = /&(?!(?:amp|lt|gt|quot|apos|#[0-9]{1,7}|#x[0-9A-Fa-f]{1,6});)/u;
-// (what a lock file, a manifest or a file's name holds is shown on one line: none of it starts a line of its own)
-const shown = oneLine;
+// (what a lock file, a manifest or a file's name holds is shown as text alone, as nuget-look.sh shows it: none of it
+// starts a line of its own or holds a runner's workflow command; #1327, #1348)
+const shown = asText;
 
 /** The config's "nuget", checked: { ships, tools, accepted, sources }. A key or a shape it does not know would check less. */
 export function nugetConfig(config, copy = "core/") {
@@ -1045,7 +1046,7 @@ if (started(import.meta.url)) {
     let files;
     try { const p = project(); files = projectFiles(p.tracked, copyOf(p.root)); } catch (e) { fail(e.message); }
     // (a line each, for a shell to read: a name that would be more than one line is refused, never cut)
-    const odd = files.filter((f) => shown(f) !== f);
+    const odd = files.filter((f) => oneLine(f) !== f);
     if (odd.length) fail(`a project file whose name holds a line break or a control character: ${odd.join(", ")}. Mend: rename it`);
     for (const f of files) console.log(f);
     process.exit(0);
@@ -1056,7 +1057,7 @@ if (started(import.meta.url)) {
       const { root, tracked } = project(), copy = copyOf(root), own = tracked.filter((f) => !f.startsWith(copy)), byContent = projectFilesByContent(root, own);
       files = [...new Set([...byContent, ...importsOf(own, (f) => readProject(root, f), byContent).brought.keys()])];
     } catch (e) { fail(e.message); }
-    const odd = files.filter((f) => shown(f) !== f);
+    const odd = files.filter((f) => oneLine(f) !== f);
     if (odd.length) fail(`a file an Import brings in whose name holds a line break or a control character: ${odd.join(", ")}. Mend: rename it`);
     for (const f of files) console.log(f);
     process.exit(0);

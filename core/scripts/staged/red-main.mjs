@@ -8,6 +8,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { BUG, build, git, github, OWNER, REPO, verdict, written } from "./scratch.mjs";
+import { parseBounded } from "../guards.mjs";
 
 export const name = "red-main";
 export const holds = ["tasks/tests.md: A check that fails on the default branch has an owner, and is run again once", "roles/shared/work-flow.md: Sessions"];
@@ -27,7 +28,7 @@ const FILES = {
 export function set(dir, opts = {}) {
   const made = build(dir, { ...opts, issues: [{ ...BUG }], files: FILES });
   const sha = git(made.project, "rev-parse", "HEAD"), file = path.join(made.dir, "github.json");
-  const state = JSON.parse(fs.readFileSync(file, "utf8"));
+  const state = parseBounded(fs.readFileSync(file, "utf8"));
   const runUrl = `https://github.com/${OWNER}/${REPO}/actions/runs/${RUN}`, at = "2026-11-01T10:00:00Z";
   state.runs = [{ id: RUN, name: "tests", path: ".github/workflows/tests.yml", event: "push", head_branch: "main", head_sha: sha, status: "completed", conclusion: "failure", run_attempt: 1, html_url: runUrl, created_at: at, updated_at: at,
     again: "success", againSays: "2 of 2 passed",

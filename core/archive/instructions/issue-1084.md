@@ -10,4 +10,4 @@ The index, and how an item is written: `archive/instructions.md`.
      before and failed after stopping the cut, only counts carried back and the project named nowhere. The reason: the
      upgrade test never ran a project's own workflows, so #1079 passed every check of the core and failed only in a
      trial on a real project. It stands behind "A release is cut on the owner's word" in `AGENTS.md`.
-     Changed by: #1257.
+     Changed by: #1257, #1261.

@@ -46,7 +46,7 @@ jobs:
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
           PR_CREATED: ${{ github.event.pull_request.created_at }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }} # (read through GitHub's API alone, never from the checkout: #1231)
           GH_TOKEN: ${{ github.token }} # (read only: the base's commits and copy, for the day it gained a line, the issues a pull request queues or closes, and the right of each account that wrote or edited the texts of the issue it names)
           DRAFT: ${{ github.event.pull_request.draft }}
         run: |

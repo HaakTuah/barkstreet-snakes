@@ -12,7 +12,7 @@
 //       Reads only; gh and Node's own modules.
 import fs from "node:fs";
 import path from "node:path";
-import { aCommit, aRepository } from "./guards.mjs";
+import { aCommit, aRepository, parseBounded } from "./guards.mjs";
 import { timeOf } from "./moment.mjs";
 import { ghApi } from "./labels.mjs";
 import { notLinked, parseConfig, where } from "./shape.mjs";
@@ -61,7 +61,7 @@ export function lastMerged(repo, count, gh = ghApi, kept = () => true) {
   // count-th newest merge read, no later page holds a newer one)
   const merged = [], kth = () => merged.map(p => p.merged_at).sort().reverse()[count - 1];
   for (let page = 1; page <= 10; page++) {
-    const rows = JSON.parse(gh(`repos/${repo}/pulls?state=closed&sort=updated&direction=desc&per_page=100&page=${page}`) || "[]");
+    const rows = parseBounded(gh(`repos/${repo}/pulls?state=closed&sort=updated&direction=desc&per_page=100&page=${page}`) || "[]");
     merged.push(...rows.filter(p => p.merged_at && kept(p)));
     if (rows.length < 100 || (merged.length >= count && String(rows.at(-1).updated_at) < kth())) break;
   }
@@ -74,7 +74,7 @@ export function measure({ repo, count = COUNT, mark, gh = ghApi }) {
   if (!aRepository(repo)) throw new Refused(`${JSON.stringify(String(repo)).slice(0, 80)} names no repository. Mend: name it as <owner>/<name>`);
   // (a head that is no commit's whole name, as GitHub gives one, is not read: it would name another route than the commit's)
   const runs = lastMerged(repo, count, gh).filter(p => aCommit(p.head?.sha))
-    .map(p => JSON.parse(gh(`repos/${repo}/commits/${p.head.sha}/check-runs?filter=all&per_page=100`) || "{}").check_runs ?? []);
+    .map(p => parseBounded(gh(`repos/${repo}/commits/${p.head.sha}/check-runs?filter=all&per_page=100`) || "{}").check_runs ?? []);
   const times = runs.map(r => waited(latest(r))).filter(t => t !== null), bills = runs.map(billed).filter(b => b !== null);
   return { median: median(times), read: times.length, mark, billed: median(bills), billedRead: bills.length };
 }

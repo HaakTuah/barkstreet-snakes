@@ -12,6 +12,7 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { noSignInWhole, parseBounded } from "./guards.mjs";
 import { registryName, registryVersion } from "./licences.mjs";
 import { fetched } from "./lookup.mjs";
 import { ENTRY_FIELDS as FIELDS } from "./packages.mjs";
@@ -61,7 +62,7 @@ export const tooYoung = async (packages, base, ask, now) => {
     if (!k || same(base[k], e)) continue;
     const { fault, name, version } = entryFault(k, e);
     const said = fault ?? registryFault(name, version, e, await ask(name).catch(err => ({ status: err.message })), now);
-    if (said) out.push(said);
+    if (said) out.push(noSignInWhole(said)); // (its key, fields and version as the lock holds them, any sign-in cut out: floor rule 1)
   }
   return out;
 };
@@ -70,7 +71,7 @@ export const tooYoung = async (packages, base, ask, now) => {
 export const failure = young => `FAIL each package the change brings or updates in the lock file is a week old or more by the registry's date (floor rule 7): ${young.join("; ")}. Mend: wait until the version is a week old and run the job again, or take the version before it, its lock entry written by npm's own install; where the registry did not answer, run the job again`;
 
 if (started(import.meta.url)) {
-  const json = f => JSON.parse(fs.readFileSync(path.join(root, f), "utf8"));
+  const json = f => parseBounded(fs.readFileSync(path.join(root, f), "utf8"));
   // (every install's lock, each entry against what any lock at the base held, so a package moved from one install to
   // another at the same version is no new one, and one the parser's lock brings or updates is held as the first's: #719)
   const locks = [".packages/package-lock.json", ".packages/parser/package-lock.json"];

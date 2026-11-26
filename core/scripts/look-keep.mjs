@@ -9,6 +9,7 @@ import { CORE } from "./core-address.mjs";
 import { FOLDER } from "./inbox.mjs";
 import { timeOf } from "./moment.mjs";
 import { TITLES } from "./look-kinds.mjs";
+import { parseBounded } from "./guards.mjs";
 
 export const BOT = "github-actions[bot]";
 export const LABELS = ["queued", "by:look"];
@@ -49,7 +50,7 @@ export const updating = (issue, body, requeue = null) => {
 function write(method, route, payload) {
   const r = spawnSync("gh", ["api", "-X", method, route, "--input", "-"], { input: JSON.stringify(payload), encoding: "utf8", maxBuffer: 1 << 24 });
   if (r.status !== 0) throw new Error(`GitHub refused ${method} ${route.replace(/^repos\/[^/]+\/[^/]+\//, "")}`);
-  return r.stdout ? JSON.parse(r.stdout) : {};
+  return r.stdout ? parseBounded(r.stdout) : {};
 }
 
 // The state label of an issue the look keeps and still holds open, kept to what its reader says of the owner: what

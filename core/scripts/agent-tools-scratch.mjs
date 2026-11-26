@@ -8,6 +8,7 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { scratchDir } from "./scratch-core.mjs";
 import { printed } from "./agent-tools.mjs";
 import { mended } from "./mend.mjs";
+import { parseBounded } from "./guards.mjs";
 
 export const SCRIPT = fileURLToPath(new URL("../scripts/agent-tools.mjs", import.meta.url));
 const template = name => fs.readFileSync(fileURLToPath(new URL(`../setup/template/${name}`, import.meta.url)), "utf8");
@@ -23,7 +24,7 @@ export const env = { ...process.env, GIT_AUTHOR_NAME: "t", GIT_AUTHOR_EMAIL: "t@
   GIT_CONFIG_GLOBAL: path.join(none, "none"), GIT_CONFIG_COUNT: "1", GIT_CONFIG_KEY_0: "core.autocrlf", GIT_CONFIG_VALUE_0: "false" };
 export const git = (dir, ...args) => execFileSync("git", args, { cwd: dir, env, encoding: "utf8" }).trim();
 export const write = (dir, file, text) => { fs.mkdirSync(path.dirname(path.join(dir, file)), { recursive: true }); fs.writeFileSync(path.join(dir, file), text); };
-export const withPlugins = plugins => JSON.stringify({ ...JSON.parse(KIT), enabledPlugins: plugins }, null, 2);
+export const withPlugins = plugins => JSON.stringify({ ...parseBounded(KIT), enabledPlugins: plugins }, null, 2);
 export const PLUGIN = { kind: "plugin", name: "helper@example-market", publisher: "Example Tools", version: "1.4.0" };
 // A link to `to`, as a value of `files`, made as the file system makes one (git stores it as one, mode 120000).
 export const LINK = Symbol("link"), link = to => ({ [LINK]: to });
@@ -69,7 +70,7 @@ export const cli = (dir, ...args) => { const r = spawnSync(process.execPath, [SC
 export const listing = (...entries) => ({ "checks/licences.json": { lockfiles: [], agentTools: entries } });
 // ---- the pin a tool's own configuration gives (#352) ----
 export const C1 = "0123456789abcdef0123456789abcdef01234567", C2 = "89abcdef0123456789abcdef0123456789abcdef";
-export const withHook = command => ({ hooks: { ...JSON.parse(KIT).hooks, PostToolUse: [{ hooks: [{ type: "command", command }] }] } });
+export const withHook = command => ({ hooks: { ...parseBounded(KIT).hooks, PostToolUse: [{ hooks: [{ type: "command", command }] }] } });
 export const kitCommand = words => `bash -c 'f=$(git -C "\${CLAUDE_PROJECT_DIR:-.}" --no-replace-objects show refs/remotes/origin/main:scripts/format.sh 2>/dev/null) || exit 0; bash -c "$f"${words}'`;
 export const TREE_HOOK = "bash scripts/format.sh", MAIN_HOOK = "git show refs/remotes/origin/main:scripts/format.sh | bash", KIT_HOOK = kitCommand("");
 export const NOT_KIT = "is not in the starter kit's form, so nothing shows that it runs its copy on main";
@@ -77,7 +78,7 @@ export const entry = (command, extra = {}) => ({ kind: "hook", name: `PostToolUs
 export const script = { "scripts/format.sh": "echo formatted\n" };
 export const fromWorkingTree = { from: "the working tree" }, fromMain = { from: "main" };
 // (the settings by which Claude Code runs a command of its own, read as hooks are)
-export const withSetting = (key, value) => ({ ".claude/settings.json": { ...JSON.parse(KIT), [key]: value } });
+export const withSetting = (key, value) => ({ ".claude/settings.json": { ...parseBounded(KIT), [key]: value } });
 // (and what else a tool runs by itself: the hooks of a skill's or a subagent's frontmatter, a remote server's and a
 // marketplace's command for its headers, a marketplace's command source, and a Codex model provider, held whole)
 export const front = key => `---\nname: rev\n${key}:\n  Stop:\n    - hooks:\n        - type: command\n          command: ${TREE_HOOK}\n---\n# rev\n`;

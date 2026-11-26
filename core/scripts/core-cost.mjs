@@ -26,6 +26,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { CORE } from "./core-address.mjs";
 import { ruleFiles } from "./rule-files.mjs";
 import { started } from "./started.mjs";
+import { parseBounded } from "./guards.mjs";
 
 export const DAY = /^\d{4}-\d{2}-\d{2}$/;
 const git = args => execFileSync("git", args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], maxBuffer: 1 << 28 });
@@ -249,7 +250,7 @@ function tookFrom(repo, merged) {
   for (let page = 1; page <= 200; page++) {
     const out = execFileSync("gh", ["api", `repos/${repo}/pulls?state=all&sort=created&direction=desc&per_page=100&page=${page}`,
       "--jq", ".[] | [.number, (.head.repo.full_name // \"\"), (.body // \"\")] | @json"], { encoding: "utf8", stdio: ["ignore", "pipe", "inherit"], maxBuffer: 1 << 28 });
-    const rows = out.split("\n").filter(Boolean).map(l => JSON.parse(l));
+    const rows = out.split("\n").filter(Boolean).map(l => parseBounded(l));
     pulls.push(...readings(rows, repo, oldest));
     if (rows.length < 100 || rows.some(([number]) => number < oldest)) break;
   }
