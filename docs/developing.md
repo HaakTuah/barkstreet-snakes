@@ -55,7 +55,7 @@ The REST calls from a cloud session: `core/tasks/github-calls.md`. Updates, Depe
   would have done, so nothing waits for it. A security review that Codex's app did not post itself is posted in a
   comment that opens "Security review:" (`core/tasks/reviews.md`, point 3).
 - **The licence check** (`.github/workflows/licences.yml`) runs the core's, `core/scripts/licences.mjs` with
-  `tools/licence-check.json`, against the audit, `tools/licences.json`, and the notices, `THIRD-PARTY-NOTICES.txt`; what
+  `checks/licences.json`, against the audit, `tools/licences.json`, and the notices, `THIRD-PARTY-NOTICES.txt`; what
   it and its scan hold is in the headers of `core/scripts/licences.mjs` and `core/scripts/licence-scan.mjs`. Beside it,
   `node tools/licences.js` checks what only this game has: every address the game loads is an audited
   entry's, each Google Fonts family a font of its own, and `sw.js` keeps the notices. `tools/licences-test.js` stages
