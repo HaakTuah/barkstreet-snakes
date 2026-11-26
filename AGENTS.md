@@ -34,7 +34,8 @@ over rules" (`core/roles/shared/how-to-work.md`) never reaches: the storage keys
 | The design, one file per topic | `docs/design/` (index: `DESIGN.md` at the root) |
 | Materials the queue points to, with the specs of the entries that name one (`queue-specs.md`), the owner's words in them cut to the decision and its reason | `docs/handoff/` |
 | Study and measuring tools from earlier rounds (censuses, audits, PR pictures) | `tools/dev/` (done ones: `docs/archive/`) |
-| Audits of how the code is put together: the reports and their numbers, one per day | `docs/audits/`; the measures: `tools/dev/audit/` |
+| Audits of how the code is put together, and readings of the game against the core: the reports and their numbers, one per day | `docs/audits/`; the measures: `tools/dev/audit/`; the readings' record: `checks/core-reading.json` |
+| The choices that are hard to undo, each with what reopens it | `docs/choices.md` |
 | History: the old polish audit, the plan as it grew, the owner's instructions (cut to the decision and its reason: `docs/archive/instructions.md`) | `docs/archive/` |
 
 ## Starting a task
