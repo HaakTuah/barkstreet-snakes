@@ -15,7 +15,7 @@ updates:
     groups:
       actions:
         patterns: ["*"]
-        update-types: ["minor", "patch"] # a new major is its own PR (core/modules/updates.md)
+        update-types: ["minor", "patch"] # a new major is its own PR (core/tasks/updates.md)
   # The tools' packages (tools/package.json: TypeScript, Playwright; the game ships none). The licence check reads each
   # update's licence from the lock, with what it pulls in. What Dependabot cannot see (PeerJS) is in tools/versions.json,
   # checked monthly by the core's versions check (.github/workflows/versions.yml); Node is the core's one pin.
@@ -29,4 +29,4 @@ updates:
     groups:
       tools:
         patterns: ["*"]
-        update-types: ["minor", "patch"] # a new major is its own PR (core/modules/updates.md)
+        update-types: ["minor", "patch"] # a new major is its own PR (core/tasks/updates.md)

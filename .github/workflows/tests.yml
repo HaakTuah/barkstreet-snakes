@@ -24,7 +24,7 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-# Read-only: the jobs only check out and test (floor rule 2, in core/floor/topics.md: the fewest permissions each job needs).
+# Read-only: the jobs only check out and test (floor rule 2, in core/floor/topics/workflows.md: the fewest permissions each job needs).
 permissions:
   contents: read
 

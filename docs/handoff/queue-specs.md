@@ -322,16 +322,16 @@ to choose from): "Let it be creative! I don't want it to strictly look at and im
 The owner: "[We] need a full review and cleanup where we look at every file, especially the documents, and ask: what does
 this state that it does, and does it do it? If something in it doesn't, then it needs to be somewhere else, if anywhere
 at all." Every file, docs first: what does it say it is for, and does it do that? What doesn't belong moves to where it
-does, or goes; code is checked against "Split by meaning" and "Keep it lean" in `core/modules/how-to-work.md`. The files every session
+does, or goes; code is checked against "Split by meaning" and "Keep it lean" in `core/roles/shared/how-to-work.md`. The files every session
 reads first, then `docs/`, then the code, in a few PRs, each with a table of every file it covered and what happened to
 it, behaviour proven unchanged (suites, fingerprints). Helpers by
-`core/modules/helpers.md` (a Haiku search helper per folder).
+`core/tasks/helpers.md` (a Haiku search helper per folder).
 
 ### The file-by-file review's moves (the workshop lane; found in part 3 of the file-by-file review, PR #337, 2 November 2026)
 
 Part 3 of the review asked of every code file what its header says it holds and whether it holds that. Its headers
 are now right; what sits in the wrong file is listed here, checked against the code, for PRs of their own ("Split by
-meaning" in `core/modules/how-to-work.md`: a split goes in its own PR, behaviour proven unchanged by the fingerprints and the suites,
+meaning" in `core/roles/shared/how-to-work.md`: a split goes in its own PR, behaviour proven unchanged by the fingerprints and the suites,
 with what it saves said). One folder per PR; `render/world.js` waits for the main lane, as its split does.
 
 - **render/:** `drawSnakes`, `drawPasses`, `drawTrails` (marks.js) to world.js, with the frame; `drawBurning` (marks.js)
