@@ -22,14 +22,27 @@ floor's numbers, what only this game has and what the floor leaves to it; who mi
      failed guesses (offers that don't open), friends already in staying; a point that unblinds to nothing is answered
      like any other, so that silence says nothing. A joining friend shakes hands with four rooms at most and agrees
      eight keys at most, each room once anew. A relay's own message is read only as Nostr's `EVENT` for our
-     subscription, its size capped.
+     subscription, its size capped. Limits: 16,000 characters a note and 32,000 a relay's message, 12,000 a sealed
+     session description, a point of 66 and an id of 16; eight friends shaking hands at once, 50 failed guesses, four
+     rooms and eight keys a friend, 200 notes remembered; 60 s fresh, one new handshake a second, 6 s to reach a relay;
+     hostile tests: `tools/net-test.js`.
    - **Online peers** (PeerJS, `net.js`, `net-relays.js` and `online.js`): anyone with a room code. Their checks: each
      message's pinned shape (`tools/online-test.js`, `tools/protocol-shapes.json`); names through the one cleaner
      (`SnakeRecords.cleanName`); a colour, kind or id one of the game's own values; caps on counts and lengths, so
-     nothing a peer sends stalls the host's tick.
+     nothing a peer sends stalls the host's tick; a hello of any version but the host's refused, with words to reload
+     both pages. Limits: 65,536 characters a message through the relays, none of our own through PeerJS (its channel
+     holds it); a name of 16 characters, an owner of 40, a line of chatter of 200; eight connections and four people a
+     room, 512 portals a tick; a friend let in within 5 s, gone after 20 s unheard, a host after 8 s, a round trip
+     counted only between 0 and 5 s; the newest version a host knows, version 32 (`VERSION` in `online.js`, which
+     `tools/online-test.js` holds this to); hostile tests: `tools/online-test.js` and `tools/net-test.js`.
    - **Shared records and Halls of Fame** (`records.js`): what friends send is cleaned (`cleanShared`) before it is
-     stored or shown.
-   - **URL parameters and room codes:** cleaned to their own alphabet and length (`cleanCode`).
+     stored or shown. Limits: ten rows a friend and 40 a message on import; a name of 16 characters, an id, owner or
+     round of 40, a colour of `#rrggbb`; a place of 1 to 4, 0 to 9,999 eaten, 0 to 3,600,000 ms survived, a date no
+     more than a day ahead; none in time, since nothing waits on them; hostile tests: `tools/records-test.js`.
+   - **URL parameters and room codes:** cleaned to their own alphabet and length (`cleanCode`); `?acts=` taken only as
+     three rising times, `?way=` only as one of its two words. Limits: a code of 5 characters of 31; three times for
+     `?acts=`; none in time, since a link holds no clock; hostile tests: `tools/online-test.js` and
+     `tools/rules/29-woodpecker-acts.js`.
 6. **Where markup is built:** `innerHTML` and the HUD's markup (`game/hud.js`, `game/cards.js`), each escaping.
 7. **What runs in players' browsers:**
    - **The third-party script:** PeerJS, from cdnjs, with its SRI hash (`PEERJS_SRI` in `net.js`); a new external
